@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createAnnouncementAction } from "@/app/actions/cms";
 
+import MediaPicker from "@/components/media/MediaPicker";
+
 export default function CreateAnnouncementPage() {
   const router = useRouter();
   
@@ -20,6 +22,11 @@ export default function CreateAnnouncementPage() {
     const val = e.target.value;
     setTitle(val);
     setSlug(val.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, ''));
+  };
+
+  const insertMedia = (mediaId: string) => {
+    const mediaMarkdown = `\n![Media](/api/v1/media/${mediaId}/content)\n`;
+    setBody((prev) => prev + mediaMarkdown);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -119,7 +126,10 @@ export default function CreateAnnouncementPage() {
             </div>
 
             <div className="space-y-2">
-              <label className="block text-sm font-semibold text-slate-700">Content Body (HTML/Markdown) <span className="text-red-500">*</span></label>
+              <div className="flex justify-between items-center">
+                <label className="block text-sm font-semibold text-slate-700">Content Body (HTML/Markdown) <span className="text-red-500">*</span></label>
+                <MediaPicker onSelect={insertMedia} buttonLabel="Sisipkan Media" />
+              </div>
               <textarea 
                 required
                 rows={10}

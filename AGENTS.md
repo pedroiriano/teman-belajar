@@ -143,11 +143,13 @@ Rules:
 
 - Least privilege.
 - Deny by default.
+- Validate untrusted input (See `docs/governance/SECURITY-VALIDATION.md`).
+- Authorization server-side.
 - No secret in code/log/URL.
 - Validate issuer/audience/scope for tokens.
 - Rate-limit sensitive endpoints.
 - Audit privileged actions.
-- File uploads use allowlist and size limits.
+- File uploads use allowlist and size limits (must sniff magic bytes server-side).
 - Never disable security test to make CI green.
 
 ## 9. Moodle Rules

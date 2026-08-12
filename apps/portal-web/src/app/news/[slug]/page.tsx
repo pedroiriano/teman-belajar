@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { MarkdownRenderer } from "@/components/markdown-renderer";
 
 // Consider using a proper markdown renderer or isomorphic-dompurify in a real scenario
 // For this vertical slice, we will inject HTML with a note.
@@ -58,11 +59,7 @@ export default async function NewsDetailPage({ params }: { params: Promise<{ slu
              </Link>
           </div>
 
-          <div className="prose prose-indigo max-w-none text-slate-700 space-y-4">
-            {news.body.split('\n').map((paragraph: string, i: number) => (
-              <p key={i}>{paragraph}</p>
-            ))}
-          </div>
+          <MarkdownRenderer content={news.body} />
         </div>
       </section>
     </article>

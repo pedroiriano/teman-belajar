@@ -10,8 +10,10 @@ import (
 
 	_ "github.com/lib/pq"
 
+	"teman-belajar-api/internal/adapters/minio"
 	"teman-belajar-api/internal/domain/cms"
 	"teman-belajar-api/internal/domain/knowledge"
+	"teman-belajar-api/internal/domain/media"
 	"teman-belajar-api/internal/repository/postgres"
 	"teman-belajar-api/internal/transport/http/handler"
 	"teman-belajar-api/internal/transport/http/middleware"
@@ -48,6 +50,33 @@ func main() {
 	// Handlers
 	cmsHandler := handler.NewCMSHandler(cmsSvc)
 	knowledgeHandler := handler.NewKnowledgeHandler(knowledgeSvc)
+
+	// Media Storage & Services
+	minioEndpoint := os.Getenv("MINIO_ENDPOINT")
+	minioAccessKey := os.Getenv("MINIO_ACCESS_KEY")
+	minioSecretKey := os.Getenv("MINIO_SECRET_KEY")
+	minioBucket := os.Getenv("MINIO_BUCKET")
+	minioUseSSL := os.Getenv("MINIO_USE_SSL") == "true"
+	
+	var mediaSvc *media.Service
+	if minioEndpoint != "" {
+		minioStorage, err := minio.NewStorage(minioEndpoint, minioAccessKey, minioSecretKey, minioUseSSL)
+		if err != nil {
+			log.Fatalf("Failed to initialize MinIO storage: %v", err)
+		}
+		
+		if err := minioStorage.EnsureBucket(context.Background(), minioBucket); err != nil {
+			log.Fatalf("Failed to ensure MinIO bucket %s: %v", minioBucket, err)
+		}
+		
+		mediaRepo := postgres.NewMediaRepository(db)
+		mediaSvc = media.NewService(mediaRepo, minioStorage, auditRepo, minioBucket, 20*1024*1024)
+	}
+	
+	var mediaHandler *handler.MediaHandler
+	if mediaSvc != nil {
+		mediaHandler = handler.NewMediaHandler(mediaSvc)
+	}
 
 	issuerURL := os.Getenv("KEYCLOAK_ISSUER_URL")
 	if issuerURL == "" {
@@ -117,6 +146,21 @@ func main() {
 
 	mux.HandleFunc("GET /api/v1/knowledge", knowledgeHandler.ListPublicArticles)
 	mux.HandleFunc("GET /api/v1/knowledge/{slug}", knowledgeHandler.GetPublicArticle)
+
+	if mediaHandler != nil {
+		mux.HandleFunc("GET /api/v1/media/{id}/content", mediaHandler.GetMediaContent)
+		
+		// Admin Media Endpoints
+		mux.Handle("GET /api/v1/admin/media", adminAuthMiddleware(http.HandlerFunc(mediaHandler.ListAdminMedia)))
+		mux.Handle("POST /api/v1/admin/media", adminAuthMiddleware(http.HandlerFunc(mediaHandler.CreateMedia)))
+		mux.Handle("GET /api/v1/admin/media/{id}", adminAuthMiddleware(http.HandlerFunc(mediaHandler.GetAdminMedia)))
+		mux.Handle("GET /api/v1/admin/media/{id}/content", adminAuthMiddleware(http.HandlerFunc(mediaHandler.GetAdminMediaContent)))
+		mux.Handle("PATCH /api/v1/admin/media/{id}", adminAuthMiddleware(http.HandlerFunc(mediaHandler.UpdateMediaMetadata)))
+		mux.Handle("POST /api/v1/admin/media/{id}/archive", adminAuthMiddleware(http.HandlerFunc(mediaHandler.ArchiveMedia)))
+		
+		mux.Handle("POST /api/v1/admin/media/{id}/attach", adminAuthMiddleware(http.HandlerFunc(mediaHandler.AttachMediaUsage)))
+		mux.Handle("POST /api/v1/admin/media/{id}/detach", adminAuthMiddleware(http.HandlerFunc(mediaHandler.DetachMediaUsage)))
+	}
 
 	mux.Handle("GET /api/v1/admin/knowledge", adminAuthMiddleware(http.HandlerFunc(knowledgeHandler.ListAdminArticles)))
 	mux.Handle("POST /api/v1/admin/knowledge", adminAuthMiddleware(http.HandlerFunc(knowledgeHandler.CreateArticle)))

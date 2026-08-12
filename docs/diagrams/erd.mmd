@@ -80,10 +80,32 @@ erDiagram
 
   MEDIA_ASSET {
     uuid id PK
-    string object_key UK
-    string mime_type
+    string storage_key UK
+    string bucket
+    string original_filename
+    string detected_mime_type
     bigint size_bytes
-    string visibility
+    string checksum_sha256
+    string title
+    string alt_text
+    text caption
+    string status
+    timestamptz created_at
+    uuid created_by
+    timestamptz updated_at
+    uuid updated_by
+    timestamptz archived_at
+  }
+
+  MEDIA_USAGES {
+    uuid id PK
+    uuid media_id FK
+    string entity_type
+    string entity_id
+    string usage_role
+    int sort_order
+    timestamptz created_at
+    uuid created_by
   }
 
   GALLERY {
@@ -164,6 +186,10 @@ erDiagram
   KNOWLEDGE_ARTICLE ||--o{ KNOWLEDGE_REVISION : has
   GALLERY ||--o{ GALLERY_ITEM : contains
   MEDIA_ASSET ||--o{ GALLERY_ITEM : used_by
+  MEDIA_ASSET ||--o{ MEDIA_USAGES : used_in
+  NEWS ||--o{ MEDIA_USAGES : has_media
+  ANNOUNCEMENT ||--o{ MEDIA_USAGES : has_media
+  KNOWLEDGE_REVISION ||--o{ MEDIA_USAGES : has_media
   USER_PROFILE ||--o{ BOOKMARK : creates
   USER_PROFILE ||--o{ RATING : creates
   USER_PROFILE ||--o| MOODLE_USER_MAPPING : maps_to
