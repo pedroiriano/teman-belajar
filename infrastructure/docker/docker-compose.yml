@@ -1,0 +1,178 @@
+name: teman-belajar
+
+services:
+  postgres-portal:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: teman_belajar_portal
+      POSTGRES_PASSWORD: local_password
+      POSTGRES_DB: teman_belajar
+    ports:
+      - "5432:5432"
+    volumes:
+      - teman-belajar_postgres_portal_data:/var/lib/postgresql/data
+      - ./init-db.sh:/docker-entrypoint-initdb.d/init-db.sh
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U teman_belajar_portal -d teman_belajar"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  postgres-moodle:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: teman_belajar_moodle
+      POSTGRES_PASSWORD: local_password
+      POSTGRES_DB: moodle
+    ports:
+      - "5433:5432"
+    volumes:
+      - teman-belajar_postgres_moodle_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U teman_belajar_moodle -d moodle"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - teman-belajar_redis_data:/data
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:22.0
+    command: start-dev --import-realm
+    environment:
+      KC_DB: postgres
+      KC_DB_URL_HOST: postgres-portal
+      KC_DB_URL_DATABASE: keycloak
+      KC_DB_USERNAME: teman_belajar_portal
+      KC_DB_PASSWORD: local_password
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+      PORTAL_WEB_URL: http://localhost:3000
+      ADMIN_WEB_URL: http://localhost:3001
+      MOODLE_BASE_URL: http://localhost:8082
+      KEYCLOAK_WEB_CLIENT_SECRET: change_me_web_secret
+      KEYCLOAK_ADMIN_CLIENT_SECRET: change_me_admin_secret
+      KEYCLOAK_MOODLE_CLIENT_SECRET: change_me_moodle_secret
+    ports:
+      - "8081:8080"
+    depends_on:
+      postgres-portal:
+        condition: service_healthy
+    volumes:
+      - ../../infrastructure/keycloak/teman-belajar-realm.json:/opt/keycloak/data/import/realm.json
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c 'exec 3<>/dev/tcp/127.0.0.1/8080'"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  minio:
+    image: minio/minio:RELEASE.2023-08-09T23-30-22Z
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - teman-belajar_minio_data:/data
+
+  moodle:
+    image: nginx:alpine # Replacing bitnami/moodle due to missing docker registry image (PRE-TASK-005 DEBT)
+    ports:
+      - "8082:80"
+      - "8443:443"
+    depends_on:
+      postgres-moodle:
+        condition: service_healthy
+    volumes:
+      - teman-belajar_moodle_app_data:/bitnami/moodle
+      - teman-belajar_moodledata:/bitnami/moodledata
+
+  portal-migrate:
+    build:
+      context: ../../services/portal-api
+      dockerfile: Dockerfile
+    command: ["./portal-migrate"]
+    environment:
+      DATABASE_URL: postgres://teman_belajar_portal:local_password@postgres-portal:5432/teman_belajar?sslmode=disable
+      MIGRATIONS_DIR: /app/migrations
+    depends_on:
+      postgres-portal:
+        condition: service_healthy
+
+  portal-api:
+    build:
+      context: ../../services/portal-api
+      dockerfile: Dockerfile
+    environment:
+      PORT: "8080"
+      DATABASE_URL: postgres://teman_belajar_portal:local_password@postgres-portal:5432/teman_belajar?sslmode=disable
+      REDIS_URL: redis:6379
+      KEYCLOAK_URL: http://keycloak:8080
+    ports:
+      - "8080:8080"
+    depends_on:
+      portal-migrate:
+        condition: service_completed_successfully
+      keycloak:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://127.0.0.1:8080/api/v1/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  portal-web:
+    build:
+      context: ../../apps/portal-web
+      dockerfile: Dockerfile
+    environment:
+      NEXTAUTH_URL: http://localhost:3000
+      NEXTAUTH_SECRET: local_secret_key_12345
+      KEYCLOAK_ID: teman-belajar-web
+      KEYCLOAK_SECRET: change_me_web_secret
+      KEYCLOAK_ISSUER: http://localhost:8081/realms/teman-belajar
+      PORTAL_API_INTERNAL_URL: http://portal-api:8080
+    ports:
+      - "3000:3000"
+    depends_on:
+      portal-api:
+        condition: service_healthy
+      keycloak:
+        condition: service_healthy
+
+  admin-web:
+    build:
+      context: ../../apps/admin-web
+      dockerfile: Dockerfile
+    environment:
+      NEXTAUTH_URL: http://localhost:3001
+      NEXTAUTH_SECRET: local_secret_key_67890
+      KEYCLOAK_ID: teman-belajar-admin
+      KEYCLOAK_SECRET: change_me_admin_secret
+      KEYCLOAK_ISSUER: http://localhost:8081/realms/teman-belajar
+      PORTAL_API_INTERNAL_URL: http://portal-api:8080
+    ports:
+      - "3001:3000"
+    depends_on:
+      portal-api:
+        condition: service_healthy
+      keycloak:
+        condition: service_healthy
+
+volumes:
+  teman-belajar_postgres_portal_data:
+  teman-belajar_postgres_moodle_data:
+  teman-belajar_redis_data:
+  teman-belajar_minio_data:
+  teman-belajar_moodle_app_data:
+  teman-belajar_moodledata:

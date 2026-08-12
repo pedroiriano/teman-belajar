@@ -1,0 +1,170 @@
+erDiagram
+  USER_PROFILE {
+    uuid id PK
+    string identity_subject UK
+    string display_name
+    string locale
+    timestamptz created_at
+    timestamptz updated_at
+  }
+
+  PAGE {
+    uuid id PK
+    string slug UK
+    string title
+    string status
+    timestamptz published_at
+  }
+
+  NEWS {
+    uuid id PK
+    string slug UK
+    string title
+    string excerpt
+    text body
+    string status
+    uuid category_id FK
+    timestamptz published_at
+    timestamptz created_at
+    uuid created_by
+    timestamptz updated_at
+    uuid updated_by
+  }
+
+  ANNOUNCEMENT {
+    uuid id PK
+    string slug UK
+    string title
+    text body
+    string status
+    timestamptz start_at
+    timestamptz end_at
+    timestamptz published_at
+    timestamptz created_at
+    uuid created_by
+    timestamptz updated_at
+    uuid updated_by
+  }
+
+  CATEGORY {
+    uuid id PK
+    string domain
+    string slug
+    string name
+  }
+
+  TAG {
+    uuid id PK
+    string slug UK
+    string name
+  }
+
+  KNOWLEDGE_ARTICLE {
+    uuid id PK
+    string slug UK
+    string title
+    string status
+    uuid category_id FK
+    int current_revision_no
+    timestamptz last_reviewed_at
+  }
+
+  KNOWLEDGE_REVISION {
+    uuid id PK
+    uuid article_id FK
+    int revision_no
+    text body
+    uuid author_id
+    timestamptz created_at
+  }
+
+  MEDIA_ASSET {
+    uuid id PK
+    string object_key UK
+    string mime_type
+    bigint size_bytes
+    string visibility
+  }
+
+  GALLERY {
+    uuid id PK
+    string slug UK
+    string title
+    string status
+  }
+
+  GALLERY_ITEM {
+    uuid gallery_id FK
+    uuid asset_id FK
+    int sort_order
+  }
+
+  BOOKMARK {
+    uuid id PK
+    uuid user_id FK
+    string entity_type
+    uuid entity_id
+    timestamptz created_at
+  }
+
+  RATING {
+    uuid id PK
+    uuid user_id FK
+    string entity_type
+    uuid entity_id
+    int score
+  }
+
+  MOODLE_USER_MAPPING {
+    uuid id PK
+    uuid user_id FK
+    string identity_subject UK
+    bigint moodle_user_id UK
+    timestamptz synced_at
+  }
+
+  MOODLE_COURSE_SNAPSHOT {
+    uuid id PK
+    bigint moodle_course_id UK
+    string title
+    string status
+    timestamptz synced_at
+  }
+
+  EVENT_INBOX {
+    uuid event_id PK
+    string event_type
+    string source
+    string state
+    timestamptz occurred_at
+    timestamptz processed_at
+  }
+
+  EVENT_OUTBOX {
+    uuid event_id PK
+    string event_type
+    string state
+    timestamptz occurred_at
+    timestamptz published_at
+  }
+
+  AUDIT_EVENT {
+    uuid id PK
+    uuid actor_user_id
+    string action
+    string target_type
+    string target_id
+    string result
+    string trace_id
+    timestamptz occurred_at
+  }
+
+  CATEGORY ||--o{ NEWS : categorizes
+  CATEGORY ||--o{ KNOWLEDGE_ARTICLE : categorizes
+  KNOWLEDGE_ARTICLE ||--o{ KNOWLEDGE_REVISION : has
+  GALLERY ||--o{ GALLERY_ITEM : contains
+  MEDIA_ASSET ||--o{ GALLERY_ITEM : used_by
+  USER_PROFILE ||--o{ BOOKMARK : creates
+  USER_PROFILE ||--o{ RATING : creates
+  USER_PROFILE ||--o| MOODLE_USER_MAPPING : maps_to
+  USER_PROFILE ||--o{ AUDIT_EVENT : acts

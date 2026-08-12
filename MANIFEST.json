@@ -1,0 +1,436 @@
+{
+  "product": "Teman Belajar",
+  "repository": "teman-belajar",
+  "package_version": "3.0",
+  "ui_foundations": {
+    "public_learner": "Techwind Tailwind",
+    "admin": "Cuba Tailwind"
+  },
+  "files": [
+    {
+      "path": ".editorconfig",
+      "bytes": 205,
+      "sha256": "dd225de205e8a6441639d37b24c9ac2bba8ab4b8e41c78f15413d77040bf6e96"
+    },
+    {
+      "path": ".env.example",
+      "bytes": 758,
+      "sha256": "6673c1652ef17a89138e141561242256a4583f93e7eda927b3ee05045ad4537e"
+    },
+    {
+      "path": ".github/PULL_REQUEST_TEMPLATE.md",
+      "bytes": 1000,
+      "sha256": "024440d0b4edaaa768f672c7bd40215befdb969a34ac1f186d39d8f9973a87ac"
+    },
+    {
+      "path": ".github/workflows/README.md",
+      "bytes": 85,
+      "sha256": "6ea0c74b4e222f4e959f463250c3f810b3b6c077e31688bc25becbcf27154be6"
+    },
+    {
+      "path": ".gitignore",
+      "bytes": 529,
+      "sha256": "fe1c5a59d256f1763f60a6b956511e6a2cb73e0b345bb08776b3f408a619b9da"
+    },
+    {
+      "path": "00-INDEX.md",
+      "bytes": 3673,
+      "sha256": "c5d31c8bf46d784ee8c24951bce235ad5729651ff25820f9a5520de55e50e8da"
+    },
+    {
+      "path": "AGENTS.md",
+      "bytes": 6217,
+      "sha256": "d6a978f979d799ab93ea4735543e4d09023746bdeaa7ca4f84c7e53c67f39e88"
+    },
+    {
+      "path": "README.md",
+      "bytes": 2747,
+      "sha256": "e29425b6ec429940c6f7384b48081b0fadb24ac3d54e41ee85f1cff7843990e1"
+    },
+    {
+      "path": "REPOSITORY-STRUCTURE.md",
+      "bytes": 2779,
+      "sha256": "3ecef7e59f9d1e1ff7e21aa536812e51e1bcfe4c022031059a77a060c996c3c6"
+    },
+    {
+      "path": "apps/admin-web/README.md",
+      "bytes": 374,
+      "sha256": "a6524300891e94241b7111bdcf13bd597a391466ed261fd63e705fa726f5e53b"
+    },
+    {
+      "path": "apps/portal-web/README.md",
+      "bytes": 381,
+      "sha256": "59351e3b653571d01f4bf1240e4f58ec56666ccf4fc19e21945410a50cc5999b"
+    },
+    {
+      "path": "docs/adr/ADR-001-composable-lxp-moodle.md",
+      "bytes": 387,
+      "sha256": "8f6179e3b0d8d3381246cae9a5f4e46035ea678c93203aaaed32d6c8e884b7cf"
+    },
+    {
+      "path": "docs/adr/ADR-002-nextjs-experience-layer.md",
+      "bytes": 255,
+      "sha256": "a7e60796c87c1654ab8f094142b059348136745d23b555fd1f3e7ff4b241b89f"
+    },
+    {
+      "path": "docs/adr/ADR-003-go-modular-monolith-first.md",
+      "bytes": 268,
+      "sha256": "a277cce3e5a69304148edb2d090293b7bb26ab3a98933f197b0eed2097ae40c8"
+    },
+    {
+      "path": "docs/adr/ADR-004-data-ownership.md",
+      "bytes": 262,
+      "sha256": "5d550df6c1cbb5804e59bb678fcd86b077a5590f68689e3073473615a79fa3c3"
+    },
+    {
+      "path": "docs/adr/ADR-005-keycloak-oidc.md",
+      "bytes": 231,
+      "sha256": "8cf4eee6308351c64b482cf79c718745cd2327dd36fa8afa3fba55aea501ddb0"
+    },
+    {
+      "path": "docs/adr/ADR-006-rest-openapi.md",
+      "bytes": 214,
+      "sha256": "eb3a6b64556a7cf4b33e2b682af78f8a1b9d031035fc4fe912732d2d0b91d7f0"
+    },
+    {
+      "path": "docs/adr/ADR-007-object-storage.md",
+      "bytes": 241,
+      "sha256": "f32af2342a75cc7c303e06435303347087b8fef76e3698f66e6ef74cdceaba91"
+    },
+    {
+      "path": "docs/adr/ADR-008-search-engine.md",
+      "bytes": 271,
+      "sha256": "cf6db99d3d197d7ef535e97f59f6a9abafbf86628801206ecc2fa29274590631"
+    },
+    {
+      "path": "docs/adr/ADR-009-monorepo.md",
+      "bytes": 254,
+      "sha256": "c8981f2c2da6553e8b2dec70ce9e67802f0d902ef84d4b419eb57c85e737f36c"
+    },
+    {
+      "path": "docs/adr/ADR-010-no-moodle-core-patch.md",
+      "bytes": 220,
+      "sha256": "516914c5bc2342c45514a31e64089252ba2a13f9b786ab836bf6fc3be9c30142"
+    },
+    {
+      "path": "docs/adr/ADR-011-outbox-inbox-events.md",
+      "bytes": 291,
+      "sha256": "07e8241a180c9125aaa9cdbedb3810a3fd86664da190bb7601bd9430a06e03a0"
+    },
+    {
+      "path": "docs/adr/ADR-012-agentic-governance.md",
+      "bytes": 307,
+      "sha256": "dac53beb3a6b950dc29f67ea53a4ae74547695b230aaea14eec1ec41a21e570e"
+    },
+    {
+      "path": "docs/adr/ADR-013-ui-vendor-foundations.md",
+      "bytes": 1225,
+      "sha256": "a288d54ecf1f53c50b8171f97d6692ad8e90fe077dd5ce4ff7082639edae4168"
+    },
+    {
+      "path": "docs/api/README.md",
+      "bytes": 102,
+      "sha256": "f65237c1721dddfd50f6789129fd0a05740c8e529502bfc2de6aebce3c2ffe05"
+    },
+    {
+      "path": "docs/canonical/01-master-blueprint.md",
+      "bytes": 4875,
+      "sha256": "21143fb355a6040a4bef86e5fcdd44cbf124ca024bd6af5fbc1dcab4dd49df30"
+    },
+    {
+      "path": "docs/canonical/02-brd-prd.md",
+      "bytes": 4641,
+      "sha256": "6c35aab008c0e238b7032243fcfc411dee0793f868d7ea771732521ecc15ad9b"
+    },
+    {
+      "path": "docs/canonical/03-srs.md",
+      "bytes": 5244,
+      "sha256": "6d78e425cf082d3bcdb81ccfddbe1a86d605aec5b1f183b50839e84a5cbddbf8"
+    },
+    {
+      "path": "docs/canonical/04-system-design-document.md",
+      "bytes": 3824,
+      "sha256": "31c38230cd0b3d3202bb23b3748d8bd592f9159f105f7440c8dc595ebf36a0b3"
+    },
+    {
+      "path": "docs/canonical/05-feature-catalogue.md",
+      "bytes": 3487,
+      "sha256": "d0087af169953fdf0aba90c85a0f5cafc9870b5cadd9a5420fb129ed7db14f00"
+    },
+    {
+      "path": "docs/canonical/06-ui-ux-blueprint.md",
+      "bytes": 3602,
+      "sha256": "76ca28ba5659de4f5806878b369d7708b5090f710dafc7bbf1fed03ffe9dc03d"
+    },
+    {
+      "path": "docs/canonical/07-database-design.md",
+      "bytes": 2989,
+      "sha256": "84a8020f12446836b1f712cca42572b6dcdbc9a0fdf8838eec047b39a17fbac2"
+    },
+    {
+      "path": "docs/canonical/08-api-specification.md",
+      "bytes": 2235,
+      "sha256": "4d86f4fe4220820b3a6ee3c002812540e43f07a6bc725a68f1de2aa0c4d0514a"
+    },
+    {
+      "path": "docs/canonical/09-moodle-integration-specification.md",
+      "bytes": 3435,
+      "sha256": "840a337d3e8675f8487288678997bbcd454ca94f8e1faa774598046e955f238b"
+    },
+    {
+      "path": "docs/canonical/10-security-architecture.md",
+      "bytes": 2956,
+      "sha256": "f5e8754c1070534b71f9dc52fd12155f6a169a5470c76cce521344c9acf9a908"
+    },
+    {
+      "path": "docs/canonical/11-devsecops-infrastructure.md",
+      "bytes": 3071,
+      "sha256": "2410d42069ab2ffe1f8172309d40db59f799748df0672f9c2817f85977842ed1"
+    },
+    {
+      "path": "docs/canonical/12-agentic-development-playbook.md",
+      "bytes": 4280,
+      "sha256": "962d05c4cd8ccbd76fae02643d318ae13c7ceb1532acd4439e88d5fd01bc264e"
+    },
+    {
+      "path": "docs/design-system/COMPONENT-INVENTORY.md",
+      "bytes": 1122,
+      "sha256": "66d2029f4c8aa68a007c1567acbc9912ba3c78103722a1fbaa568735f8b5c7e9"
+    },
+    {
+      "path": "docs/design-system/DESIGN-TOKENS.md",
+      "bytes": 902,
+      "sha256": "0734d2ac0e7b43d020d7ece1e4c960c6afb4e84e7aa15598927f0acc008296d9"
+    },
+    {
+      "path": "docs/design-system/README.md",
+      "bytes": 781,
+      "sha256": "3cc14b6adca9f9f3b8f9eab0e028e59604bbd09eada6120a99f260656025df11"
+    },
+    {
+      "path": "docs/design-system/THEME-INTEGRATION-RULES.md",
+      "bytes": 1992,
+      "sha256": "ad324fc72c43d6c9a7970f690f06c75fac325508516b8d954501fa0f7ca5cd37"
+    },
+    {
+      "path": "docs/design-system/UI-SOURCE-MAPPING.md",
+      "bytes": 1034,
+      "sha256": "8f133c721d5d57b17241ceb26ae13d5b09ddaaf20194b6dd2a9ff7fef733c2aa"
+    },
+    {
+      "path": "docs/diagrams/erd.mmd",
+      "bytes": 2728,
+      "sha256": "3109a12cc7f46f1dd134d53e2503f82f76bf984e81e930b6d8bb8fd78a605cc8"
+    },
+    {
+      "path": "docs/governance/PACKAGE-VERSION.md",
+      "bytes": 569,
+      "sha256": "d5d219eb074f2c2c86ad0c62ca50245e6c78792289444b6cb3b3b0e303d1dc72"
+    },
+    {
+      "path": "docs/governance/PRODUCT-IDENTITY-NAMING.md",
+      "bytes": 2261,
+      "sha256": "e3e4344fd22786067c1b9d39cd1ba7afa7478937c5e7df8cc58e9918262ea1fd"
+    },
+    {
+      "path": "docs/governance/SOURCE-OF-TRUTH.md",
+      "bytes": 846,
+      "sha256": "39a30658056ddcf4c7428202b918852503710b86efb2fca9ab4ead9999e1296d"
+    },
+    {
+      "path": "docs/governance/THIRD-PARTY-ASSET-REGISTER.md",
+      "bytes": 719,
+      "sha256": "994547d73a4b7551038ed624a2687af61dd3a055e08012f22ddea2be842e4422"
+    },
+    {
+      "path": "docs/runbooks/README.md",
+      "bytes": 46,
+      "sha256": "e4781d9a492668f9cdc161fcbbdef8f38f186bb2b9a8ef5cdb19be5a93b199be"
+    },
+    {
+      "path": "docs/threat-models/README.md",
+      "bytes": 57,
+      "sha256": "7c3d5df079345327a520fb44eb25c77b73badd4b1ecae398dd5fb57ff9489c93"
+    },
+    {
+      "path": "infrastructure/deployment/README.md",
+      "bytes": 85,
+      "sha256": "ee33611f2ca445c8a21b5ce2d656147e8956944e5b0458269935612a9e1342b0"
+    },
+    {
+      "path": "infrastructure/docker/README.md",
+      "bytes": 67,
+      "sha256": "c2ac19303412cba6bade0f924ac60a9014dff171596d862b6ee8919bb77da46d"
+    },
+    {
+      "path": "infrastructure/keycloak/README.md",
+      "bytes": 60,
+      "sha256": "6586d29efa2d2fdece9edccc6238e66693ec5e1cffffb8f36cdaaeb3d9e90b1a"
+    },
+    {
+      "path": "infrastructure/observability/README.md",
+      "bytes": 62,
+      "sha256": "081e149653dda24dcab8195add3119f7c8fc1f80fd40c8727e3669fcdb373737"
+    },
+    {
+      "path": "infrastructure/proxy/README.md",
+      "bytes": 56,
+      "sha256": "fd9bc183d3008ef438e9ceef46734f82c9c5e46176d6be09b46bf203dc8db223"
+    },
+    {
+      "path": "integrations/moodle-plugin/README.md",
+      "bytes": 84,
+      "sha256": "347f32221ba5195f8ad99e248a3f206816463225748c67df13c52edbb92b4c28"
+    },
+    {
+      "path": "openapi/openapi.yaml",
+      "bytes": 13526,
+      "sha256": "b604d89f026a319b76971823244a9ad9f84444a3e0ded0da04991a2c2ecc6a57"
+    },
+    {
+      "path": "packages/config/README.md",
+      "bytes": 63,
+      "sha256": "6f9ff1b4e42fc700f5c1ac083c830f10a1ca9d9babd83f9832013773a8db2b77"
+    },
+    {
+      "path": "packages/contracts/README.md",
+      "bytes": 102,
+      "sha256": "35fb659351b7ede45bfbe2b9ba5145acb51694f233850b2ca952f77fce198678"
+    },
+    {
+      "path": "packages/ui/README.md",
+      "bytes": 61,
+      "sha256": "6e20dc9eb35873b8f19b91e23bda950f3e5a7d7be1f3300b28dd2daf9b244704"
+    },
+    {
+      "path": "scripts/README.md",
+      "bytes": 81,
+      "sha256": "13a78c8c17b1e3a32d54e025e6edda447b0e3a35567716131998dbbca0ed8c1e"
+    },
+    {
+      "path": "services/portal-api/README.md",
+      "bytes": 95,
+      "sha256": "cfd3438ad47e44c1cdce070bff7ca52dfac46b35f9f3f906b8fac97c2e278af3"
+    },
+    {
+      "path": "tasks/README.md",
+      "bytes": 646,
+      "sha256": "d4461e7cd93d6f0226bb9f28a8f1594d6e9a68b2c49322efd3cd687e1d1c12a7"
+    },
+    {
+      "path": "tasks/TASK-000-repository-bootstrap.md",
+      "bytes": 1426,
+      "sha256": "ff39c15f3bb5e74111c2aa9e15f79a4923e444040caff2bb181f6114eb0f9b56"
+    },
+    {
+      "path": "tasks/TASK-000A-ui-vendor-intake.md",
+      "bytes": 1766,
+      "sha256": "7c9f15883e5ce00399dcfe64761c73a23c1dcc0beafa09795cd85d632fde6673"
+    },
+    {
+      "path": "tasks/TASK-001-keycloak-sso.md",
+      "bytes": 1033,
+      "sha256": "699863d2da2163656730cc39b6466ffc829641ed53e81a145495405ffc3ad62d"
+    },
+    {
+      "path": "tasks/TASK-002-cms-news-announcement.md",
+      "bytes": 877,
+      "sha256": "c087465d1beee24cd53c79e82946e17913ca4c0d89ca04e0087ab9fc6a8c6050"
+    },
+    {
+      "path": "tasks/TASK-003-knowledge-hub.md",
+      "bytes": 860,
+      "sha256": "820a5f400b73c5fa52262430225d0185b84e61d3c3ce97fe9eef16dbda59d228"
+    },
+    {
+      "path": "tasks/TASK-004-media-object-storage.md",
+      "bytes": 790,
+      "sha256": "f465963204c0af8889e131eff39d83a5b477eef3a0e361b92094e5603160ec9f"
+    },
+    {
+      "path": "tasks/TASK-005-moodle-adapter.md",
+      "bytes": 1014,
+      "sha256": "8928051e9cb5afeb81ad7ebdfe1c2f796ab142b40f7cbefca18662fc48ca2ad1"
+    },
+    {
+      "path": "tasks/TASK-006-learning-dashboard.md",
+      "bytes": 786,
+      "sha256": "fbd28eed2fbdcd26158264ec46d592a268c473b65aec77602c94189f3a1f64b2"
+    },
+    {
+      "path": "tasks/TASK-007-unified-search.md",
+      "bytes": 676,
+      "sha256": "96a3f3d66d93c952aa99ec0fd4c32f4310808d5c2aa521add0a2443ff36d2bf0"
+    },
+    {
+      "path": "tasks/TASK-008-engagement-bookmark.md",
+      "bytes": 646,
+      "sha256": "5a3100de02200ee2f894bea0d1a76252ca632b92b5d3d6e23c167d13a4397dc3"
+    },
+    {
+      "path": "tasks/TASK-009-observability.md",
+      "bytes": 703,
+      "sha256": "914aa7fa819aaab0481684647dec232e9d09cddce7cf3a4939ac31fa4347fe96"
+    },
+    {
+      "path": "tasks/TASK-010-devsecops-security-gates.md",
+      "bytes": 581,
+      "sha256": "f36d92987615e25fcbd6c9ce4b20a31364cbc4640eeffd4a86056ae37beaa0fa"
+    },
+    {
+      "path": "tasks/TASK-011-moodle-event-inbox.md",
+      "bytes": 770,
+      "sha256": "78205467b07328c3c049cfdf918fd839a65214928c577c69a7a6a06b00eb5743"
+    },
+    {
+      "path": "tasks/TASK-012-production-readiness.md",
+      "bytes": 826,
+      "sha256": "706268c14bc103c1b1745fbe12410e249bcff96c884c119eb7b227f46561fa9c"
+    },
+    {
+      "path": "templates/FEATURE.md",
+      "bytes": 828,
+      "sha256": "bd2cb90471f7ad9e8a1d38bd953be54bc9214234285d6dfda926cecbfbf37f24"
+    },
+    {
+      "path": "templates/TASK.md",
+      "bytes": 1136,
+      "sha256": "e3fc64ab54a956cbb986a5b5115d37b26be94f1f66bd791d15c39d1f23496b17"
+    },
+    {
+      "path": "vendor/README.md",
+      "bytes": 1185,
+      "sha256": "ef0a4aad9db026a401355dfaeb7f4b6e461eb8cf27485322262f9a6746d3fbe1"
+    },
+    {
+      "path": "vendor/ui-templates/cuba/LICENSE-NOTES.md",
+      "bytes": 299,
+      "sha256": "3fb349a62c1410cf990689ca8fb4202c4e12157b1fc5702c22603af6c2122967"
+    },
+    {
+      "path": "vendor/ui-templates/cuba/ORIGINAL/README_DROP_CUBA_HERE.md",
+      "bytes": 394,
+      "sha256": "f8b512a3552348ef15bc79fe389a359c9d486a5b3cff45c54f5e12b47868c1e0"
+    },
+    {
+      "path": "vendor/ui-templates/cuba/README.md",
+      "bytes": 323,
+      "sha256": "74f6c299f2407d3bb6c37fc302e41c21aba7c89798bd86aa7b35a71426825952"
+    },
+    {
+      "path": "vendor/ui-templates/techwind/LICENSE-NOTES.md",
+      "bytes": 303,
+      "sha256": "6162c87b229c6695f6d463f41d7ad64666a192116fb84c9f6931b81052158330"
+    },
+    {
+      "path": "vendor/ui-templates/techwind/ORIGINAL/README_DROP_TECHWIND_HERE.md",
+      "bytes": 403,
+      "sha256": "cf35fd07873e8a1183e2d9adc3d9793a2ddf3c2cb69cd6077fd0ebf2a60b1ff0"
+    },
+    {
+      "path": "vendor/ui-templates/techwind/README.md",
+      "bytes": 413,
+      "sha256": "6f7f3e4496098ec0e00acb1e53005bef5a1bf9f3296098d1a6b4bb3ce47ff72f"
+    }
+  ]
+}

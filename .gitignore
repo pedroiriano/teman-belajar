@@ -1,0 +1,39 @@
+# Environment / secrets
+.env
+.env.*
+!.env.example
+
+*.pem
+*.key
+*.p12
+*.pfx
+# Node / Next.js
+node_modules/
+.next/
+out/
+coverage/
+
+# Go
+bin/
+dist/
+*.exe
+*.test
+*.prof
+
+# IDE / OS
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+
+# Local runtime data
+tmp/
+.local/
+data/
+
+# Commercial vendor source: keep local unless license/repo policy explicitly allows otherwise
+vendor/ui-templates/techwind/ORIGINAL/*
+!vendor/ui-templates/techwind/ORIGINAL/README_DROP_TECHWIND_HERE.md
+vendor/ui-templates/cuba/ORIGINAL/*
+!vendor/ui-templates/cuba/ORIGINAL/README_DROP_CUBA_HERE.md

@@ -1,0 +1,12 @@
+Dockerfile
+.dockerignore
+node_modules
+npm-debug.log
+README.md
+.next
+.git
+.env*
+!.env.example
+coverage
+vendor/ui-templates/techwind/ORIGINAL/**
+vendor/ui-templates/cuba/ORIGINAL/**

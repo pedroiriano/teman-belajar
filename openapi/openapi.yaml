@@ -1,0 +1,761 @@
+openapi: 3.1.0
+info:
+  title: Teman Belajar API
+  version: 1.0.0
+  description: Canonical API contract for Teman Belajar, an Enterprise Digital Learning Experience Platform (LXP + LMS).
+servers:
+  - url: /api/v1
+tags:
+  - name: System
+  - name: News
+  - name: Announcements
+  - name: Knowledge
+  - name: FAQ
+  - name: Learning
+  - name: Me
+  - name: Admin
+paths:
+  /health:
+    get:
+      tags: [System]
+      operationId: getHealth
+      responses:
+        "200":
+          description: Process is alive
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Health"
+  /news:
+    get:
+      tags: [News]
+      operationId: listNews
+      parameters:
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/PageSize"
+      responses:
+        "200":
+          description: Published news
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NewsList"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+  /news/{slug}:
+    get:
+      tags: [News]
+      operationId: getNews
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema: {type: string}
+      responses:
+        "200":
+          description: Published news detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/News"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /announcements:
+    get:
+      tags: [Announcements]
+      operationId: listAnnouncements
+      responses:
+        "200":
+          description: Active published announcements
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Announcement"
+  /knowledge:
+    get:
+      tags: [Knowledge]
+      operationId: listKnowledge
+      parameters:
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/PageSize"
+        - name: category
+          in: query
+          schema: {type: string}
+      responses:
+        "200":
+          description: Published knowledge articles
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/KnowledgeList"
+  /knowledge/{slug}:
+    get:
+      tags: [Knowledge]
+      operationId: getKnowledge
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema: {type: string}
+      responses:
+        "200":
+          description: Knowledge article
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/KnowledgeArticle"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /faqs:
+    get:
+      tags: [FAQ]
+      operationId: listFaqs
+      parameters:
+        - name: category
+          in: query
+          schema: {type: string}
+      responses:
+        "200":
+          description: FAQ list
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Faq"
+  /courses:
+    get:
+      tags: [Learning]
+      operationId: listCourses
+      parameters:
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/PageSize"
+      responses:
+        "200":
+          description: Canonical course catalogue
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CourseList"
+        "503":
+          $ref: "#/components/responses/DependencyUnavailable"
+  /courses/{id}:
+    get:
+      tags: [Learning]
+      operationId: getCourse
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: {type: string}
+      responses:
+        "200":
+          description: Course detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Course"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "503":
+          $ref: "#/components/responses/DependencyUnavailable"
+  /me:
+    get:
+      tags: [Me]
+      security:
+        - oidc: [profile]
+      operationId: getMe
+      responses:
+        "200":
+          description: Current profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserProfile"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /me/dashboard:
+    get:
+      tags: [Me]
+      security:
+        - oidc: [profile]
+      operationId: getMyDashboard
+      responses:
+        "200":
+          description: Aggregated learner dashboard
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Dashboard"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /me/bookmarks:
+    get:
+      tags: [Me]
+      security:
+        - oidc: [profile]
+      operationId: listMyBookmarks
+      responses:
+        "200":
+          description: User bookmarks
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Bookmark"
+    post:
+      tags: [Me]
+      security:
+        - oidc: [profile]
+      operationId: createBookmark
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BookmarkCreate"
+      responses:
+        "201":
+          description: Bookmark created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Bookmark"
+        "409":
+          description: Bookmark already exists
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+  /admin/news:
+    get:
+      tags: [Admin]
+      security:
+        - oidc: [content:read]
+      operationId: listAdminNews
+      parameters:
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/PageSize"
+      responses:
+        "200":
+          description: All news (admin view)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NewsList"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+    post:
+      tags: [Admin]
+      security:
+        - oidc: [content:write]
+      operationId: createNews
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NewsCreate"
+      responses:
+        "201":
+          description: Draft news created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/News"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+  /admin/news/{id}:
+    put:
+      tags: [Admin]
+      security:
+        - oidc: [content:write]
+      operationId: updateNewsStatus
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: {type: string}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status]
+              properties:
+                status:
+                  type: string
+                  enum: [draft, in_review, approved, published, archived]
+      responses:
+        "200":
+          description: Status updated
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+  /admin/announcements:
+    get:
+      tags: [Admin]
+      security:
+        - oidc: [content:read]
+      operationId: listAdminAnnouncements
+      parameters:
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/PageSize"
+      responses:
+        "200":
+          description: All announcements (admin view)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Announcement"
+                  pagination:
+                    $ref: "#/components/schemas/Pagination"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+    post:
+      tags: [Admin]
+      security:
+        - oidc: [content:write]
+      operationId: createAnnouncement
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AnnouncementCreate"
+      responses:
+        "201":
+          description: Announcement created
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+  /admin/announcements/{id}:
+    put:
+      tags: [Admin]
+      security:
+        - oidc: [content:write]
+      operationId: updateAnnouncementStatus
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: {type: string}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status]
+              properties:
+                status:
+                  type: string
+                  enum: [draft, in_review, approved, published, archived]
+      responses:
+        "200":
+          description: Status updated
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+  /admin/knowledge:
+    post:
+      tags: [Admin, Knowledge]
+      security:
+        - oidc: [content:write]
+      operationId: createKnowledgeArticle
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/KnowledgeCreate"
+      responses:
+        "201":
+          description: Article created
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+  /admin/knowledge/{id}/revisions:
+    post:
+      tags: [Admin, Knowledge]
+      security:
+        - oidc: [content:write]
+      operationId: createKnowledgeRevision
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: {type: string}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/KnowledgeRevisionCreate"
+      responses:
+        "201":
+          description: Revision created
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+  /admin/knowledge/{id}/transition:
+    post:
+      tags: [Admin, Knowledge]
+      security:
+        - oidc: [content:write]
+      operationId: transitionKnowledgeStatus
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: {type: string}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status]
+              properties:
+                status:
+                  type: string
+                  enum: [draft, in_review, approved, published, archived]
+      responses:
+        "200":
+          description: Status transitioned
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+components:
+  securitySchemes:
+    oidc:
+      type: openIdConnect
+      openIdConnectUrl: https://id.example.invalid/realms/teman-belajar/.well-known/openid-configuration
+
+  parameters:
+    Page:
+      name: page
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+    PageSize:
+      name: page_size
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+
+  responses:
+    ValidationError:
+      description: Validation failed
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+    NotFound:
+      description: Resource not found
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+    Unauthorized:
+      description: Authentication required
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+    Forbidden:
+      description: Insufficient permission
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+    DependencyUnavailable:
+      description: Required learning dependency is unavailable
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+
+  schemas:
+    Health:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: [ok]
+
+    Pagination:
+      type: object
+      required: [page, page_size, total, total_pages]
+      properties:
+        page: {type: integer}
+        page_size: {type: integer}
+        total: {type: integer}
+        total_pages: {type: integer}
+
+    Problem:
+      type: object
+      required: [type, title, status, trace_id]
+      properties:
+        type: {type: string}
+        title: {type: string}
+        status: {type: integer}
+        detail: {type: string}
+        trace_id: {type: string}
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              field: {type: string}
+              message: {type: string}
+
+    News:
+      type: object
+      required: [id, slug, title, status]
+      properties:
+        id: {type: string, format: uuid}
+        slug: {type: string}
+        title: {type: string}
+        excerpt: {type: string}
+        body: {type: string}
+        status:
+          type: string
+          enum: [draft, in_review, approved, published, archived]
+        published_at: {type: [string, "null"], format: date-time}
+
+    NewsCreate:
+      type: object
+      required: [title, slug]
+      properties:
+        title: {type: string, minLength: 1, maxLength: 200}
+        slug: {type: string, minLength: 1, maxLength: 220}
+        excerpt: {type: string, maxLength: 500}
+        body: {type: string}
+
+    NewsList:
+      type: object
+      required: [data, pagination]
+      properties:
+        data:
+          type: array
+          items: {$ref: "#/components/schemas/News"}
+        pagination:
+          $ref: "#/components/schemas/Pagination"
+
+    AnnouncementCreate:
+      type: object
+      required: [title, slug, body]
+      properties:
+        title: {type: string}
+        slug: {type: string}
+        body: {type: string}
+        start_at: {type: [string, "null"], format: date-time}
+        end_at: {type: [string, "null"], format: date-time}
+
+    Announcement:
+      type: object
+      required: [id, slug, title, status]
+      properties:
+        id: {type: string, format: uuid}
+        slug: {type: string}
+        title: {type: string}
+        body: {type: string}
+        status:
+          type: string
+          enum: [draft, in_review, approved, published, archived]
+        start_at: {type: [string, "null"], format: date-time}
+        end_at: {type: [string, "null"], format: date-time}
+
+    KnowledgeArticle:
+      type: object
+      required: [id, slug, title, status]
+      properties:
+        id: {type: string, format: uuid}
+        slug: {type: string}
+        title: {type: string}
+        summary: {type: string}
+        body: {type: string}
+        status:
+          type: string
+          enum: [draft, in_review, approved, published, archived]
+        last_reviewed_at: {type: [string, "null"], format: date-time}
+        reading_minutes: {type: [integer, "null"], minimum: 1}
+
+    KnowledgeList:
+      type: object
+      required: [data, pagination]
+      properties:
+        data:
+          type: array
+          items: {$ref: "#/components/schemas/KnowledgeArticle"}
+        pagination:
+          $ref: "#/components/schemas/Pagination"
+
+    Faq:
+      type: object
+      required: [id, question, answer]
+      properties:
+        id: {type: string, format: uuid}
+        question: {type: string}
+        answer: {type: string}
+        category: {type: [string, "null"]}
+
+    Course:
+      type: object
+      required: [id, source, title]
+      properties:
+        id: {type: string}
+        source:
+          type: string
+          enum: [moodle]
+        title: {type: string}
+        summary: {type: string}
+        image_url: {type: [string, "null"], format: uri}
+        enrollment_status: {type: [string, "null"]}
+        progress_percent: {type: [number, "null"], minimum: 0, maximum: 100}
+        synced_at: {type: [string, "null"], format: date-time}
+
+    CourseList:
+      type: object
+      required: [data, pagination]
+      properties:
+        data:
+          type: array
+          items: {$ref: "#/components/schemas/Course"}
+        pagination:
+          $ref: "#/components/schemas/Pagination"
+
+    UserProfile:
+      type: object
+      required: [id, subject, display_name]
+      properties:
+        id: {type: string, format: uuid}
+        subject: {type: string}
+        display_name: {type: string}
+        locale: {type: [string, "null"]}
+
+    Dashboard:
+      type: object
+      required: [profile, active_courses, dependency_status]
+      properties:
+        profile:
+          $ref: "#/components/schemas/UserProfile"
+        active_courses:
+          type: array
+          items: {$ref: "#/components/schemas/Course"}
+        dependency_status:
+          type: object
+          required: [moodle]
+          properties:
+            moodle:
+              type: string
+              enum: [available, degraded, unavailable]
+
+    Bookmark:
+      type: object
+      required: [id, entity_type, entity_id, created_at]
+      properties:
+        id: {type: string, format: uuid}
+        entity_type: {type: string, enum: [knowledge, news, course]}
+        entity_id: {type: string}
+        created_at: {type: string, format: date-time}
+
+    BookmarkCreate:
+      type: object
+      required: [entity_type, entity_id]
+      properties:
+        entity_type: {type: string, enum: [knowledge, news, course]}
+        entity_id: {type: string}
+
+    KnowledgeArticle:
+      type: object
+      required: [id, slug, title, body, status, current_revision_no]
+      properties:
+        id: {type: string, format: uuid}
+        slug: {type: string}
+        title: {type: string}
+        summary: {type: [string, "null"]}
+        body: {type: string}
+        status:
+          type: string
+          enum: [draft, in_review, approved, published, archived]
+        current_revision_no: {type: integer}
+        published_revision_no: {type: [integer, "null"]}
+        created_at: {type: string, format: date-time}
+        updated_at: {type: string, format: date-time}
+
+    KnowledgeList:
+      type: object
+      required: [data, pagination]
+      properties:
+        data:
+          type: array
+          items: {$ref: "#/components/schemas/KnowledgeArticle"}
+        pagination:
+          $ref: "#/components/schemas/Pagination"
+
+    KnowledgeCreate:
+      type: object
+      required: [title, slug, body]
+      properties:
+        title: {type: string}
+        slug: {type: string}
+        summary: {type: string}
+        body: {type: string}
+        category_id: {type: string, format: uuid}
+
+    KnowledgeRevisionCreate:
+      type: object
+      required: [body]
+      properties:
+        body: {type: string}
