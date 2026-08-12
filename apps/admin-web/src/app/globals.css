@@ -3,31 +3,123 @@
 @tailwind utilities;
 
 :root {
-  --foreground-rgb: 0, 0, 0;
-  --background-start-rgb: 214, 219, 220;
-  --background-end-rgb: 255, 255, 255;
+  color-scheme: light;
+  --admin-primary: #c2410c;
+  --admin-primary-hover: #9a3412;
+  --admin-accent-text: #c2410c;
+  --admin-ink: #1e293b;
+  --admin-copy: #475569;
+  --admin-muted: #64748b;
+  --admin-surface: #f6f7fb;
+  --admin-panel: #ffffff;
+  --admin-panel-muted: #f8fafc;
+  --admin-panel-strong: #f1f5f9;
+  --admin-border: #e2e8f0;
+  --admin-sidebar: #111827;
+  --admin-topbar: rgba(255, 255, 255, .94);
+  --admin-shadow: 0 8px 25px rgba(30, 41, 59, .06);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --foreground-rgb: 255, 255, 255;
-    --background-start-rgb: 0, 0, 0;
-    --background-end-rgb: 0, 0, 0;
-  }
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --admin-ink: #f1f5f9;
+  --admin-copy: #cbd5e1;
+  --admin-muted: #a8a9ad;
+  --admin-accent-text: #fdba74;
+  --admin-surface: #1d1e26;
+  --admin-panel: #262932;
+  --admin-panel-muted: #323846;
+  --admin-panel-strong: #1f2533;
+  --admin-border: #374558;
+  --admin-sidebar: #171921;
+  --admin-topbar: rgba(38, 41, 50, .94);
+  --admin-shadow: 0 14px 35px rgba(8, 10, 15, .28);
 }
 
-body {
-  color: rgb(var(--foreground-rgb));
-  background: linear-gradient(
-      to bottom,
-      transparent,
-      rgb(var(--background-end-rgb))
-    )
-    rgb(var(--background-start-rgb));
+* { box-sizing: border-box; }
+html { background: var(--admin-surface); }
+body { margin: 0; color: var(--admin-ink); background: var(--admin-surface); transition: color 180ms ease, background-color 180ms ease; }
+a, button, input, textarea, select { outline-offset: 3px; }
+a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible { outline: 3px solid rgba(249, 115, 22, .4); }
+
+@layer components {
+  .admin-card { @apply rounded-2xl border; color: var(--admin-ink); background: var(--admin-panel); border-color: var(--admin-border); box-shadow: var(--admin-shadow); }
+  .admin-button { @apply inline-flex min-h-10 items-center justify-center rounded-xl px-4 py-2 text-sm font-bold text-white shadow-sm transition disabled:cursor-not-allowed disabled:opacity-50; background: var(--admin-primary); }
+  .admin-button:hover { background: var(--admin-primary-hover); }
+  .admin-button-secondary { @apply inline-flex min-h-10 items-center justify-center rounded-xl border px-4 py-2 text-sm font-bold transition; color: var(--admin-copy); background: var(--admin-panel); border-color: var(--admin-border); }
+  .admin-button-secondary:hover { color: var(--admin-accent-text); border-color: #fb923c; }
+  .admin-input { @apply w-full rounded-xl border px-4 py-3 text-sm focus:ring-2; color: var(--admin-ink); background: var(--admin-panel); border-color: var(--admin-border); --tw-ring-color: rgba(249, 115, 22, .18); }
+  .admin-input::placeholder { color: var(--admin-muted); }
+  .admin-input:focus { border-color: #f97316; }
+  .admin-label { @apply mb-2 block text-sm font-bold; color: var(--admin-copy); }
+  .admin-page { @apply mx-auto w-full max-w-7xl; }
+  .admin-sidebar { color: #cbd5e1; background: var(--admin-sidebar); }
+  .admin-topbar { color: var(--admin-ink); background: var(--admin-topbar); border-color: var(--admin-border); }
+  .admin-menu-button { color: var(--admin-copy); background: var(--admin-panel); border-color: var(--admin-border); }
+  .admin-theme-toggle { @apply inline-flex h-10 items-center gap-2 rounded-xl border px-2 text-xs font-extrabold transition; color: var(--admin-copy); background: var(--admin-panel); border-color: var(--admin-border); }
+  .admin-theme-toggle:hover { color: var(--admin-accent-text); border-color: #fb923c; transform: translateY(-1px); }
+  .admin-theme-toggle__icon { @apply grid h-7 w-7 place-items-center rounded-lg; color: var(--admin-accent-text); background: rgba(249, 115, 22, .13); }
+  .admin-theme-toggle__icon svg { @apply h-4 w-4; }
+  .admin-theme-toggle__label { @apply hidden sm:inline; }
 }
 
-@layer utilities {
-  .text-balance {
-    text-wrap: balance;
-  }
+/* Legacy actions are mapped to the Admin semantic orange instead of Cuba demo colors. */
+.admin-root .bg-indigo-600 { background-color: var(--admin-primary) !important; }
+.admin-root .hover\:bg-indigo-700:hover { background-color: var(--admin-primary-hover) !important; }
+.admin-root .text-indigo-600,
+.admin-root .hover\:text-indigo-800:hover,
+.admin-root .hover\:text-indigo-900:hover { color: var(--admin-accent-text) !important; }
+.admin-root .bg-orange-600 { background-color: var(--admin-primary) !important; }
+.admin-root .hover\:bg-orange-700:hover { background-color: var(--admin-primary-hover) !important; }
+.admin-root .text-orange-600,
+.admin-root .text-orange-700,
+.admin-root .hover\:text-orange-600:hover,
+.admin-root .hover\:text-orange-700:hover { color: var(--admin-accent-text) !important; }
+.admin-root .focus\:border-indigo-500:focus { border-color: #f97316 !important; }
+.admin-root .focus\:ring-indigo-500:focus { --tw-ring-color: rgba(249, 115, 22, .25) !important; }
+
+:root[data-theme="dark"] .bg-white { background-color: var(--admin-panel) !important; }
+:root[data-theme="dark"] .bg-white\/95 { background-color: var(--admin-topbar) !important; }
+:root[data-theme="dark"] .bg-slate-50 { background-color: var(--admin-panel-muted) !important; }
+:root[data-theme="dark"] .bg-slate-100,
+:root[data-theme="dark"] .bg-gray-100 { background-color: var(--admin-surface) !important; }
+:root[data-theme="dark"] .bg-slate-200 { background-color: var(--admin-panel-muted) !important; }
+:root[data-theme="dark"] .bg-slate-900,
+:root[data-theme="dark"] .bg-slate-950 { background-color: #15171d !important; }
+:root[data-theme="dark"] .text-black,
+:root[data-theme="dark"] .text-gray-800,
+:root[data-theme="dark"] .text-slate-900,
+:root[data-theme="dark"] .text-slate-800,
+:root[data-theme="dark"] .text-slate-700 { color: var(--admin-ink) !important; }
+:root[data-theme="dark"] .text-slate-600 { color: var(--admin-copy) !important; }
+:root[data-theme="dark"] .text-slate-500,
+:root[data-theme="dark"] .text-slate-400 { color: var(--admin-muted) !important; }
+:root[data-theme="dark"] .border-slate-100,
+:root[data-theme="dark"] .border-slate-200,
+:root[data-theme="dark"] .border-slate-300 { border-color: var(--admin-border) !important; }
+:root[data-theme="dark"] .hover\:bg-slate-50:hover { background-color: var(--admin-panel-muted) !important; }
+:root[data-theme="dark"] .bg-orange-100 { background-color: rgba(249, 115, 22, .15) !important; }
+:root[data-theme="dark"] .text-orange-700 { color: #fdba74 !important; }
+:root[data-theme="dark"] .bg-emerald-50,
+:root[data-theme="dark"] .bg-green-100 { background-color: rgba(16, 185, 129, .14) !important; }
+:root[data-theme="dark"] .text-emerald-800,
+:root[data-theme="dark"] .text-green-800 { color: #6ee7b7 !important; }
+:root[data-theme="dark"] .bg-yellow-100,
+:root[data-theme="dark"] .bg-orange-100 { background-color: rgba(245, 158, 11, .15) !important; }
+:root[data-theme="dark"] .text-yellow-800 { color: #fcd34d !important; }
+:root[data-theme="dark"] .bg-blue-100 { background-color: rgba(59, 130, 246, .15) !important; }
+:root[data-theme="dark"] .text-blue-800 { color: #93c5fd !important; }
+:root[data-theme="dark"] .bg-rose-100,
+:root[data-theme="dark"] .bg-red-50 { background-color: rgba(244, 63, 94, .14) !important; }
+:root[data-theme="dark"] .text-rose-600,
+:root[data-theme="dark"] .text-rose-700,
+:root[data-theme="dark"] .text-red-700 { color: #fda4af !important; }
+:root[data-theme="dark"] .border-emerald-200 { border-color: rgba(52, 211, 153, .38) !important; }
+:root[data-theme="dark"] .border-rose-200 { border-color: rgba(251, 113, 133, .4) !important; }
+:root[data-theme="dark"] input,
+:root[data-theme="dark"] textarea,
+:root[data-theme="dark"] select { color: var(--admin-ink) !important; background: var(--admin-panel-muted); border-color: var(--admin-border); }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition-duration: .01ms !important; animation-duration: .01ms !important; }
 }

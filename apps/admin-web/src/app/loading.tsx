@@ -1,0 +1,1 @@
+export default function Loading() { return <div className="admin-page" role="status"><span className="sr-only">Memuat halaman admin</span><div className="h-9 w-72 animate-pulse rounded-xl bg-slate-200"/><div className="mt-7 grid gap-5 md:grid-cols-3">{[1,2,3].map(item => <div key={item} className="h-44 animate-pulse rounded-2xl bg-slate-200"/>)}</div></div>; }

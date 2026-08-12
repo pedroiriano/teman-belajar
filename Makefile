@@ -1,4 +1,4 @@
-.PHONY: all bootstrap build test lint up down
+.PHONY: all bootstrap build test lint docker-config up down status logs verify
 
 all: bootstrap build test
 
@@ -20,9 +20,19 @@ lint:
 	@echo "Lint skipped for now (need golangci-lint)"
 
 up:
-	@echo "Starting local infrastructure..."
-	cd infrastructure/docker && docker-compose up -d
+	powershell -NoProfile -ExecutionPolicy Bypass -File infrastructure/docker/teman-belajar-docker.ps1 up
 
 down:
-	@echo "Stopping local infrastructure..."
-	cd infrastructure/docker && docker-compose down
+	powershell -NoProfile -ExecutionPolicy Bypass -File infrastructure/docker/teman-belajar-docker.ps1 down
+
+docker-config:
+	powershell -NoProfile -ExecutionPolicy Bypass -File infrastructure/docker/teman-belajar-docker.ps1 config
+
+status:
+	powershell -NoProfile -ExecutionPolicy Bypass -File infrastructure/docker/teman-belajar-docker.ps1 status
+
+logs:
+	powershell -NoProfile -ExecutionPolicy Bypass -File infrastructure/docker/teman-belajar-docker.ps1 logs
+
+verify:
+	powershell -NoProfile -ExecutionPolicy Bypass -File infrastructure/docker/teman-belajar-docker.ps1 verify

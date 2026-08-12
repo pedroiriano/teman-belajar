@@ -5,8 +5,8 @@ export const authOptions: NextAuthOptions = {
   providers: [
     KeycloakProvider({
       clientId: process.env.KEYCLOAK_ID || "teman-belajar-web",
-      clientSecret: process.env.KEYCLOAK_SECRET || "change_me_web_secret",
-      issuer: process.env.KEYCLOAK_ISSUER || "http://localhost:8081/realms/teman-belajar",
+      clientSecret: process.env.KEYCLOAK_SECRET || "",
+      issuer: process.env.KEYCLOAK_ISSUER || "http://keycloak.teman-belajar.localhost:8081/realms/teman-belajar",
       authorization: {
         params: {
           scope: "openid profile email",
@@ -27,12 +27,11 @@ export const authOptions: NextAuthOptions = {
       }
       return token;
     },
-    async session({ session, token }: any) {
-      session.accessToken = token.accessToken;
+    async session({ session }: any) {
       return session;
     },
   },
   pages: {
-    signIn: "/auth/signin", // We will let it redirect to Keycloak directly or build a simple page
+    signIn: "/api/auth/signin",
   },
 };

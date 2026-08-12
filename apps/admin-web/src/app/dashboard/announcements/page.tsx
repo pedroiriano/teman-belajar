@@ -2,6 +2,7 @@ import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import Link from "next/link";
+import { getServerAccessToken } from "@/lib/server-auth";
 
 async function getAdminAnnouncements(token: string) {
   try {
@@ -30,6 +31,7 @@ async function getAdminAnnouncements(token: string) {
 
 export default async function AdminAnnouncementsPage() {
   const session: any = await getServerSession(authOptions);
+  const accessToken = await getServerAccessToken();
 
   if (!session) {
     redirect("/api/auth/signin");
@@ -51,25 +53,26 @@ export default async function AdminAnnouncementsPage() {
     );
   }
 
-  const annsRes = await getAdminAnnouncements(session.accessToken || '');
+  const annsRes = accessToken ? await getAdminAnnouncements(accessToken) : null;
 
   return (
-    <div className="min-h-screen bg-slate-100 text-slate-800 p-8 font-sans">
-      <div className="max-w-6xl mx-auto">
-        <div className="flex justify-between items-center mb-8">
+    <div className="admin-page">
+      <div>
+        <div className="mb-8 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
           <div>
-            <h1 className="text-3xl font-bold text-slate-900">Announcements Management</h1>
-            <p className="text-slate-500 mt-2">Manage active and scheduled announcements.</p>
+            <p className="text-xs font-black uppercase tracking-[.18em] text-orange-600">Manajemen konten</p>
+            <h1 className="mt-2 text-3xl font-black text-slate-900">Pengumuman</h1>
+            <p className="mt-2 text-sm text-slate-500">Kelola informasi aktif dan terjadwal.</p>
           </div>
           <Link 
             href="/dashboard/announcements/create" 
-            className="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-lg font-medium transition-colors shadow-sm"
+            className="admin-button"
           >
-            + Create Announcement
+            + Buat pengumuman
           </Link>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+        <div className="admin-card overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-slate-50 border-b border-slate-200">
@@ -83,7 +86,7 @@ export default async function AdminAnnouncementsPage() {
               {!annsRes || !annsRes.data || annsRes.data.length === 0 ? (
                 <tr>
                   <td colSpan={4} className="p-8 text-center text-slate-500">
-                    No announcements found. Create one to get started.
+                    Belum ada pengumuman. Buat draft pertama untuk memulai.
                   </td>
                 </tr>
               ) : (

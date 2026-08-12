@@ -37,3 +37,4 @@ vendor/ui-templates/techwind/ORIGINAL/*
 !vendor/ui-templates/techwind/ORIGINAL/README_DROP_TECHWIND_HERE.md
 vendor/ui-templates/cuba/ORIGINAL/*
 !vendor/ui-templates/cuba/ORIGINAL/README_DROP_CUBA_HERE.md
+*.tgz

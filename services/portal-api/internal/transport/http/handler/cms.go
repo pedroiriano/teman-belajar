@@ -47,7 +47,7 @@ func (h *CMSHandler) ListPublicNews(w http.ResponseWriter, r *http.Request) {
 
 func (h *CMSHandler) GetPublicNews(w http.ResponseWriter, r *http.Request) {
 	slug := r.URL.Path[len("/api/v1/news/"):]
-	
+
 	res, err := h.svc.GetPublicNewsBySlug(r.Context(), slug)
 	if err != nil {
 		if err == cms.ErrNotFound {
@@ -118,6 +118,10 @@ func (h *CMSHandler) CreateNews(w http.ResponseWriter, r *http.Request) {
 	claims, ok := r.Context().Value(middleware.ClaimsContextKey).(middleware.CustomClaims)
 	if !ok {
 		respondProblem(w, http.StatusUnauthorized, "Unauthorized", "Missing claims")
+		return
+	}
+	if !hasAnyRole(claims.RealmAccess.Roles, "Portal Administrator", "Content Editor") {
+		respondProblem(w, http.StatusForbidden, "Forbidden", "Content Editor role required")
 		return
 	}
 
@@ -201,6 +205,10 @@ func (h *CMSHandler) CreateAnnouncement(w http.ResponseWriter, r *http.Request) 
 	claims, ok := r.Context().Value(middleware.ClaimsContextKey).(middleware.CustomClaims)
 	if !ok {
 		respondProblem(w, http.StatusUnauthorized, "Unauthorized", "Missing claims")
+		return
+	}
+	if !hasAnyRole(claims.RealmAccess.Roles, "Portal Administrator", "Content Editor") {
+		respondProblem(w, http.StatusForbidden, "Forbidden", "Content Editor role required")
 		return
 	}
 

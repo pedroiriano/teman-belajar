@@ -2,11 +2,13 @@
 
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
+import { getServerAccessToken } from "@/lib/server-auth";
 
 export async function createKnowledgeAction(data: { title: string; slug: string; summary: string; body: string }) {
   const session: any = await getServerSession(authOptions);
+  const accessToken = await getServerAccessToken();
   
-  if (!session || !session.accessToken) {
+  if (!session || !accessToken) {
     return { success: false, error: "Unauthorized" };
   }
 
@@ -17,14 +19,13 @@ export async function createKnowledgeAction(data: { title: string; slug: string;
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${session.accessToken}`
+        "Authorization": `Bearer ${accessToken}`
       },
       body: JSON.stringify({
         title: data.title,
         slug: data.slug,
         summary: data.summary,
-        body: data.body,
-        category_id: "00000000-0000-0000-0000-000000000000" // For now, we mock category if needed
+        body: data.body
       }),
     });
 
@@ -41,8 +42,9 @@ export async function createKnowledgeAction(data: { title: string; slug: string;
 
 export async function createKnowledgeRevisionAction(id: string, data: { body: string }) {
   const session: any = await getServerSession(authOptions);
+  const accessToken = await getServerAccessToken();
   
-  if (!session || !session.accessToken) {
+  if (!session || !accessToken) {
     return { success: false, error: "Unauthorized" };
   }
 
@@ -53,7 +55,7 @@ export async function createKnowledgeRevisionAction(id: string, data: { body: st
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${session.accessToken}`
+        "Authorization": `Bearer ${accessToken}`
       },
       body: JSON.stringify({
         body: data.body,
@@ -73,8 +75,9 @@ export async function createKnowledgeRevisionAction(id: string, data: { body: st
 
 export async function transitionKnowledgeAction(id: string, status: string) {
   const session: any = await getServerSession(authOptions);
+  const accessToken = await getServerAccessToken();
   
-  if (!session || !session.accessToken) {
+  if (!session || !accessToken) {
     return { success: false, error: "Unauthorized" };
   }
 
@@ -85,7 +88,7 @@ export async function transitionKnowledgeAction(id: string, status: string) {
       method: "POST", // we used POST in main.go
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${session.accessToken}`
+        "Authorization": `Bearer ${accessToken}`
       },
       body: JSON.stringify({ status }),
     });
@@ -102,18 +105,19 @@ export async function transitionKnowledgeAction(id: string, status: string) {
 }
 export async function getAdminKnowledgeAction() {
   const session: any = await getServerSession(authOptions);
+  const accessToken = await getServerAccessToken();
   
-  if (!session || !session.accessToken) {
+  if (!session || !accessToken) {
     return { success: false, error: "Unauthorized" };
   }
 
   const API_BASE = process.env.PORTAL_API_INTERNAL_URL;
   
   try {
-    const res = await fetch(`${API_BASE}/api/v1/knowledge`, {
+    const res = await fetch(`${API_BASE}/api/v1/admin/knowledge`, {
       method: "GET",
       headers: {
-        "Authorization": `Bearer ${session.accessToken}`
+        "Authorization": `Bearer ${accessToken}`
       },
       next: { revalidate: 0 }
     });
@@ -123,8 +127,34 @@ export async function getAdminKnowledgeAction() {
     }
 
     const data = await res.json();
-    return { success: true, data: data.data || [] };
+    return { success: true, data: data.data || [], roles: session.roles || [] };
   } catch (err: any) {
     return { success: false, error: err.message || "Failed to communicate with API" };
+  }
+}
+
+export async function getAdminKnowledgeDetailAction(id: string) {
+  const session: any = await getServerSession(authOptions);
+  const accessToken = await getServerAccessToken();
+  const API_BASE = process.env.PORTAL_API_INTERNAL_URL;
+
+  if (!session || !accessToken) {
+    return { success: false, error: "Unauthorized" };
+  }
+  if (!API_BASE) {
+    return { success: false, error: "Portal API is not configured" };
+  }
+
+  try {
+    const res = await fetch(`${API_BASE}/api/v1/admin/knowledge/${id}`, {
+      headers: { "Authorization": `Bearer ${accessToken}` },
+      cache: "no-store",
+    });
+    if (!res.ok) {
+      return { success: false, error: res.status === 404 ? "Knowledge article not found" : "Failed to fetch knowledge article" };
+    }
+    return { success: true, data: await res.json(), roles: session.roles || [] };
+  } catch {
+    return { success: false, error: "Failed to communicate with API" };
   }
 }

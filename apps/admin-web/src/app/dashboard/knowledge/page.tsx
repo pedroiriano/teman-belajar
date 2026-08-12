@@ -2,15 +2,14 @@ import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import Link from "next/link";
+import { getServerAccessToken } from "@/lib/server-auth";
 
 async function getAdminKnowledge(token: string) {
   const API_BASE = process.env.PORTAL_API_INTERNAL_URL;
   if (!API_BASE) throw new Error("Missing PORTAL_API_INTERNAL_URL");
 
   try {
-    // In actual implementation, we might want to have a list admin endpoint for knowledge
-    // For now, if we don't have it, we fallback to public endpoint or empty array.
-    const res = await fetch(`${API_BASE}/api/v1/knowledge`, {
+    const res = await fetch(`${API_BASE}/api/v1/admin/knowledge`, {
       headers: {
         'Authorization': `Bearer ${token}`
       },
@@ -26,6 +25,7 @@ async function getAdminKnowledge(token: string) {
 
 export default async function AdminKnowledgePage() {
   const session: any = await getServerSession(authOptions);
+  const accessToken = await getServerAccessToken();
 
   if (!session) {
     redirect("/api/auth/signin");
@@ -48,25 +48,26 @@ export default async function AdminKnowledgePage() {
     );
   }
 
-  const knowledgeRes = await getAdminKnowledge(session.accessToken || '');
+  const knowledgeRes = accessToken ? await getAdminKnowledge(accessToken) : null;
 
   return (
-    <div className="min-h-screen bg-slate-100 text-slate-800 p-8 font-sans">
-      <div className="max-w-6xl mx-auto">
-        <div className="flex justify-between items-center mb-8">
+    <div className="admin-page">
+      <div>
+        <div className="mb-8 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
           <div>
-            <h1 className="text-3xl font-bold text-slate-900">Knowledge Hub Management</h1>
-            <p className="text-slate-500 mt-2">Manage knowledge articles and learning materials workflow.</p>
+            <p className="text-xs font-black uppercase tracking-[.18em] text-orange-600">Manajemen konten</p>
+            <h1 className="mt-2 text-3xl font-black text-slate-900">Pusat Pengetahuan</h1>
+            <p className="mt-2 text-sm text-slate-500">Kelola artikel, revisi, dan workflow review.</p>
           </div>
           <Link 
             href="/dashboard/knowledge/create" 
-            className="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-lg font-medium transition-colors shadow-sm"
+            className="admin-button"
           >
-            + Create Article
+            + Buat artikel
           </Link>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+        <div className="admin-card overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-slate-50 border-b border-slate-200">
@@ -80,7 +81,7 @@ export default async function AdminKnowledgePage() {
               {!knowledgeRes || !knowledgeRes.data || knowledgeRes.data.length === 0 ? (
                 <tr>
                   <td colSpan={4} className="p-8 text-center text-slate-500">
-                    No knowledge articles found. Create one to get started.
+                    Belum ada artikel pengetahuan. Buat draft pertama untuk memulai.
                   </td>
                 </tr>
               ) : (

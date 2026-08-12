@@ -1,71 +1,55 @@
-import Link from "next/link";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/lib/auth";
+import { EmptyState, ErrorState, formatDate, PageHero } from "@/components/public-content";
+
+type Announcement = { id: string; title: string; body: string; start_at?: string; end_at?: string };
 
 async function getAnnouncements() {
   const API_BASE = process.env.PORTAL_API_INTERNAL_URL;
-  if (!API_BASE) throw new Error("Missing PORTAL_API_INTERNAL_URL");
+  if (!API_BASE) return { data: [], error: true };
 
   const res = await fetch(`${API_BASE}/api/v1/announcements`, {
     next: { revalidate: 60 } 
   });
   if (!res.ok) {
-    return null;
+    return { data: [], error: true };
   }
-  return res.json();
+  const payload = await res.json();
+  return { ...payload, data: Array.isArray(payload.data) ? payload.data : [] };
 }
 
 export default async function AnnouncementsPage() {
-  const session = await getServerSession(authOptions);
   const announcementsRes = await getAnnouncements();
 
   return (
-    <main className="min-h-screen bg-gray-50 flex flex-col">
-      <section className="bg-amber-500 text-white py-12">
-        <div className="container mx-auto px-4 text-center">
-          <h1 className="text-4xl md:text-5xl font-bold mb-4">Pengumuman</h1>
-          <p className="text-amber-100 text-lg max-w-2xl mx-auto">
-            Informasi penting dan jadwal kegiatan untuk peserta Teman Belajar.
-          </p>
-        </div>
-      </section>
+    <div>
+      <PageHero tone="amber" eyebrow="Informasi Terkini" title="Pengumuman penting untuk Anda" description="Pantau informasi operasional, jadwal, dan pembaruan penting dari Teman Belajar." />
 
-      <section className="container mx-auto px-4 py-16 max-w-4xl">
-        <div className="mb-6">
-          <Link href="/" className="text-amber-600 hover:text-amber-700 font-medium">
-            &larr; Kembali ke Beranda
-          </Link>
-        </div>
-
-        {!announcementsRes || !announcementsRes.data || announcementsRes.data.length === 0 ? (
-          <div className="text-center py-20 bg-white rounded-lg shadow-sm border border-gray-100">
-            <h3 className="text-2xl font-semibold text-gray-800 mb-2">Tidak ada pengumuman aktif</h3>
-            <p className="text-gray-500">Saat ini tidak ada informasi penting yang perlu ditampilkan.</p>
-          </div>
+      <section className="portal-container max-w-5xl py-12 sm:py-16">
+        {announcementsRes.error ? <ErrorState title="Pengumuman belum dapat dimuat" /> : announcementsRes.data.length === 0 ? (
+          <EmptyState title="Tidak ada pengumuman aktif" description="Saat ini tidak ada informasi penting yang perlu ditampilkan." />
         ) : (
-          <div className="space-y-6">
-            {announcementsRes.data.map((ann: any) => (
-              <div key={ann.id} className="bg-white rounded-xl shadow-sm border-l-4 border-amber-500 overflow-hidden">
+          <div className="space-y-5">
+            {announcementsRes.data.map((ann: Announcement) => (
+              <article key={ann.id} className="portal-card overflow-hidden border-l-4 border-l-amber-500">
                 <div className="p-6 md:p-8">
-                  <div className="flex justify-between items-start mb-4">
-                    <h2 className="text-2xl font-bold text-gray-900">{ann.title}</h2>
+                  <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
+                    <div><p className="text-xs font-black uppercase tracking-[0.16em] text-amber-700">Pengumuman aktif</p><h2 className="mt-2 text-2xl font-extrabold text-slate-900">{ann.title}</h2></div>
                     {ann.start_at && ann.end_at && (
-                      <span className="bg-amber-100 text-amber-800 text-xs px-3 py-1 rounded-full font-medium whitespace-nowrap ml-4">
-                        {new Date(ann.start_at).toLocaleDateString()} - {new Date(ann.end_at).toLocaleDateString()}
+                      <span className="whitespace-nowrap rounded-full bg-amber-100 px-3 py-1.5 text-xs font-bold text-amber-900">
+                        {formatDate(ann.start_at)} — {formatDate(ann.end_at)}
                       </span>
                     )}
                   </div>
-                  <div className="mt-4 text-slate-700 space-y-4">
+                  <div className="mt-5 space-y-3 text-sm leading-7 text-slate-600">
                     {ann.body.split('\n').map((paragraph: string, i: number) => (
                       <p key={i}>{paragraph}</p>
                     ))}
                   </div>
                 </div>
-              </div>
+              </article>
             ))}
           </div>
         )}
       </section>
-    </main>
+    </div>
   );
 }

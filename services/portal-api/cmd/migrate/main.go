@@ -16,8 +16,7 @@ import (
 func main() {
 	dbURL := os.Getenv("DATABASE_URL")
 	if dbURL == "" {
-		// Fallback for local docker if not provided
-		dbURL = "postgres://teman_belajar_portal:local_password@postgres-portal:5432/teman_belajar?sslmode=disable"
+		log.Fatal("Missing required environment variable: DATABASE_URL")
 	}
 
 	migrationsDir := os.Getenv("MIGRATIONS_DIR")
@@ -27,7 +26,7 @@ func main() {
 
 	log.Println("Starting database migration runner...")
 
-	// Connect to database with retry for docker-compose dependency startup
+	// Connect to database with retry for Docker Compose dependency startup.
 	var db *sql.DB
 	var err error
 	maxRetries := 30

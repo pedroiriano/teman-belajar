@@ -2,6 +2,7 @@ import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import Link from "next/link";
+import { getServerAccessToken } from "@/lib/server-auth";
 
 async function getAdminNews(token: string) {
   // In a real implementation we would fetch /api/v1/admin/news 
@@ -29,6 +30,7 @@ async function getAdminNews(token: string) {
 
 export default async function AdminNewsPage() {
   const session: any = await getServerSession(authOptions);
+  const accessToken = await getServerAccessToken();
 
   if (!session) {
     redirect("/api/auth/signin");
@@ -51,26 +53,26 @@ export default async function AdminNewsPage() {
     );
   }
 
-  // Attempt to fetch data (session.accessToken should be populated by Next-Auth JWT callback)
-  const newsRes = await getAdminNews(session.accessToken || '');
+  const newsRes = accessToken ? await getAdminNews(accessToken) : null;
 
   return (
-    <div className="min-h-screen bg-slate-100 text-slate-800 p-8 font-sans">
-      <div className="max-w-6xl mx-auto">
-        <div className="flex justify-between items-center mb-8">
+    <div className="admin-page">
+      <div>
+        <div className="mb-8 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
           <div>
-            <h1 className="text-3xl font-bold text-slate-900">News Management</h1>
-            <p className="text-slate-500 mt-2">Manage news articles and announcements workflow.</p>
+            <p className="text-xs font-black uppercase tracking-[.18em] text-orange-600">Manajemen konten</p>
+            <h1 className="mt-2 text-3xl font-black text-slate-900">Berita</h1>
+            <p className="mt-2 text-sm text-slate-500">Susun dan kelola workflow berita Teman Belajar.</p>
           </div>
           <Link 
             href="/dashboard/news/create" 
-            className="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-lg font-medium transition-colors shadow-sm"
+            className="admin-button"
           >
-            + Create News
+            + Buat berita
           </Link>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+        <div className="admin-card overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-slate-50 border-b border-slate-200">
@@ -84,7 +86,7 @@ export default async function AdminNewsPage() {
               {!newsRes || !newsRes.data || newsRes.data.length === 0 ? (
                 <tr>
                   <td colSpan={4} className="p-8 text-center text-slate-500">
-                    No news articles found. Create one to get started.
+                    Belum ada berita. Buat draft pertama untuk memulai.
                   </td>
                 </tr>
               ) : (
@@ -108,7 +110,7 @@ export default async function AdminNewsPage() {
                     </td>
                     <td className="p-4 text-sm">
                       <Link href={`/dashboard/news/${news.id}`} className="text-indigo-600 hover:text-indigo-900 font-medium mr-4">
-                        Edit / View
+                        Buka detail
                       </Link>
                     </td>
                   </tr>

@@ -9,6 +9,7 @@ var (
 	ErrInvalidStatusTransition = errors.New("invalid status transition")
 	ErrArticleNotFound         = errors.New("article not found")
 	ErrRevisionNotFound        = errors.New("revision not found")
+	ErrForbidden               = errors.New("forbidden")
 )
 
 type ArticleStatus string
@@ -72,13 +73,51 @@ func (a *Article) TransitionTo(nextStatus ArticleStatus) error {
 	if !a.CanTransitionTo(nextStatus) {
 		return ErrInvalidStatusTransition
 	}
-	
+
 	a.Status = nextStatus
-	
+
 	if nextStatus == StatusPublished {
 		val := a.CurrentRevisionNo
 		a.PublishedRevisionNo = &val
 	}
-	
+
 	return nil
+}
+
+func HasEditorialRole(roles []string) bool {
+	for _, role := range roles {
+		if role == "Portal Administrator" || role == "Content Editor" || role == "Reviewer" {
+			return true
+		}
+	}
+	return false
+}
+
+func CanTransitionWithRoles(current, next ArticleStatus, roles []string) bool {
+	hasRole := func(expected string) bool {
+		for _, role := range roles {
+			if role == expected || role == "Portal Administrator" {
+				return true
+			}
+		}
+		return false
+	}
+
+	isEditor := hasRole("Content Editor")
+	isReviewer := hasRole("Reviewer")
+
+	switch current {
+	case StatusDraft:
+		return (next == StatusInReview && isEditor) || (next == StatusArchived && (isEditor || isReviewer))
+	case StatusInReview:
+		return (next == StatusApproved && isReviewer) || (next == StatusDraft && isReviewer)
+	case StatusApproved:
+		return (next == StatusPublished && isReviewer) || (next == StatusDraft && (isEditor || isReviewer))
+	case StatusPublished:
+		return next == StatusArchived && (isEditor || isReviewer)
+	case StatusArchived:
+		return next == StatusDraft && isEditor
+	default:
+		return false
+	}
 }

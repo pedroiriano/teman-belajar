@@ -42,6 +42,7 @@ Semua berada di `docs/canonical/`.
 - `docs/governance/PRODUCT-IDENTITY-NAMING.md`
 - `docs/governance/SOURCE-OF-TRUTH.md`
 - `docs/governance/THIRD-PARTY-ASSET-REGISTER.md`
+- `docs/governance/DOCKER-LOCAL-ENVIRONMENT.md`
 - `docs/adr/ADR-001...ADR-012`
 - `docs/diagrams/erd.mmd`
 - `openapi/openapi.yaml`
@@ -86,6 +87,7 @@ Nama lain hanya boleh digunakan bila didefinisikan sebagai component/service, bu
 5. `openapi/openapi.yaml` if API touched
 6. `docs/diagrams/erd.mmd` + DB canonical doc if data touched
 7. existing source and tests
+8. `docs/governance/DOCKER-LOCAL-ENVIRONMENT.md` when Docker, ports, environment, or local runtime is touched
 
 ## 6. Authority Hierarchy
 

@@ -3,6 +3,7 @@
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
+import { getServerAccessToken } from "@/lib/server-auth";
 
 const API_BASE = process.env.PORTAL_API_INTERNAL_URL;
 
@@ -12,8 +13,9 @@ if (!API_BASE) {
 
 export async function createNewsAction(data: { title: string, slug: string, excerpt: string, body: string }) {
   const session: any = await getServerSession(authOptions);
+  const accessToken = await getServerAccessToken();
   
-  if (!session || !session.accessToken) {
+  if (!session || !accessToken) {
     return { success: false, error: "Unauthorized" };
   }
 
@@ -21,7 +23,7 @@ export async function createNewsAction(data: { title: string, slug: string, exce
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      "Authorization": `Bearer ${session.accessToken}`
+      "Authorization": `Bearer ${accessToken}`
     },
     body: JSON.stringify(data)
   });
@@ -37,8 +39,9 @@ export async function createNewsAction(data: { title: string, slug: string, exce
 
 export async function transitionNewsAction(id: string, status: string) {
   const session: any = await getServerSession(authOptions);
+  const accessToken = await getServerAccessToken();
   
-  if (!session || !session.accessToken) {
+  if (!session || !accessToken) {
     return { success: false, error: "Unauthorized" };
   }
 
@@ -46,7 +49,7 @@ export async function transitionNewsAction(id: string, status: string) {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",
-      "Authorization": `Bearer ${session.accessToken}`
+      "Authorization": `Bearer ${accessToken}`
     },
     body: JSON.stringify({ status })
   });
@@ -63,8 +66,9 @@ export async function transitionNewsAction(id: string, status: string) {
 
 export async function createAnnouncementAction(data: { title: string, slug: string, body: string, start_at: Date | null, end_at: Date | null }) {
   const session: any = await getServerSession(authOptions);
+  const accessToken = await getServerAccessToken();
   
-  if (!session || !session.accessToken) {
+  if (!session || !accessToken) {
     return { success: false, error: "Unauthorized" };
   }
 
@@ -72,7 +76,7 @@ export async function createAnnouncementAction(data: { title: string, slug: stri
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      "Authorization": `Bearer ${session.accessToken}`
+      "Authorization": `Bearer ${accessToken}`
     },
     body: JSON.stringify({
       title: data.title,
@@ -94,8 +98,9 @@ export async function createAnnouncementAction(data: { title: string, slug: stri
 
 export async function transitionAnnouncementAction(id: string, status: string) {
   const session: any = await getServerSession(authOptions);
+  const accessToken = await getServerAccessToken();
   
-  if (!session || !session.accessToken) {
+  if (!session || !accessToken) {
     return { success: false, error: "Unauthorized" };
   }
 
@@ -103,7 +108,7 @@ export async function transitionAnnouncementAction(id: string, status: string) {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",
-      "Authorization": `Bearer ${session.accessToken}`
+      "Authorization": `Bearer ${accessToken}`
     },
     body: JSON.stringify({ status })
   });
@@ -120,14 +125,15 @@ export async function transitionAnnouncementAction(id: string, status: string) {
 
 export async function getAdminNewsAction() {
   const session: any = await getServerSession(authOptions);
+  const accessToken = await getServerAccessToken();
   
-  if (!session || !session.accessToken) {
+  if (!session || !accessToken) {
     return { success: false, error: "Unauthorized", data: null };
   }
 
   const res = await fetch(`${API_BASE}/api/v1/admin/news`, {
     headers: {
-      "Authorization": `Bearer ${session.accessToken}`
+      "Authorization": `Bearer ${accessToken}`
     },
     next: { revalidate: 0 }
   });
@@ -137,19 +143,20 @@ export async function getAdminNewsAction() {
   }
 
   const data = await res.json();
-  return { success: true, data: data.data };
+  return { success: true, data: data.data, roles: session.roles || [] };
 }
 
 export async function getAdminAnnouncementsAction() {
   const session: any = await getServerSession(authOptions);
+  const accessToken = await getServerAccessToken();
   
-  if (!session || !session.accessToken) {
+  if (!session || !accessToken) {
     return { success: false, error: "Unauthorized", data: null };
   }
 
   const res = await fetch(`${API_BASE}/api/v1/admin/announcements`, {
     headers: {
-      "Authorization": `Bearer ${session.accessToken}`
+      "Authorization": `Bearer ${accessToken}`
     },
     next: { revalidate: 0 }
   });
@@ -159,5 +166,5 @@ export async function getAdminAnnouncementsAction() {
   }
 
   const data = await res.json();
-  return { success: true, data: data.data };
+  return { success: true, data: data.data, roles: session.roles || [] };
 }

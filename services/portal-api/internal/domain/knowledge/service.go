@@ -5,14 +5,15 @@ import (
 	"errors"
 	"time"
 
-	"teman-belajar-api/internal/domain/audit"
 	"github.com/google/uuid"
+	"teman-belajar-api/internal/domain/audit"
 )
 
 var (
-	ErrTitleRequired = errors.New("title is required")
-	ErrSlugRequired  = errors.New("slug is required")
-	ErrBodyRequired  = errors.New("body is required")
+	ErrTitleRequired  = errors.New("title is required")
+	ErrSlugRequired   = errors.New("slug is required")
+	ErrBodyRequired   = errors.New("body is required")
+	ErrRevisionLocked = errors.New("article must be draft or published before creating a revision")
 )
 
 type Service struct {
@@ -87,9 +88,13 @@ func (s *Service) CreateRevision(ctx context.Context, articleID, body string, ac
 	if err != nil {
 		return nil, err
 	}
+	if article.Status != StatusDraft && article.Status != StatusPublished {
+		return nil, ErrRevisionLocked
+	}
 
 	// Always increment current revision no for a new edit
 	article.CurrentRevisionNo += 1
+	article.Status = StatusDraft
 	article.UpdatedAt = time.Now().UTC()
 	article.UpdatedBy = actorID
 
@@ -116,9 +121,21 @@ func (s *Service) CreateRevision(ctx context.Context, articleID, body string, ac
 }
 
 func (s *Service) TransitionStatus(ctx context.Context, articleID string, nextStatus ArticleStatus, actorID *string) error {
+	return s.transitionStatus(ctx, articleID, nextStatus, nil, actorID, false)
+}
+
+func (s *Service) TransitionStatusAuthorized(ctx context.Context, articleID string, nextStatus ArticleStatus, roles []string, actorID *string) error {
+	return s.transitionStatus(ctx, articleID, nextStatus, roles, actorID, true)
+}
+
+func (s *Service) transitionStatus(ctx context.Context, articleID string, nextStatus ArticleStatus, roles []string, actorID *string, enforceRoles bool) error {
 	article, err := s.repo.GetArticleByID(ctx, articleID)
 	if err != nil {
 		return err
+	}
+
+	if enforceRoles && !CanTransitionWithRoles(article.Status, nextStatus, roles) {
+		return ErrForbidden
 	}
 
 	if err := article.TransitionTo(nextStatus); err != nil {
@@ -127,7 +144,7 @@ func (s *Service) TransitionStatus(ctx context.Context, articleID string, nextSt
 
 	article.UpdatedAt = time.Now().UTC()
 	article.UpdatedBy = actorID
-	
+
 	// Update last reviewed if it's approved
 	if nextStatus == StatusApproved || nextStatus == StatusPublished {
 		now := time.Now().UTC()
@@ -142,6 +159,69 @@ func (s *Service) TransitionStatus(ctx context.Context, articleID string, nextSt
 	s.logAudit(ctx, actorID, actionName, articleID, "SUCCESS")
 
 	return nil
+}
+
+type ArticleList struct {
+	Data       []Article  `json:"data"`
+	Pagination Pagination `json:"pagination"`
+}
+
+type Pagination struct {
+	Page       int `json:"page"`
+	PageSize   int `json:"page_size"`
+	Total      int `json:"total"`
+	TotalPages int `json:"total_pages"`
+}
+
+func normalizePagination(page, pageSize int) (int, int) {
+	if page < 1 {
+		page = 1
+	}
+	if pageSize < 1 || pageSize > 100 {
+		pageSize = 20
+	}
+	return page, pageSize
+}
+
+func articleList(items []Article, total, page, pageSize int) *ArticleList {
+	totalPages := total / pageSize
+	if total%pageSize > 0 {
+		totalPages++
+	}
+	if items == nil {
+		items = []Article{}
+	}
+	return &ArticleList{Data: items, Pagination: Pagination{Page: page, PageSize: pageSize, Total: total, TotalPages: totalPages}}
+}
+
+func (s *Service) ListPublicArticles(ctx context.Context, page, pageSize int, categoryID *string) (*ArticleList, error) {
+	page, pageSize = normalizePagination(page, pageSize)
+	items, total, err := s.repo.ListPublicArticles(ctx, page, pageSize, categoryID)
+	if err != nil {
+		return nil, err
+	}
+	return articleList(items, total, page, pageSize), nil
+}
+
+func (s *Service) ListAdminArticles(ctx context.Context, page, pageSize int) (*ArticleList, error) {
+	page, pageSize = normalizePagination(page, pageSize)
+	items, total, err := s.repo.ListAdminArticles(ctx, page, pageSize)
+	if err != nil {
+		return nil, err
+	}
+	return articleList(items, total, page, pageSize), nil
+}
+
+func (s *Service) GetAdminArticleWithRevision(ctx context.Context, id string) (*Article, *Revision, error) {
+	article, err := s.repo.GetArticleByID(ctx, id)
+	if err != nil {
+		return nil, nil, err
+	}
+	revision, err := s.repo.GetRevision(ctx, article.ID, article.CurrentRevisionNo)
+	if err != nil {
+		return nil, nil, err
+	}
+	return article, revision, nil
 }
 
 func (s *Service) AddRelatedArticle(ctx context.Context, articleID1, articleID2 string, actorID *string) error {
@@ -196,20 +276,20 @@ func (s *Service) logAudit(ctx context.Context, actorID *string, action, targetI
 	if s.auditRepo == nil {
 		return
 	}
-	
+
 	var actorStr string
 	if actorID != nil {
 		actorStr = *actorID
 	}
 
 	event := &audit.AuditEvent{
-		ID:           uuid.New().String(),
-		ActorUserID:  actorStr,
-		Action:       action,
-		TargetType:   "knowledge",
-		TargetID:     targetID,
-		Result:       result,
-		OccurredAt:   time.Now().UTC(),
+		ID:          uuid.New().String(),
+		ActorUserID: actorStr,
+		Action:      action,
+		TargetType:  "knowledge",
+		TargetID:    targetID,
+		Result:      result,
+		OccurredAt:  time.Now().UTC(),
 	}
 
 	// best effort

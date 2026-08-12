@@ -1,0 +1,166 @@
+[CmdletBinding()]
+param(
+    [Parameter(Position = 0)]
+    [ValidateSet("config", "up", "down", "status", "logs", "verify")]
+    [string]$Action = "status"
+)
+
+$ErrorActionPreference = "Stop"
+$DockerDirectory = Split-Path -Parent $MyInvocation.MyCommand.Path
+$ComposeFile = Join-Path $DockerDirectory "docker-compose.yml"
+$EnvironmentFile = Join-Path $DockerDirectory ".env"
+
+if (-not (Test-Path -LiteralPath $EnvironmentFile)) {
+    throw "Missing $EnvironmentFile. Copy .env.example to .env, then replace every CHANGE_ME value."
+}
+
+$Environment = @{}
+foreach ($Line in Get-Content -LiteralPath $EnvironmentFile) {
+    $Trimmed = $Line.Trim()
+    if (-not $Trimmed -or $Trimmed.StartsWith("#")) { continue }
+    $Pair = $Trimmed.Split("=", 2)
+    if ($Pair.Count -eq 2) { $Environment[$Pair[0]] = $Pair[1] }
+}
+
+$RequiredKeys = @(
+    "TB_BIND_ADDRESS",
+    "TB_WEB_PORT", "TB_ADMIN_PORT", "TB_PORTAL_DB_PORT", "TB_MOODLE_DB_PORT",
+    "TB_REDIS_PORT", "TB_API_PORT", "TB_KEYCLOAK_PORT", "TB_MOODLE_PORT",
+    "TB_MINIO_API_PORT", "TB_MINIO_CONSOLE_PORT",
+    "TB_WEB_URL", "TB_ADMIN_URL", "TB_KEYCLOAK_URL", "TB_MOODLE_URL",
+    "TB_PORTAL_DB_NAME", "TB_PORTAL_DB_USER", "TB_PORTAL_DB_PASSWORD",
+    "TB_KEYCLOAK_DB_NAME", "TB_KEYCLOAK_DB_USER", "TB_KEYCLOAK_DB_PASSWORD",
+    "TB_MOODLE_DB_NAME", "TB_MOODLE_DB_USER", "TB_MOODLE_DB_PASSWORD",
+    "TB_REDIS_PASSWORD", "TB_MINIO_ROOT_USER", "TB_MINIO_ROOT_PASSWORD",
+    "TB_KEYCLOAK_ADMIN_USER", "TB_KEYCLOAK_ADMIN_PASSWORD",
+    "TB_KEYCLOAK_WEB_CLIENT_SECRET", "TB_KEYCLOAK_ADMIN_CLIENT_SECRET",
+    "TB_KEYCLOAK_MOODLE_CLIENT_SECRET", "TB_KEYCLOAK_SEED_ADMIN_PASSWORD",
+    "TB_KEYCLOAK_SEED_LEARNER_PASSWORD", "TB_MOODLE_ADMIN_USER",
+    "TB_MOODLE_ADMIN_PASSWORD", "TB_MOODLE_ADMIN_EMAIL",
+    "TB_WEB_NEXTAUTH_SECRET", "TB_ADMIN_NEXTAUTH_SECRET"
+)
+
+$Missing = @($RequiredKeys | Where-Object {
+    -not $Environment.ContainsKey($_) -or [string]::IsNullOrWhiteSpace($Environment[$_])
+})
+if ($Missing.Count -gt 0) {
+    throw "Missing required .env keys: $($Missing -join ', ')"
+}
+
+$Placeholders = @($RequiredKeys | Where-Object { $Environment[$_] -match "CHANGE_ME" })
+if ($Placeholders.Count -gt 0) {
+    throw "Replace placeholder values for: $($Placeholders -join ', ')"
+}
+
+$PortKeys = @(
+    "TB_WEB_PORT", "TB_ADMIN_PORT", "TB_PORTAL_DB_PORT", "TB_MOODLE_DB_PORT",
+    "TB_REDIS_PORT", "TB_API_PORT", "TB_KEYCLOAK_PORT", "TB_MOODLE_PORT",
+    "TB_MINIO_API_PORT", "TB_MINIO_CONSOLE_PORT"
+)
+$Ports = foreach ($Key in $PortKeys) {
+    $Port = 0
+    if (-not [int]::TryParse($Environment[$Key], [ref]$Port) -or $Port -lt 1 -or $Port -gt 65535) {
+        throw "$Key must be an integer from 1 through 65535."
+    }
+    [pscustomobject]@{ Key = $Key; Port = $Port }
+}
+$DuplicatePorts = @($Ports | Group-Object Port | Where-Object Count -gt 1)
+if ($DuplicatePorts.Count -gt 0) {
+    $Details = $DuplicatePorts | ForEach-Object {
+        "$($_.Name): $(($_.Group.Key) -join ', ')"
+    }
+    throw "Duplicate host ports detected: $($Details -join '; ')"
+}
+
+$DatabaseIdentifierKeys = @(
+    "TB_PORTAL_DB_NAME", "TB_PORTAL_DB_USER", "TB_KEYCLOAK_DB_NAME",
+    "TB_KEYCLOAK_DB_USER", "TB_MOODLE_DB_NAME", "TB_MOODLE_DB_USER"
+)
+foreach ($Key in $DatabaseIdentifierKeys) {
+    if ($Environment[$Key] -notmatch "^[a-z][a-z0-9_]*$") {
+        throw "$Key must be a lowercase PostgreSQL identifier using only letters, digits, and underscores."
+    }
+}
+
+$DatabasePasswordKeys = @(
+    "TB_PORTAL_DB_PASSWORD", "TB_KEYCLOAK_DB_PASSWORD", "TB_MOODLE_DB_PASSWORD"
+)
+foreach ($Key in $DatabasePasswordKeys) {
+    if ($Environment[$Key] -notmatch "^[A-Za-z0-9._~-]+$") {
+        throw "$Key must be URL-safe because it is embedded in DATABASE_URL."
+    }
+}
+
+$UrlPortPairs = @(
+    @{ UrlKey = "TB_WEB_URL"; PortKey = "TB_WEB_PORT"; Host = "localhost" },
+    @{ UrlKey = "TB_ADMIN_URL"; PortKey = "TB_ADMIN_PORT"; Host = "localhost" },
+    @{ UrlKey = "TB_MOODLE_URL"; PortKey = "TB_MOODLE_PORT"; Host = "localhost" },
+    @{ UrlKey = "TB_KEYCLOAK_URL"; PortKey = "TB_KEYCLOAK_PORT"; Host = "keycloak.teman-belajar.localhost" }
+)
+foreach ($Pair in $UrlPortPairs) {
+    $Uri = [uri]$Environment[$Pair.UrlKey]
+    if ($Uri.Scheme -ne "http" -or $Uri.Host -ne $Pair.Host -or $Uri.Port -ne [int]$Environment[$Pair.PortKey]) {
+        throw "$($Pair.UrlKey) must use http://$($Pair.Host):$($Environment[$Pair.PortKey])."
+    }
+}
+
+if ($Environment["TB_BIND_ADDRESS"] -notin @("127.0.0.1", "::1", "localhost")) {
+    Write-Warning "TB_BIND_ADDRESS exposes services beyond loopback. Use only with explicit security review."
+}
+
+$ComposeArguments = @(
+    "compose", "--env-file", $EnvironmentFile, "-f", $ComposeFile
+)
+
+function Invoke-Compose {
+    param([string[]]$Arguments)
+    & docker @ComposeArguments @Arguments
+    if ($LASTEXITCODE -ne 0) {
+        throw "docker compose failed with exit code $LASTEXITCODE."
+    }
+}
+
+Invoke-Compose @("config", "--quiet")
+
+switch ($Action) {
+    "config" {
+        Invoke-Compose @("config", "--services")
+    }
+    "up" {
+        Invoke-Compose @("up", "-d", "--build", "--remove-orphans", "--wait")
+        Invoke-Compose @("ps", "--all")
+    }
+    "down" {
+        # Intentionally excludes --volumes: normal shutdown must preserve all data.
+        Invoke-Compose @("down", "--remove-orphans")
+    }
+    "status" {
+        Invoke-Compose @("ps", "--all")
+    }
+    "logs" {
+        Invoke-Compose @("logs", "--tail", "200")
+    }
+    "verify" {
+        if (-not (Get-Command curl.exe -ErrorAction SilentlyContinue)) {
+            throw "curl.exe is required for endpoint verification."
+        }
+        Invoke-Compose @("ps", "--all")
+
+        $Checks = @(
+            @{ Name = "Portal API"; Url = "http://127.0.0.1:$($Environment['TB_API_PORT'])/api/v1/health" },
+            @{ Name = "Portal Web"; Url = "http://127.0.0.1:$($Environment['TB_WEB_PORT'])/" },
+            @{ Name = "Admin Web"; Url = "http://127.0.0.1:$($Environment['TB_ADMIN_PORT'])/" },
+            @{ Name = "Keycloak"; Url = "$($Environment['TB_KEYCLOAK_URL'])/realms/teman-belajar/.well-known/openid-configuration" },
+            @{ Name = "Moodle"; Url = "http://127.0.0.1:$($Environment['TB_MOODLE_PORT'])/" },
+            @{ Name = "MinIO"; Url = "http://127.0.0.1:$($Environment['TB_MINIO_API_PORT'])/minio/health/live" }
+        )
+
+        foreach ($Check in $Checks) {
+            $StatusCode = & curl.exe --silent --show-error --location --max-time 15 --output NUL --write-out "%{http_code}" $Check.Url
+            if ($LASTEXITCODE -ne 0 -or [int]$StatusCode -lt 200 -or [int]$StatusCode -ge 400) {
+                throw "$($Check.Name) returned HTTP $StatusCode."
+            }
+            Write-Host "PASS $($Check.Name): HTTP $StatusCode"
+        }
+    }
+}

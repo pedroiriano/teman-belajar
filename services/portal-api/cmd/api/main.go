@@ -23,7 +23,7 @@ func main() {
 	// Database Connection
 	dbConnString := os.Getenv("DATABASE_URL")
 	if dbConnString == "" {
-		dbConnString = "postgres://teman_belajar_portal:local_password@localhost:5432/teman_belajar?sslmode=disable"
+		log.Fatal("Missing required environment variable: DATABASE_URL")
 	}
 
 	db, err := sql.Open("postgres", dbConnString)
@@ -51,7 +51,7 @@ func main() {
 
 	issuerURL := os.Getenv("KEYCLOAK_ISSUER_URL")
 	if issuerURL == "" {
-		issuerURL = "http://localhost:8081/realms/teman-belajar"
+		log.Fatal("Missing required environment variable: KEYCLOAK_ISSUER_URL")
 	}
 	audience := os.Getenv("KEYCLOAK_AUDIENCE")
 	if audience == "" {
@@ -70,9 +70,18 @@ func main() {
 	}
 
 	authMiddleware := middleware.AuthMiddleware(verifier, authConfig)
+	adminAuthMiddleware := middleware.AuthMiddleware(verifier, middleware.AuthConfig{
+		IssuerURL: issuerURL,
+		Audience:  audience,
+		RequiredRoles: []string{
+			"Portal Administrator",
+			"Content Editor",
+			"Reviewer",
+		},
+	})
 
 	mux.HandleFunc("/api/v1/health", handler.HealthCheck)
-	
+
 	// Public CMS Endpoints
 	mux.HandleFunc("/api/v1/news", cmsHandler.ListPublicNews)
 	mux.HandleFunc("/api/v1/news/", func(w http.ResponseWriter, r *http.Request) {
@@ -87,35 +96,43 @@ func main() {
 
 	// Protected endpoints
 	mux.Handle("/api/v1/me", authMiddleware(http.HandlerFunc(handler.GetMe)))
-	
+
 	// Admin CMS Endpoints
-	mux.Handle("/api/v1/admin/news", authMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	mux.Handle("/api/v1/admin/news", adminAuthMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == http.MethodGet {
 			cmsHandler.ListAdminNews(w, r)
 			return
 		}
 		cmsHandler.CreateNews(w, r)
 	})))
-	mux.Handle("/api/v1/admin/news/", authMiddleware(http.HandlerFunc(cmsHandler.TransitionNews)))
-	mux.Handle("/api/v1/admin/announcements", authMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	mux.Handle("/api/v1/admin/news/", adminAuthMiddleware(http.HandlerFunc(cmsHandler.TransitionNews)))
+	mux.Handle("/api/v1/admin/announcements", adminAuthMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == http.MethodGet {
 			cmsHandler.ListAdminAnnouncements(w, r)
 			return
 		}
 		cmsHandler.CreateAnnouncement(w, r)
 	})))
-	mux.Handle("/api/v1/admin/announcements/", authMiddleware(http.HandlerFunc(cmsHandler.TransitionAnnouncement)))
-	
-	mux.HandleFunc("GET /api/v1/knowledge/{slug}", knowledgeHandler.GetPublicArticle)
-	
-	mux.Handle("POST /api/v1/admin/knowledge", authMiddleware(http.HandlerFunc(knowledgeHandler.CreateArticle)))
-	mux.Handle("POST /api/v1/admin/knowledge/{id}/revisions", authMiddleware(http.HandlerFunc(knowledgeHandler.CreateRevision)))
-	mux.Handle("POST /api/v1/admin/knowledge/{id}/transition", authMiddleware(http.HandlerFunc(knowledgeHandler.TransitionStatus)))
+	mux.Handle("/api/v1/admin/announcements/", adminAuthMiddleware(http.HandlerFunc(cmsHandler.TransitionAnnouncement)))
 
-	log.Println("Starting portal-api on :8080")
-	
+	mux.HandleFunc("GET /api/v1/knowledge", knowledgeHandler.ListPublicArticles)
+	mux.HandleFunc("GET /api/v1/knowledge/{slug}", knowledgeHandler.GetPublicArticle)
+
+	mux.Handle("GET /api/v1/admin/knowledge", adminAuthMiddleware(http.HandlerFunc(knowledgeHandler.ListAdminArticles)))
+	mux.Handle("POST /api/v1/admin/knowledge", adminAuthMiddleware(http.HandlerFunc(knowledgeHandler.CreateArticle)))
+	mux.Handle("GET /api/v1/admin/knowledge/{id}", adminAuthMiddleware(http.HandlerFunc(knowledgeHandler.GetAdminArticle)))
+	mux.Handle("POST /api/v1/admin/knowledge/{id}/revisions", adminAuthMiddleware(http.HandlerFunc(knowledgeHandler.CreateRevision)))
+	mux.Handle("POST /api/v1/admin/knowledge/{id}/transition", adminAuthMiddleware(http.HandlerFunc(knowledgeHandler.TransitionStatus)))
+
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+
+	log.Printf("Starting teman-belajar-api on :%s", port)
+
 	server := &http.Server{
-		Addr:              ":8080",
+		Addr:              ":" + port,
 		Handler:           mux,
 		ReadHeaderTimeout: 5 * time.Second,
 	}

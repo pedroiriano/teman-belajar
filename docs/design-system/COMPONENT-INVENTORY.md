@@ -28,6 +28,7 @@ Status:
 | Error State | N/Adapt | N/Adapt | S |
 | Loading/Skeleton | R | R | S |
 | Accessibility Helpers | N | N | S |
+| Light/Dark Theme Toggle | R/Adapt | R/Adapt | Application-specific controller, shared persistence contract |
 
 Inventory updated based on actual Techwind and Cuba sources in `vendor/ui-templates`.
 

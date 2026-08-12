@@ -1,78 +1,22 @@
 import Link from "next/link";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/lib/auth";
+import { EmptyState, ErrorState, formatDate, PageHero, Pagination, type PaginationData } from "@/components/public-content";
 
-async function getNews() {
-  // Use absolute URL since this runs on the server
-  const API_BASE = process.env.PORTAL_API_INTERNAL_URL;
-  if (!API_BASE) throw new Error("Missing PORTAL_API_INTERNAL_URL");
-  
-  const res = await fetch(`${API_BASE}/api/v1/news?page=1&page_size=20`, {
-    next: { revalidate: 60 } // Revalidate every 60 seconds
-  });
-  if (!res.ok) {
-    return null;
-  }
-  return res.json();
+type News = { id: string; slug: string; title: string; excerpt?: string; published_at?: string };
+type NewsResult = { data: News[]; pagination?: PaginationData; error?: true };
+
+async function getNews(page: number): Promise<NewsResult> {
+  const apiBase = process.env.PORTAL_API_INTERNAL_URL;
+  if (!apiBase) return { data: [], error: true };
+  try {
+    const res = await fetch(`${apiBase}/api/v1/news?page=${page}&page_size=9`, { next: { revalidate: 60 } });
+    if (!res.ok) return { data: [], error: true };
+    const payload = await res.json();
+    return { ...payload, data: Array.isArray(payload.data) ? payload.data : [] };
+  } catch { return { data: [], error: true }; }
 }
 
-export default async function NewsPage() {
-  const session = await getServerSession(authOptions);
-  const newsResponse = await getNews();
-
-  return (
-    <main className="min-h-screen bg-gray-50 flex flex-col">
-      {/* Techwind Inspired Header / Hero */}
-      <section className="bg-indigo-600 text-white py-16">
-        <div className="container mx-auto px-4 text-center">
-          <h1 className="text-4xl md:text-5xl font-bold mb-4">Berita Terbaru</h1>
-          <p className="text-indigo-100 text-lg max-w-2xl mx-auto">
-            Temukan berita, pembaruan, dan wawasan terbaru dari Teman Belajar.
-          </p>
-        </div>
-      </section>
-
-      {/* Main Content */}
-      <section className="container mx-auto px-4 py-16">
-        <div className="mb-6">
-          <Link href="/" className="text-indigo-600 hover:text-indigo-700 font-medium">
-            &larr; Kembali ke Beranda
-          </Link>
-        </div>
-
-        {!newsResponse || !newsResponse.data || newsResponse.data.length === 0 ? (
-          <div className="text-center py-20 bg-white rounded-lg shadow-sm border border-gray-100">
-            <h3 className="text-2xl font-semibold text-gray-800 mb-2">Belum ada berita</h3>
-            <p className="text-gray-500">Berita yang diterbitkan akan muncul di sini.</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {newsResponse.data.map((news: any) => (
-              <div key={news.id} className="bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow duration-300 border border-gray-100 overflow-hidden flex flex-col">
-                <div className="p-6 flex-grow">
-                  <div className="text-sm text-indigo-600 font-semibold mb-2">
-                    {new Date(news.published_at).toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' })}
-                  </div>
-                  <h3 className="text-xl font-bold text-gray-900 mb-3 line-clamp-2">
-                    <Link href={`/news/${news.slug}`} className="hover:text-indigo-600 transition-colors">
-                      {news.title}
-                    </Link>
-                  </h3>
-                  <p className="text-gray-600 line-clamp-3">
-                    {news.excerpt}
-                  </p>
-                </div>
-                <div className="px-6 py-4 border-t border-gray-100 mt-auto">
-                  <Link href={`/news/${news.slug}`} className="text-indigo-600 hover:text-indigo-800 font-medium text-sm flex items-center">
-                    Baca selengkapnya
-                    <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path></svg>
-                  </Link>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </section>
-    </main>
-  );
+export default async function NewsPage({ searchParams }: { searchParams: { page?: string } }) {
+  const page = Math.max(1, Number.parseInt(searchParams.page || "1", 10) || 1);
+  const result = await getNews(page);
+  return <><PageHero eyebrow="Kabar Teman Belajar" title="Cerita dan perkembangan terbaru" description="Ikuti program, inisiatif, dan wawasan terbaru yang mendukung perjalanan belajar di organisasi Anda."/><section className="portal-container py-12 sm:py-16">{result.error ? <ErrorState title="Berita belum dapat dimuat"/> : result.data.length === 0 ? <EmptyState title="Belum ada berita" description="Berita yang telah melewati proses editorial akan tampil di halaman ini."/> : <><div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">{result.data.map((news, index) => <article key={news.id} className="portal-card group flex min-h-72 flex-col overflow-hidden"><div className={`h-2 ${index % 3 === 0 ? "bg-teal-600" : index % 3 === 1 ? "bg-sky-600" : "bg-amber-500"}`}/><div className="flex flex-1 flex-col p-6"><p className="text-xs font-bold uppercase tracking-wider text-teal-700">{formatDate(news.published_at)}</p><h2 className="mt-3 text-xl font-extrabold leading-7 text-slate-900"><Link href={`/news/${news.slug}`} className="transition group-hover:text-teal-700">{news.title}</Link></h2><p className="mt-3 line-clamp-3 text-sm leading-6 text-slate-600">{news.excerpt || "Baca kabar selengkapnya dari Teman Belajar."}</p><Link href={`/news/${news.slug}`} className="mt-auto pt-6 text-sm font-bold text-teal-700">Baca selengkapnya <span aria-hidden="true">→</span></Link></div></article>)}</div><Pagination pagination={result.pagination} path="/news"/></>}</section></>;
 }

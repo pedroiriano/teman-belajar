@@ -392,6 +392,25 @@ paths:
         "422":
           $ref: "#/components/responses/ValidationError"
   /admin/knowledge:
+    get:
+      tags: [Admin, Knowledge]
+      security:
+        - oidc: [content:read]
+      operationId: listAdminKnowledgeArticles
+      parameters:
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/PageSize"
+      responses:
+        "200":
+          description: All knowledge articles, including unpublished workflow states
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/KnowledgeList"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
     post:
       tags: [Admin, Knowledge]
       security:
@@ -412,6 +431,30 @@ paths:
           $ref: "#/components/responses/Forbidden"
         "422":
           $ref: "#/components/responses/ValidationError"
+  /admin/knowledge/{id}:
+    get:
+      tags: [Admin, Knowledge]
+      security:
+        - oidc: [content:read]
+      operationId: getAdminKnowledgeArticle
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: {type: string, format: uuid}
+      responses:
+        "200":
+          description: Knowledge article with its current working revision
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/KnowledgeArticle"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
   /admin/knowledge/{id}/revisions:
     post:
       tags: [Admin, Knowledge]
@@ -616,31 +659,6 @@ components:
         start_at: {type: [string, "null"], format: date-time}
         end_at: {type: [string, "null"], format: date-time}
 
-    KnowledgeArticle:
-      type: object
-      required: [id, slug, title, status]
-      properties:
-        id: {type: string, format: uuid}
-        slug: {type: string}
-        title: {type: string}
-        summary: {type: string}
-        body: {type: string}
-        status:
-          type: string
-          enum: [draft, in_review, approved, published, archived]
-        last_reviewed_at: {type: [string, "null"], format: date-time}
-        reading_minutes: {type: [integer, "null"], minimum: 1}
-
-    KnowledgeList:
-      type: object
-      required: [data, pagination]
-      properties:
-        data:
-          type: array
-          items: {$ref: "#/components/schemas/KnowledgeArticle"}
-        pagination:
-          $ref: "#/components/schemas/Pagination"
-
     Faq:
       type: object
       required: [id, question, answer]
@@ -719,7 +737,7 @@ components:
 
     KnowledgeArticle:
       type: object
-      required: [id, slug, title, body, status, current_revision_no]
+      required: [id, slug, title]
       properties:
         id: {type: string, format: uuid}
         slug: {type: string}
@@ -733,6 +751,12 @@ components:
         published_revision_no: {type: [integer, "null"]}
         created_at: {type: string, format: date-time}
         updated_at: {type: string, format: date-time}
+        published_at: {type: [string, "null"], format: date-time}
+        last_reviewed_at: {type: [string, "null"], format: date-time}
+        related:
+          type: array
+          items:
+            $ref: "#/components/schemas/KnowledgeArticle"
 
     KnowledgeList:
       type: object

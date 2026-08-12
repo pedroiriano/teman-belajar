@@ -3,14 +3,12 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { transitionKnowledgeAction, getAdminKnowledgeAction, createKnowledgeRevisionAction } from "@/app/actions/knowledge";
-import { useSession } from "next-auth/react";
+import { transitionKnowledgeAction, getAdminKnowledgeDetailAction, createKnowledgeRevisionAction } from "@/app/actions/knowledge";
 
 export default function AdminKnowledgeDetailPage({ params }: { params: { id: string } }) {
   const router = useRouter();
-  const { data: session }: any = useSession();
-  
   const [article, setArticle] = useState<any>(null);
+	const [roles, setRoles] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
   const [error, setError] = useState("");
@@ -19,19 +17,15 @@ export default function AdminKnowledgeDetailPage({ params }: { params: { id: str
   useEffect(() => {
     const fetchArticle = async () => {
       try {
-        const res = await getAdminKnowledgeAction();
+        const res = await getAdminKnowledgeDetailAction(params.id);
         if (!res.success) {
           setError(res.error || "Failed to fetch article");
           return;
         }
         
-        const found = res.data?.find((n: any) => n.id === params.id);
-        if (found) {
-          setArticle(found);
-          setBody(found.body || ""); // Initialize body with current content
-        } else {
-          setError("Knowledge article not found");
-        }
+		setArticle(res.data);
+		setBody(res.data?.body || "");
+		setRoles(res.roles || []);
       } catch (e) {
         setError("Failed to load article");
       } finally {
@@ -40,7 +34,7 @@ export default function AdminKnowledgeDetailPage({ params }: { params: { id: str
     };
     
     fetchArticle();
-  }, [params.id, session]);
+  }, [params.id]);
 
   const handleTransition = async (status: string) => {
     setActionLoading(true);
@@ -62,7 +56,6 @@ export default function AdminKnowledgeDetailPage({ params }: { params: { id: str
       setError(res.error || "Revision creation failed");
       setActionLoading(false);
     } else {
-      alert("New revision created successfully. It is now a draft.");
       router.push("/dashboard/knowledge");
     }
   };
@@ -70,9 +63,9 @@ export default function AdminKnowledgeDetailPage({ params }: { params: { id: str
   if (loading) return <div className="p-8">Loading...</div>;
   if (!article) return <div className="p-8 text-red-500">{error || "Not found"}</div>;
 
-  const roles = session?.roles || [];
   const isEditor = roles.includes("Content Editor") || roles.includes("Portal Administrator");
   const isReviewer = roles.includes("Reviewer") || roles.includes("Portal Administrator");
+  const canCreateRevision = isEditor && ["draft", "published"].includes(article.status);
 
   return (
     <div className="min-h-screen bg-slate-100 p-8 font-sans">
@@ -150,7 +143,7 @@ export default function AdminKnowledgeDetailPage({ params }: { params: { id: str
             
             <h3 className="font-semibold text-slate-700 mb-2">Current Body</h3>
             
-            {article.status === 'published' || article.status === 'archived' ? (
+            {!canCreateRevision ? (
               <div className="prose max-w-none text-slate-600 border border-slate-200 p-4 rounded-md font-mono text-sm bg-slate-50">
                 {article.body}
               </div>
@@ -163,7 +156,7 @@ export default function AdminKnowledgeDetailPage({ params }: { params: { id: str
                   rows={15}
                 />
                 
-                {isEditor && article.body !== body && (
+                {article.body !== body && (
                   <div className="flex justify-end">
                     <button
                       onClick={handleSaveRevision}

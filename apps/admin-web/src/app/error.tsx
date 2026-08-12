@@ -1,0 +1,2 @@
+"use client";
+export default function ErrorPage({ reset }: { reset: () => void }) { return <div className="admin-card mx-auto max-w-xl p-10 text-center" role="alert"><p className="text-xs font-black uppercase tracking-wider text-rose-600">Terjadi kendala</p><h1 className="mt-3 text-2xl font-black">Halaman belum dapat dimuat</h1><p className="mt-3 text-sm text-slate-500">Silakan coba kembali. Jika masalah berlanjut, periksa koneksi Portal API.</p><button onClick={reset} className="admin-button mt-6">Coba lagi</button></div>; }

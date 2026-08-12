@@ -90,17 +90,21 @@ Baca `docs/design-system/` sebelum mengerjakan UI. Vendor source adalah read-onl
 
 ## Quick Start / Local Bootstrap
 
-1. Ensure you have Docker, Docker Compose, Go 1.21+, and Node.js 18+ installed.
-2. Run the bootstrap and start command:
-   ```bash
-   make all
-   make up
+1. Install Docker Desktop with Docker Compose v2.
+2. Read `docs/governance/DOCKER-LOCAL-ENVIRONMENT.md`.
+3. Create the ignored local environment file and replace every placeholder:
+   ```powershell
+   Copy-Item infrastructure/docker/.env.example infrastructure/docker/.env
    ```
-3. The Portal API will be available at `http://localhost:8080/api/v1/health`
-4. The Portal Web will be available at `http://localhost:3000` (run via `npm run dev` in `apps/portal-web`)
-5. The Admin Web will be available at `http://localhost:3001` (run via `npm run dev` in `apps/admin-web`)
+4. Validate, start, and verify the complete stack:
+   ```powershell
+   powershell -NoProfile -ExecutionPolicy Bypass -File infrastructure/docker/teman-belajar-docker.ps1 config
+   powershell -NoProfile -ExecutionPolicy Bypass -File infrastructure/docker/teman-belajar-docker.ps1 up
+   powershell -NoProfile -ExecutionPolicy Bypass -File infrastructure/docker/teman-belajar-docker.ps1 verify
+   ```
+5. Portal, Admin, API, Keycloak, Moodle, MinIO, Redis, and both databases run in Docker. See `infrastructure/docker/README.md` for the canonical URLs and ports.
 
 To stop local infrastructure:
-```bash
-make down
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File infrastructure/docker/teman-belajar-docker.ps1 down
 ```

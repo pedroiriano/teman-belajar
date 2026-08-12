@@ -4,13 +4,11 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { transitionAnnouncementAction, getAdminAnnouncementsAction } from "@/app/actions/cms";
-import { useSession } from "next-auth/react";
 
 export default function AdminAnnouncementDetailPage({ params }: { params: { id: string } }) {
   const router = useRouter();
-  const { data: session }: any = useSession();
-  
   const [ann, setAnn] = useState<any>(null);
+	const [roles, setRoles] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
   const [error, setError] = useState("");
@@ -25,6 +23,7 @@ export default function AdminAnnouncementDetailPage({ params }: { params: { id: 
         }
 
         const found = res.data?.find((a: any) => a.id === params.id);
+		setRoles(res.roles || []);
         if (found) {
           setAnn(found);
         } else {
@@ -38,7 +37,7 @@ export default function AdminAnnouncementDetailPage({ params }: { params: { id: 
     };
     
     fetchAnnouncement();
-  }, [params.id, session]);
+  }, [params.id]);
 
   const handleTransition = async (status: string) => {
     setActionLoading(true);
@@ -55,7 +54,6 @@ export default function AdminAnnouncementDetailPage({ params }: { params: { id: 
   if (loading) return <div className="p-8">Loading...</div>;
   if (!ann) return <div className="p-8 text-red-500">{error || "Not found"}</div>;
 
-  const roles = session?.roles || [];
   const isEditor = roles.includes("Content Editor") || roles.includes("Portal Administrator");
   const isReviewer = roles.includes("Reviewer") || roles.includes("Portal Administrator");
 

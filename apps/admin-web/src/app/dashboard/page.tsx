@@ -1,32 +1,20 @@
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
+import Link from "next/link";
+
+const modules = [
+  { href: "/dashboard/news", title: "Berita", copy: "Kelola berita dan cerita pembelajaran.", accent: "bg-sky-500", label: "CMS" },
+  { href: "/dashboard/announcements", title: "Pengumuman", copy: "Atur informasi aktif dan terjadwal.", accent: "bg-amber-500", label: "Jadwal" },
+  { href: "/dashboard/knowledge", title: "Pusat Pengetahuan", copy: "Kelola artikel, revisi, dan review.", accent: "bg-teal-600", label: "Knowledge" },
+];
 
 export default async function AdminDashboard() {
   const session: any = await getServerSession(authOptions);
+  if (!session) redirect("/api/auth/signin?callbackUrl=/dashboard");
+  const hasAccess = session.roles?.some((role: string) => ["Portal Administrator", "Content Editor", "Reviewer"].includes(role));
+  if (!hasAccess) return <div className="admin-card mx-auto max-w-xl border-rose-200 p-8 text-center" role="alert"><span className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-rose-100 font-black text-rose-700">403</span><h1 className="mt-5 text-2xl font-black text-slate-900">Akses tidak tersedia</h1><p className="mt-3 text-sm leading-6 text-slate-500">Akun Anda belum memiliki role editorial untuk mengakses Admin Console.</p><Link href="/api/auth/signout" className="admin-button-secondary mt-6">Keluar dan ganti akun</Link></div>;
 
-  if (!session) {
-    redirect("/api/auth/signin");
-  }
-
-  const hasAdminRole = session.roles?.includes("Portal Administrator");
-
-  if (!hasAdminRole) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-900 text-white p-8">
-        <div className="bg-red-900/50 border border-red-500 p-8 rounded-lg max-w-lg w-full">
-          <h1 className="text-3xl font-bold mb-4 text-red-400">403 Forbidden</h1>
-          <p className="mb-6">You do not have the necessary permissions to access the Admin Shell.</p>
-          <a href="/" className="text-blue-400 hover:underline">Return to Home</a>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="min-h-screen bg-slate-900 text-white p-8">
-      <h1 className="text-3xl font-bold mb-6">Admin Shell Dashboard</h1>
-      <p>This is a protected route. Only users with the Portal Administrator role can see this.</p>
-    </div>
-  );
+  const name = session.user?.name?.split(" ")[0] || "Tim";
+  return <div className="admin-page"><div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end"><div><p className="text-xs font-black uppercase tracking-[.18em] text-orange-600">Ringkasan workspace</p><h1 className="mt-2 text-3xl font-black tracking-tight text-slate-900">Selamat datang, {name}</h1><p className="mt-2 text-sm text-slate-500">Pilih modul untuk mulai mengelola konten Teman Belajar.</p></div><div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-bold text-emerald-800"><span className="mr-2 inline-block h-2 w-2 rounded-full bg-emerald-500"/>Workflow aktif</div></div><div className="mt-8 grid gap-5 md:grid-cols-3">{modules.map((module) => <Link key={module.href} href={module.href} className="admin-card group overflow-hidden transition hover:-translate-y-1 hover:shadow-xl"><div className={`h-1.5 ${module.accent}`}/><div className="p-6"><div className="flex items-center justify-between"><span className="rounded-full bg-slate-100 px-3 py-1 text-[10px] font-black uppercase tracking-wider text-slate-600">{module.label}</span><span className="text-slate-300 transition group-hover:translate-x-1 group-hover:text-orange-600">→</span></div><h2 className="mt-6 text-xl font-black text-slate-900">{module.title}</h2><p className="mt-2 text-sm leading-6 text-slate-500">{module.copy}</p></div></Link>)}</div><section className="admin-card mt-7 p-6 sm:p-7" aria-labelledby="workflow-title"><div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center"><div><p className="text-xs font-black uppercase tracking-wider text-slate-400">Editorial workflow</p><h2 id="workflow-title" className="mt-1 text-lg font-black text-slate-900">Alur publikasi terkontrol</h2></div><span className="text-xs font-semibold text-slate-500">Diterapkan pada seluruh modul konten</span></div><ol className="mt-7 grid gap-3 md:grid-cols-5">{[["1","Draft","Editor"],["2","Dalam review","Editor"],["3","Disetujui","Reviewer"],["4","Terbit","Reviewer"],["5","Arsip","Editorial"]].map(([number,status,owner], index) => <li key={status} className="relative rounded-xl bg-slate-50 p-4"><span className="grid h-7 w-7 place-items-center rounded-lg bg-white text-xs font-black text-orange-600 shadow-sm">{number}</span><p className="mt-3 text-sm font-extrabold text-slate-800">{status}</p><p className="mt-1 text-xs text-slate-400">{owner}</p>{index < 4 && <span className="absolute -right-2 top-1/2 z-10 hidden text-slate-300 md:block">›</span>}</li>)}</ol></section></div>;
 }

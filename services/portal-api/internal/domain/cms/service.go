@@ -115,6 +115,9 @@ func (s *Service) GetPublicNews(ctx context.Context, page, pageSize int) (*NewsL
 	if err != nil {
 		return nil, err
 	}
+	if items == nil {
+		items = []News{}
+	}
 
 	totalPages := total / pageSize
 	if total%pageSize > 0 {
@@ -143,6 +146,9 @@ func (s *Service) GetAdminNews(ctx context.Context, page, pageSize int) (*NewsLi
 	items, total, err := s.repo.ListAdminNews(ctx, page, pageSize)
 	if err != nil {
 		return nil, err
+	}
+	if items == nil {
+		items = []News{}
 	}
 
 	totalPages := total / pageSize
@@ -264,6 +270,9 @@ func (s *Service) GetActiveAnnouncements(ctx context.Context) (*AnnouncementList
 	if err != nil {
 		return nil, err
 	}
+	if items == nil {
+		items = []Announcement{}
+	}
 
 	return &AnnouncementList{Data: items}, nil
 }
@@ -284,6 +293,9 @@ func (s *Service) GetAdminAnnouncements(ctx context.Context, page, pageSize int)
 	items, total, err := s.repo.ListAdminAnnouncements(ctx, page, pageSize)
 	if err != nil {
 		return nil, err
+	}
+	if items == nil {
+		items = []Announcement{}
 	}
 
 	totalPages := total / pageSize

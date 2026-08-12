@@ -14,7 +14,7 @@ RUN CGO_ENABLED=0 GOOS=linux go build -o /app/portal-api ./cmd/api
 # Build the migration runner
 RUN CGO_ENABLED=0 GOOS=linux go build -o /app/portal-migrate ./cmd/migrate
 
-FROM alpine:latest
+FROM alpine:3.22
 
 WORKDIR /app
 

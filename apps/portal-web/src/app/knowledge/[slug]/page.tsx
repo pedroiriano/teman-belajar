@@ -28,7 +28,7 @@ export default async function KnowledgeDetailPage({ params }: { params: { slug: 
   }
 
   return (
-    <main className="min-h-screen bg-gray-50 flex flex-col pb-20">
+    <article className="min-h-screen bg-gray-50 flex flex-col pb-20">
       <section className="bg-indigo-600 text-white py-20 lg:py-24">
         <div className="container mx-auto px-4 max-w-4xl text-center">
           <div className="mb-6">
@@ -64,6 +64,6 @@ export default async function KnowledgeDetailPage({ params }: { params: { slug: 
           </div>
         </div>
       </section>
-    </main>
+    </article>
   );
 }
