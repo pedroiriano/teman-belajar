@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { transitionAnnouncementAction, getAdminAnnouncementsAction } from "@/app/actions/cms";
 
-export default function AdminAnnouncementDetailPage({ params }: { params: { id: string } }) {
+export default function AdminAnnouncementDetailPage() {
+  const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const [ann, setAnn] = useState<any>(null);
 	const [roles, setRoles] = useState<string[]>([]);
@@ -22,7 +23,7 @@ export default function AdminAnnouncementDetailPage({ params }: { params: { id: 
           return;
         }
 
-        const found = res.data?.find((a: any) => a.id === params.id);
+        const found = res.data?.find((a: any) => a.id === id);
 		setRoles(res.roles || []);
         if (found) {
           setAnn(found);
@@ -37,12 +38,12 @@ export default function AdminAnnouncementDetailPage({ params }: { params: { id: 
     };
     
     fetchAnnouncement();
-  }, [params.id]);
+  }, [id]);
 
   const handleTransition = async (status: string) => {
     setActionLoading(true);
     setError("");
-    const res = await transitionAnnouncementAction(params.id, status);
+    const res = await transitionAnnouncementAction(id, status);
     if (!res.success) {
       setError(res.error || "Transition failed");
       setActionLoading(false);

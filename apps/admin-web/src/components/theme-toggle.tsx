@@ -24,7 +24,6 @@ export function ThemeToggle() {
 
   useEffect(() => {
     const media = window.matchMedia("(prefers-color-scheme: dark)");
-    const syncFromRoot = () => setTheme(readTheme());
     const syncFromSystem = () => {
       if (!window.localStorage.getItem(STORAGE_KEY)) {
         const nextTheme: Theme = media.matches ? "dark" : "light";
@@ -39,11 +38,14 @@ export function ThemeToggle() {
       setTheme(nextTheme);
     };
 
-    syncFromRoot();
-    setMounted(true);
+    const animationFrame = window.requestAnimationFrame(() => {
+      setTheme(readTheme());
+      setMounted(true);
+    });
     media.addEventListener("change", syncFromSystem);
     window.addEventListener("storage", syncFromStorage);
     return () => {
+      window.cancelAnimationFrame(animationFrame);
       media.removeEventListener("change", syncFromSystem);
       window.removeEventListener("storage", syncFromStorage);
     };

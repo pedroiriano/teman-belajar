@@ -1,4 +1,5 @@
 import { getServerSession } from "next-auth/next";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { authOptions } from "@/lib/auth";
@@ -41,9 +42,9 @@ export default async function Home() {
           <p className="mt-3 text-sm leading-6 text-slate-500">
             Gunakan akun organisasi Anda. Hak akses Editor, Reviewer, atau Portal Administrator diperlukan.
           </p>
-          <a href="/api/auth/signin?callbackUrl=/dashboard" className="admin-button mt-8 w-full !min-h-12">
+          <Link href="/api/auth/signin?callbackUrl=/dashboard" className="admin-button mt-8 w-full !min-h-12">
             Masuk dengan Keycloak
-          </a>
+          </Link>
           <p className="mt-5 text-center text-xs leading-5 text-slate-400">
             Sesi dikelola secara aman melalui cookie HttpOnly.
           </p>

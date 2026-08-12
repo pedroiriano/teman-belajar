@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { transitionKnowledgeAction, getAdminKnowledgeDetailAction, createKnowledgeRevisionAction } from "@/app/actions/knowledge";
 
-export default function AdminKnowledgeDetailPage({ params }: { params: { id: string } }) {
+export default function AdminKnowledgeDetailPage() {
+  const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const [article, setArticle] = useState<any>(null);
 	const [roles, setRoles] = useState<string[]>([]);
@@ -17,7 +18,7 @@ export default function AdminKnowledgeDetailPage({ params }: { params: { id: str
   useEffect(() => {
     const fetchArticle = async () => {
       try {
-        const res = await getAdminKnowledgeDetailAction(params.id);
+        const res = await getAdminKnowledgeDetailAction(id);
         if (!res.success) {
           setError(res.error || "Failed to fetch article");
           return;
@@ -34,12 +35,12 @@ export default function AdminKnowledgeDetailPage({ params }: { params: { id: str
     };
     
     fetchArticle();
-  }, [params.id]);
+  }, [id]);
 
   const handleTransition = async (status: string) => {
     setActionLoading(true);
     setError("");
-    const res = await transitionKnowledgeAction(params.id, status);
+    const res = await transitionKnowledgeAction(id, status);
     if (!res.success) {
       setError(res.error || "Transition failed");
       setActionLoading(false);
@@ -51,7 +52,7 @@ export default function AdminKnowledgeDetailPage({ params }: { params: { id: str
   const handleSaveRevision = async () => {
     setActionLoading(true);
     setError("");
-    const res = await createKnowledgeRevisionAction(params.id, { body });
+    const res = await createKnowledgeRevisionAction(id, { body });
     if (!res.success) {
       setError(res.error || "Revision creation failed");
       setActionLoading(false);

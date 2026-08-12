@@ -20,8 +20,9 @@ async function getKnowledgeBySlug(slug: string) {
   return res.json();
 }
 
-export default async function KnowledgeDetailPage({ params }: { params: { slug: string } }) {
-  const article = await getKnowledgeBySlug(params.slug);
+export default async function KnowledgeDetailPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
+  const article = await getKnowledgeBySlug(slug);
 
   if (!article) {
     notFound();

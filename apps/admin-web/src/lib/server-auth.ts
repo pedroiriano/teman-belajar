@@ -4,8 +4,9 @@ import { cookies } from "next/headers";
 import { getToken } from "next-auth/jwt";
 
 export async function getServerAccessToken(): Promise<string | null> {
+  const cookieStore = await cookies();
   const token = await getToken({
-    req: { headers: { cookie: cookies().toString() } } as never,
+    req: { headers: { cookie: cookieStore.toString() } } as never,
     secret: process.env.NEXTAUTH_SECRET,
   });
 

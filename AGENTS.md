@@ -105,6 +105,15 @@ Rules:
 ## 5. Frontend Rules
 
 - Next.js + React + TypeScript.
+- Runtime baseline is synchronized across Portal/Admin: Next.js `16.3.0`, React
+  `19.2.8`, Node `22`, and the exact tooling documented in
+  `docs/handoffs/TASK-003F-HANDOFF.md`.
+- Next.js request APIs are asynchronous. Await server `params`, `searchParams`,
+  `cookies`, `headers`, and `draftMode`; use `useParams` in client route pages.
+- Use ESLint flat config through `npm run lint`; `next lint` is forbidden because
+  it was removed in Next.js 16.
+- Dependency changes must keep both applications aligned and pass no-cache
+  Docker `npm ci`, lint, typecheck, build, and production audit.
 - Mobile-first.
 - Use shared design system.
 - Accessible semantics.

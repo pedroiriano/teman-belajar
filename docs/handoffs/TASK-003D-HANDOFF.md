@@ -1,5 +1,9 @@
 # TASK-003D Handoff — Docker Runtime Normalization and Governance
 
+> **Historical dependency note:** Catatan Next.js 14.2.35 dan risiko audit pada
+> handoff ini telah diselesaikan dan digantikan oleh `TASK-003F-HANDOFF.md`.
+> Registry Docker/port/volume di dokumen ini tetap berlaku.
+
 **Tanggal:** 2026-08-12
 **Status implementasi Docker:** selesai dan berjalan
 **Scope:** nama service/container/image, port, env/secret, network, volume, bootstrap, health check, runbook, governance, dan verifikasi runtime lokal

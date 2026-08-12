@@ -14,3 +14,8 @@ Untuk perubahan UI, `docs/design-system/*` adalah source of truth. Mulai
 `TASK-003E`, kontrak tema terang/gelap di
 `docs/design-system/THEME-INTEGRATION-RULES.md` wajib dibaca sebelum menyentuh
 shell, warna, token, atau komponen Portal/Admin.
+
+Untuk frontend runtime, `TASK-003F` menggantikan catatan dependency lama:
+Portal dan Admin wajib memakai Next.js `16.3.0`, React/React DOM `19.2.8`, Node
+`22`, ESLint flat config, dan async request APIs. Jangan menyalin perintah
+`next lint` atau tipe synchronous `params/searchParams/cookies` dari handoff lama.

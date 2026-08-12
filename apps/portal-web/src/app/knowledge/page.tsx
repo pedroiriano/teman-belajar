@@ -16,8 +16,9 @@ async function getKnowledge(page: number): Promise<Result> {
   } catch { return { data: [], error: true }; }
 }
 
-export default async function KnowledgePage({ searchParams }: { searchParams: { page?: string } }) {
-  const page = Math.max(1, Number.parseInt(searchParams.page || "1", 10) || 1);
+export default async function KnowledgePage({ searchParams }: { searchParams: Promise<{ page?: string }> }) {
+  const query = await searchParams;
+  const page = Math.max(1, Number.parseInt(query.page || "1", 10) || 1);
   const knowledgeResponse = await getKnowledge(page);
 
   return (

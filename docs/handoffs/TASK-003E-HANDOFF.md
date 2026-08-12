@@ -1,5 +1,9 @@
 # TASK-003E Handoff — Portal/Admin Light and Dark Themes
 
+> **Runtime supersession:** Verifikasi tema tetap berlaku, tetapi runtime
+> Next.js 14.2.35 dan risiko audit pada bagian akhir telah digantikan oleh
+> upgrade Next.js 16 di `TASK-003F-HANDOFF.md`.
+
 **Tanggal:** 2026-08-12
 **Status:** implemented; verification evidence must remain current
 **Scope:** Portal Techwind theme, Admin Cuba theme, persistence, accessibility,
@@ -127,7 +131,7 @@ Fill/update this section whenever theme behavior changes:
 |---|---|---|
 | lint | PASS — no warning/error | PASS — no warning/error |
 | TypeScript `--noEmit` | PASS | PASS |
-| production build | PASS — Docker Node 22/Next.js 14.2.35 | PASS — Docker Node 22/Next.js 14.2.35 |
+| production build | PASS — superseded by Docker Node 22/Next.js 16.3.0 verification in TASK-003F | PASS — superseded by Docker Node 22/Next.js 16.3.0 verification in TASK-003F |
 | light desktop | PASS — body `#f8fafc`, panel `#fff` | PASS — body `#f6f7fb`, card `#fff` |
 | dark desktop | PASS — body `#0f172a`, panel `#111827` | PASS — body `#1d1e26`, card `#262932` |
 | dark reload persistence | PASS — `data-theme=dark`, root `dark` | PASS — `data-theme=dark`, root `dark dark-only` |
@@ -141,12 +145,10 @@ read or transmitted for visual testing. Future changes with an existing safe
 session must repeat the authenticated rows; never weaken Keycloak authorization
 to obtain screenshots.
 
-## 8. Known Dependency Risk
+## 8. Resolved Dependency Risk
 
-`npm audit --omit=dev --audit-level=high` reports two high severity dependency
-groups in both applications (`next` and its nested `postcss`). The registry's
-automatic fix upgrades Next.js 14 to Next.js 16, a breaking major framework
-change. In accordance with `AGENTS.md`, this task did not run
-`npm audit fix --force`. The same risk and required separate upgrade task are
-recorded in `TASK-003D-HANDOFF.md`; do not hide the audit result or perform the
-major upgrade opportunistically inside a UI task.
+At completion of this historical task, audit reported high advisories in
+Next.js 14/PostCSS and required a separately approved major upgrade. The user
+subsequently approved and TASK-003F completed that upgrade. Current production
+audit is zero vulnerabilities for both applications. Do not run
+`npm audit fix --force`; use the exact governed versions from TASK-003F.
