@@ -189,6 +189,12 @@ services:
       REDIS_URL: redis://:${TB_REDIS_PASSWORD:?Set TB_REDIS_PASSWORD in infrastructure/docker/.env}@redis:6379/0
       KEYCLOAK_ISSUER_URL: ${TB_KEYCLOAK_URL:-http://keycloak.teman-belajar.localhost:8081}/realms/teman-belajar
       KEYCLOAK_AUDIENCE: teman-belajar-api
+      MINIO_ENDPOINT: minio:9000
+      MINIO_ACCESS_KEY: ${TB_MINIO_ROOT_USER:?Set TB_MINIO_ROOT_USER in infrastructure/docker/.env}
+      MINIO_SECRET_KEY: ${TB_MINIO_ROOT_PASSWORD:?Set TB_MINIO_ROOT_PASSWORD in infrastructure/docker/.env}
+      MINIO_BUCKET: teman-belajar-media
+      MINIO_USE_SSL: "false"
+      MEDIA_MAX_UPLOAD_BYTES: "20971520"
     extra_hosts:
       - keycloak.teman-belajar.localhost:host-gateway
     ports:

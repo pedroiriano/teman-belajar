@@ -1,8 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-
-// Consider using a proper markdown renderer or isomorphic-dompurify in a real scenario
-// For this vertical slice, we will inject HTML with a note.
+import { MarkdownRenderer } from "@/components/markdown-renderer";
 
 async function getKnowledgeBySlug(slug: string) {
   const API_BASE = process.env.PORTAL_API_INTERNAL_URL;
@@ -58,11 +56,7 @@ export default async function KnowledgeDetailPage({ params }: { params: Promise<
              </Link>
           </div>
 
-          <div className="prose prose-indigo max-w-none text-slate-700 space-y-4">
-            {article.body.split('\n').map((paragraph: string, i: number) => (
-              <p key={i}>{paragraph}</p>
-            ))}
-          </div>
+          <MarkdownRenderer content={article.body} />
         </div>
       </section>
     </article>

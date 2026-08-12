@@ -14,6 +14,7 @@ tags:
   - name: Learning
   - name: Me
   - name: Admin
+  - name: Media
 paths:
   /health:
     get:
@@ -512,6 +513,251 @@ paths:
           $ref: "#/components/responses/Forbidden"
         "422":
           $ref: "#/components/responses/ValidationError"
+  /admin/media:
+    get:
+      tags: [Admin, Media]
+      security:
+        - oidc: [content:read]
+      operationId: listAdminMedia
+      parameters:
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/PageSize"
+      responses:
+        "200":
+          description: All media assets
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MediaAssetList"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+    post:
+      tags: [Admin, Media]
+      security:
+        - oidc: [content:write]
+      operationId: createMedia
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file:
+                  type: string
+                  format: binary
+                title:
+                  type: string
+                alt_text:
+                  type: string
+                caption:
+                  type: string
+      responses:
+        "201":
+          description: Media uploaded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MediaUploadResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "413":
+          description: Payload too large
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+        "415":
+          description: Unsupported media type
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+  /admin/media/{id}:
+    get:
+      tags: [Admin, Media]
+      security:
+        - oidc: [content:read]
+      operationId: getAdminMedia
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: {type: string, format: uuid}
+      responses:
+        "200":
+          description: Media asset detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MediaAsset"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    patch:
+      tags: [Admin, Media]
+      security:
+        - oidc: [content:write]
+      operationId: updateMediaMetadata
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: {type: string, format: uuid}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MediaMetadataUpdate"
+      responses:
+        "200":
+          description: Metadata updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MediaAsset"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+  /admin/media/{id}/content:
+    get:
+      tags: [Admin, Media]
+      summary: Admin access to media binary content
+      description: Returns the binary content of the media asset, bypassing public access checks.
+      operationId: getAdminMediaContent
+      parameters:
+        - $ref: "#/components/parameters/PathId"
+      responses:
+        "200":
+          description: Media binary content
+          content:
+            application/octet-stream: {}
+            image/*: {}
+            application/pdf: {}
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /admin/media/{id}/archive:
+    post:
+      tags: [Admin, Media]
+      security:
+        - oidc: [content:write]
+      operationId: archiveMedia
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: {type: string, format: uuid}
+      responses:
+        "200":
+          description: Media archived
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          description: Media still in use
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+  /admin/media/{id}/attach:
+    post:
+      tags: [Admin, Media]
+      security:
+        - oidc: [content:write]
+      operationId: attachMedia
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: {type: string, format: uuid}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [entity_type, entity_id, usage_role]
+              properties:
+                entity_type: {type: string}
+                entity_id: {type: string}
+                usage_role: {type: string}
+                sort_order: {type: integer, default: 0}
+      responses:
+        "200":
+          description: Media attached
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /admin/media/{id}/detach:
+    post:
+      tags: [Admin, Media]
+      security:
+        - oidc: [content:write]
+      operationId: detachMedia
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: {type: string, format: uuid}
+        - name: entity_type
+          in: query
+          required: true
+          schema: {type: string}
+        - name: entity_id
+          in: query
+          required: true
+          schema: {type: string}
+        - name: usage_role
+          in: query
+          required: true
+          schema: {type: string}
+      responses:
+        "200":
+          description: Media detached
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /media/{id}/content:
+    get:
+      tags: [Media]
+      operationId: getMediaContent
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: {type: string, format: uuid}
+      responses:
+        "200":
+          description: Media binary content
+          content:
+            '*/*':
+              schema:
+                type: string
+                format: binary
+        "404":
+          $ref: "#/components/responses/NotFound"
 components:
   securitySchemes:
     oidc:
@@ -783,3 +1029,54 @@ components:
       required: [body]
       properties:
         body: {type: string}
+
+    MediaAsset:
+      type: object
+      required: [id, detected_mime_type, size_bytes, status, created_at]
+      properties:
+        id: {type: string, format: uuid}
+        original_filename: {type: [string, "null"]}
+        detected_mime_type: {type: string}
+        size_bytes: {type: integer}
+        title: {type: [string, "null"]}
+        alt_text: {type: [string, "null"]}
+        caption: {type: [string, "null"]}
+        status: {type: string, enum: [active, archived]}
+        created_at: {type: string, format: date-time}
+        archived_at: {type: [string, "null"], format: date-time}
+
+    MediaAssetList:
+      type: object
+      required: [data, pagination]
+      properties:
+        data:
+          type: array
+          items: {$ref: "#/components/schemas/MediaAsset"}
+        pagination:
+          $ref: "#/components/schemas/Pagination"
+
+    MediaUploadResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: "#/components/schemas/MediaAsset"
+
+    MediaMetadataUpdate:
+      type: object
+      properties:
+        title: {type: [string, "null"]}
+        alt_text: {type: [string, "null"]}
+        caption: {type: [string, "null"]}
+
+    MediaUsage:
+      type: object
+      required: [id, media_id, entity_type, entity_id, usage_role]
+      properties:
+        id: {type: string, format: uuid}
+        media_id: {type: string, format: uuid}
+        entity_type: {type: string}
+        entity_id: {type: string}
+        usage_role: {type: string}
+        sort_order: {type: integer}
+        created_at: {type: string, format: date-time}
