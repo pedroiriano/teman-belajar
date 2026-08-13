@@ -1,5 +1,5 @@
 import { cookies } from "next/headers";
-import { decode } from "next-auth/jwt";
+import { getToken } from "next-auth/jwt";
 
 /**
  * Retrieves the decoded NextAuth JWT token from cookies on the server.
@@ -9,23 +9,19 @@ import { decode } from "next-auth/jwt";
 export async function getBackendAccessToken(): Promise<string | null> {
   const cookieStore = await cookies();
   
-  // NextAuth stores cookies differently based on whether it is running on https (production) or http
-  const secureCookie = cookieStore.get("__Secure-next-auth.session-token");
-  const sessionToken = secureCookie?.value || cookieStore.get("next-auth.session-token")?.value;
-
-  if (!sessionToken) {
-    return null;
-  }
+  // Create a mock request object for getToken
+  const req = {
+    cookies: Object.fromEntries(cookieStore.getAll().map(c => [c.name, c.value])),
+    headers: {},
+  } as any;
 
   try {
-    const salt = secureCookie ? "__Secure-next-auth.session-token" : "next-auth.session-token";
-    const decoded = await decode({
-      token: sessionToken,
+    const token = await getToken({
+      req,
       secret: process.env.NEXTAUTH_SECRET || "",
-      salt: salt,
     });
 
-    return (decoded?.accessToken as string) || null;
+    return (token?.accessToken as string) || null;
   } catch (error) {
     console.error("Failed to decode NextAuth session token:", error);
     return null;
