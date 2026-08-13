@@ -96,9 +96,13 @@ func (c *Client) callWS(ctx context.Context, wsfunction string, params url.Value
 		return fmt.Errorf("%w: status code %d", learning.ErrMoodleUnavailable, resp.StatusCode)
 	}
 
-	body, err := io.ReadAll(io.LimitReader(resp.Body, 5*1024*1024)) // 5MB limit
+	limit := int64(5 * 1024 * 1024)
+	body, err := io.ReadAll(io.LimitReader(resp.Body, limit+1))
 	if err != nil {
 		return err
+	}
+	if int64(len(body)) > limit {
+		return fmt.Errorf("%w: response too large", learning.ErrMoodleInvalidResponse)
 	}
 
 	// Moodle often returns a 200 OK with an error JSON payload.
@@ -110,9 +114,9 @@ func (c *Client) callWS(ctx context.Context, wsfunction string, params url.Value
 		}
 	}
 
-	// Some functions might return false or null
+	// Reject false or null
 	if string(body) == "false" || string(body) == "null" {
-		return nil
+		return fmt.Errorf("%w: received null or false", learning.ErrMoodleInvalidResponse)
 	}
 
 	if dst != nil {
@@ -134,6 +138,9 @@ func (c *Client) mapError(err *MoodleError) error {
 		return learning.ErrMoodleInvalidResponse
 	case "webservice_function_not_found":
 		return learning.ErrMoodleFunction
+	case "errorcoursecompletedisabled", "completionnotenabled":
+		// Can be handled up the stack if it shouldn't be a fatal error
+		return fmt.Errorf("%w: errorcoursecompletedisabled", learning.ErrMoodleInvalidResponse)
 	default:
 		// Do not leak debuginfo
 		return fmt.Errorf("%w: %s", learning.ErrMoodleUnavailable, err.Message)

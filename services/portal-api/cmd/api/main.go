@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
 	"time"
 
@@ -54,6 +55,14 @@ func main() {
 	if moodleBaseURL == "" {
 		moodleBaseURL = "http://moodle"
 	}
+	
+	if moodleToken == "" {
+		log.Fatal("Missing required environment variable: TB_MOODLE_WEBSERVICE_TOKEN")
+	}
+	if _, err := url.ParseRequestURI(moodleBaseURL); err != nil {
+		log.Fatalf("Invalid MOODLE_INTERNAL_BASE_URL: %v", err)
+	}
+
 	moodleClient := moodle.NewClient(moodle.Config{
 		BaseURL: moodleBaseURL,
 		Token:   moodleToken,

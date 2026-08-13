@@ -35,6 +35,20 @@ func (s *Service) GetMyCourseCompletion(ctx context.Context, identity FederatedI
 	if err != nil {
 		return nil, err
 	}
+	courses, err := s.provider.ListUserCourses(ctx, user)
+	if err != nil {
+		return nil, err
+	}
+	enrolled := false
+	for _, c := range courses {
+		if c.ID == courseID {
+			enrolled = true
+			break
+		}
+	}
+	if !enrolled {
+		return nil, ErrCourseNotFound
+	}
 	return s.provider.GetCourseCompletion(ctx, user, courseID)
 }
 
@@ -42,6 +56,20 @@ func (s *Service) GetMyCourseGrades(ctx context.Context, identity FederatedIdent
 	user, err := s.provider.ResolveCurrentUser(ctx, identity)
 	if err != nil {
 		return nil, err
+	}
+	courses, err := s.provider.ListUserCourses(ctx, user)
+	if err != nil {
+		return nil, err
+	}
+	enrolled := false
+	for _, c := range courses {
+		if c.ID == courseID {
+			enrolled = true
+			break
+		}
+	}
+	if !enrolled {
+		return nil, ErrCourseNotFound
 	}
 	return s.provider.GetCourseGrades(ctx, user, courseID)
 }

@@ -2,7 +2,6 @@ package moodle
 
 import (
 	"context"
-	"fmt"
 	"net/url"
 	"strconv"
 	"strings"
@@ -33,7 +32,7 @@ func (c *Client) ListCourses(ctx context.Context, filter learning.CourseFilter) 
 	var courses []learning.LearningCourse
 	for _, crs := range response {
 		// Site course (ID=1) is usually omitted from standard listing
-		if crs.ID == 1 {
+		if crs.ID == 1 || crs.Visible == 0 {
 			continue
 		}
 		var startAt, endAt *int64
@@ -60,60 +59,29 @@ func (c *Client) ListCourses(ctx context.Context, filter learning.CourseFilter) 
 
 // ResolveCurrentUser calls core_user_get_users_by_field to find user by Keycloak sub or email.
 func (c *Client) ResolveCurrentUser(ctx context.Context, identity learning.FederatedIdentity) (*learning.LearningUser, error) {
-	if identity.Subject == "" && identity.Email == "" {
+	if identity.Subject == "" {
 		return nil, learning.ErrLearningUserNotMapped
 	}
 
 	params := url.Values{}
-	// First try resolving by username (Keycloak sub might map to username in Moodle auth_oauth2/oidc)
-	// Alternatively, try resolving by email if username fails.
-	field := "username"
-	value := identity.Subject // Often, sub is mapped to username when auto-provisioned
-	if identity.Subject == "" {
-		field = "email"
-		value = identity.Email
-	}
+	params.Set("subject", identity.Subject)
 
-	params.Set("field", field)
-	params.Set("values[0]", value)
-
-	var response []struct {
+	var response struct {
 		ID       int    `json:"id"`
 		Username string `json:"username"`
 		Email    string `json:"email"`
 	}
 
-	err := c.callWS(ctx, "core_user_get_users_by_field", params, &response)
+	err := c.callWS(ctx, "local_temanbelajar_resolve_federated_user", params, &response)
 	if err != nil {
-		return nil, err
-	}
-
-	if len(response) == 0 {
-		// Fallback to email if we searched by username and failed
-		if field == "username" && identity.Email != "" {
-			params.Set("field", "email")
-			params.Set("values[0]", identity.Email)
-			err = c.callWS(ctx, "core_user_get_users_by_field", params, &response)
-			if err != nil {
-				return nil, err
-			}
-		}
-	}
-
-	if len(response) == 0 {
+		// Moodle exception is thrown if not mapped, which our client parses into error
 		return nil, learning.ErrLearningUserNotMapped
 	}
 
-	if len(response) > 1 {
-		// Ambiguous mapping -> Fail Closed
-		return nil, fmt.Errorf("%w: ambiguous identity resolution", learning.ErrLearningUserNotMapped)
-	}
-
-	user := response[0]
 	return &learning.LearningUser{
-		ID:       user.ID,
-		Username: user.Username,
-		Email:    user.Email,
+		ID:       response.ID,
+		Username: response.Username,
+		Email:    response.Email,
 	}, nil
 }
 
@@ -126,7 +94,8 @@ func (c *Client) ListUserCourses(ctx context.Context, user *learning.LearningUse
 		ID         int     `json:"id"`
 		ShortName  string  `json:"shortname"`
 		FullName   string  `json:"fullname"`
-		EnrolledAt int64   `json:"timeaccess"` // timeaccess used as last access, timeenrolled is not always available in this endpoint output
+		TimeAccess int64   `json:"timeaccess"` // timeaccess used as last access
+		TimeEnrolled int64 `json:"timeenrolled,omitempty"`
 		Progress   *float64 `json:"progress"`
 		Completed  bool    `json:"completed"`
 	}
@@ -139,14 +108,19 @@ func (c *Client) ListUserCourses(ctx context.Context, user *learning.LearningUse
 	var courses []learning.EnrolledCourse
 	for _, crs := range response {
 		var lastAccess *int64
-		if crs.EnrolledAt > 0 { // Moodle returns timeaccess which we'll use if available
-			lastAccess = &crs.EnrolledAt
+		if crs.TimeAccess > 0 { // Moodle returns timeaccess which we'll use if available
+			lastAccess = &crs.TimeAccess
+		}
+		var enrolledAt *int64
+		if crs.TimeEnrolled > 0 {
+			enrolledAt = &crs.TimeEnrolled
 		}
 		
 		courses = append(courses, learning.EnrolledCourse{
 			ID:         crs.ID,
 			ShortName:  crs.ShortName,
 			FullName:   crs.FullName,
+			EnrolledAt: enrolledAt,
 			LastAccess: lastAccess,
 			Progress:   crs.Progress,
 			Completed:  crs.Completed,
@@ -174,9 +148,9 @@ func (c *Client) GetCourseCompletion(ctx context.Context, user *learning.Learnin
 
 	err := c.callWS(ctx, "core_completion_get_course_completion_status", params, &response)
 	if err != nil {
-		// Moodle might return an exception if completion is disabled for the course.
-		// We normalize this.
-		if strings.Contains(err.Error(), "completion") {
+		// Moodle returns exception if completion is disabled or not tracked.
+		// It might be mapped to ErrMoodleCompletionDisabled in client.go
+		if err == learning.ErrCourseNotFound || strings.Contains(err.Error(), "errorcoursecompletedisabled") {
 			return &learning.CourseCompletion{
 				CourseID:  courseID,
 				Completed: false,

@@ -794,16 +794,30 @@ paths:
                 properties:
                   data:
                     $ref: '#/components/schemas/LearningUser'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '502':
+          description: Bad Gateway
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '503':
+          $ref: '#/components/responses/DependencyUnavailable'
   /api/v1/learning/me/courses:
     get:
       tags:
         - Learning
-      summary: Get enrolled courses for current user
+      summary: List my enrolled courses
       security:
         - bearerAuth: []
       responses:
         '200':
-          description: Enrolled courses
+          description: A list of enrolled courses
           content:
             application/json:
               schema:
@@ -813,6 +827,20 @@ paths:
                     type: array
                     items:
                       $ref: '#/components/schemas/EnrolledCourse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '502':
+          description: Bad Gateway
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '503':
+          $ref: '#/components/responses/DependencyUnavailable'
   /api/v1/learning/me/courses/{courseId}/completion:
     get:
       tags:
@@ -840,18 +868,18 @@ paths:
     get:
       tags:
         - Learning
-      summary: Get user grades for a course
+      summary: Get course grades for current user
       security:
         - bearerAuth: []
       parameters:
-        - in: path
-          name: courseId
+        - name: courseId
+          in: path
           required: true
           schema:
             type: integer
       responses:
         '200':
-          description: User course grades
+          description: User grades for course
           content:
             application/json:
               schema:
@@ -861,6 +889,26 @@ paths:
                     type: array
                     items:
                       $ref: '#/components/schemas/GradeItem'
+        '400':
+          description: Bad Request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '502':
+          description: Bad Gateway
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '503':
+          $ref: '#/components/responses/DependencyUnavailable'
 
 components:
   securitySchemes:
@@ -1215,6 +1263,7 @@ components:
           type: string
     EnrolledCourse:
       type: object
+      required: [id, short_name, full_name, completed]
       properties:
         id:
           type: integer
@@ -1224,10 +1273,13 @@ components:
           type: string
         enrolled_at:
           type: integer
+          nullable: true
         last_access:
           type: integer
+          nullable: true
         progress:
           type: number
+          format: float
         completed:
           type: boolean
     CourseCompletion:

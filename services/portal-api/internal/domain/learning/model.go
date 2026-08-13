@@ -50,7 +50,7 @@ type EnrolledCourse struct {
 	ID              int     `json:"id"`
 	ShortName       string  `json:"short_name"`
 	FullName        string  `json:"full_name"`
-	EnrolledAt      int64   `json:"enrolled_at"`
+	EnrolledAt      *int64  `json:"enrolled_at,omitempty"`
 	LastAccess      *int64  `json:"last_access,omitempty"`
 	Progress        *float64 `json:"progress,omitempty"`
 	Completed       bool    `json:"completed"`

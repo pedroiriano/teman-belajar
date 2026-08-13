@@ -31,6 +31,11 @@ type CustomClaims struct {
 	Typ               string      `json:"typ"`
 }
 
+func ClaimsFromContext(ctx context.Context) (CustomClaims, bool) {
+	claims, ok := ctx.Value(ClaimsContextKey).(CustomClaims)
+	return claims, ok
+}
+
 type AuthConfig struct {
 	IssuerURL     string
 	Audience      string

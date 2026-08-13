@@ -1,0 +1,73 @@
+    LearningCourse:
+      type: object
+      properties:
+        id:
+          type: integer
+        short_name:
+          type: string
+        full_name:
+          type: string
+        summary:
+          type: string
+        category:
+          type: string
+        start_at:
+          type: integer
+        end_at:
+          type: integer
+        visible:
+          type: boolean
+    LearningUser:
+      type: object
+      properties:
+        id:
+          type: integer
+        username:
+          type: string
+        email:
+          type: string
+    EnrolledCourse:
+      type: object
+      properties:
+        id:
+          type: integer
+        short_name:
+          type: string
+        full_name:
+          type: string
+        enrolled_at:
+          type: integer
+        last_access:
+          type: integer
+        progress:
+          type: number
+        completed:
+          type: boolean
+    CourseCompletion:
+      type: object
+      properties:
+        course_id:
+          type: integer
+        completed:
+          type: boolean
+        status:
+          type: string
+    GradeItem:
+      type: object
+      properties:
+        id:
+          type: integer
+        item_name:
+          type: string
+        grade:
+          type: number
+        grade_min:
+          type: number
+        grade_max:
+          type: number
+        grade_formatted:
+          type: string
+        feedback:
+          type: string
+        hidden:
+          type: boolean

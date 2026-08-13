@@ -76,10 +76,44 @@ func TestClient_MalformedJSON(t *testing.T) {
 	}
 }
 
+func TestClient_LargeResponse(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		// Write 6MB of data
+		w.Write(make([]byte, 6*1024*1024))
+	}))
+	defer server.Close()
+
+	client := NewClient(Config{BaseURL: server.URL, Token: "test", Timeout: 5 * time.Second})
+	
+	var dst map[string]interface{}
+	err := client.callWS(context.Background(), "test_func", nil, &dst)
+	
+	if err == nil || !strings.Contains(err.Error(), "response too large") {
+		t.Errorf("expected response too large error, got %v", err)
+	}
+}
+
+func TestClient_NullFalse(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(`null`))
+	}))
+	defer server.Close()
+
+	client := NewClient(Config{BaseURL: server.URL, Token: "test", Timeout: 1 * time.Second})
+	
+	err := client.callWS(context.Background(), "test_func", nil, nil)
+	
+	if err == nil || !strings.Contains(err.Error(), "received null or false") {
+		t.Errorf("expected received null or false error, got %v", err)
+	}
+}
+
 func TestResolveCurrentUser_Mapped(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(`[{"id": 12, "username": "testuser", "email": "test@test.com"}]`))
+		w.Write([]byte(`{"id": 12, "username": "testuser", "email": "test@test.com"}`))
 	}))
 	defer server.Close()
 
@@ -97,7 +131,7 @@ func TestResolveCurrentUser_Mapped(t *testing.T) {
 func TestResolveCurrentUser_Unmapped(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(`[]`))
+		w.Write([]byte(`{"exception":"moodle_exception","errorcode":"invalidrecord","message":"Invalid record"}`))
 	}))
 	defer server.Close()
 
@@ -112,15 +146,15 @@ func TestResolveCurrentUser_Unmapped(t *testing.T) {
 func TestResolveCurrentUser_Ambiguous(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(`[{"id": 1}, {"id": 2}]`))
+		w.Write([]byte(`{"exception":"moodle_exception","errorcode":"ambiguous_identity","message":"Ambiguous identity resolution"}`))
 	}))
 	defer server.Close()
 
 	client := NewClient(Config{BaseURL: server.URL, Token: "test", Timeout: 1 * time.Second})
 	
 	_, err := client.ResolveCurrentUser(context.Background(), learning.FederatedIdentity{Subject: "ambiguous"})
-	if err == nil || err.Error() != "learning user identity not mapped: ambiguous identity resolution" {
-		t.Errorf("expected ambiguous identity error, got %v", err)
+	if err == nil || err != learning.ErrLearningUserNotMapped {
+		t.Errorf("expected ErrLearningUserNotMapped, got %v", err)
 	}
 }
 
@@ -141,10 +175,10 @@ func TestListCourses_Filters(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if len(courses) != 2 {
-		t.Errorf("expected 2 courses (id=1 omitted), got %d", len(courses))
+	if len(courses) != 1 {
+		t.Errorf("expected 1 courses (id=1 and visible=0 omitted), got %d", len(courses))
 	}
-	if courses[0].ID != 2 {
+	if len(courses) > 0 && courses[0].ID != 2 {
 		t.Errorf("expected course ID 2, got %d", courses[0].ID)
 	}
 }
