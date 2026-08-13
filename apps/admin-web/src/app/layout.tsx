@@ -57,7 +57,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
                   <ThemeToggle />
                   <span className="hidden text-right md:block"><span className="block text-sm font-bold text-slate-800">{session.user?.name || session.user?.email}</span><span className="block text-xs text-slate-500">{session.roles?.includes("Portal Administrator") ? "Portal Administrator" : session.roles?.includes("Reviewer") ? "Reviewer" : "Content Editor"}</span></span>
                   <span className="grid h-10 w-10 place-items-center rounded-full bg-orange-100 text-sm font-black text-orange-700">{(session.user?.name || session.user?.email || "TB").slice(0, 2).toUpperCase()}</span>
-                  <Link href="/api/auth/signout" className="admin-button-secondary hidden sm:inline-flex">Keluar</Link>
+                  <Link href="/api/auth/federated-logout" prefetch={false} className="admin-button-secondary hidden sm:inline-flex">Keluar</Link>
                 </div>
               </header>
               <main id="admin-content" className="p-4 sm:p-7 lg:p-8">{children}</main>
