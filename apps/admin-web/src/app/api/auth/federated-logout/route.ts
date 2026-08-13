@@ -6,10 +6,16 @@ export async function GET(req: NextRequest) {
   try {
     const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
     
-    // Clear NextAuth session cookies
+    // Clear all NextAuth session cookies (including chunked cookies)
     const cookieStore = await cookies();
-    cookieStore.delete("next-auth.session-token");
-    cookieStore.delete("__Secure-next-auth.session-token");
+    cookieStore.getAll().forEach((cookie) => {
+      if (
+        cookie.name.startsWith("next-auth.") ||
+        cookie.name.startsWith("__Secure-next-auth.")
+      ) {
+        cookieStore.delete(cookie.name);
+      }
+    });
 
     const issuer = process.env.KEYCLOAK_ISSUER || "http://keycloak.teman-belajar.localhost:8081/realms/teman-belajar";
     const postLogoutUrl = encodeURIComponent(process.env.NEXTAUTH_URL || "http://localhost:3001");
