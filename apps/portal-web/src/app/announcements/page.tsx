@@ -21,7 +21,7 @@ export default async function AnnouncementsPage() {
 
   return (
     <div>
-      <PageHero tone="amber" eyebrow="Informasi Terkini" title="Pengumuman penting untuk Anda" description="Pantau informasi operasional, jadwal, dan pembaruan penting dari Teman Belajar." />
+      <PageHero eyebrow="Informasi Terkini" title="Pengumuman penting untuk Anda" description="Pantau informasi operasional, jadwal, dan pembaruan penting dari Teman Belajar." />
 
       <section className="portal-container max-w-5xl py-12 sm:py-16">
         {announcementsRes.error ? <ErrorState title="Pengumuman belum dapat dimuat" /> : announcementsRes.data.length === 0 ? (
@@ -29,12 +29,12 @@ export default async function AnnouncementsPage() {
         ) : (
           <div className="space-y-5">
             {announcementsRes.data.map((ann: Announcement) => (
-              <article key={ann.id} className="portal-card overflow-hidden border-l-4 border-l-amber-500">
+              <article key={ann.id} className="portal-card overflow-hidden border-l-4 border-l-sky-500">
                 <div className="p-6 md:p-8">
                   <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
-                    <div><p className="text-xs font-black uppercase tracking-[0.16em] text-amber-700">Pengumuman aktif</p><h2 className="mt-2 text-2xl font-extrabold text-slate-900">{ann.title}</h2></div>
+                    <div><p className="text-xs font-black uppercase tracking-[0.16em] text-sky-700">Pengumuman aktif</p><h2 className="mt-2 text-2xl font-extrabold text-slate-900">{ann.title}</h2></div>
                     {ann.start_at && ann.end_at && (
-                      <span className="whitespace-nowrap rounded-full bg-amber-100 px-3 py-1.5 text-xs font-bold text-amber-900">
+                      <span className="whitespace-nowrap rounded-full bg-sky-100 px-3 py-1.5 text-xs font-bold text-sky-900">
                         {formatDate(ann.start_at)} — {formatDate(ann.end_at)}
                       </span>
                     )}
