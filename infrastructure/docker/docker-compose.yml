@@ -230,6 +230,7 @@ services:
       MINIO_BUCKET: teman-belajar-media
       MINIO_USE_SSL: "false"
       MEDIA_MAX_UPLOAD_BYTES: "20971520"
+      TB_MOODLE_WEBSERVICE_TOKEN: ${TB_MOODLE_WEBSERVICE_TOKEN}
     extra_hosts:
       - keycloak.teman-belajar.localhost:host-gateway
     ports:

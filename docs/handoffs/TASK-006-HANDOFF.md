@@ -28,7 +28,7 @@ Branch `antigravity/task-006-my-learning-dashboard` dibuat dan digunakan.
 Seluruh persyaratan produk "My Learning" untuk menampilkan *courses*, *progress*, *completion*, dan *grades* diimplementasikan.
 
 ## 10. Route Decision
-Rute `/belajar-saya` digunakan untuk My Learning Dashboard karena sesuai dengan konvensi bahasa, dan tautan eksisting `/dashboard` diarahkan (redirect) ke `/belajar-saya`.
+Rute `/my-learning` digunakan untuk My Learning Dashboard karena sesuai dengan konvensi bahasa, dan tautan eksisting `/dashboard` diarahkan (redirect) ke `/my-learning`.
 
 ## 11. Authentication Boundary
 Data di-*fetch* melalui server side.
@@ -40,7 +40,7 @@ Memanfaatkan *Route Handlers* (BFF) di `/api/learning/me/courses/[courseId]/...`
 `accessToken` Keycloak tidak pernah dimasukkan ke klien; dia disadap di server Next.js melalui JWT decode dan diteruskan dengan aman ke Backend Go.
 
 ## 14. Initial Data Fetch Strategy
-Menggunakan konkuren `Promise.all` di Server Component pada `/belajar-saya` untuk mencegah N+1 (course list dan user profile diload tanpa delay berantai).
+Menggunakan konkuren `Promise.all` di Server Component pada `/my-learning` untuk mencegah N+1 (course list dan user profile diload tanpa delay berantai).
 
 ## 15. N+1 Avoidance
 Selesai, implementasi *initial load* hanya mengambil data esensial.

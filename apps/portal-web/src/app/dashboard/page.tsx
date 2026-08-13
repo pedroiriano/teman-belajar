@@ -7,5 +7,5 @@ export default async function Dashboard() {
   const session = await getServerSession(authOptions);
   if (!session) redirect("/api/auth/signin?callbackUrl=/dashboard");
   
-  redirect("/belajar-saya");
+  redirect("/my-learning");
 }

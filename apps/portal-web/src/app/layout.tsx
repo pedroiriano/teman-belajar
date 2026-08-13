@@ -62,13 +62,13 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
             <div className="ml-auto flex items-center gap-2 lg:ml-0">
               <ThemeToggle />
               <div className="hidden items-center gap-3 sm:flex">
-                {session ? <><Link href="/belajar-saya" className="text-sm font-bold text-slate-700 hover:text-teal-700">Pembelajaran Saya</Link><Link href="/api/auth/federated-logout" prefetch={false} className="portal-button-secondary">Keluar</Link></> : <Link href="/api/auth/signin" className="portal-button-primary">Masuk ke akun</Link>}
+                {session ? <><Link href="/my-learning" className="text-sm font-bold text-slate-700 hover:text-teal-700">Pembelajaran Saya</Link><Link href="/api/auth/federated-logout" prefetch={false} className="portal-button-secondary">Keluar</Link></> : <Link href="/api/auth/signin" className="portal-button-primary">Masuk ke akun</Link>}
               </div>
               <details className="relative lg:hidden">
                 <summary className="portal-menu-button grid h-11 w-11 cursor-pointer list-none place-items-center rounded-xl border" aria-label="Buka navigasi"><svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></summary>
                 <div className="portal-mobile-menu absolute right-0 top-14 w-72 rounded-2xl border p-3 shadow-2xl">
                   <nav className="grid" aria-label="Navigasi seluler">{navItems.map((item) => <Link key={item.href} href={item.href} className="rounded-xl px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-teal-50 hover:text-teal-800">{item.label}</Link>)}</nav>
-                  <div className="mt-2 border-t border-slate-100 pt-3">{session ? <div className="grid gap-2"><Link href="/belajar-saya" className="portal-button-secondary">Pembelajaran Saya</Link><Link href="/api/auth/federated-logout" prefetch={false} className="portal-button-primary">Keluar</Link></div> : <Link href="/api/auth/signin" className="portal-button-primary w-full">Masuk ke akun</Link>}</div>
+                  <div className="mt-2 border-t border-slate-100 pt-3">{session ? <div className="grid gap-2"><Link href="/my-learning" className="portal-button-secondary">Pembelajaran Saya</Link><Link href="/api/auth/federated-logout" prefetch={false} className="portal-button-primary">Keluar</Link></div> : <Link href="/api/auth/signin" className="portal-button-primary w-full">Masuk ke akun</Link>}</div>
                 </div>
               </details>
             </div>

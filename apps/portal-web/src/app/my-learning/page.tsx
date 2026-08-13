@@ -34,11 +34,11 @@ async function getLearningData(token: string) {
 
 export default async function MyLearningDashboard() {
   const session = await getServerSession(authOptions);
-  if (!session) redirect("/api/auth/signin?callbackUrl=/belajar-saya");
+  if (!session) redirect("/api/auth/signin?callbackUrl=/my-learning");
 
   const accessToken = await getBackendAccessToken();
   if (!accessToken) {
-    redirect("/api/auth/signin?callbackUrl=/belajar-saya");
+    redirect("/api/auth/signin?callbackUrl=/my-learning");
   }
 
   const data = await getLearningData(accessToken);
