@@ -58,5 +58,18 @@ fi
 chown www-data:www-data "$MOODLE_DIR/config.php"
 chmod 0640 "$MOODLE_DIR/config.php"
 
+# Bypass Moodle's curl security block for local Keycloak proxy
+echo "Bypassing Moodle cURL SSRF protection for local Keycloak proxy..."
+sudo -u www-data php "$MOODLE_DIR/admin/cli/cfg.php" --name=curlsecurityallowedport --set="8080
+8081"
+sudo -u www-data php "$MOODLE_DIR/admin/cli/cfg.php" --name=curlsecurityblockedhosts --set="127.0.0.2"
+
+# Start socat proxy so that PHP cURL requests to
+# keycloak.teman-belajar.localhost:8081 (which resolves to 127.0.0.1
+# inside the container due to the .localhost TLD) are forwarded to the
+# actual Keycloak Docker service on its internal port.
+echo "Starting Keycloak loopback proxy (socat)..."
+socat TCP-LISTEN:8081,fork,bind=127.0.0.1 TCP:keycloak:8080 &
+
 echo "Starting Apache..."
 exec "$@"

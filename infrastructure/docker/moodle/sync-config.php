@@ -47,6 +47,10 @@ if ($count === 0) {
     $config .= "\n\$CFG->oauth2allowinsecure = " . var_export($oauth2allowinsecure, true) . ";\n";
 }
 
+// Remove legacy curlsecurity overrides from config.php if they exist
+$config = preg_replace('/\$CFG->curlsecurityallowedport\s*=\s*[^;]+;/', '', $config);
+$config = preg_replace('/\$CFG->curlsecurityblockedhosts\s*=\s*[^;]+;/', '', $config);
+
 $temporaryPath = $configPath . '.tmp';
 if (file_put_contents($temporaryPath, $config, LOCK_EX) === false) {
     fwrite(STDERR, "Unable to write temporary Moodle config.php.\n");
