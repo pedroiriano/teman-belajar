@@ -38,7 +38,9 @@ export default async function MyLearningDashboard() {
 
   const accessToken = await getBackendAccessToken();
   if (!accessToken) {
-    redirect("/api/auth/signin?callbackUrl=/my-learning");
+    // If we have a session but no access token (e.g. stale cookie from old version),
+    // force a federated logout to clear the bad session and break the infinite loop.
+    redirect("/api/auth/federated-logout");
   }
 
   const data = await getLearningData(accessToken);
