@@ -10,18 +10,19 @@ export async function getBackendAccessToken(): Promise<string | null> {
   const cookieStore = await cookies();
   
   // NextAuth stores cookies differently based on whether it is running on https (production) or http
-  const sessionToken = 
-    cookieStore.get("__Secure-next-auth.session-token")?.value ||
-    cookieStore.get("next-auth.session-token")?.value;
+  const secureCookie = cookieStore.get("__Secure-next-auth.session-token");
+  const sessionToken = secureCookie?.value || cookieStore.get("next-auth.session-token")?.value;
 
   if (!sessionToken) {
     return null;
   }
 
   try {
+    const salt = secureCookie ? "__Secure-next-auth.session-token" : "next-auth.session-token";
     const decoded = await decode({
       token: sessionToken,
       secret: process.env.NEXTAUTH_SECRET || "",
+      salt: salt,
     });
 
     return (decoded?.accessToken as string) || null;
