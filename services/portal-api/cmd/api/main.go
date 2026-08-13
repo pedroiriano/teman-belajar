@@ -11,8 +11,10 @@ import (
 	_ "github.com/lib/pq"
 
 	"teman-belajar-api/internal/adapters/minio"
+	"teman-belajar-api/internal/adapters/moodle"
 	"teman-belajar-api/internal/domain/cms"
 	"teman-belajar-api/internal/domain/knowledge"
+	"teman-belajar-api/internal/domain/learning"
 	"teman-belajar-api/internal/domain/media"
 	"teman-belajar-api/internal/repository/postgres"
 	"teman-belajar-api/internal/transport/http/handler"
@@ -47,9 +49,22 @@ func main() {
 	knowledgeRepo := postgres.NewKnowledgeRepository(db)
 	knowledgeSvc := knowledge.NewService(knowledgeRepo, auditRepo)
 
+	moodleToken := os.Getenv("TB_MOODLE_WEBSERVICE_TOKEN")
+	moodleBaseURL := os.Getenv("MOODLE_INTERNAL_BASE_URL")
+	if moodleBaseURL == "" {
+		moodleBaseURL = "http://moodle"
+	}
+	moodleClient := moodle.NewClient(moodle.Config{
+		BaseURL: moodleBaseURL,
+		Token:   moodleToken,
+		Timeout: 10 * time.Second,
+	})
+	learningSvc := learning.NewService(moodleClient)
+
 	// Handlers
 	cmsHandler := handler.NewCMSHandler(cmsSvc)
 	knowledgeHandler := handler.NewKnowledgeHandler(knowledgeSvc)
+	learningHandler := handler.NewLearningHandler(learningSvc)
 
 	// Media Storage & Services
 	minioEndpoint := os.Getenv("MINIO_ENDPOINT")
@@ -125,6 +140,13 @@ func main() {
 
 	// Protected endpoints
 	mux.Handle("/api/v1/me", authMiddleware(http.HandlerFunc(handler.GetMe)))
+	
+	// Learning endpoints
+	mux.Handle("GET /api/v1/learning/courses", authMiddleware(http.HandlerFunc(learningHandler.ListCourses)))
+	mux.Handle("GET /api/v1/learning/me", authMiddleware(http.HandlerFunc(learningHandler.GetMe)))
+	mux.Handle("GET /api/v1/learning/me/courses", authMiddleware(http.HandlerFunc(learningHandler.ListMyCourses)))
+	mux.Handle("GET /api/v1/learning/me/courses/{courseId}/completion", authMiddleware(http.HandlerFunc(learningHandler.GetMyCourseCompletion)))
+	mux.Handle("GET /api/v1/learning/me/courses/{courseId}/grades", authMiddleware(http.HandlerFunc(learningHandler.GetMyCourseGrades)))
 
 	// Admin CMS Endpoints
 	mux.Handle("/api/v1/admin/news", adminAuthMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
