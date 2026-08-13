@@ -86,7 +86,7 @@
       "implicitFlowEnabled": false,
       "rootUrl": "${MOODLE_BASE_URL}",
       "redirectUris": [
-        "${MOODLE_BASE_URL}/*"
+        "${MOODLE_BASE_URL}/admin/oauth2callback.php"
       ],
       "webOrigins": [
         "${MOODLE_BASE_URL}"

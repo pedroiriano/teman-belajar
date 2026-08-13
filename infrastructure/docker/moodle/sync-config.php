@@ -12,6 +12,8 @@ $settings = [
     'dataroot' => '/var/www/moodledata',
 ];
 
+$oauth2allowinsecure = filter_var(getenv('MOODLE_ALLOW_INSECURE_OAUTH2'), FILTER_VALIDATE_BOOLEAN);
+
 $config = file_get_contents($configPath);
 if ($config === false) {
     fwrite(STDERR, "Unable to read Moodle config.php.\n");
@@ -34,6 +36,15 @@ foreach ($settings as $property => $value) {
     }
 
     $config = $updated;
+}
+
+// Sync oauth2allowinsecure (boolean)
+$pattern = '/\$CFG->oauth2allowinsecure\s*=\s*[^;]+;/';
+$replacement = '$CFG->oauth2allowinsecure = ' . var_export($oauth2allowinsecure, true) . ';';
+$config = preg_replace($pattern, $replacement, $config, 1, $count);
+if ($count === 0) {
+    // If not found, add it
+    $config .= "\n\$CFG->oauth2allowinsecure = " . var_export($oauth2allowinsecure, true) . ";\n";
 }
 
 $temporaryPath = $configPath . '.tmp';
