@@ -143,8 +143,11 @@ services:
       MOODLE_ADMIN_USER: ${TB_MOODLE_ADMIN_USER:?Set TB_MOODLE_ADMIN_USER in infrastructure/docker/.env}
       MOODLE_ADMIN_PASSWORD: ${TB_MOODLE_ADMIN_PASSWORD:?Set TB_MOODLE_ADMIN_PASSWORD in infrastructure/docker/.env}
       MOODLE_ADMIN_EMAIL: ${TB_MOODLE_ADMIN_EMAIL:?Set TB_MOODLE_ADMIN_EMAIL in infrastructure/docker/.env}
+      MOODLE_ALLOW_INSECURE_OAUTH2: ${TB_MOODLE_ALLOW_INSECURE_OAUTH2:-false}
     ports:
       - "${TB_BIND_ADDRESS:-127.0.0.1}:${TB_MOODLE_PORT:-8082}:80"
+    extra_hosts:
+      - keycloak.teman-belajar.localhost:host-gateway
     depends_on:
       moodle-db:
         condition: service_healthy
@@ -160,6 +163,38 @@ services:
       start_period: 90s
     labels:
       com.teman-belajar.component: moodle
+
+  moodle-cron:
+    image: teman-belajar-moodle:local
+    build:
+      context: ./moodle
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    command: >
+      bash -c "while true; do sudo -u www-data php /var/www/html/admin/cli/cron.php; sleep 60; done"
+    environment:
+      MOODLE_DATABASE_HOST: moodle-db
+      MOODLE_DATABASE_NAME: ${TB_MOODLE_DB_NAME:?Set TB_MOODLE_DB_NAME in infrastructure/docker/.env}
+      MOODLE_DATABASE_USER: ${TB_MOODLE_DB_USER:?Set TB_MOODLE_DB_USER in infrastructure/docker/.env}
+      MOODLE_DATABASE_PASSWORD: ${TB_MOODLE_DB_PASSWORD:?Set TB_MOODLE_DB_PASSWORD in infrastructure/docker/.env}
+      MOODLE_BASE_URL: ${TB_MOODLE_URL:-http://localhost:8082}
+      MOODLE_ADMIN_USER: ${TB_MOODLE_ADMIN_USER:?Set TB_MOODLE_ADMIN_USER in infrastructure/docker/.env}
+      MOODLE_ADMIN_PASSWORD: ${TB_MOODLE_ADMIN_PASSWORD:?Set TB_MOODLE_ADMIN_PASSWORD in infrastructure/docker/.env}
+      MOODLE_ADMIN_EMAIL: ${TB_MOODLE_ADMIN_EMAIL:?Set TB_MOODLE_ADMIN_EMAIL in infrastructure/docker/.env}
+      MOODLE_ALLOW_INSECURE_OAUTH2: ${TB_MOODLE_ALLOW_INSECURE_OAUTH2:-false}
+    extra_hosts:
+      - keycloak.teman-belajar.localhost:host-gateway
+    depends_on:
+      moodle-db:
+        condition: service_healthy
+      moodle:
+        condition: service_healthy
+    volumes:
+      - moodle-app-data:/var/www/html
+      - moodle-data:/var/www/moodledata
+      - ../../integrations/moodle-plugin/local_temanbelajar:/var/www/html/local/temanbelajar:ro
+    labels:
+      com.teman-belajar.component: moodle-cron
 
   migrate:
     image: teman-belajar-api:local
