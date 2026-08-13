@@ -24,7 +24,7 @@ export async function GET(req: NextRequest) {
     if (token && token.idToken) {
       url += `&id_token_hint=${token.idToken}`;
     } else {
-      url += `&client_id=${process.env.KEYCLOAK_ID || "teman-belajar-moodle"}`;
+      url += `&client_id=${process.env.KEYCLOAK_ID || "teman-belajar-web"}`;
     }
 
     return NextResponse.redirect(url);

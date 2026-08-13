@@ -3,6 +3,7 @@ import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { getBackendAccessToken } from "@/lib/server-auth";
 import { CourseList } from "@/components/learning/course-list";
+import type { EnrolledCourse } from "@/lib/learning/types";
 
 async function getLearningData(token: string) {
   const apiUrl = process.env.PORTAL_API_INTERNAL_URL;
@@ -68,14 +69,16 @@ export default async function MyLearningDashboard() {
   }
 
   const firstName = session.user?.name?.split(" ")[0] || "Pembelajar";
-  const { courses } = data;
+  const courses: EnrolledCourse[] = data.courses;
 
-  const inProgress = courses.filter((c: any) => c.status !== "completed");
-  const completed = courses.filter((c: any) => c.status === "completed");
+  const inProgress = courses.filter((c) => !c.completed);
+  const completed = courses.filter((c) => c.completed);
 
-  const continueCourse = [...inProgress].sort((a: any, b: any) => {
+  const continueCourse = [...inProgress].sort((a, b) => {
     return (b.last_access || 0) - (a.last_access || 0);
   })[0];
+
+  const moodleBaseUrl = process.env.MOODLE_PUBLIC_BASE_URL || process.env.TB_MOODLE_URL || "http://localhost:8082";
 
   return (
     <div className="portal-container py-10 sm:py-14">
@@ -101,6 +104,7 @@ export default async function MyLearningDashboard() {
       <CourseList 
         courses={courses} 
         continueCourse={continueCourse} 
+        moodleBaseUrl={moodleBaseUrl}
       />
     </div>
   );

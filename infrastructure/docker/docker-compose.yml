@@ -265,6 +265,7 @@ services:
       KEYCLOAK_SECRET: ${TB_KEYCLOAK_WEB_CLIENT_SECRET:?Set TB_KEYCLOAK_WEB_CLIENT_SECRET in infrastructure/docker/.env}
       KEYCLOAK_ISSUER: ${TB_KEYCLOAK_URL:-http://keycloak.teman-belajar.localhost:8081}/realms/teman-belajar
       PORTAL_API_INTERNAL_URL: http://api:8080
+      MOODLE_PUBLIC_BASE_URL: ${TB_MOODLE_URL:-http://localhost:8082}
     extra_hosts:
       - keycloak.teman-belajar.localhost:host-gateway
     ports:
