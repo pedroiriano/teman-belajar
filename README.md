@@ -46,7 +46,7 @@ Teman Belajar API/BFF (Go)
 ## Start Here
 
 1. Read `AGENTS.md`.
-2. Read `00-INDEX.md`.
+2. Gemini users confirm root `GEMINI.md` imports are loaded; all agents then read `00-INDEX.md`.
 3. Read relevant canonical docs in `docs/canonical/`.
 4. Review ADRs in `docs/adr/`.
 5. Start with `tasks/TASK-000-repository-bootstrap.md`.

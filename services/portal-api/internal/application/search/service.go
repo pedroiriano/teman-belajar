@@ -8,6 +8,7 @@ import (
 
 	"github.com/google/uuid"
 
+	"teman-belajar-api/internal/domain/engagement"
 	domainsearch "teman-belajar-api/internal/domain/search"
 )
 
@@ -25,8 +26,32 @@ type Service struct {
 	provider domainsearch.Provider
 }
 
+type CandidateProvider interface {
+	Discover(ctx context.Context, query engagement.CandidateQuery) ([]engagement.Candidate, error)
+}
+
 func NewService(provider domainsearch.Provider) *Service {
 	return &Service{provider: provider}
+}
+
+func (s *Service) Discover(ctx context.Context, query engagement.CandidateQuery) ([]engagement.Candidate, error) {
+	if query.TargetType != engagement.TargetKnowledge || query.Limit < 1 || query.Limit > 40 {
+		return nil, ErrInvalidQuery
+	}
+	query.Text = strings.TrimSpace(query.Text)
+	if len([]rune(query.Text)) > 200 || strings.IndexFunc(query.Text, unicode.IsControl) >= 0 {
+		return nil, ErrInvalidQuery
+	}
+	if query.CategoryID != "" {
+		if _, err := uuid.Parse(query.CategoryID); err != nil {
+			return nil, ErrInvalidQuery
+		}
+	}
+	provider, ok := s.provider.(CandidateProvider)
+	if !ok {
+		return nil, errors.New("search candidate discovery is unavailable")
+	}
+	return provider.Discover(ctx, query)
 }
 
 func (s *Service) Search(ctx context.Context, query domainsearch.Query) (domainsearch.Result, error) {

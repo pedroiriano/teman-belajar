@@ -14,6 +14,7 @@ import (
 	"teman-belajar-api/internal/adapters/minio"
 	"teman-belajar-api/internal/adapters/moodle"
 	searchadapter "teman-belajar-api/internal/adapters/search"
+	engagementapplication "teman-belajar-api/internal/application/engagement"
 	searchapplication "teman-belajar-api/internal/application/search"
 	"teman-belajar-api/internal/domain/cms"
 	"teman-belajar-api/internal/domain/knowledge"
@@ -51,6 +52,8 @@ func main() {
 
 	knowledgeRepo := postgres.NewKnowledgeRepository(db)
 	knowledgeSvc := knowledge.NewService(knowledgeRepo, auditRepo)
+	engagementRepo := postgres.NewEngagementRepository(db)
+	engagementResolver := engagementapplication.NewKnowledgeTargetResolver(knowledgeRepo)
 
 	moodleToken := os.Getenv("TB_MOODLE_WEBSERVICE_TOKEN")
 	moodleBaseURL := os.Getenv("MOODLE_INTERNAL_BASE_URL")
@@ -119,6 +122,7 @@ func main() {
 		log.Fatal("SEARCH_CAPTURE_RAW_QUERY must be false; raw query capture is disabled by policy")
 	}
 	var searchHandler *handler.SearchHandler
+	var searchService *searchapplication.Service
 	if meiliURL != "" {
 		if _, err := url.ParseRequestURI(meiliURL); err != nil {
 			log.Fatalf("Invalid MEILI_URL: %v", err)
@@ -130,9 +134,11 @@ func main() {
 			log.Fatal("Missing required environment variable: MEILI_INDEX_NAME")
 		}
 		meiliClient := searchadapter.NewMeilisearchClient(meiliURL, meiliKey, meiliIndexName)
-		searchService := searchapplication.NewService(meiliClient)
+		searchService = searchapplication.NewService(meiliClient)
 		searchHandler = handler.NewSearchHandler(searchService)
 	}
+	engagementService := engagementapplication.NewService(engagementRepo, engagementResolver, searchService)
+	engagementHandler := handler.NewEngagementHandler(engagementService)
 
 	issuerURL := os.Getenv("KEYCLOAK_ISSUER_URL")
 	if issuerURL == "" {
@@ -185,6 +191,16 @@ func main() {
 
 	// Protected endpoints
 	mux.Handle("/api/v1/me", authMiddleware(http.HandlerFunc(handler.GetMe)))
+	mux.Handle("GET /api/v1/me/bookmarks", authMiddleware(http.HandlerFunc(engagementHandler.ListBookmarks)))
+	mux.Handle("PUT /api/v1/me/bookmarks/{targetType}/{targetId}", authMiddleware(http.HandlerFunc(engagementHandler.Bookmark)))
+	mux.Handle("DELETE /api/v1/me/bookmarks/{targetType}/{targetId}", authMiddleware(http.HandlerFunc(engagementHandler.Bookmark)))
+	mux.Handle("GET /api/v1/me/ratings/{targetType}/{targetId}", authMiddleware(http.HandlerFunc(engagementHandler.Rating)))
+	mux.Handle("PUT /api/v1/me/ratings/{targetType}/{targetId}", authMiddleware(http.HandlerFunc(engagementHandler.Rating)))
+	mux.Handle("DELETE /api/v1/me/ratings/{targetType}/{targetId}", authMiddleware(http.HandlerFunc(engagementHandler.Rating)))
+	mux.Handle("GET /api/v1/me/recent-views", authMiddleware(http.HandlerFunc(engagementHandler.ListRecentViews)))
+	mux.Handle("PUT /api/v1/me/recent-views/{targetType}/{targetId}", authMiddleware(http.HandlerFunc(engagementHandler.RecentView)))
+	mux.Handle("GET /api/v1/me/recommendations", authMiddleware(http.HandlerFunc(engagementHandler.Recommendations)))
+	mux.HandleFunc("GET /api/v1/ratings/{targetType}/{targetId}", engagementHandler.RatingSummary)
 
 	// Learning endpoints
 	mux.Handle("GET /api/v1/learning/courses", authMiddleware(http.HandlerFunc(learningHandler.ListCourses)))

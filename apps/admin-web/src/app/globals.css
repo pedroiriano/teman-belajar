@@ -54,6 +54,8 @@ a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visib
   .admin-label { @apply mb-2 block text-sm font-bold; color: var(--admin-copy); }
   .admin-page { @apply mx-auto w-full max-w-7xl; }
   .admin-sidebar { color: #cbd5e1; background: var(--admin-sidebar); }
+  .admin-sidebar-control { color: #cbd5e1; background: rgba(255, 255, 255, .04); transition: color 160ms ease, background-color 160ms ease, transform 160ms ease; }
+  .admin-sidebar-control:hover { color: #fff; background: rgba(255, 255, 255, .1); transform: translateX(-1px); }
   .admin-topbar { color: var(--admin-ink); background: var(--admin-topbar); border-color: var(--admin-border); }
   .admin-menu-button { color: var(--admin-copy); background: var(--admin-panel); border-color: var(--admin-border); }
   .admin-theme-toggle { @apply inline-flex h-10 items-center gap-2 rounded-xl border px-2 text-xs font-extrabold transition; color: var(--admin-copy); background: var(--admin-panel); border-color: var(--admin-border); }

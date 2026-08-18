@@ -3,6 +3,7 @@ import type { SVGProps } from "react";
 export type PortalIconName =
   | "arrow-up"
   | "book"
+  | "bookmark"
   | "briefcase"
   | "calendar"
   | "chevron-down"
@@ -18,11 +19,13 @@ export type PortalIconName =
   | "search"
   | "shield"
   | "sparkles"
+  | "star"
   | "users";
 
 const paths: Record<PortalIconName, string> = {
   "arrow-up": "M12 19V5m0 0-6 6m6-6 6 6",
   book: "M4 5.5A3.5 3.5 0 0 1 7.5 2H20v17H7.5A3.5 3.5 0 0 0 4 22V5.5Zm0 0V19",
+  bookmark: "M6 3h12v18l-6-4-6 4V3Z",
   briefcase: "M9 6V4h6v2m5 4v9H4v-9m-1-3h18v5H3V7Zm7 5h4",
   calendar: "M6 3v3m12-3v3M4 9h16M5 5h14a1 1 0 0 1 1 1v14H4V6a1 1 0 0 1 1-1Z",
   "chevron-down": "m7 10 5 5 5-5",
@@ -38,6 +41,7 @@ const paths: Record<PortalIconName, string> = {
   search: "m21 21-4.4-4.4m2.4-5.1a7.5 7.5 0 1 1-15 0 7.5 7.5 0 0 1 15 0Z",
   shield: "M12 3 5 6v5c0 4.6 2.8 8.2 7 10 4.2-1.8 7-5.4 7-10V6l-7-3Zm-3 9 2 2 4-5",
   sparkles: "m12 3 1.2 3.8L17 8l-3.8 1.2L12 13l-1.2-3.8L7 8l3.8-1.2L12 3Zm6 11 .8 2.2L21 17l-2.2.8L18 20l-.8-2.2L15 17l2.2-.8L18 14ZM5 13l.9 2.6L8.5 16l-2.6.9L5 19.5l-.9-2.6L1.5 16l2.6-.4L5 13Z",
+  star: "m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2-5.6-3-5.6 3 1.1-6.2L3 9.6l6.2-.9L12 3Z",
   users: "M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2m7-10a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm13 10v-2a4 4 0 0 0-3-3.9m-2-11.8a4 4 0 0 1 0 7.4",
 };
 

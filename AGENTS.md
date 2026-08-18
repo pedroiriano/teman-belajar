@@ -198,6 +198,17 @@ Before declaring done:
 5. Update contracts/docs.
 6. Provide verification evidence.
 
+## 12A. Cross-Agent Alignment
+
+- `AGENTS.md` is the single engineering constitution for Codex/ChatGPT, Gemini,
+  Antigravity, humans, and future agents.
+- Root `GEMINI.md` is a thin context adapter that imports this constitution and
+  `docs/governance/AI-AGENT-ALIGNMENT.md`; it is not an independent authority.
+- Do not create nested agent policies, hidden prompt rules, or persistent memory
+  that overrides root governance without an accepted governance change.
+- Run `scripts/verify-agent-governance.ps1` when agent governance, repository
+  structure, security rules, Docker rules, or AI instructions change.
+
 ## 13. Forbidden Without Human Approval
 
 - architecture rewrite;

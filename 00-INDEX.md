@@ -15,6 +15,7 @@ Dokumen ini adalah peta resmi seluruh artefak arsitektur, product, security, int
 |---|---|
 | `README.md` | Identitas, orientasi dan cara mulai proyek |
 | `AGENTS.md` | Engineering Constitution; aturan wajib semua agent/developer |
+| `GEMINI.md` | Thin Gemini context adapter; mengimpor constitution canonical |
 | `00-INDEX.md` | Peta dokumentasi dan hierarki source of truth |
 | `REPOSITORY-STRUCTURE.md` | Struktur monorepo final |
 
@@ -43,6 +44,7 @@ Semua berada di `docs/canonical/`.
 - `docs/governance/SOURCE-OF-TRUTH.md`
 - `docs/governance/THIRD-PARTY-ASSET-REGISTER.md`
 - `docs/governance/DOCKER-LOCAL-ENVIRONMENT.md`
+- `docs/governance/AI-AGENT-ALIGNMENT.md`
 - `docs/adr/ADR-001...ADR-012`
 - `docs/diagrams/erd.mmd`
 - `openapi/openapi.yaml`

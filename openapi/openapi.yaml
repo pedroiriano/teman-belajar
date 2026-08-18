@@ -23,6 +23,8 @@ tags:
     description: Learning operations
   - name: Me
     description: Me operations
+  - name: Engagement
+    description: Learner engagement operations owned by the Portal
   - name: Admin
     description: Admin operations
   - name: Media
@@ -285,14 +287,14 @@ paths:
   /me/bookmarks:
     get:
       tags:
-        - Me
+        - Engagement
       security:
         - oidc:
             - profile
       operationId: listMyBookmarks
       responses:
         '200':
-          description: User bookmarks
+          description: Current learner's active bookmarks
           content:
             application/json:
               schema:
@@ -303,41 +305,233 @@ paths:
                   data:
                     type: array
                     items:
-                      $ref: '#/components/schemas/Bookmark'
-        '400':
-          description: Bad Request
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
+                      $ref: '#/components/schemas/EngagementItem'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/ValidationError'
       summary: list My Bookmarks
-    post:
+  /me/bookmarks/{targetType}/{targetId}:
+    parameters:
+      - $ref: '#/components/parameters/EngagementTargetType'
+      - $ref: '#/components/parameters/EngagementTargetId'
+    put:
       tags:
-        - Me
+        - Engagement
       security:
         - oidc:
             - profile
-      operationId: createBookmark
+      operationId: putMyBookmark
+      responses:
+        '200':
+          description: Bookmark created or already present
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EngagementItem'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+      summary: idempotently save a bookmark
+    delete:
+      tags:
+        - Engagement
+      security:
+        - oidc:
+            - profile
+      operationId: deleteMyBookmark
+      responses:
+        '204':
+          description: Bookmark is absent
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+      summary: idempotently delete a bookmark
+  /me/ratings/{targetType}/{targetId}:
+    parameters:
+      - $ref: '#/components/parameters/EngagementTargetType'
+      - $ref: '#/components/parameters/EngagementTargetId'
+    get:
+      tags:
+        - Engagement
+      security:
+        - oidc:
+            - profile
+      operationId: getMyRating
+      responses:
+        '200':
+          description: Aggregate rating and current learner rating
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RatingSummary'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+      summary: get my rating and aggregate
+    put:
+      tags:
+        - Engagement
+      security:
+        - oidc:
+            - profile
+      operationId: putMyRating
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/BookmarkCreate'
+              $ref: '#/components/schemas/RatingWrite'
       responses:
-        '201':
-          description: Bookmark created
+        '200':
+          description: Rating created or updated
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Bookmark'
-        '409':
-          description: Bookmark already exists
+                $ref: '#/components/schemas/RatingSummary'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+      summary: atomically create or update my rating
+    delete:
+      tags:
+        - Engagement
+      security:
+        - oidc:
+            - profile
+      operationId: deleteMyRating
+      responses:
+        '204':
+          description: Rating is absent
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+      summary: idempotently delete my rating
+  /ratings/{targetType}/{targetId}:
+    parameters:
+      - $ref: '#/components/parameters/EngagementTargetType'
+      - $ref: '#/components/parameters/EngagementTargetId'
+    get:
+      tags:
+        - Engagement
+      operationId: getRatingSummary
+      security: []
+      responses:
+        '200':
+          description: Anonymous aggregate without learner identities
           content:
-            application/problem+json:
+            application/json:
               schema:
-                $ref: '#/components/schemas/Problem'
-      summary: create Bookmark
+                $ref: '#/components/schemas/RatingSummaryPublic'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+      summary: get public rating aggregate
+  /me/recent-views:
+    get:
+      tags:
+        - Engagement
+      security:
+        - oidc:
+            - profile
+      operationId: listMyRecentViews
+      responses:
+        '200':
+          description: Latest 50 unique accessible targets for the current learner
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    type: array
+                    maxItems: 50
+                    items:
+                      $ref: '#/components/schemas/EngagementItem'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+      summary: list my bounded recent view history
+  /me/recent-views/{targetType}/{targetId}:
+    parameters:
+      - $ref: '#/components/parameters/EngagementTargetType'
+      - $ref: '#/components/parameters/EngagementTargetId'
+    put:
+      tags:
+        - Engagement
+      security:
+        - oidc:
+            - profile
+      operationId: putMyRecentView
+      responses:
+        '200':
+          description: Recent view created or atomically incremented
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EngagementItem'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+      summary: record a successful meaningful content view
+  /me/recommendations:
+    get:
+      tags:
+        - Engagement
+      security:
+        - oidc:
+            - profile
+      operationId: listMyRecommendations
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 20
+            default: 6
+        - name: content_type
+          in: query
+          schema:
+            type: string
+            enum: [knowledge]
+      responses:
+        '200':
+          description: Deterministically ranked eligible targets
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data, personalized]
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Recommendation'
+                  personalized:
+                    type: boolean
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailableError'
+      summary: list deterministic explainable recommendations
   /admin/news:
     get:
       tags:
@@ -1292,6 +1486,20 @@ components:
         minimum: 1
         maximum: 100
         default: 20
+    EngagementTargetType:
+      name: targetType
+      in: path
+      required: true
+      schema:
+        type: string
+        enum: [knowledge]
+    EngagementTargetId:
+      name: targetId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
   responses:
     ValidationError:
       description: Validation failed
@@ -1612,42 +1820,97 @@ components:
                 - available
                 - degraded
                 - unavailable
-    Bookmark:
+    EngagementTarget:
       type: object
       required:
-        - id
-        - entity_type
-        - entity_id
-        - created_at
+        - target_type
+        - target_id
+        - title
+        - url
+        - tags
       properties:
-        id:
+        target_type:
+          type: string
+          enum: [knowledge]
+        target_id:
           type: string
           format: uuid
-        entity_type:
+        title:
           type: string
-          enum:
-            - knowledge
-            - news
-            - course
-        entity_id:
+        summary:
           type: string
-        created_at:
+        url:
+          type: string
+          pattern: '^/'
+        category_id:
+          type: string
+          format: uuid
+        tags:
+          type: array
+          items:
+            type: string
+        published_at:
           type: string
           format: date-time
-    BookmarkCreate:
+    EngagementItem:
+      allOf:
+        - $ref: '#/components/schemas/EngagementTarget'
+        - type: object
+          properties:
+            bookmarked:
+              type: boolean
+            rating:
+              type: integer
+              minimum: 1
+              maximum: 5
+            created_at:
+              type: string
+              format: date-time
+            last_viewed_at:
+              type: string
+              format: date-time
+            view_count:
+              type: integer
+              minimum: 1
+    RatingWrite:
       type: object
       required:
-        - entity_type
-        - entity_id
+        - rating
+      additionalProperties: false
       properties:
-        entity_type:
-          type: string
-          enum:
-            - knowledge
-            - news
-            - course
-        entity_id:
-          type: string
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+    RatingSummaryPublic:
+      type: object
+      required: [average, count]
+      properties:
+        average:
+          type: number
+          minimum: 0
+          maximum: 5
+        count:
+          type: integer
+          minimum: 0
+    RatingSummary:
+      allOf:
+        - $ref: '#/components/schemas/RatingSummaryPublic'
+        - type: object
+          properties:
+            current_user_rating:
+              type: integer
+              minimum: 1
+              maximum: 5
+    Recommendation:
+      allOf:
+        - $ref: '#/components/schemas/EngagementTarget'
+        - type: object
+          required: [reason]
+          properties:
+            reason:
+              type: string
+              enum: [same_category, recent_interest, popular_rating, fallback_recent]
     KnowledgeArticle:
       type: object
       required:

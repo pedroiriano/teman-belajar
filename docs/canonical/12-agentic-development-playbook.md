@@ -169,6 +169,11 @@ Repository tidak boleh bergantung pada prompt syntax proprietary. Source of trut
 
 Dengan demikian Codex, Antigravity, atau developer manusia mengikuti aturan yang sama.
 
+Gemini mengikuti aturan yang sama melalui root `GEMINI.md`, yang hanya mengimpor
+`AGENTS.md` dan governance alignment. Tool-specific memory/context tidak boleh
+menjadi source of truth baru. Gate `scripts/verify-agent-governance.ps1` menjaga
+adaptor, authority, dan struktur governance tetap konsisten.
+
 ## 12. Quality Gate
 
 Agent output dianggap proposal sampai CI + review selesai.

@@ -50,6 +50,11 @@ Status implementasi berikut wajib dipertahankan. `Implemented` berarti pola vend
 | Back to top | Implemented | Not required in fixed Cuba shell | scroll-aware floating action |
 | Empty/error/loading/unauthorized | Implemented where data-driven | Implemented | reusable state patterns |
 | Light/dark theme | Implemented | Implemented | shared persistence key, separate tokens |
+| Engagement controls | Bookmark/rating on Knowledge; saved/recent/recommendation learner sections | Not applicable | Techwind-derived, TASK-008 |
+
+TASK-008 carry-forward: the Cuba Admin shell now includes desktop sidebar
+close/reopen with layout expansion; the mobile drawer retains overlay, X,
+Escape, focus containment/restore, and body-scroll locking.
 
 ### Strict maintenance rules
 

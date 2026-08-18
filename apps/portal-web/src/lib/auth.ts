@@ -1,6 +1,8 @@
 import { NextAuthOptions } from "next-auth";
 import KeycloakProvider from "next-auth/providers/keycloak";
 
+import { hasUsableAccessToken, refreshKeycloakToken } from "@/lib/keycloak-token";
+
 export const authOptions: NextAuthOptions = {
   providers: [
     KeycloakProvider({
@@ -24,8 +26,11 @@ export const authOptions: NextAuthOptions = {
         token.accessToken = account.access_token;
         token.refreshToken = account.refresh_token;
         token.expiresAt = account.expires_at;
+        token.tokenError = undefined;
+        return token;
       }
-      return token;
+      if (hasUsableAccessToken(token)) return token;
+      return refreshKeycloakToken(token);
     },
     async session({ session }: any) {
       return session;

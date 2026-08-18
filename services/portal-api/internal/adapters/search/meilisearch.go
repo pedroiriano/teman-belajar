@@ -6,6 +6,7 @@ import (
 
 	"github.com/meilisearch/meilisearch-go"
 
+	"teman-belajar-api/internal/domain/engagement"
 	domainsearch "teman-belajar-api/internal/domain/search"
 )
 
@@ -68,4 +69,35 @@ func (m *MeilisearchClient) Search(ctx context.Context, query domainsearch.Query
 	}
 
 	return domainsearch.Result{Hits: hits, Total: int(response.EstimatedTotalHits)}, nil
+}
+
+func (m *MeilisearchClient) Discover(ctx context.Context, query engagement.CandidateQuery) ([]engagement.Candidate, error) {
+	filters := []string{fmt.Sprintf("source_type = %q", string(query.TargetType))}
+	if query.CategoryID != "" {
+		filters = append(filters, fmt.Sprintf("category_id = %q", query.CategoryID))
+	}
+	request := &meilisearch.SearchRequest{
+		Limit:                int64(query.Limit),
+		AttributesToRetrieve: []string{"source_type", "source_id", "published_at"},
+		Filter:               filters,
+	}
+	if query.Newest {
+		request.Sort = []string{"published_at:desc"}
+	}
+	response, err := m.client.Index(m.index).SearchWithContext(ctx, query.Text, request)
+	if err != nil {
+		return nil, fmt.Errorf("search dependency unavailable: %w", err)
+	}
+	candidates := make([]engagement.Candidate, 0, len(response.Hits))
+	for _, raw := range response.Hits {
+		var document domainsearch.IndexDocument
+		if err := raw.DecodeInto(&document); err != nil || document.SourceID == "" || document.SourceType != string(query.TargetType) {
+			continue
+		}
+		candidates = append(candidates, engagement.Candidate{
+			Target:      engagement.Target{Type: engagement.TargetType(document.SourceType), ID: document.SourceID},
+			PublishedAt: document.PublishedAt,
+		})
+	}
+	return candidates, nil
 }

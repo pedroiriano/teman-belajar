@@ -122,6 +122,8 @@ Cards:
 - recommendations;
 - saved knowledge.
 
+Saved Knowledge, Recently Viewed, and deterministic recommendations are Portal-owned and remain available when Moodle mapping or course data is unavailable. Moodle error state must not short-circuit the Portal engagement sections.
+
 Loading state dan dependency error harus granular; satu widget gagal tidak menjatuhkan seluruh dashboard.
 
 ## 7. Admin UX

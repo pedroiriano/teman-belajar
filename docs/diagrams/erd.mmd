@@ -123,18 +123,30 @@ erDiagram
 
   BOOKMARK {
     uuid id PK
-    uuid user_id FK
-    string entity_type
-    uuid entity_id
+    string user_subject
+    string target_type
+    string target_id
     timestamptz created_at
   }
 
   RATING {
     uuid id PK
-    uuid user_id FK
-    string entity_type
-    uuid entity_id
-    int score
+    string user_subject
+    string target_type
+    string target_id
+    int rating
+    timestamptz created_at
+    timestamptz updated_at
+  }
+
+  RECENT_VIEW {
+    uuid id PK
+    string user_subject
+    string target_type
+    string target_id
+    timestamptz first_viewed_at
+    timestamptz last_viewed_at
+    bigint view_count
   }
 
   MOODLE_USER_MAPPING {
@@ -190,7 +202,5 @@ erDiagram
   NEWS ||--o{ MEDIA_USAGES : has_media
   ANNOUNCEMENT ||--o{ MEDIA_USAGES : has_media
   KNOWLEDGE_REVISION ||--o{ MEDIA_USAGES : has_media
-  USER_PROFILE ||--o{ BOOKMARK : creates
-  USER_PROFILE ||--o{ RATING : creates
   USER_PROFILE ||--o| MOODLE_USER_MAPPING : maps_to
   USER_PROFILE ||--o{ AUDIT_EVENT : acts

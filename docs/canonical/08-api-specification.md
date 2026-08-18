@@ -84,7 +84,17 @@ Authenticated:
 - `/me`
 - `/me/dashboard`
 - `/me/learning`
-- `/me/bookmarks`
+- `GET /me/bookmarks`
+- `PUT|DELETE /me/bookmarks/{targetType}/{targetId}`
+- `GET|PUT|DELETE /me/ratings/{targetType}/{targetId}`
+- `GET /me/recent-views`
+- `PUT /me/recent-views/{targetType}/{targetId}`
+- `GET /me/recommendations`
+
+Public aggregate:
+- `GET /ratings/{targetType}/{targetId}`
+
+Engagement identity always comes from validated access-token `sub`; the API accepts no user selector. TASK-008 accepts `targetType=knowledge` only. Canonical wire details and problem responses remain authoritative in `openapi/openapi.yaml`.
 
 Admin:
 - `/admin/news`

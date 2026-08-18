@@ -4,6 +4,7 @@
 teman-belajar/
 ├── README.md
 ├── AGENTS.md
+├── GEMINI.md
 ├── 00-INDEX.md
 ├── REPOSITORY-STRUCTURE.md
 ├── .gitignore

@@ -75,9 +75,11 @@ audit
 - `media.videos`
 
 ### engagement
-- `engagement.bookmarks`
-- `engagement.ratings`
-- `engagement.recent_views`
+- `engagement_bookmarks`: one row per OIDC `sub` + eligible target.
+- `engagement_ratings`: one integer 1–5 per OIDC `sub` + eligible target.
+- `engagement_recent_views`: one mutable counter/timestamp row per OIDC `sub` + eligible target; retain at most 50 unique targets per user.
+
+TASK-008 enables only `knowledge` as an engagement target. Target metadata is not duplicated in engagement tables; every read re-resolves the authoritative published Knowledge record and omits unavailable/private/archived targets.
 
 ### integration
 - `integration.identity_mappings`
@@ -136,7 +138,9 @@ Index berdasarkan query nyata:
 - integration external_id unique;
 - outbox processing state;
 - audit timestamp + actor;
-- bookmarks user+entity unique.
+- bookmarks, ratings, and recent views unique on `user_subject + target_type + target_id`;
+- recent views ordered by `user_subject + last_viewed_at`;
+- rating aggregate by `target_type + target_id`.
 
 ## 9. Audit
 

@@ -1,6 +1,8 @@
 import { cookies } from "next/headers";
 import { getToken } from "next-auth/jwt";
 
+import { hasUsableAccessToken, refreshKeycloakToken } from "@/lib/keycloak-token";
+
 /**
  * Retrieves the decoded NextAuth JWT token from cookies on the server.
  * This is used by Server Components and API Route Handlers to securely
@@ -21,7 +23,10 @@ export async function getBackendAccessToken(): Promise<string | null> {
       secret: process.env.NEXTAUTH_SECRET || "",
     });
 
-    return (token?.accessToken as string) || null;
+    if (!token) return null;
+    if (hasUsableAccessToken(token)) return token.accessToken as string;
+    const refreshed = await refreshKeycloakToken(token);
+    return typeof refreshed.accessToken === "string" && !refreshed.tokenError ? refreshed.accessToken : null;
   } catch (error) {
     console.error("Failed to decode NextAuth session token:", error);
     return null;
