@@ -1,15 +1,15 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { createNewsAction } from "@/app/actions/cms";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 
+import { createNewsAction } from "@/app/actions/cms";
+import { AdminIcon } from "@/components/admin-icon";
 import MediaPicker from "@/components/media/MediaPicker";
 
 export default function CreateNewsPage() {
   const router = useRouter();
-  
   const [title, setTitle] = useState("");
   const [slug, setSlug] = useState("");
   const [excerpt, setExcerpt] = useState("");
@@ -17,124 +17,16 @@ export default function CreateNewsPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // Auto-generate slug from title
-  const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = e.target.value;
-    setTitle(val);
-    setSlug(val.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, ''));
-  };
+  const handleTitleChange = (value: string) => { setTitle(value); setSlug(value.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)+/g, "")); };
+  const insertMedia = (mediaId: string) => setBody((current) => `${current}\n![Media](/api/v1/media/${mediaId}/content)\n`);
+  const handleSubmit = async (event: React.FormEvent) => { event.preventDefault(); setLoading(true); setError(""); try { const result = await createNewsAction({ title, slug, excerpt, body }); if (!result.success) throw new Error(result.error || "Berita belum dapat disimpan"); router.push("/dashboard/news"); } catch (caught) { setError(caught instanceof Error ? caught.message : "Terjadi kesalahan yang tidak terduga"); } finally { setLoading(false); } };
 
-  const insertMedia = (mediaId: string) => {
-    // Append the media markdown to the body
-    const mediaMarkdown = `\n![Media](/api/v1/media/${mediaId}/content)\n`;
-    setBody((prev) => prev + mediaMarkdown);
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError("");
-
-    try {
-      const res = await createNewsAction({ title, slug, excerpt, body });
-
-      if (!res.success) {
-        throw new Error(res.error || "Failed to create news");
-      }
-
-      router.push("/dashboard/news");
-    } catch (err: any) {
-      setError(err.message || "An unexpected error occurred");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <div className="min-h-screen bg-slate-100 p-8 font-sans">
-      <div className="max-w-4xl mx-auto">
-        <div className="mb-6">
-          <Link href="/dashboard/news" className="text-indigo-600 hover:text-indigo-800 font-medium text-sm flex items-center">
-            &larr; Back to News Management
-          </Link>
-        </div>
-
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-          <div className="p-6 border-b border-slate-100">
-            <h1 className="text-2xl font-bold text-slate-900">Create News Article</h1>
-            <p className="text-slate-500 text-sm mt-1">Draft a new article. It will start in &apos;draft&apos; status.</p>
-          </div>
-          
-          <form onSubmit={handleSubmit} className="p-6 space-y-6">
-            {error && (
-              <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded text-red-700 text-sm">
-                {error}
-              </div>
-            )}
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <label className="block text-sm font-semibold text-slate-700">Title <span className="text-red-500">*</span></label>
-                <input 
-                  type="text" 
-                  required
-                  value={title}
-                  onChange={handleTitleChange}
-                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all text-black"
-                  placeholder="e.g., Platform Update Q3"
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <label className="block text-sm font-semibold text-slate-700">URL Slug <span className="text-red-500">*</span></label>
-                <input 
-                  type="text" 
-                  required
-                  value={slug}
-                  onChange={(e) => setSlug(e.target.value)}
-                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all bg-slate-50 text-slate-600"
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <label className="block text-sm font-semibold text-slate-700">Excerpt</label>
-              <textarea 
-                rows={3}
-                value={excerpt}
-                onChange={(e) => setExcerpt(e.target.value)}
-                className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all text-black"
-                placeholder="A short summary for the news card..."
-              />
-            </div>
-
-            <div className="space-y-2">
-              <div className="flex justify-between items-center">
-                <label className="block text-sm font-semibold text-slate-700">Isi berita <span className="text-red-500">*</span></label>
-                <MediaPicker onSelect={insertMedia} buttonLabel="Sisipkan Media" />
-              </div>
-              <textarea 
-                required
-                rows={10}
-                value={body}
-                onChange={(e) => setBody(e.target.value)}
-                className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all font-mono text-sm text-black"
-                placeholder="Tulis isi berita dalam teks yang jelas dan mudah dibaca..."
-              />
-            </div>
-
-            <div className="pt-4 flex justify-end">
-              <button 
-                type="submit" 
-                disabled={loading}
-                className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2.5 rounded-lg font-medium transition-colors shadow-sm disabled:opacity-50 flex items-center"
-              >
-                {loading ? "Saving..." : "Save Draft"}
-              </button>
-            </div>
-          </form>
-        </div>
-      </div>
-    </div>
-  );
+  return <div className="admin-page max-w-5xl">
+    <div className="admin-page-header"><div><Link href="/dashboard/news" className="inline-flex items-center text-sm font-bold text-orange-700">← Kembali ke Berita</Link><p className="admin-kicker mt-5">Editor berita</p><h1 className="admin-page-title">Buat berita baru</h1><p className="admin-page-copy">Berita disimpan sebagai draft sebelum masuk proses review.</p></div><span className="admin-status bg-slate-100 text-slate-600">Status: Draft</span></div>
+    <form onSubmit={handleSubmit} className="admin-form-card">
+      <div className="admin-form-header"><div className="flex items-center gap-3"><span className="admin-stat-icon"><AdminIcon name="news" className="h-5 w-5" /></span><div><h2 className="font-black text-slate-900">Informasi berita</h2><p className="mt-1 text-xs text-slate-500">Lengkapi judul, ringkasan, dan isi publikasi.</p></div></div></div>
+      <div className="admin-form-body">{error && <div className="admin-alert-error" role="alert">{error}</div>}<div className="grid gap-6 md:grid-cols-2"><div><label htmlFor="news-title" className="admin-label">Judul <span className="text-rose-600">*</span></label><input id="news-title" required value={title} onChange={(event) => handleTitleChange(event.target.value)} className="admin-input" placeholder="Contoh: Program Pembelajaran Kuartal Ketiga" /></div><div><label htmlFor="news-slug" className="admin-label">Slug URL <span className="text-rose-600">*</span></label><input id="news-slug" required value={slug} onChange={(event) => setSlug(event.target.value)} className="admin-input !bg-slate-50" aria-describedby="news-slug-help" /><p id="news-slug-help" className="mt-2 text-xs text-slate-500">Gunakan huruf kecil, angka, dan tanda hubung.</p></div></div><div><label htmlFor="news-excerpt" className="admin-label">Ringkasan</label><textarea id="news-excerpt" rows={3} value={excerpt} onChange={(event) => setExcerpt(event.target.value)} className="admin-input" placeholder="Ringkasan singkat yang tampil pada kartu berita." /></div><div><div className="mb-2 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"><label htmlFor="news-body" className="admin-label !mb-0">Isi berita <span className="text-rose-600">*</span></label><MediaPicker onSelect={insertMedia} buttonLabel="Sisipkan media" /></div><textarea id="news-body" required rows={14} value={body} onChange={(event) => setBody(event.target.value)} className="admin-input font-mono" placeholder="Tulis isi berita dalam Markdown yang terstruktur…" /></div></div>
+      <div className="admin-form-footer"><Link href="/dashboard/news" className="admin-button-secondary">Batal</Link><button type="submit" disabled={loading} className="admin-button">{loading ? "Menyimpan…" : "Simpan draft"}</button></div>
+    </form>
+  </div>;
 }

@@ -52,7 +52,7 @@ Build and maintain a secure, modular **Learning Experience Platform + Moodle LMS
 
 1. Read `docs/governance/DOCKER-LOCAL-ENVIRONMENT.md` before changing Docker files.
 2. Docker Compose project name is always `teman-belajar`; do not pass another project name.
-3. Compose service keys are fixed: `web`, `admin`, `api`, `migrate`, `portal-db`, `moodle-db`, `redis`, `keycloak`, `minio`, and `moodle`.
+3. Compose service keys are fixed: `web`, `admin`, `api`, `migrate`, `portal-db`, `moodle-db`, `redis`, `keycloak`, `minio`, `search`, `search-worker`, `moodle`, and `moodle-cron`. The Search worker is the separate runtime accepted by ADR-014 and is built from the Portal API module; this does not authorize additional services.
 4. Do not add `container_name`. Compose must generate `<project>-<service>-<replica>` names.
 5. Host ports come only from `infrastructure/docker/.env`; internal container ports and service DNS names remain stable.
 6. Default host binding is `127.0.0.1`. Binding to `0.0.0.0` requires explicit human security approval.

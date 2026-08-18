@@ -29,6 +29,7 @@ Thumbs.db
 
 # Local runtime data
 tmp/
+.tmp/
 .local/
 data/
 
@@ -38,3 +39,9 @@ vendor/ui-templates/techwind/ORIGINAL/*
 vendor/ui-templates/cuba/ORIGINAL/*
 !vendor/ui-templates/cuba/ORIGINAL/README_DROP_CUBA_HERE.md
 *.tgz
+
+# Local diagnostics, database exports, learning backups, and recordings
+/backups/
+/temanbelajar_db.sql
+/*.mp4
+*.mbz

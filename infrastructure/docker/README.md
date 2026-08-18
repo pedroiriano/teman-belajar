@@ -33,7 +33,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File infrastructure/docker/teman-
 # Tail 200 baris log seluruh service
 powershell -NoProfile -ExecutionPolicy Bypass -File infrastructure/docker/teman-belajar-docker.ps1 logs
 
-# Smoke test status + enam endpoint
+# Smoke test status + tujuh endpoint
 powershell -NoProfile -ExecutionPolicy Bypass -File infrastructure/docker/teman-belajar-docker.ps1 verify
 
 # Stop container/network; volume dipertahankan
@@ -51,16 +51,18 @@ Alias Makefile: `make docker-config`, `make up`, `make status`, `make logs`, `ma
 - Moodle: `http://localhost:8082`
 - MinIO API: `http://localhost:19000`
 - MinIO Console: `http://localhost:19001`
+- Meilisearch: `http://localhost:7700`
 - Portal PostgreSQL: `127.0.0.1:15432`
 - Moodle PostgreSQL: `127.0.0.1:15433`
 - Redis: `127.0.0.1:16379`
 
 ## Kondisi Status yang Benar
 
-- `web`, `admin`, `api`, `portal-db`, `moodle-db`, `redis`, `keycloak`, `minio`, dan `moodle`: `healthy`.
+- `web`, `admin`, `api`, `portal-db`, `moodle-db`, `redis`, `keycloak`, `minio`, `search`, dan `moodle`: `healthy`.
+- `search-worker` dan `moodle-cron`: running; tidak membuka port host.
 - `migrate`: `Exited (0)`.
 - Network: hanya `teman-belajar-network`.
-- Volume: enam nama pada registry governance; tidak ada prefix ganda `teman-belajar_teman-belajar_*`.
+- Volume: tujuh nama pada registry governance; tidak ada prefix ganda `teman-belajar_teman-belajar_*`.
 
 ## Port Bentrok
 
@@ -78,6 +80,7 @@ Alias Makefile: `make docker-config`, `make up`, `make status`, `make logs`, `ma
 - OIDC issuer mismatch: pastikan semua aplikasi memakai `TB_KEYCLOAK_URL`, bukan DNS internal `keycloak:8080`.
 - Migrasi gagal: jangan memulai API secara paksa; periksa log `migrate` dan database.
 - Data terlihat kosong: stop. Jangan `down -v`, prune, atau menginisialisasi ulang; periksa nama/mount volume dan minta review manusia.
+- Search gagal: ikuti `docs/runbooks/SEARCH-OPERATIONS.md`; jangan menghapus volume atau memasukkan key ke URL/log.
 
 ## Larangan Operasional
 

@@ -16,9 +16,10 @@ import (
 )
 
 type Config struct {
-	BaseURL string
-	Token   string
-	Timeout time.Duration
+	BaseURL       string
+	PublicBaseURL string
+	Token         string
+	Timeout       time.Duration
 }
 
 type Client struct {
@@ -77,6 +78,16 @@ func (c *Client) callWS(ctx context.Context, wsfunction string, params url.Value
 		return err
 	}
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	if c.config.PublicBaseURL != "" {
+		publicURL, parseErr := url.Parse(c.config.PublicBaseURL)
+		if parseErr != nil || publicURL.Host == "" {
+			return fmt.Errorf("invalid Moodle public base URL")
+		}
+		// Connect over private service DNS while presenting Moodle's canonical
+		// public host. This prevents Moodle redirecting server-to-server calls to
+		// localhost inside the container.
+		req.Host = publicURL.Host
+	}
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {

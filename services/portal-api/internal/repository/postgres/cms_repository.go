@@ -54,7 +54,7 @@ func (r *CMSRepository) UpdateNews(ctx context.Context, n *cms.News) error {
 
 func (r *CMSRepository) ListPublicNews(ctx context.Context, page, pageSize int) ([]cms.News, int, error) {
 	offset := (page - 1) * pageSize
-	
+
 	var total int
 	err := r.db.QueryRowContext(ctx, `SELECT count(*) FROM news WHERE status = 'published'`).Scan(&total)
 	if err != nil {
@@ -63,7 +63,7 @@ func (r *CMSRepository) ListPublicNews(ctx context.Context, page, pageSize int) 
 
 	query := `SELECT id, slug, title, excerpt, body, status, category_id, published_at, created_at, created_by, updated_at, updated_by
 			  FROM news WHERE status = 'published' ORDER BY published_at DESC LIMIT $1 OFFSET $2`
-	
+
 	rows, err := r.db.QueryContext(ctx, query, pageSize, offset)
 	if err != nil {
 		return nil, 0, err
@@ -84,7 +84,7 @@ func (r *CMSRepository) ListPublicNews(ctx context.Context, page, pageSize int) 
 
 func (r *CMSRepository) ListAdminNews(ctx context.Context, page, pageSize int) ([]cms.News, int, error) {
 	offset := (page - 1) * pageSize
-	
+
 	var total int
 	err := r.db.QueryRowContext(ctx, `SELECT count(*) FROM news`).Scan(&total)
 	if err != nil {
@@ -93,7 +93,7 @@ func (r *CMSRepository) ListAdminNews(ctx context.Context, page, pageSize int) (
 
 	query := `SELECT id, slug, title, excerpt, body, status, category_id, published_at, created_at, created_by, updated_at, updated_by
 			  FROM news ORDER BY created_at DESC LIMIT $1 OFFSET $2`
-	
+
 	rows, err := r.db.QueryContext(ctx, query, pageSize, offset)
 	if err != nil {
 		return nil, 0, err
@@ -154,7 +154,7 @@ func (r *CMSRepository) ListActiveAnnouncements(ctx context.Context) ([]cms.Anno
 			  AND (start_at IS NULL OR start_at <= NOW()) 
 			  AND (end_at IS NULL OR end_at > NOW())
 			  ORDER BY published_at DESC`
-	
+
 	rows, err := r.db.QueryContext(ctx, query)
 	if err != nil {
 		return nil, err
@@ -175,7 +175,7 @@ func (r *CMSRepository) ListActiveAnnouncements(ctx context.Context) ([]cms.Anno
 
 func (r *CMSRepository) ListAdminAnnouncements(ctx context.Context, page, pageSize int) ([]cms.Announcement, int, error) {
 	offset := (page - 1) * pageSize
-	
+
 	var total int
 	err := r.db.QueryRowContext(ctx, `SELECT count(*) FROM announcements`).Scan(&total)
 	if err != nil {
@@ -184,7 +184,7 @@ func (r *CMSRepository) ListAdminAnnouncements(ctx context.Context, page, pageSi
 
 	query := `SELECT id, slug, title, body, status, start_at, end_at, published_at, created_at, created_by, updated_at, updated_by
 			  FROM announcements ORDER BY created_at DESC LIMIT $1 OFFSET $2`
-	
+
 	rows, err := r.db.QueryContext(ctx, query, pageSize, offset)
 	if err != nil {
 		return nil, 0, err
@@ -203,7 +203,6 @@ func (r *CMSRepository) ListAdminAnnouncements(ctx context.Context, page, pageSi
 	return items, total, nil
 }
 
-
 // Scanners
 
 type rowScanner interface {
@@ -215,7 +214,7 @@ func scanNews(s rowScanner) (*cms.News, error) {
 	var excerpt sql.NullString
 	err := s.Scan(&n.ID, &n.Slug, &n.Title, &excerpt, &n.Body, &n.Status, &n.CategoryID,
 		&n.PublishedAt, &n.CreatedAt, &n.CreatedBy, &n.UpdatedAt, &n.UpdatedBy)
-	
+
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, cms.ErrNotFound
@@ -236,7 +235,7 @@ func scanAnnouncement(s rowScanner) (*cms.Announcement, error) {
 	var a cms.Announcement
 	err := s.Scan(&a.ID, &a.Slug, &a.Title, &a.Body, &a.Status, &a.StartAt, &a.EndAt, &a.PublishedAt,
 		&a.CreatedAt, &a.CreatedBy, &a.UpdatedAt, &a.UpdatedBy)
-	
+
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, cms.ErrNotFound

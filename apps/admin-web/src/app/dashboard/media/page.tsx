@@ -1,9 +1,13 @@
+/* eslint-disable @next/next/no-img-element -- Media Library previews authenticated BFF assets with runtime MIME types. */
+
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { getServerAccessToken } from "@/lib/server-auth";
 import MediaUploader from "./MediaUploader";
+import { AdminIcon } from "@/components/admin-icon";
+import { AdminUnauthorized } from "@/components/admin-states";
 
 async function getAdminMedia(token: string) {
   const API_BASE = process.env.PORTAL_API_INTERNAL_URL;
@@ -47,47 +51,34 @@ export default async function AdminMediaPage() {
   );
 
   if (!hasAccess) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-900 text-white p-8">
-        <div className="bg-red-900/50 border border-red-500 p-8 rounded-lg max-w-lg w-full">
-          <h1 className="text-3xl font-bold mb-4 text-red-400">403 Forbidden</h1>
-          <p className="mb-6">You do not have the necessary permissions to manage Media.</p>
-          <Link href="/dashboard" className="text-blue-400 hover:underline">Return to Dashboard</Link>
-        </div>
-      </div>
-    );
+    return <AdminUnauthorized resource="media" />;
   }
 
   const mediaRes = accessToken ? await getAdminMedia(accessToken) : null;
+  const mediaAssets = Array.isArray(mediaRes?.data) ? mediaRes.data : [];
 
   return (
     <div className="admin-page">
       <div>
-        <div className="mb-8 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
+        <div className="admin-page-header">
           <div>
-            <p className="text-xs font-black uppercase tracking-[.18em] text-indigo-600">Manajemen Aset</p>
-            <h1 className="mt-2 text-3xl font-black text-slate-900">Media Library</h1>
-            <p className="mt-2 text-sm text-slate-500">Kelola berkas, gambar, dan dokumen untuk portal Teman Belajar.</p>
+            <p className="admin-kicker">Manajemen aset</p><h1 className="admin-page-title">Media Library</h1><p className="admin-page-copy">Kelola gambar dan dokumen yang digunakan dalam konten Teman Belajar.</p>
           </div>
         </div>
 
         <MediaUploader />
 
-        <div className="admin-card overflow-x-auto">
-          <table className="w-full text-left border-collapse">
+        {mediaAssets.some((asset: any) => asset.detected_mime_type.startsWith("image/")) && <section className="mb-7" aria-labelledby="media-gallery-title"><div className="mb-4 flex items-end justify-between"><div><p className="text-xs font-black uppercase tracking-wider text-slate-400">Pratinjau visual</p><h2 id="media-gallery-title" className="mt-1 text-xl font-black text-slate-900">Galeri aset</h2></div><span className="admin-status bg-slate-100 text-slate-600">{mediaAssets.length} aset</span></div><div className="grid grid-cols-2 gap-4 md:grid-cols-4 xl:grid-cols-6">{mediaAssets.filter((asset: any) => asset.detected_mime_type.startsWith("image/")).slice(0, 6).map((asset: any) => <Link key={asset.id} href={`/dashboard/media/${asset.id}`} className="admin-card group overflow-hidden"><span className="block aspect-square overflow-hidden bg-slate-100"><img src={`/api/bff/media/${asset.id}/content`} alt={asset.alt_text || asset.original_filename} className="h-full w-full object-cover transition duration-300 group-hover:scale-105" /></span><span className="block truncate p-3 text-xs font-bold text-slate-700">{asset.original_filename}</span></Link>)}</div></section>}
+
+        <div className="admin-table-shell"><div className="admin-table-toolbar"><div className="flex items-center gap-3"><span className="admin-stat-icon"><AdminIcon name="file" className="h-5 w-5" /></span><div><h2 className="font-black text-slate-900">Daftar aset</h2><p className="mt-1 text-xs text-slate-500">Metadata, ukuran, dan status media</p></div></div></div><div className="overflow-x-auto"><table className="admin-table">
             <thead>
-              <tr className="bg-slate-50 border-b border-slate-200">
-                <th className="p-4 font-semibold text-slate-600 text-sm">Pratinjau</th>
-                <th className="p-4 font-semibold text-slate-600 text-sm">Detail Berkas</th>
-                <th className="p-4 font-semibold text-slate-600 text-sm">Ukuran</th>
-                <th className="p-4 font-semibold text-slate-600 text-sm">Dibuat</th>
-                <th className="p-4 font-semibold text-slate-600 text-sm">Aksi</th>
+              <tr><th>Pratinjau</th><th>Detail berkas</th><th>Ukuran</th><th>Dibuat</th><th>Aksi</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {!mediaRes || !mediaRes.data || mediaRes.data.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="p-8 text-center text-slate-500">
+                  <td colSpan={5} className="admin-empty">
                     Belum ada media. Silakan unggah berkas baru.
                   </td>
                 </tr>
@@ -97,7 +88,6 @@ export default async function AdminMediaPage() {
                     <td className="p-4">
                       {asset.detected_mime_type.startsWith('image/') ? (
                         <div className="w-16 h-16 rounded overflow-hidden bg-slate-100 border border-slate-200">
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img 
                             src={`/api/bff/media/${asset.id}/content`} 
                             alt={asset.alt_text || asset.original_filename}
@@ -135,8 +125,8 @@ export default async function AdminMediaPage() {
                     </td>
                     <td className="p-4 text-sm">
                       <div className="flex gap-3">
-                        <Link href={`/dashboard/media/${asset.id}`} className="text-indigo-600 hover:text-indigo-900 font-medium">
-                          Edit
+                        <Link href={`/dashboard/media/${asset.id}`} className="font-bold text-orange-700 hover:text-orange-600">
+                          Kelola
                         </Link>
                         {/* We could add a public view link if active, e.g. /api/v1/media/{id}/content */}
                         {asset.status === 'active' && (
@@ -155,7 +145,7 @@ export default async function AdminMediaPage() {
                 ))
               )}
             </tbody>
-          </table>
+          </table></div>
         </div>
       </div>
     </div>

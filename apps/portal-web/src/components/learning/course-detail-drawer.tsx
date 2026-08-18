@@ -7,27 +7,57 @@ export function CourseDetailDrawer({ courseId, onClose }: { courseId: string | n
   const [data, setData] = useState<{ grades: GradeItem[] | null; completion: CourseCompletion | null; error?: string } | null>(null);
   const [loading, setLoading] = useState(false);
   const drawerRef = useRef<HTMLDivElement>(null);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const activeControllerRef = useRef<AbortController | null>(null);
+  const previousFocusRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+    const handleKeyboard = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        onClose();
+        return;
+      }
+      if (event.key !== "Tab" || !drawerRef.current) return;
+      const focusable = Array.from(drawerRef.current.querySelectorAll<HTMLElement>(
+        'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+      ));
+      if (focusable.length === 0) {
+        event.preventDefault();
+        drawerRef.current.focus();
+        return;
+      }
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
     };
     if (courseId) {
-      document.addEventListener("keydown", handleEscape);
-      document.body.style.overflow = "hidden"; // Prevent background scrolling
-      // Focus drawer for accessibility
-      drawerRef.current?.focus();
+      previousFocusRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+      const previousOverflow = document.body.style.overflow;
+      document.addEventListener("keydown", handleKeyboard);
+      document.body.style.overflow = "hidden";
+      requestAnimationFrame(() => closeButtonRef.current?.focus());
+      return () => {
+        document.removeEventListener("keydown", handleKeyboard);
+        document.body.style.overflow = previousOverflow;
+        activeControllerRef.current?.abort();
+        previousFocusRef.current?.focus();
+      };
     }
-    return () => {
-      document.removeEventListener("keydown", handleEscape);
-      document.body.style.overflow = "";
-    };
   }, [courseId, onClose]);
 
   const loadData = useCallback(() => {
     if (!courseId) return;
     
+    activeControllerRef.current?.abort();
     const controller = new AbortController();
+    activeControllerRef.current = controller;
     const signal = controller.signal;
 
     setLoading(true);
@@ -62,7 +92,7 @@ export function CourseDetailDrawer({ courseId, onClose }: { courseId: string | n
       }
       setLoading(false);
     })
-    .catch((err) => {
+    .catch(() => {
       if (!signal.aborted) {
         setData({ error: "Terjadi kesalahan jaringan", completion: null, grades: null });
         setLoading(false);
@@ -76,7 +106,7 @@ export function CourseDetailDrawer({ courseId, onClose }: { courseId: string | n
     // eslint-disable-next-line react-hooks/set-state-in-effect
     const controller = loadData();
     return () => { 
-      if (controller) controller.abort(); 
+      if (controller) controller.abort();
     };
   }, [loadData]);
 
@@ -104,6 +134,7 @@ export function CourseDetailDrawer({ courseId, onClose }: { courseId: string | n
         <div className="flex items-center justify-between border-b border-slate-100 p-6 dark:border-slate-800">
           <h2 id="course-detail-title" className="text-lg font-black text-slate-800 dark:text-white">Detail Pembelajaran</h2>
           <button 
+            ref={closeButtonRef}
             onClick={onClose} 
             className="rounded-full p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-300 focus:ring-2 focus:ring-teal-500"
             aria-label="Tutup detail"

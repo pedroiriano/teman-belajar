@@ -6,7 +6,7 @@ import (
 
 	"github.com/meilisearch/meilisearch-go"
 
-	domainSearch "teman-belajar-api/internal/domain/search"
+	domainsearch "teman-belajar-api/internal/domain/search"
 )
 
 type MeilisearchClient struct {
@@ -14,47 +14,58 @@ type MeilisearchClient struct {
 	index  string
 }
 
-// NewMeilisearchClient creates a new Meilisearch client
 func NewMeilisearchClient(url, apiKey, indexName string) *MeilisearchClient {
-	client := meilisearch.New(url, meilisearch.WithAPIKey(apiKey))
-
 	return &MeilisearchClient{
-		client: client,
+		client: meilisearch.New(url, meilisearch.WithAPIKey(apiKey)),
 		index:  indexName,
 	}
 }
 
-// Search queries the Meilisearch engine and returns the unified result
-func (m *MeilisearchClient) Search(ctx context.Context, query domainSearch.SearchQuery) (*domainSearch.SearchResult, error) {
-	req := &meilisearch.SearchRequest{
-		Limit:  int64(query.Limit),
-		Offset: int64(query.Offset),
+func (m *MeilisearchClient) Search(ctx context.Context, query domainsearch.Query) (domainsearch.Result, error) {
+	request := &meilisearch.SearchRequest{
+		Limit:  int64(query.PageSize),
+		Offset: int64((query.Page - 1) * query.PageSize),
+		AttributesToRetrieve: []string{
+			"document_id", "source_type", "title", "summary", "url", "category_name", "tags", "published_at",
+		},
 	}
 
-	if query.Type != "" {
-		req.Filter = []string{fmt.Sprintf("type = '%s'", query.Type)}
+	filters := make([]string, 0, 3)
+	if query.ContentType != "" {
+		filters = append(filters, fmt.Sprintf("source_type = %q", string(query.ContentType)))
+	}
+	if query.CategoryID != "" {
+		filters = append(filters, fmt.Sprintf("category_id = %q", query.CategoryID))
+	}
+	if query.Tag != "" {
+		filters = append(filters, fmt.Sprintf("tags = %q", query.Tag))
+	}
+	if len(filters) > 0 {
+		request.Filter = filters
+	}
+	if query.Sort == domainsearch.SortNewest {
+		request.Sort = []string{"published_at:desc"}
+	} else if query.Sort == domainsearch.SortOldest {
+		request.Sort = []string{"published_at:asc"}
 	}
 
-	res, err := m.client.Index(m.index).Search(query.Query, req)
+	response, err := m.client.Index(m.index).SearchWithContext(ctx, query.Text, request)
 	if err != nil {
-		return nil, fmt.Errorf("failed to search in meilisearch: %w", err)
+		return domainsearch.Result{}, fmt.Errorf("search dependency unavailable: %w", err)
 	}
 
-	var hits []domainSearch.SearchDocument
-	for _, hit := range res.Hits {
-		var doc domainSearch.SearchDocument
-		if err := hit.DecodeInto(&doc); err != nil {
-			// Skip decoding errors for individual hits
+	hits := make([]domainsearch.Hit, 0, len(response.Hits))
+	for _, raw := range response.Hits {
+		var document domainsearch.IndexDocument
+		if err := raw.DecodeInto(&document); err != nil {
 			continue
 		}
-		hits = append(hits, doc)
+		hits = append(hits, domainsearch.Hit{
+			ID: document.DocumentID, ContentType: document.SourceType, Title: document.Title,
+			Snippet: document.Summary, URL: document.URL, Category: document.CategoryName,
+			Tags: document.Tags, PublishedAt: document.PublishedAt,
+		})
 	}
 
-	return &domainSearch.SearchResult{
-		Hits:       hits,
-		TotalHits:  int(res.EstimatedTotalHits),
-		Limit:      query.Limit,
-		Offset:     query.Offset,
-		Processing: int(res.ProcessingTimeMs),
-	}, nil
+	return domainsearch.Result{Hits: hits, Total: int(response.EstimatedTotalHits)}, nil
 }

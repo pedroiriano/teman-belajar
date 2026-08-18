@@ -61,6 +61,43 @@ a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visib
   .admin-theme-toggle__icon { @apply grid h-7 w-7 place-items-center rounded-lg; color: var(--admin-accent-text); background: rgba(249, 115, 22, .13); }
   .admin-theme-toggle__icon svg { @apply h-4 w-4; }
   .admin-theme-toggle__label { @apply hidden sm:inline; }
+  .admin-sidebar-link { @apply flex min-h-11 items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-400 transition; }
+  .admin-sidebar-link:hover { @apply bg-white/10 text-white; }
+  .admin-sidebar-link.is-active { @apply bg-orange-600 text-white shadow-lg shadow-orange-950/20; }
+  .admin-topbar-search { @apply min-h-10 w-full rounded-xl border py-2 pl-10 pr-4 text-sm outline-none transition; color: var(--admin-ink); background: var(--admin-panel-muted); border-color: var(--admin-border); }
+  .admin-topbar-search:focus { border-color: #f97316; box-shadow: 0 0 0 3px rgba(249, 115, 22, .14); }
+  .admin-search-results { @apply absolute inset-x-0 top-12 z-50 grid overflow-hidden rounded-xl border p-1 shadow-xl; color: var(--admin-ink); background: var(--admin-panel); border-color: var(--admin-border); }
+  .admin-search-results a { @apply flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-semibold; }
+  .admin-search-results a:hover { color: var(--admin-accent-text); background: var(--admin-panel-muted); }
+  .admin-icon-button { @apply h-10 w-10 place-items-center rounded-xl border transition; color: var(--admin-copy); background: var(--admin-panel); border-color: var(--admin-border); }
+  .admin-icon-button:hover { color: var(--admin-accent-text); border-color: #fb923c; }
+  .admin-profile-menu { @apply absolute right-0 top-14 z-50 w-64 overflow-hidden rounded-xl border shadow-xl; color: var(--admin-ink); background: var(--admin-panel); border-color: var(--admin-border); }
+  .admin-profile-menu > a { @apply block px-4 py-3 text-sm font-bold transition; color: var(--admin-copy); }
+  .admin-profile-menu > a:hover { color: var(--admin-accent-text); background: var(--admin-panel-muted); }
+  .admin-footer { @apply flex min-h-[58px] flex-col justify-center gap-1 border-t px-4 py-3 text-xs sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8; color: var(--admin-muted); background: var(--admin-panel); border-color: var(--admin-border); }
+  .admin-page-header { @apply mb-7 flex flex-col justify-between gap-4 lg:flex-row lg:items-end; }
+  .admin-kicker { @apply text-xs font-black uppercase tracking-[.18em]; color: var(--admin-accent-text); }
+  .admin-page-title { @apply mt-2 text-3xl font-black tracking-tight; color: var(--admin-ink); }
+  .admin-page-copy { @apply mt-2 text-sm leading-6; color: var(--admin-muted); }
+  .admin-stat-card { @apply relative overflow-hidden rounded-2xl border p-5; color: var(--admin-ink); background: var(--admin-panel); border-color: var(--admin-border); box-shadow: var(--admin-shadow); }
+  .admin-stat-icon { @apply grid h-11 w-11 place-items-center rounded-xl; color: var(--admin-accent-text); background: rgba(249, 115, 22, .13); }
+  .admin-table-shell { @apply overflow-hidden rounded-2xl border; background: var(--admin-panel); border-color: var(--admin-border); box-shadow: var(--admin-shadow); }
+  .admin-table-toolbar { @apply flex flex-col gap-3 border-b p-4 sm:flex-row sm:items-center sm:justify-between; border-color: var(--admin-border); }
+  .admin-table { @apply w-full border-collapse text-left; }
+  .admin-table thead { background: var(--admin-panel-muted); }
+  .admin-table th { @apply whitespace-nowrap px-5 py-4 text-xs font-black uppercase tracking-wider; color: var(--admin-muted); }
+  .admin-table td { @apply px-5 py-4 text-sm; color: var(--admin-copy); }
+  .admin-table tbody tr { @apply border-t transition; border-color: var(--admin-border); }
+  .admin-table tbody tr:hover { background: var(--admin-panel-muted); }
+  .admin-form-card { @apply overflow-hidden rounded-2xl border; color: var(--admin-ink); background: var(--admin-panel); border-color: var(--admin-border); box-shadow: var(--admin-shadow); }
+  .admin-form-header { @apply border-b px-5 py-5 sm:px-7; border-color: var(--admin-border); }
+  .admin-form-body { @apply space-y-6 p-5 sm:p-7; }
+  .admin-form-footer { @apply flex flex-col-reverse gap-3 border-t px-5 py-4 sm:flex-row sm:justify-end sm:px-7; background: var(--admin-panel-muted); border-color: var(--admin-border); }
+  .admin-status { @apply inline-flex items-center rounded-full px-2.5 py-1 text-xs font-bold capitalize; }
+  .admin-empty { @apply px-6 py-14 text-center; color: var(--admin-muted); }
+  .admin-alert-error { @apply rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm font-semibold text-rose-700; }
+  .admin-modal-overlay { @apply fixed inset-0 z-50 flex items-center justify-center bg-slate-950/65 p-4 backdrop-blur-sm; }
+  .admin-modal { @apply flex max-h-[86vh] w-full max-w-5xl flex-col overflow-hidden rounded-2xl border shadow-2xl; color: var(--admin-ink); background: var(--admin-panel); border-color: var(--admin-border); }
 }
 
 /* Legacy actions are mapped to the Admin semantic orange instead of Cuba demo colors. */

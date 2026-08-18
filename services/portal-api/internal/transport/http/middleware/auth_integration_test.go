@@ -20,20 +20,20 @@ func setupMockIdP(t *testing.T) (*httptest.Server, *rsa.PrivateKey) {
 	if err != nil {
 		t.Fatalf("failed to generate key: %v", err)
 	}
-	
+
 	mux := http.NewServeMux()
 	var serverURL string
-	
+
 	mux.HandleFunc("/.well-known/openid-configuration", func(w http.ResponseWriter, r *http.Request) {
 		config := map[string]interface{}{
-			"issuer":                             serverURL,
-			"jwks_uri":                           serverURL + "/keys",
+			"issuer":                                serverURL,
+			"jwks_uri":                              serverURL + "/keys",
 			"id_token_signing_alg_values_supported": []string{"RS256"},
 		}
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(config)
 	})
-	
+
 	mux.HandleFunc("/keys", func(w http.ResponseWriter, r *http.Request) {
 		jwks := jose.JSONWebKeySet{
 			Keys: []jose.JSONWebKey{
@@ -48,10 +48,10 @@ func setupMockIdP(t *testing.T) (*httptest.Server, *rsa.PrivateKey) {
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(jwks)
 	})
-	
+
 	server := httptest.NewServer(mux)
 	serverURL = server.URL
-	
+
 	return server, privateKey
 }
 
@@ -62,35 +62,35 @@ func signJWT(privateKey *rsa.PrivateKey, claims interface{}) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	
+
 	return jwt.Signed(signer).Claims(claims).Serialize()
 }
 
 func TestAuthMiddlewareIntegration(t *testing.T) {
 	mockIdP, privateKey := setupMockIdP(t)
 	defer mockIdP.Close()
-	
+
 	ctx := context.Background()
 	provider, err := oidc.NewProvider(ctx, mockIdP.URL)
 	if err != nil {
 		t.Fatalf("Failed to create provider: %v", err)
 	}
-	
+
 	verifier := provider.Verifier(&oidc.Config{
 		ClientID: "teman-belajar-api",
 	})
-	
+
 	config := AuthConfig{
 		IssuerURL:     mockIdP.URL,
 		Audience:      "teman-belajar-api",
 		RequiredRoles: []string{"Portal Administrator"},
 	}
-	
+
 	middleware := AuthMiddleware(verifier, config)
 	handler := middleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	}))
-	
+
 	tests := []struct {
 		name           string
 		setupHeader    func() string
@@ -197,7 +197,7 @@ func TestAuthMiddlewareIntegration(t *testing.T) {
 			expectedStatus: http.StatusOK,
 		},
 	}
-	
+
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			req := httptest.NewRequest("GET", "/", nil)
@@ -205,10 +205,10 @@ func TestAuthMiddlewareIntegration(t *testing.T) {
 			if header != "" {
 				req.Header.Set("Authorization", header)
 			}
-			
+
 			rr := httptest.NewRecorder()
 			handler.ServeHTTP(rr, req)
-			
+
 			if rr.Code != tc.expectedStatus {
 				t.Errorf("expected status %d, got %d", tc.expectedStatus, rr.Code)
 			}

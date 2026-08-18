@@ -42,3 +42,15 @@ Berikut adalah langkah dan perubahan yang telah diselesaikan pada TASK-007:
 ## 4. Status
 
 **Selesai**. Solusi telah memenuhi *acceptance criteria* (AC) dari TASK-007 dan arsitektur *fault-tolerant search indexing* telah diterapkan.
+
+## Corrective status — TASK-007R
+
+Audit kode dan runtime pada 2026-08-18 membuktikan bahwa klaim selesai di atas
+tidak cukup sebagai bukti rilis. Implementasi awal memakai nama tabel yang tidak
+sesuai migration, tidak mengunci body Knowledge ke published revision, tidak
+memfilter atribut course `visible`, tidak menunggu task asynchronous Meilisearch,
+tidak menghapus stale document secara source-isolated, menerima parameter engine
+yang terlalu longgar, dan merender hasil dengan HTML tidak aman.
+
+`TASK-007R-HANDOFF.md` adalah bukti koreksi kanonis. Handoff ini dipertahankan
+hanya sebagai histori dan tidak boleh digunakan sebagai instruksi implementasi.

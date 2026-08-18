@@ -18,7 +18,7 @@ func TestGetMe(t *testing.T) {
 		Name:              "John Learner",
 		PreferredUsername: "john.learner",
 	}
-	
+
 	ctx := context.WithValue(req.Context(), middleware.ClaimsContextKey, claims)
 	req = req.WithContext(ctx)
 

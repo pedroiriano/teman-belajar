@@ -5,13 +5,14 @@ import (
 	"database/sql"
 	"log"
 	"os"
-	"path/filepath"
+	"regexp"
 	"sort"
-	"strings"
 	"time"
 
 	_ "github.com/lib/pq"
 )
+
+var migrationFileName = regexp.MustCompile(`^[0-9]{3}_[a-z0-9_]+\.sql$`)
 
 func main() {
 	dbURL := os.Getenv("DATABASE_URL")
@@ -68,11 +69,16 @@ func main() {
 
 	var migrationFiles []string
 	for _, file := range files {
-		if !file.IsDir() && strings.HasSuffix(file.Name(), ".sql") {
+		if !file.IsDir() && migrationFileName.MatchString(file.Name()) {
 			migrationFiles = append(migrationFiles, file.Name())
 		}
 	}
 	sort.Strings(migrationFiles)
+	migrationsRoot, err := os.OpenRoot(migrationsDir)
+	if err != nil {
+		log.Fatalf("Failed to open migrations root: %v", err)
+	}
+	defer migrationsRoot.Close()
 
 	for _, file := range migrationFiles {
 		// Check if already applied
@@ -88,7 +94,7 @@ func main() {
 		}
 
 		// Read file content
-		content, err := os.ReadFile(filepath.Join(migrationsDir, file))
+		content, err := migrationsRoot.ReadFile(file)
 		if err != nil {
 			log.Fatalf("Failed to read migration file %s: %v", file, err)
 		}
@@ -101,6 +107,7 @@ func main() {
 		}
 
 		log.Printf("Applying migration: %s", file)
+		// #nosec G701 -- migration SQL is a version-controlled file selected by a strict filename allowlist.
 		_, err = tx.ExecContext(ctx, string(content))
 		if err != nil {
 			tx.Rollback()

@@ -20,8 +20,16 @@ func NewMediaHandler(service *media.Service) *MediaHandler {
 }
 
 func (h *MediaHandler) CreateMedia(w http.ResponseWriter, r *http.Request) {
-	err := r.ParseMultipartForm(32 << 20) // 32 MB max memory
+	const maxUploadBytes = int64(32 << 20)
+	r.Body = http.MaxBytesReader(w, r.Body, maxUploadBytes)
+	// #nosec G120 -- MaxBytesReader enforces the request-wide 32 MiB limit before multipart parsing.
+	err := r.ParseMultipartForm(1 << 20)
 	if err != nil {
+		var maxBytesError *http.MaxBytesError
+		if errors.As(err, &maxBytesError) {
+			h.respondProblem(w, http.StatusRequestEntityTooLarge, "Payload Too Large", "Upload exceeds the 32 MiB limit")
+			return
+		}
 		http.Error(w, "Failed to parse multipart form", http.StatusBadRequest)
 		return
 	}
@@ -49,9 +57,9 @@ func (h *MediaHandler) CreateMedia(w http.ResponseWriter, r *http.Request) {
 			h.respondProblem(w, http.StatusRequestEntityTooLarge, "Payload Too Large", err.Error())
 			return
 		}
-		
+
 		fmt.Printf("Upload Error: %v\n", err)
-		
+
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
@@ -83,7 +91,7 @@ func (h *MediaHandler) CreateMedia(w http.ResponseWriter, r *http.Request) {
 
 func (h *MediaHandler) GetMediaContent(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
-	
+
 	reader, mimeType, size, err := h.service.GetPublicContent(r.Context(), id)
 	if err != nil {
 		// Do not expose why it is not found (private vs deleted vs not eligible)
@@ -103,7 +111,7 @@ func (h *MediaHandler) GetMediaContent(w http.ResponseWriter, r *http.Request) {
 
 func (h *MediaHandler) GetAdminMediaContent(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
-	
+
 	reader, mimeType, size, err := h.service.GetAdminContent(r.Context(), id)
 	if err != nil {
 		http.Error(w, "Not Found", http.StatusNotFound)

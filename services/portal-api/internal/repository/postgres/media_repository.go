@@ -44,7 +44,7 @@ func (r *MediaRepository) UpdateMetadata(ctx context.Context, id string, update 
 			      updated_by = $4
 			  WHERE id = $5
 			  RETURNING id, storage_key, bucket, original_filename, detected_mime_type, size_bytes, checksum_sha256, title, alt_text, caption, status, created_at, created_by, updated_at, updated_by, archived_at`
-	
+
 	row := r.db.QueryRowContext(ctx, query, update.Title, update.AltText, update.Caption, updatedBy, id)
 	return scanMediaAsset(row)
 }
@@ -57,7 +57,7 @@ func (r *MediaRepository) ArchiveAsset(ctx context.Context, id string, archivedB
 
 func (r *MediaRepository) ListAdminAssets(ctx context.Context, page, pageSize int) ([]media.MediaAsset, int, error) {
 	offset := (page - 1) * pageSize
-	
+
 	var total int
 	err := r.db.QueryRowContext(ctx, `SELECT count(*) FROM media_assets`).Scan(&total)
 	if err != nil {
@@ -66,7 +66,7 @@ func (r *MediaRepository) ListAdminAssets(ctx context.Context, page, pageSize in
 
 	query := `SELECT id, storage_key, bucket, original_filename, detected_mime_type, size_bytes, checksum_sha256, title, alt_text, caption, status, created_at, created_by, updated_at, updated_by, archived_at
 			  FROM media_assets ORDER BY created_at DESC LIMIT $1 OFFSET $2`
-	
+
 	rows, err := r.db.QueryContext(ctx, query, pageSize, offset)
 	if err != nil {
 		return nil, 0, err
@@ -134,7 +134,6 @@ func (r *MediaRepository) DetachUsage(ctx context.Context, mediaID, entityType, 
 	return err
 }
 
-
 func scanMediaAsset(s rowScanner) (*media.MediaAsset, error) {
 	var m media.MediaAsset
 	var origFilename, title, altText, caption sql.NullString
@@ -151,11 +150,21 @@ func scanMediaAsset(s rowScanner) (*media.MediaAsset, error) {
 		return nil, err
 	}
 
-	if origFilename.Valid { m.OriginalFilename = &origFilename.String }
-	if title.Valid { m.Title = &title.String }
-	if altText.Valid { m.AltText = &altText.String }
-	if caption.Valid { m.Caption = &caption.String }
-	if archivedAt.Valid { m.ArchivedAt = &archivedAt.Time }
+	if origFilename.Valid {
+		m.OriginalFilename = &origFilename.String
+	}
+	if title.Valid {
+		m.Title = &title.String
+	}
+	if altText.Valid {
+		m.AltText = &altText.String
+	}
+	if caption.Valid {
+		m.Caption = &caption.String
+	}
+	if archivedAt.Valid {
+		m.ArchivedAt = &archivedAt.Time
+	}
 
 	return &m, nil
 }

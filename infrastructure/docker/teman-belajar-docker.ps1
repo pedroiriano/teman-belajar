@@ -25,13 +25,14 @@ foreach ($Line in Get-Content -LiteralPath $EnvironmentFile) {
 $RequiredKeys = @(
     "TB_BIND_ADDRESS",
     "TB_WEB_PORT", "TB_ADMIN_PORT", "TB_PORTAL_DB_PORT", "TB_MOODLE_DB_PORT",
-    "TB_REDIS_PORT", "TB_API_PORT", "TB_KEYCLOAK_PORT", "TB_MOODLE_PORT",
+    "TB_REDIS_PORT", "TB_API_PORT", "TB_KEYCLOAK_PORT", "TB_MOODLE_PORT", "TB_MEILI_PORT",
     "TB_MINIO_API_PORT", "TB_MINIO_CONSOLE_PORT",
     "TB_WEB_URL", "TB_ADMIN_URL", "TB_KEYCLOAK_URL", "TB_MOODLE_URL",
+    "TB_MEILI_ENV", "TB_MEILI_INDEX_NAME", "TB_SEARCH_CAPTURE_RAW_QUERY", "TB_MOODLE_ALLOW_INSECURE_OAUTH2",
     "TB_PORTAL_DB_NAME", "TB_PORTAL_DB_USER", "TB_PORTAL_DB_PASSWORD",
     "TB_KEYCLOAK_DB_NAME", "TB_KEYCLOAK_DB_USER", "TB_KEYCLOAK_DB_PASSWORD",
     "TB_MOODLE_DB_NAME", "TB_MOODLE_DB_USER", "TB_MOODLE_DB_PASSWORD",
-    "TB_REDIS_PASSWORD", "TB_MINIO_ROOT_USER", "TB_MINIO_ROOT_PASSWORD",
+    "TB_REDIS_PASSWORD", "TB_MINIO_ROOT_USER", "TB_MINIO_ROOT_PASSWORD", "TB_MEILI_MASTER_KEY",
     "TB_KEYCLOAK_ADMIN_USER", "TB_KEYCLOAK_ADMIN_PASSWORD",
     "TB_KEYCLOAK_WEB_CLIENT_SECRET", "TB_KEYCLOAK_ADMIN_CLIENT_SECRET",
     "TB_KEYCLOAK_MOODLE_CLIENT_SECRET", "TB_KEYCLOAK_SEED_ADMIN_PASSWORD",
@@ -54,7 +55,7 @@ if ($Placeholders.Count -gt 0) {
 
 $PortKeys = @(
     "TB_WEB_PORT", "TB_ADMIN_PORT", "TB_PORTAL_DB_PORT", "TB_MOODLE_DB_PORT",
-    "TB_REDIS_PORT", "TB_API_PORT", "TB_KEYCLOAK_PORT", "TB_MOODLE_PORT",
+    "TB_REDIS_PORT", "TB_API_PORT", "TB_KEYCLOAK_PORT", "TB_MOODLE_PORT", "TB_MEILI_PORT",
     "TB_MINIO_API_PORT", "TB_MINIO_CONSOLE_PORT"
 )
 $Ports = foreach ($Key in $PortKeys) {
@@ -105,7 +106,23 @@ foreach ($Pair in $UrlPortPairs) {
 }
 
 if ($Environment["TB_BIND_ADDRESS"] -notin @("127.0.0.1", "::1", "localhost")) {
-    Write-Warning "TB_BIND_ADDRESS exposes services beyond loopback. Use only with explicit security review."
+    throw "TB_BIND_ADDRESS must remain loopback for the governed local environment."
+}
+
+if ($Environment["TB_MEILI_ENV"] -ne "development") {
+    throw "TB_MEILI_ENV must be development in the governed local environment."
+}
+
+if ($Environment["TB_MEILI_INDEX_NAME"] -notmatch "^[a-z][a-z0-9_]*$") {
+    throw "TB_MEILI_INDEX_NAME must be a lowercase engine identifier."
+}
+
+if ($Environment["TB_SEARCH_CAPTURE_RAW_QUERY"] -ne "false") {
+    throw "TB_SEARCH_CAPTURE_RAW_QUERY must remain false; raw search-query capture is prohibited by default."
+}
+
+if ($Environment["TB_MOODLE_ALLOW_INSECURE_OAUTH2"] -notin @("true", "false")) {
+    throw "TB_MOODLE_ALLOW_INSECURE_OAUTH2 must be true or false. Production must use false."
 }
 
 $ComposeArguments = @(
@@ -152,7 +169,8 @@ switch ($Action) {
             @{ Name = "Admin Web"; Url = "http://127.0.0.1:$($Environment['TB_ADMIN_PORT'])/" },
             @{ Name = "Keycloak"; Url = "$($Environment['TB_KEYCLOAK_URL'])/realms/teman-belajar/.well-known/openid-configuration" },
             @{ Name = "Moodle"; Url = "http://127.0.0.1:$($Environment['TB_MOODLE_PORT'])/" },
-            @{ Name = "MinIO"; Url = "http://127.0.0.1:$($Environment['TB_MINIO_API_PORT'])/minio/health/live" }
+            @{ Name = "MinIO"; Url = "http://127.0.0.1:$($Environment['TB_MINIO_API_PORT'])/minio/health/live" },
+            @{ Name = "Meilisearch"; Url = "http://127.0.0.1:$($Environment['TB_MEILI_PORT'])/health" }
         )
 
         foreach ($Check in $Checks) {

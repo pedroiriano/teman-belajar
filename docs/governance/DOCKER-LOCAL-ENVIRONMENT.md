@@ -28,7 +28,10 @@ Dokumen ini adalah source of truth untuk nama service, port, environment, networ
 | `redis` | cache/message dependency | `teman-belajar-redis-1` | `redis:6379` |
 | `keycloak` | central identity | `teman-belajar-keycloak-1` | `keycloak:8080` |
 | `minio` | object storage lokal | `teman-belajar-minio-1` | `minio:9000` |
+| `search` | Meilisearch untuk unified search | `teman-belajar-search-1` | `search:7700` |
+| `search-worker` | sinkronisasi indeks pencarian | `teman-belajar-search-worker-1` | tidak membuka port |
 | `moodle` | Moodle Learning Engine | `teman-belajar-moodle-1` | `moodle:80` |
+| `moodle-cron` | Moodle scheduled task runner | `teman-belajar-moodle-cron-1` | tidak membuka port |
 
 Nama lama `portal-web`, `admin-web`, `portal-api`, `portal-migrate`, `postgres-portal`, dan `postgres-moodle` tidak boleh dipakai pada perintah baru. Jangan menambahkan `container_name`; project + service key sudah menghasilkan nama kanonis dan tetap mendukung recreate/scale.
 
@@ -46,8 +49,11 @@ Nama lama `portal-web`, `admin-web`, `portal-api`, `portal-migrate`, `postgres-p
 | Redis | `TB_REDIS_PORT` | `16379` | `6379` | debug lokal |
 | MinIO API | `TB_MINIO_API_PORT` | `19000` | `9000` | S3 API |
 | MinIO Console | `TB_MINIO_CONSOLE_PORT` | `19001` | `9001` | browser |
+| Meilisearch | `TB_MEILI_PORT` | `7700` | `7700` | health/debug lokal |
 
 Aturan:
+
+Compose tidak menyediakan fallback untuk published port. Semua nilai host wajib berasal dari `.env` yang sudah lolos validasi wrapper.
 
 1. Semua published port wajib berbentuk `${TB_BIND_ADDRESS}:${TB_*_PORT}:<internal>`.
 2. Default `TB_BIND_ADDRESS=127.0.0.1`; jangan gunakan `0.0.0.0` tanpa persetujuan keamanan manusia.
@@ -66,6 +72,9 @@ Aturan:
 - Akun seed hanya fixture development. Jangan gunakan credential lokal ini pada staging/production.
 - Mengubah password admin Moodle pada `.env` hanya memengaruhi instalasi baru. Rotasi instalasi yang sudah ada harus memakai CLI resmi `admin/cli/reset_password.php` dan dicatat di handoff tanpa menulis nilainya.
 - Jangan menulis secret ke README, handoff, issue, prompt, screenshot, atau log.
+- `TB_SEARCH_CAPTURE_RAW_QUERY` wajib `false`; query pencarian mentah tidak boleh dicatat secara default.
+- `TB_MEILI_ENV` wajib `development` untuk Compose lokal dan master key tidak pernah dikirim ke browser.
+- Perbedaan local/test/production diatur lebih rinci dalam `ENVIRONMENT-SECURITY-MATRIX.md`.
 
 Issuer Keycloak lokal adalah `http://keycloak.teman-belajar.localhost:8081/realms/teman-belajar`. Nama `*.localhost` menuju loopback pada host; Compose memetakannya ke host gateway pada container aplikasi. Jangan mengganti issuer API dengan DNS internal `http://keycloak:8080`, karena nilai `iss` token harus identik bagi browser dan API.
 
@@ -79,6 +88,7 @@ Satu-satunya network proyek adalah `teman-belajar-network`. Service berkomunikas
 | `teman-belajar-moodle-db-data` | Moodle PostgreSQL |
 | `teman-belajar-redis-data` | Redis AOF |
 | `teman-belajar-minio-data` | MinIO objects |
+| `teman-belajar-meili-data` | Meilisearch indexes; dapat dibangun ulang dari source data |
 | `teman-belajar-moodle-app-data` | Moodle application/config runtime |
 | `teman-belajar-moodle-data` | Moodle dataroot |
 
@@ -100,13 +110,16 @@ Normal recreate container tidak menghapus volume. Sebelum migrasi volume: hentik
 - `api` menunggu `migrate` selesai serta Keycloak/Redis sehat.
 - `web` dan `admin` menunggu API serta Keycloak sehat.
 - `moodle` menunggu `moodle-db` sehat.
+- `search-worker` menunggu Portal DB, Meilisearch, dan Moodle sehat; kegagalan satu source setelah startup tidak boleh menghapus snapshot source lain.
+- `api` tidak menunggu `search`, sehingga outage Search hanya menurunkan endpoint Search menjadi 503.
 - Moodle menyinkronkan enam nilai runtime yang diizinkan di `config.php` sebelum upgrade/start; sinkronisasi harus gagal tertutup bila struktur file tidak cocok.
 - Jangan menambahkan `|| true` pada migrasi, upgrade, atau health-critical bootstrap.
 
 ## 7. Versi Image dan Dependency
 
 - Image infrastruktur harus dipin minimal sampai patch version atau release tag eksplisit.
-- Image aplikasi lokal harus eksplisit: `teman-belajar-web:local`, `teman-belajar-admin:local`, `teman-belajar-api:local`, `teman-belajar-moodle:local`.
+- Image aplikasi lokal harus eksplisit: `teman-belajar-web:local`, `teman-belajar-admin:local`, `teman-belajar-api:local`, `teman-belajar-search-worker:local`, `teman-belajar-moodle:local`.
+- Meilisearch dipin ke `getmeili/meilisearch:v1.6.2`; keputusan dan upgrade gate ada pada ADR-014.
 - Dockerfile Node memakai `npm ci`; manifest dan lockfile harus sinkron.
 - Major upgrade database, Keycloak, Moodle, Node, Next.js, Go, atau base OS memerlukan impact analysis, backup/rollback, test, dan persetujuan manusia bila berdampak material.
 - Jangan memakai `latest` untuk runtime final.

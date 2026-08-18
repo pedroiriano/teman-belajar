@@ -95,3 +95,21 @@ module/
 ```
 
 Business logic tidak boleh berada di HTTP handler atau UI component.
+
+## Search Runtime Layout
+
+Unified Search does not own a second Go module. Both runtime commands share the
+Portal API module and its contracts/adapters:
+
+```text
+services/portal-api/
+├── cmd/api/
+├── cmd/search-worker/
+├── internal/application/search/
+├── internal/adapters/search/
+├── internal/domain/search/
+└── internal/searchindex/
+```
+
+The Compose service key remains `search-worker`, while the obsolete
+`services/search-worker/` module must not be recreated.

@@ -20,7 +20,7 @@ export default function AdminKnowledgeDetailPage() {
       try {
         const res = await getAdminKnowledgeDetailAction(id);
         if (!res.success) {
-          setError(res.error || "Failed to fetch article");
+          setError(res.error || "Artikel pengetahuan belum dapat dimuat");
           return;
         }
         
@@ -28,7 +28,7 @@ export default function AdminKnowledgeDetailPage() {
 		setBody(res.data?.body || "");
 		setRoles(res.roles || []);
       } catch (e) {
-        setError("Failed to load article");
+        setError("Artikel pengetahuan belum dapat dimuat");
       } finally {
         setLoading(false);
       }
@@ -42,7 +42,7 @@ export default function AdminKnowledgeDetailPage() {
     setError("");
     const res = await transitionKnowledgeAction(id, status);
     if (!res.success) {
-      setError(res.error || "Transition failed");
+      setError(res.error || "Status artikel belum dapat diperbarui");
       setActionLoading(false);
     } else {
       router.push("/dashboard/knowledge");
@@ -54,46 +54,35 @@ export default function AdminKnowledgeDetailPage() {
     setError("");
     const res = await createKnowledgeRevisionAction(id, { body });
     if (!res.success) {
-      setError(res.error || "Revision creation failed");
+      setError(res.error || "Revisi baru belum dapat disimpan");
       setActionLoading(false);
     } else {
       router.push("/dashboard/knowledge");
     }
   };
 
-  if (loading) return <div className="p-8">Loading...</div>;
-  if (!article) return <div className="p-8 text-red-500">{error || "Not found"}</div>;
+  if (loading) return <div className="admin-card animate-pulse p-8"><div className="h-7 w-72 rounded bg-slate-100" /><div className="mt-6 h-72 rounded-xl bg-slate-100" /></div>;
+  if (!article) return <div className="admin-card mx-auto max-w-xl p-8 text-center" role="alert"><h1 className="text-xl font-black text-slate-900">Artikel tidak tersedia</h1><p className="mt-3 text-sm text-slate-500">{error}</p><Link href="/dashboard/knowledge" className="admin-button mt-6">Kembali</Link></div>;
 
   const isEditor = roles.includes("Content Editor") || roles.includes("Portal Administrator");
   const isReviewer = roles.includes("Reviewer") || roles.includes("Portal Administrator");
   const canCreateRevision = isEditor && ["draft", "published"].includes(article.status);
 
   return (
-    <div className="min-h-screen bg-slate-100 p-8 font-sans">
-      <div className="max-w-4xl mx-auto">
-        <div className="mb-6">
-          <Link href="/dashboard/knowledge" className="text-indigo-600 hover:text-indigo-800 font-medium text-sm flex items-center">
-            &larr; Back to Knowledge Management
-          </Link>
-        </div>
-
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden mb-6">
-          <div className="p-6 border-b border-slate-100 flex justify-between items-center">
-            <div>
-              <h1 className="text-2xl font-bold text-slate-900">{article.title}</h1>
-              <div className="text-slate-500 text-sm mt-1">Status: <span className="font-semibold uppercase">{article.status}</span></div>
-            </div>
-            
-            <div className="flex gap-2">
-              {error && <span className="text-red-500 text-sm mr-4 self-center">{error}</span>}
+    <div className="admin-page max-w-5xl">
+      <div className="admin-page-header"><div><Link href="/dashboard/knowledge" className="text-sm font-bold text-orange-700">&larr; Kembali ke Pengetahuan</Link><p className="admin-kicker mt-5">Detail editorial</p><h1 className="admin-page-title">{article.title}</h1><p className="admin-page-copy">Kelola revisi serta transisi review dan publikasi.</p></div><span className="admin-status bg-orange-50 text-orange-800">{article.status}</span></div>
+      {error && <div className="admin-alert-error mb-5" role="alert">{error}</div>}
+      <section className="admin-form-card">
+          <div className="admin-form-header flex flex-wrap items-center justify-between gap-4"><div><h2 className="font-black text-slate-900">Alur publikasi</h2><p className="mt-1 text-xs text-slate-500">Aksi mengikuti status dan peran editorial.</p></div>
+            <div className="flex flex-wrap gap-2">
               
               {article.status === 'draft' && isEditor && (
                 <button 
                   onClick={() => handleTransition('in_review')} 
                   disabled={actionLoading}
-                  className="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-md font-medium text-sm disabled:opacity-50"
+                  className="admin-button"
                 >
-                  Submit for Review
+                  Ajukan review
                 </button>
               )}
 
@@ -102,16 +91,16 @@ export default function AdminKnowledgeDetailPage() {
                   <button 
                     onClick={() => handleTransition('draft')} 
                     disabled={actionLoading}
-                    className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-md font-medium text-sm disabled:opacity-50"
+                    className="admin-button-secondary !text-rose-700"
                   >
-                    Reject
+                    Kembalikan ke draft
                   </button>
                   <button 
                     onClick={() => handleTransition('approved')} 
                     disabled={actionLoading}
-                    className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md font-medium text-sm disabled:opacity-50"
+                    className="admin-button"
                   >
-                    Approve
+                    Setujui
                   </button>
                 </>
               )}
@@ -120,9 +109,9 @@ export default function AdminKnowledgeDetailPage() {
                 <button 
                   onClick={() => handleTransition('published')} 
                   disabled={actionLoading}
-                  className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-md font-medium text-sm disabled:opacity-50"
+                  className="admin-button"
                 >
-                  Publish
+                  Terbitkan
                 </button>
               )}
 
@@ -130,22 +119,20 @@ export default function AdminKnowledgeDetailPage() {
                 <button 
                   onClick={() => handleTransition('archived')} 
                   disabled={actionLoading}
-                  className="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-md font-medium text-sm disabled:opacity-50"
+                  className="admin-button-secondary"
                 >
-                  Archive
+                  Arsipkan
                 </button>
               )}
             </div>
           </div>
           
-          <div className="p-6">
-            <h3 className="font-semibold text-slate-700 mb-2">Summary</h3>
-            <p className="text-slate-600 mb-6 bg-slate-50 p-4 rounded-md">{article.summary || "No summary"}</p>
-            
-            <h3 className="font-semibold text-slate-700 mb-2">Current Body</h3>
+          <div className="admin-form-body">
+            <div><h3 className="admin-label">Ringkasan</h3><p className="rounded-xl bg-slate-50 p-4 text-sm leading-7 text-slate-600">{article.summary || "Belum ada ringkasan."}</p></div>
+            <div><h3 className="admin-label">Isi artikel saat ini</h3>
             
             {!canCreateRevision ? (
-              <div className="prose max-w-none text-slate-600 border border-slate-200 p-4 rounded-md font-mono text-sm bg-slate-50">
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 font-mono text-sm leading-7 text-slate-600 whitespace-pre-wrap">
                 {article.body}
               </div>
             ) : (
@@ -153,8 +140,9 @@ export default function AdminKnowledgeDetailPage() {
                 <textarea
                   value={body}
                   onChange={(e) => setBody(e.target.value)}
-                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all text-black font-mono text-sm"
+                  className="admin-input font-mono text-sm"
                   rows={15}
+                  aria-label="Isi revisi artikel"
                 />
                 
                 {article.body !== body && (
@@ -162,18 +150,17 @@ export default function AdminKnowledgeDetailPage() {
                     <button
                       onClick={handleSaveRevision}
                       disabled={actionLoading}
-                      className="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-lg font-medium transition-colors shadow-sm disabled:opacity-50"
+                      className="admin-button"
                     >
-                      Save as New Draft Revision
+                      Simpan sebagai revisi draft baru
                     </button>
                   </div>
                 )}
               </div>
             )}
-            
+            </div>
           </div>
-        </div>
-      </div>
+      </section>
     </div>
   );
 }

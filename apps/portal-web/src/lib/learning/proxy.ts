@@ -84,7 +84,7 @@ export async function proxyLearningRequest(
       data = await response.json();
     } else {
       // Non-JSON upstream response, prevent raw text leakage
-      console.error(`proxyLearningRequest: Unexpected non-JSON response from ${upstreamUrl}. Status: ${response.status}, Content-Type: ${contentType}`);
+      console.error("proxyLearningRequest: upstream returned an unsupported response type", { status: response.status });
       return NextResponse.json(
         {
           type: "https://temanbelajar.com/errors/bad-gateway",
@@ -112,8 +112,8 @@ export async function proxyLearningRequest(
         "Cache-Control": "no-store",
       },
     });
-  } catch (error) {
-    console.error("proxyLearningRequest fetch error:", error);
+  } catch {
+    console.error("proxyLearningRequest: upstream request failed");
     return NextResponse.json(
       {
         type: "https://temanbelajar.com/errors/gateway-timeout",

@@ -40,7 +40,7 @@ func TestIDORGetMyCourseCompletion(t *testing.T) {
 
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/learning/me/courses/2/completion", nil)
 	req.SetPathValue("courseId", "2") // User is enrolled in course 1, not 2
-	
+
 	claims := middleware.CustomClaims{Subject: "mapped"}
 	ctx := context.WithValue(req.Context(), middleware.ClaimsContextKey, claims)
 	req = req.WithContext(ctx)
@@ -59,7 +59,7 @@ func TestIDORGetMyCourseGrades(t *testing.T) {
 
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/learning/me/courses/2/grades", nil)
 	req.SetPathValue("courseId", "2") // User is enrolled in course 1, not 2
-	
+
 	claims := middleware.CustomClaims{Subject: "mapped"}
 	ctx := context.WithValue(req.Context(), middleware.ClaimsContextKey, claims)
 	req = req.WithContext(ctx)
@@ -78,7 +78,7 @@ func TestGetMyCourseCompletion_Allowed(t *testing.T) {
 
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/learning/me/courses/1/completion", nil)
 	req.SetPathValue("courseId", "1") // User is enrolled in course 1
-	
+
 	claims := middleware.CustomClaims{Subject: "mapped"}
 	ctx := context.WithValue(req.Context(), middleware.ClaimsContextKey, claims)
 	req = req.WithContext(ctx)

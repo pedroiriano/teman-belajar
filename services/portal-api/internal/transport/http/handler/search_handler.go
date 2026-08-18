@@ -2,70 +2,93 @@ package handler
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 	"strconv"
 
-	"teman-belajar-api/internal/domain/search"
+	applicationsearch "teman-belajar-api/internal/application/search"
+	domainsearch "teman-belajar-api/internal/domain/search"
 )
 
+// SearchHandler intentionally holds the concrete application service so the
+// transport cannot bypass validation and call the engine adapter directly.
 type SearchHandler struct {
-	provider search.SearchProvider
+	service *applicationsearch.Service
 }
 
-func NewSearchHandler(provider search.SearchProvider) *SearchHandler {
-	return &SearchHandler{
-		provider: provider,
-	}
+func NewSearchHandler(service *applicationsearch.Service) *SearchHandler {
+	return &SearchHandler{service: service}
 }
 
 func (h *SearchHandler) Search(w http.ResponseWriter, r *http.Request) {
-	q := r.URL.Query().Get("q")
-	if q == "" {
-		w.Header().Set("Content-Type", "application/problem+json")
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(map[string]interface{}{
-			"type":   "https://temanbelajar.com/errors/bad-request",
-			"title":  "Bad Request",
-			"status": 400,
-			"detail": "Missing required query parameter: q",
-		})
-		return
-	}
-
-	query := search.SearchQuery{
-		Query:  q,
-		Type:   r.URL.Query().Get("type"),
-		Limit:  10,
-		Offset: 0,
-	}
-
-	if limitStr := r.URL.Query().Get("limit"); limitStr != "" {
-		if limit, err := strconv.Atoi(limitStr); err == nil && limit > 0 {
-			query.Limit = limit
+	allowed := map[string]bool{"q": true, "content_type": true, "category_id": true, "tag": true, "page": true, "page_size": true, "sort": true}
+	for key := range r.URL.Query() {
+		if !allowed[key] {
+			searchProblem(w, http.StatusUnprocessableEntity, "Parameter pencarian tidak valid", "Parameter yang tidak dikenal tidak diizinkan.", key)
+			return
 		}
 	}
 
-	if offsetStr := r.URL.Query().Get("offset"); offsetStr != "" {
-		if offset, err := strconv.Atoi(offsetStr); err == nil && offset >= 0 {
-			query.Offset = offset
-		}
+	page, ok := parseSearchInt(r, "page", 1)
+	if !ok {
+		searchProblem(w, http.StatusUnprocessableEntity, "Parameter pencarian tidak valid", "page harus berupa bilangan bulat.", "page")
+		return
 	}
-
-	result, err := h.provider.Search(r.Context(), query)
-	if err != nil {
-		w.Header().Set("Content-Type", "application/problem+json")
-		w.WriteHeader(http.StatusServiceUnavailable)
-		json.NewEncoder(w).Encode(map[string]interface{}{
-			"type":   "https://temanbelajar.com/errors/service-unavailable",
-			"title":  "Service Unavailable",
-			"status": 503,
-			"detail": "Search service is currently unavailable",
-		})
+	pageSize, ok := parseSearchInt(r, "page_size", 20)
+	if !ok {
+		searchProblem(w, http.StatusUnprocessableEntity, "Parameter pencarian tidak valid", "page_size harus berupa bilangan bulat.", "page_size")
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]interface{}{
-		"data": result,
+	result, err := h.service.Search(r.Context(), domainsearch.Query{
+		Text: r.URL.Query().Get("q"), ContentType: domainsearch.ContentType(r.URL.Query().Get("content_type")),
+		CategoryID: r.URL.Query().Get("category_id"), Tag: r.URL.Query().Get("tag"),
+		Page: page, PageSize: pageSize, Sort: domainsearch.Sort(r.URL.Query().Get("sort")),
 	})
+	if err != nil {
+		if errors.Is(err, applicationsearch.ErrInvalidQuery) {
+			field := "query"
+			var validation *applicationsearch.ValidationError
+			if errors.As(err, &validation) {
+				field = validation.Field
+			}
+			searchProblem(w, http.StatusUnprocessableEntity, "Parameter pencarian tidak valid", err.Error(), field)
+			return
+		}
+		searchProblem(w, http.StatusServiceUnavailable, "Pencarian tidak tersedia", "Layanan pencarian sedang tidak tersedia. Coba kembali beberapa saat lagi.", "")
+		return
+	}
+
+	totalPages := 0
+	if result.Total > 0 {
+		totalPages = (result.Total + pageSize - 1) / pageSize
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Cache-Control", "no-store")
+	_ = json.NewEncoder(w).Encode(map[string]any{
+		"data":       result.Hits,
+		"pagination": map[string]int{"page": page, "page_size": pageSize, "total": result.Total, "total_pages": totalPages},
+	})
+}
+
+func parseSearchInt(r *http.Request, name string, fallback int) (int, bool) {
+	value := r.URL.Query().Get(name)
+	if value == "" {
+		return fallback, true
+	}
+	parsed, err := strconv.Atoi(value)
+	return parsed, err == nil
+}
+
+func searchProblem(w http.ResponseWriter, status int, title, detail, field string) {
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Cache-Control", "no-store")
+	w.WriteHeader(status)
+	payload := map[string]any{
+		"type": "https://teman-belajar.invalid/problems/search", "title": title, "status": status, "detail": detail,
+	}
+	if field != "" {
+		payload["errors"] = []map[string]string{{"field": field, "message": detail}}
+	}
+	_ = json.NewEncoder(w).Encode(payload)
 }

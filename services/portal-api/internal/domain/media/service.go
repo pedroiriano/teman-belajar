@@ -64,7 +64,7 @@ func (s *Service) Upload(ctx context.Context, reader io.Reader, originalFilename
 	// Hash calculation during stream
 	hash := sha256.New()
 	teeReader := io.TeeReader(multiReader, hash)
-	
+
 	// Enforce limit reader to protect memory
 	limitReader := io.LimitReader(teeReader, s.maxUploadSize+1)
 
@@ -233,7 +233,7 @@ func (s *Service) GetAdminContent(ctx context.Context, id string) (io.ReadCloser
 	if err != nil {
 		return nil, "", 0, ErrAssetNotFound
 	}
-	
+
 	reader, err := s.storage.Get(ctx, asset.Bucket, asset.StorageKey)
 	if err != nil {
 		return nil, "", 0, err

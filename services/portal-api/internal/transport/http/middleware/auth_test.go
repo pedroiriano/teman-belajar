@@ -19,7 +19,7 @@ func (m *MockVerifier) Verify(ctx context.Context, rawIDToken string) (*oidc.IDT
 	return m.VerifyFunc(ctx, rawIDToken)
 }
 
-// Since oidc.IDToken is a struct containing unexported fields, 
+// Since oidc.IDToken is a struct containing unexported fields,
 // we actually test the middleware HTTP logic by mocking it out or just using jwt directly.
 // But we designed our middleware to accept `OIDCVerifier`.
 // To fully mock `*oidc.IDToken`, it's notoriously difficult because `oidc.IDToken` is concrete.
@@ -79,5 +79,5 @@ func TestAuthMiddleware_InvalidToken(t *testing.T) {
 	}
 }
 
-// We rely on integration tests or manual tests to verify the claims decoding 
+// We rely on integration tests or manual tests to verify the claims decoding
 // and role validation since we can't easily mock *oidc.IDToken internal state.

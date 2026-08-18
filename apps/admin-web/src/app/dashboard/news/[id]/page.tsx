@@ -19,7 +19,7 @@ export default function AdminNewsDetailPage() {
       try {
         const res = await getAdminNewsAction();
         if (!res.success) {
-          setError(res.error || "Failed to fetch news");
+          setError(res.error || "Berita belum dapat dimuat");
           return;
         }
         
@@ -28,10 +28,10 @@ export default function AdminNewsDetailPage() {
         if (found) {
           setNews(found);
         } else {
-          setError("News not found");
+          setError("Berita tidak ditemukan");
         }
       } catch (e) {
-        setError("Failed to load news");
+        setError("Berita belum dapat dimuat");
       } finally {
         setLoading(false);
       }
@@ -45,45 +45,38 @@ export default function AdminNewsDetailPage() {
     setError("");
     const res = await transitionNewsAction(id, status);
     if (!res.success) {
-      setError(res.error || "Transition failed");
+      setError(res.error || "Status berita belum dapat diperbarui");
       setActionLoading(false);
     } else {
       router.push("/dashboard/news");
     }
   };
 
-  if (loading) return <div className="p-8">Loading...</div>;
-  if (!news) return <div className="p-8 text-red-500">{error || "Not found"}</div>;
+  if (loading) return <div className="admin-card animate-pulse p-8"><div className="h-7 w-72 rounded bg-slate-100" /><div className="mt-6 h-52 rounded-xl bg-slate-100" /></div>;
+  if (!news) return <div className="admin-card mx-auto max-w-xl p-8 text-center" role="alert"><h1 className="text-xl font-black text-slate-900">Berita tidak tersedia</h1><p className="mt-3 text-sm text-slate-500">{error}</p><Link href="/dashboard/news" className="admin-button mt-6">Kembali</Link></div>;
 
   const isEditor = roles.includes("Content Editor") || roles.includes("Portal Administrator");
   const isReviewer = roles.includes("Reviewer") || roles.includes("Portal Administrator");
 
   return (
-    <div className="min-h-screen bg-slate-100 p-8 font-sans">
-      <div className="max-w-4xl mx-auto">
-        <div className="mb-6">
-          <Link href="/dashboard/news" className="text-indigo-600 hover:text-indigo-800 font-medium text-sm flex items-center">
-            &larr; Back to News Management
-          </Link>
-        </div>
-
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden mb-6">
-          <div className="p-6 border-b border-slate-100 flex justify-between items-center">
-            <div>
-              <h1 className="text-2xl font-bold text-slate-900">{news.title}</h1>
-              <div className="text-slate-500 text-sm mt-1">Status: <span className="font-semibold uppercase">{news.status}</span></div>
-            </div>
-            
-            <div className="flex gap-2">
-              {error && <span className="text-red-500 text-sm mr-4 self-center">{error}</span>}
+    <div className="admin-page max-w-5xl">
+      <div className="admin-page-header">
+        <div><Link href="/dashboard/news" className="text-sm font-bold text-orange-700">&larr; Kembali ke Berita</Link><p className="admin-kicker mt-5">Detail editorial</p><h1 className="admin-page-title">{news.title}</h1><p className="admin-page-copy">Tinjau konten dan jalankan transisi sesuai peran editorial.</p></div>
+        <span className="admin-status bg-orange-50 text-orange-800">{news.status}</span>
+      </div>
+      {error && <div className="admin-alert-error mb-5" role="alert">{error}</div>}
+      <section className="admin-form-card">
+          <div className="admin-form-header flex flex-wrap items-center justify-between gap-4">
+            <div><h2 className="font-black text-slate-900">Alur publikasi</h2><p className="mt-1 text-xs text-slate-500">Aksi yang tersedia mengikuti status dan peran Anda.</p></div>
+            <div className="flex flex-wrap gap-2">
               
               {news.status === 'draft' && isEditor && (
                 <button 
                   onClick={() => handleTransition('in_review')} 
                   disabled={actionLoading}
-                  className="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-md font-medium text-sm disabled:opacity-50"
+                  className="admin-button"
                 >
-                  Submit for Review
+                  Ajukan review
                 </button>
               )}
 
@@ -92,16 +85,16 @@ export default function AdminNewsDetailPage() {
                   <button 
                     onClick={() => handleTransition('draft')} 
                     disabled={actionLoading}
-                    className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-md font-medium text-sm disabled:opacity-50"
+                    className="admin-button-secondary !text-rose-700"
                   >
-                    Reject
+                    Kembalikan ke draft
                   </button>
                   <button 
                     onClick={() => handleTransition('approved')} 
                     disabled={actionLoading}
-                    className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md font-medium text-sm disabled:opacity-50"
+                    className="admin-button"
                   >
-                    Approve
+                    Setujui
                   </button>
                 </>
               )}
@@ -110,9 +103,9 @@ export default function AdminNewsDetailPage() {
                 <button 
                   onClick={() => handleTransition('published')} 
                   disabled={actionLoading}
-                  className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-md font-medium text-sm disabled:opacity-50"
+                  className="admin-button"
                 >
-                  Publish
+                  Terbitkan
                 </button>
               )}
 
@@ -120,25 +113,19 @@ export default function AdminNewsDetailPage() {
                 <button 
                   onClick={() => handleTransition('archived')} 
                   disabled={actionLoading}
-                  className="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-md font-medium text-sm disabled:opacity-50"
+                  className="admin-button-secondary"
                 >
-                  Archive
+                  Arsipkan
                 </button>
               )}
             </div>
           </div>
           
-          <div className="p-6">
-            <h3 className="font-semibold text-slate-700 mb-2">Excerpt</h3>
-            <p className="text-slate-600 mb-6 bg-slate-50 p-4 rounded-md">{news.excerpt || "No excerpt"}</p>
-            
-            <h3 className="font-semibold text-slate-700 mb-2">Body</h3>
-            <div className="prose max-w-none text-slate-600 border border-slate-200 p-4 rounded-md font-mono text-sm bg-slate-50">
-              {news.body}
-            </div>
+          <div className="admin-form-body">
+            <div><h3 className="admin-label">Ringkasan</h3><p className="rounded-xl bg-slate-50 p-4 text-sm leading-7 text-slate-600">{news.excerpt || "Belum ada ringkasan."}</p></div>
+            <div><h3 className="admin-label">Isi berita</h3><div className="rounded-xl border border-slate-200 bg-slate-50 p-4 font-mono text-sm leading-7 text-slate-600 whitespace-pre-wrap">{news.body}</div></div>
           </div>
-        </div>
-      </div>
+      </section>
     </div>
   );
 }

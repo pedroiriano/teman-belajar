@@ -2,6 +2,9 @@ openapi: 3.1.0
 info:
   title: Teman Belajar API
   version: 1.0.0
+  license:
+    name: Proprietary
+    identifier: LicenseRef-Proprietary
   description: Canonical API contract for Teman Belajar, an Enterprise Digital Learning Experience Platform (LXP + LMS).
 servers:
   - url: /api/v1
@@ -1144,94 +1147,124 @@ paths:
       operationId: listLearningCourseGrades
   /api/v1/search:
     get:
+      operationId: searchPublicContent
       tags:
         - Search
-      summary: Unified Search
-      description: Search across authoritative domains (courses, knowledge, news, etc.).
-      security:
-        - cookieAuth: []
+      summary: Search published public content
+      description: Searches the derived public index for visible Moodle courses, published knowledge revisions, published news, and active announcements. Raw engine filters are never accepted.
+      security: []
       parameters:
         - name: q
           in: query
-          description: Search query string
+          description: Trimmed search text
           required: true
           schema:
             type: string
-        - name: type
+            minLength: 1
+            maxLength: 200
+        - name: content_type
           in: query
-          description: Filter by source type (course, knowledge, news, announcement, etc.)
+          description: Teman Belajar content type allowlist
           required: false
           schema:
             type: string
-        - name: limit
+            enum:
+              - course
+              - knowledge
+              - news
+              - announcement
+        - name: category_id
           in: query
-          description: Pagination limit
+          description: Filter by canonical category UUID
+          required: false
+          schema:
+            type: string
+            format: uuid
+        - name: tag
+          in: query
+          description: Filter by an exact public tag
+          required: false
+          schema:
+            type: string
+            maxLength: 64
+            pattern: '^[\p{L}\p{N} ._-]+$'
+        - name: page
+          in: query
           required: false
           schema:
             type: integer
-            default: 10
-        - name: offset
+            minimum: 1
+            default: 1
+        - name: page_size
           in: query
-          description: Pagination offset
           required: false
           schema:
             type: integer
-            default: 0
+            minimum: 1
+            maximum: 50
+            default: 20
+        - name: sort
+          in: query
+          required: false
+          schema:
+            type: string
+            default: relevance
+            enum:
+              - relevance
+              - newest
+              - oldest
       responses:
         '200':
-          description: Search Results
+          description: Public search results
           content:
             application/json:
               schema:
                 type: object
+                required:
+                  - data
+                  - pagination
                 properties:
                   data:
-                    type: object
-                    properties:
-                      hits:
-                        type: array
-                        items:
-                          type: object
-                          properties:
-                            id:
-                              type: string
-                            type:
-                              type: string
-                            title:
-                              type: string
-                            description:
-                              type: string
-                            url:
-                              type: string
-                            image_url:
-                              type: string
-                              nullable: true
-                            tags:
-                              type: array
-                              items:
-                                type: string
-                          required:
-                            - id
-                            - type
-                            - title
-                            - description
-                            - url
-                      total_hits:
-                        type: integer
-                      limit:
-                        type: integer
-                      offset:
-                        type: integer
-                      processing_time_ms:
-                        type: integer
-                    required:
-                      - hits
-                      - total_hits
-                      - limit
-                      - offset
-                      - processing_time_ms
-        '401':
-          $ref: '#/components/responses/UnauthorizedError'
+                    type: array
+                    items:
+                      type: object
+                      additionalProperties: false
+                      required:
+                        - id
+                        - content_type
+                        - title
+                        - snippet
+                        - url
+                        - tags
+                      properties:
+                        id:
+                          type: string
+                        content_type:
+                          type: string
+                          enum:
+                            - course
+                            - knowledge
+                            - news
+                            - announcement
+                        title:
+                          type: string
+                        snippet:
+                          type: string
+                        url:
+                          type: string
+                        category:
+                          type: string
+                        tags:
+                          type: array
+                          items:
+                            type: string
+                        published_at:
+                          type: string
+                          format: date-time
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+        '422':
+          $ref: '#/components/responses/ValidationError'
         '503':
           $ref: '#/components/responses/ServiceUnavailableError'
 components:
@@ -1295,7 +1328,7 @@ components:
       content:
         application/problem+json:
           schema:
-            $ref: '#/components/schemas/ProblemDetails'
+            $ref: '#/components/schemas/Problem'
   schemas:
     Health:
       type: object

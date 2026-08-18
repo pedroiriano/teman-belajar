@@ -3,6 +3,7 @@ import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { getServerAccessToken } from "@/lib/server-auth";
+import { AdminUnauthorized } from "@/components/admin-states";
 
 async function getAdminNews(token: string) {
   // In a real implementation we would fetch /api/v1/admin/news 
@@ -42,15 +43,7 @@ export default async function AdminNewsPage() {
   );
 
   if (!hasAccess) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-900 text-white p-8">
-        <div className="bg-red-900/50 border border-red-500 p-8 rounded-lg max-w-lg w-full">
-          <h1 className="text-3xl font-bold mb-4 text-red-400">403 Forbidden</h1>
-          <p className="mb-6">You do not have the necessary permissions to manage News.</p>
-          <Link href="/dashboard" className="text-blue-400 hover:underline">Return to Dashboard</Link>
-        </div>
-      </div>
-    );
+    return <AdminUnauthorized resource="berita" />;
   }
 
   const newsRes = accessToken ? await getAdminNews(accessToken) : null;
@@ -58,34 +51,32 @@ export default async function AdminNewsPage() {
   return (
     <div className="admin-page">
       <div>
-        <div className="mb-8 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
+        <div className="admin-page-header">
           <div>
-            <p className="text-xs font-black uppercase tracking-[.18em] text-orange-600">Manajemen konten</p>
-            <h1 className="mt-2 text-3xl font-black text-slate-900">Berita</h1>
-            <p className="mt-2 text-sm text-slate-500">Susun dan kelola workflow berita Teman Belajar.</p>
+            <p className="admin-kicker">Manajemen konten</p>
+            <h1 className="admin-page-title">Berita</h1>
+            <p className="admin-page-copy">Susun dan kelola workflow berita Teman Belajar.</p>
           </div>
           <Link 
             href="/dashboard/news/create" 
             className="admin-button"
           >
-            + Buat berita
+            <span aria-hidden="true">+</span> Buat berita
           </Link>
         </div>
 
-        <div className="admin-card overflow-x-auto">
-          <table className="w-full text-left border-collapse">
+        <div className="admin-table-shell">
+          <div className="admin-table-toolbar"><div><h2 className="font-black text-slate-900">Daftar berita</h2><p className="mt-1 text-xs text-slate-500">Seluruh status editorial</p></div><span className="admin-status bg-slate-100 text-slate-600">{newsRes?.data?.length || 0} item</span></div>
+          <div className="overflow-x-auto"><table className="admin-table">
             <thead>
-              <tr className="bg-slate-50 border-b border-slate-200">
-                <th className="p-4 font-semibold text-slate-600 text-sm">Title</th>
-                <th className="p-4 font-semibold text-slate-600 text-sm">Status</th>
-                <th className="p-4 font-semibold text-slate-600 text-sm">Published At</th>
-                <th className="p-4 font-semibold text-slate-600 text-sm">Actions</th>
+              <tr>
+                <th>Judul</th><th>Status</th><th>Dipublikasikan</th><th>Aksi</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {!newsRes || !newsRes.data || newsRes.data.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="p-8 text-center text-slate-500">
+                    <td colSpan={4} className="admin-empty">
                     Belum ada berita. Buat draft pertama untuk memulai.
                   </td>
                 </tr>
@@ -97,7 +88,7 @@ export default async function AdminNewsPage() {
                       <div className="text-xs text-slate-500 mt-1">{news.slug}</div>
                     </td>
                     <td className="p-4">
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize
+                      <span className={`admin-status
                         ${news.status === 'published' ? 'bg-green-100 text-green-800' : 
                           news.status === 'draft' ? 'bg-gray-100 text-gray-800' : 
                           news.status === 'in_review' ? 'bg-yellow-100 text-yellow-800' :
@@ -109,15 +100,15 @@ export default async function AdminNewsPage() {
                       {news.published_at ? new Date(news.published_at).toLocaleDateString() : '-'}
                     </td>
                     <td className="p-4 text-sm">
-                      <Link href={`/dashboard/news/${news.id}`} className="text-indigo-600 hover:text-indigo-900 font-medium mr-4">
-                        Buka detail
+                      <Link href={`/dashboard/news/${news.id}`} className="mr-4 font-bold text-orange-700 hover:text-orange-600">
+                        Buka detail →
                       </Link>
                     </td>
                   </tr>
                 ))
               )}
             </tbody>
-          </table>
+          </table></div>
         </div>
       </div>
     </div>

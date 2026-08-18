@@ -3,6 +3,7 @@ import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { getServerAccessToken } from "@/lib/server-auth";
+import { AdminUnauthorized } from "@/components/admin-states";
 
 async function getAdminAnnouncements(token: string) {
   try {
@@ -42,15 +43,7 @@ export default async function AdminAnnouncementsPage() {
   );
 
   if (!hasAccess) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-900 text-white p-8">
-        <div className="bg-red-900/50 border border-red-500 p-8 rounded-lg max-w-lg w-full">
-          <h1 className="text-3xl font-bold mb-4 text-red-400">403 Forbidden</h1>
-          <p className="mb-6">You do not have the necessary permissions to manage Announcements.</p>
-          <Link href="/dashboard" className="text-blue-400 hover:underline">Return to Dashboard</Link>
-        </div>
-      </div>
-    );
+    return <AdminUnauthorized resource="pengumuman" />;
   }
 
   const annsRes = accessToken ? await getAdminAnnouncements(accessToken) : null;
@@ -58,34 +51,27 @@ export default async function AdminAnnouncementsPage() {
   return (
     <div className="admin-page">
       <div>
-        <div className="mb-8 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
+        <div className="admin-page-header">
           <div>
-            <p className="text-xs font-black uppercase tracking-[.18em] text-orange-600">Manajemen konten</p>
-            <h1 className="mt-2 text-3xl font-black text-slate-900">Pengumuman</h1>
-            <p className="mt-2 text-sm text-slate-500">Kelola informasi aktif dan terjadwal.</p>
+            <p className="admin-kicker">Manajemen konten</p><h1 className="admin-page-title">Pengumuman</h1><p className="admin-page-copy">Kelola informasi aktif dan terjadwal.</p>
           </div>
           <Link 
             href="/dashboard/announcements/create" 
             className="admin-button"
           >
-            + Buat pengumuman
+            <span aria-hidden="true">+</span> Buat pengumuman
           </Link>
         </div>
 
-        <div className="admin-card overflow-x-auto">
-          <table className="w-full text-left border-collapse">
+        <div className="admin-table-shell"><div className="admin-table-toolbar"><div><h2 className="font-black text-slate-900">Daftar pengumuman</h2><p className="mt-1 text-xs text-slate-500">Konten aktif dan terjadwal</p></div><span className="admin-status bg-slate-100 text-slate-600">{annsRes?.data?.length || 0} item</span></div><div className="overflow-x-auto"><table className="admin-table">
             <thead>
-              <tr className="bg-slate-50 border-b border-slate-200">
-                <th className="p-4 font-semibold text-slate-600 text-sm">Title</th>
-                <th className="p-4 font-semibold text-slate-600 text-sm">Status</th>
-                <th className="p-4 font-semibold text-slate-600 text-sm">Schedule</th>
-                <th className="p-4 font-semibold text-slate-600 text-sm">Actions</th>
+              <tr><th>Judul</th><th>Status</th><th>Jadwal</th><th>Aksi</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {!annsRes || !annsRes.data || annsRes.data.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="p-8 text-center text-slate-500">
+                  <td colSpan={4} className="admin-empty">
                     Belum ada pengumuman. Buat draft pertama untuk memulai.
                   </td>
                 </tr>
@@ -97,7 +83,7 @@ export default async function AdminAnnouncementsPage() {
                       <div className="text-xs text-slate-500 mt-1">{ann.slug}</div>
                     </td>
                     <td className="p-4">
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize
+                      <span className={`admin-status
                         ${ann.status === 'published' ? 'bg-green-100 text-green-800' : 
                           ann.status === 'draft' ? 'bg-gray-100 text-gray-800' : 
                           ann.status === 'in_review' ? 'bg-yellow-100 text-yellow-800' :
@@ -106,19 +92,19 @@ export default async function AdminAnnouncementsPage() {
                       </span>
                     </td>
                     <td className="p-4 text-sm text-slate-600">
-                      <div><span className="font-medium">Start:</span> {ann.start_at ? new Date(ann.start_at).toLocaleDateString() : 'N/A'}</div>
-                      <div><span className="font-medium">End:</span> {ann.end_at ? new Date(ann.end_at).toLocaleDateString() : 'N/A'}</div>
+                      <div><span className="font-medium">Mulai:</span> {ann.start_at ? new Date(ann.start_at).toLocaleDateString("id-ID") : '-'}</div>
+                      <div><span className="font-medium">Selesai:</span> {ann.end_at ? new Date(ann.end_at).toLocaleDateString("id-ID") : '-'}</div>
                     </td>
                     <td className="p-4 text-sm">
-                      <Link href={`/dashboard/announcements/${ann.id}`} className="text-indigo-600 hover:text-indigo-900 font-medium mr-4">
-                        Edit / View
+                      <Link href={`/dashboard/announcements/${ann.id}`} className="mr-4 font-bold text-orange-700 hover:text-orange-600">
+                        Buka detail →
                       </Link>
                     </td>
                   </tr>
                 ))
               )}
             </tbody>
-          </table>
+          </table></div>
         </div>
       </div>
     </div>

@@ -12,7 +12,7 @@ services:
       KEYCLOAK_DB_USER: ${TB_KEYCLOAK_DB_USER:?Set TB_KEYCLOAK_DB_USER in infrastructure/docker/.env}
       KEYCLOAK_DB_PASSWORD: ${TB_KEYCLOAK_DB_PASSWORD:?Set TB_KEYCLOAK_DB_PASSWORD in infrastructure/docker/.env}
     ports:
-      - "${TB_BIND_ADDRESS:-127.0.0.1}:${TB_PORTAL_DB_PORT:-15432}:5432"
+      - "${TB_BIND_ADDRESS:?Set TB_BIND_ADDRESS in infrastructure/docker/.env}:${TB_PORTAL_DB_PORT:?Set TB_PORTAL_DB_PORT in infrastructure/docker/.env}:5432"
     volumes:
       - portal-db-data:/var/lib/postgresql/data
       - ./init-db.sh:/docker-entrypoint-initdb.d/10-create-keycloak-db.sh:ro
@@ -34,7 +34,7 @@ services:
       POSTGRES_USER: ${TB_MOODLE_DB_USER:?Set TB_MOODLE_DB_USER in infrastructure/docker/.env}
       POSTGRES_PASSWORD: ${TB_MOODLE_DB_PASSWORD:?Set TB_MOODLE_DB_PASSWORD in infrastructure/docker/.env}
     ports:
-      - "${TB_BIND_ADDRESS:-127.0.0.1}:${TB_MOODLE_DB_PORT:-15433}:5432"
+      - "${TB_BIND_ADDRESS:?Set TB_BIND_ADDRESS in infrastructure/docker/.env}:${TB_MOODLE_DB_PORT:?Set TB_MOODLE_DB_PORT in infrastructure/docker/.env}:5432"
     volumes:
       - moodle-db-data:/var/lib/postgresql/data
     healthcheck:
@@ -59,7 +59,7 @@ services:
     environment:
       REDIS_PASSWORD: ${TB_REDIS_PASSWORD:?Set TB_REDIS_PASSWORD in infrastructure/docker/.env}
     ports:
-      - "${TB_BIND_ADDRESS:-127.0.0.1}:${TB_REDIS_PORT:-16379}:6379"
+      - "${TB_BIND_ADDRESS:?Set TB_BIND_ADDRESS in infrastructure/docker/.env}:${TB_REDIS_PORT:?Set TB_REDIS_PORT in infrastructure/docker/.env}:6379"
     volumes:
       - redis-data:/data
     healthcheck:
@@ -83,16 +83,16 @@ services:
       KC_DB_PASSWORD: ${TB_KEYCLOAK_DB_PASSWORD:?Set TB_KEYCLOAK_DB_PASSWORD in infrastructure/docker/.env}
       KEYCLOAK_ADMIN: ${TB_KEYCLOAK_ADMIN_USER:?Set TB_KEYCLOAK_ADMIN_USER in infrastructure/docker/.env}
       KEYCLOAK_ADMIN_PASSWORD: ${TB_KEYCLOAK_ADMIN_PASSWORD:?Set TB_KEYCLOAK_ADMIN_PASSWORD in infrastructure/docker/.env}
-      PORTAL_WEB_URL: ${TB_WEB_URL:-http://localhost:3000}
-      ADMIN_WEB_URL: ${TB_ADMIN_URL:-http://localhost:3001}
-      MOODLE_BASE_URL: ${TB_MOODLE_URL:-http://localhost:8082}
+      PORTAL_WEB_URL: ${TB_WEB_URL:?Set TB_WEB_URL in infrastructure/docker/.env}
+      ADMIN_WEB_URL: ${TB_ADMIN_URL:?Set TB_ADMIN_URL in infrastructure/docker/.env}
+      MOODLE_BASE_URL: ${TB_MOODLE_URL:?Set TB_MOODLE_URL in infrastructure/docker/.env}
       KEYCLOAK_WEB_CLIENT_SECRET: ${TB_KEYCLOAK_WEB_CLIENT_SECRET:?Set TB_KEYCLOAK_WEB_CLIENT_SECRET in infrastructure/docker/.env}
       KEYCLOAK_ADMIN_CLIENT_SECRET: ${TB_KEYCLOAK_ADMIN_CLIENT_SECRET:?Set TB_KEYCLOAK_ADMIN_CLIENT_SECRET in infrastructure/docker/.env}
       KEYCLOAK_MOODLE_CLIENT_SECRET: ${TB_KEYCLOAK_MOODLE_CLIENT_SECRET:?Set TB_KEYCLOAK_MOODLE_CLIENT_SECRET in infrastructure/docker/.env}
       KEYCLOAK_SEED_ADMIN_PASSWORD: ${TB_KEYCLOAK_SEED_ADMIN_PASSWORD:?Set TB_KEYCLOAK_SEED_ADMIN_PASSWORD in infrastructure/docker/.env}
       KEYCLOAK_SEED_LEARNER_PASSWORD: ${TB_KEYCLOAK_SEED_LEARNER_PASSWORD:?Set TB_KEYCLOAK_SEED_LEARNER_PASSWORD in infrastructure/docker/.env}
     ports:
-      - "${TB_BIND_ADDRESS:-127.0.0.1}:${TB_KEYCLOAK_PORT:-8081}:8080"
+      - "${TB_BIND_ADDRESS:?Set TB_BIND_ADDRESS in infrastructure/docker/.env}:${TB_KEYCLOAK_PORT:?Set TB_KEYCLOAK_PORT in infrastructure/docker/.env}:8080"
     depends_on:
       portal-db:
         condition: service_healthy
@@ -115,8 +115,8 @@ services:
       MINIO_ROOT_USER: ${TB_MINIO_ROOT_USER:?Set TB_MINIO_ROOT_USER in infrastructure/docker/.env}
       MINIO_ROOT_PASSWORD: ${TB_MINIO_ROOT_PASSWORD:?Set TB_MINIO_ROOT_PASSWORD in infrastructure/docker/.env}
     ports:
-      - "${TB_BIND_ADDRESS:-127.0.0.1}:${TB_MINIO_API_PORT:-19000}:9000"
-      - "${TB_BIND_ADDRESS:-127.0.0.1}:${TB_MINIO_CONSOLE_PORT:-19001}:9001"
+      - "${TB_BIND_ADDRESS:?Set TB_BIND_ADDRESS in infrastructure/docker/.env}:${TB_MINIO_API_PORT:?Set TB_MINIO_API_PORT in infrastructure/docker/.env}:9000"
+      - "${TB_BIND_ADDRESS:?Set TB_BIND_ADDRESS in infrastructure/docker/.env}:${TB_MINIO_CONSOLE_PORT:?Set TB_MINIO_CONSOLE_PORT in infrastructure/docker/.env}:9001"
     volumes:
       - minio-data:/data
     healthcheck:
@@ -129,14 +129,14 @@ services:
       com.teman-belajar.component: minio
 
   search:
-    image: getmeili/meilisearch:v1.6
+    image: getmeili/meilisearch:v1.6.2
     restart: unless-stopped
     environment:
       MEILI_MASTER_KEY: ${TB_MEILI_MASTER_KEY:?Set TB_MEILI_MASTER_KEY in infrastructure/docker/.env}
       MEILI_NO_ANALYTICS: "true"
-      MEILI_ENV: "development"
+      MEILI_ENV: ${TB_MEILI_ENV:?Set TB_MEILI_ENV in infrastructure/docker/.env}
     ports:
-      - "${TB_BIND_ADDRESS:-127.0.0.1}:${TB_MEILI_PORT:-7700}:7700"
+      - "${TB_BIND_ADDRESS:?Set TB_BIND_ADDRESS in infrastructure/docker/.env}:${TB_MEILI_PORT:?Set TB_MEILI_PORT in infrastructure/docker/.env}:7700"
     volumes:
       - meili-data:/meili_data
     healthcheck:
@@ -159,13 +159,13 @@ services:
       MOODLE_DATABASE_NAME: ${TB_MOODLE_DB_NAME:?Set TB_MOODLE_DB_NAME in infrastructure/docker/.env}
       MOODLE_DATABASE_USER: ${TB_MOODLE_DB_USER:?Set TB_MOODLE_DB_USER in infrastructure/docker/.env}
       MOODLE_DATABASE_PASSWORD: ${TB_MOODLE_DB_PASSWORD:?Set TB_MOODLE_DB_PASSWORD in infrastructure/docker/.env}
-      MOODLE_BASE_URL: ${TB_MOODLE_URL:-http://localhost:8082}
+      MOODLE_BASE_URL: ${TB_MOODLE_URL:?Set TB_MOODLE_URL in infrastructure/docker/.env}
       MOODLE_ADMIN_USER: ${TB_MOODLE_ADMIN_USER:?Set TB_MOODLE_ADMIN_USER in infrastructure/docker/.env}
       MOODLE_ADMIN_PASSWORD: ${TB_MOODLE_ADMIN_PASSWORD:?Set TB_MOODLE_ADMIN_PASSWORD in infrastructure/docker/.env}
       MOODLE_ADMIN_EMAIL: ${TB_MOODLE_ADMIN_EMAIL:?Set TB_MOODLE_ADMIN_EMAIL in infrastructure/docker/.env}
-      MOODLE_ALLOW_INSECURE_OAUTH2: ${TB_MOODLE_ALLOW_INSECURE_OAUTH2:-false}
+      MOODLE_ALLOW_INSECURE_OAUTH2: ${TB_MOODLE_ALLOW_INSECURE_OAUTH2:?Set TB_MOODLE_ALLOW_INSECURE_OAUTH2 in infrastructure/docker/.env}
     ports:
-      - "${TB_BIND_ADDRESS:-127.0.0.1}:${TB_MOODLE_PORT:-8082}:80"
+      - "${TB_BIND_ADDRESS:?Set TB_BIND_ADDRESS in infrastructure/docker/.env}:${TB_MOODLE_PORT:?Set TB_MOODLE_PORT in infrastructure/docker/.env}:80"
     extra_hosts:
       - keycloak.teman-belajar.localhost:host-gateway
     depends_on:
@@ -197,11 +197,11 @@ services:
       MOODLE_DATABASE_NAME: ${TB_MOODLE_DB_NAME:?Set TB_MOODLE_DB_NAME in infrastructure/docker/.env}
       MOODLE_DATABASE_USER: ${TB_MOODLE_DB_USER:?Set TB_MOODLE_DB_USER in infrastructure/docker/.env}
       MOODLE_DATABASE_PASSWORD: ${TB_MOODLE_DB_PASSWORD:?Set TB_MOODLE_DB_PASSWORD in infrastructure/docker/.env}
-      MOODLE_BASE_URL: ${TB_MOODLE_URL:-http://localhost:8082}
+      MOODLE_BASE_URL: ${TB_MOODLE_URL:?Set TB_MOODLE_URL in infrastructure/docker/.env}
       MOODLE_ADMIN_USER: ${TB_MOODLE_ADMIN_USER:?Set TB_MOODLE_ADMIN_USER in infrastructure/docker/.env}
       MOODLE_ADMIN_PASSWORD: ${TB_MOODLE_ADMIN_PASSWORD:?Set TB_MOODLE_ADMIN_PASSWORD in infrastructure/docker/.env}
       MOODLE_ADMIN_EMAIL: ${TB_MOODLE_ADMIN_EMAIL:?Set TB_MOODLE_ADMIN_EMAIL in infrastructure/docker/.env}
-      MOODLE_ALLOW_INSECURE_OAUTH2: ${TB_MOODLE_ALLOW_INSECURE_OAUTH2:-false}
+      MOODLE_ALLOW_INSECURE_OAUTH2: ${TB_MOODLE_ALLOW_INSECURE_OAUTH2:?Set TB_MOODLE_ALLOW_INSECURE_OAUTH2 in infrastructure/docker/.env}
     extra_hosts:
       - keycloak.teman-belajar.localhost:host-gateway
     depends_on:
@@ -242,7 +242,7 @@ services:
       PORT: "8080"
       DATABASE_URL: postgres://${TB_PORTAL_DB_USER:?Set TB_PORTAL_DB_USER in infrastructure/docker/.env}:${TB_PORTAL_DB_PASSWORD:?Set TB_PORTAL_DB_PASSWORD in infrastructure/docker/.env}@portal-db:5432/${TB_PORTAL_DB_NAME:?Set TB_PORTAL_DB_NAME in infrastructure/docker/.env}?sslmode=disable
       REDIS_URL: redis://:${TB_REDIS_PASSWORD:?Set TB_REDIS_PASSWORD in infrastructure/docker/.env}@redis:6379/0
-      KEYCLOAK_ISSUER_URL: ${TB_KEYCLOAK_URL:-http://keycloak.teman-belajar.localhost:8081}/realms/teman-belajar
+      KEYCLOAK_ISSUER_URL: ${TB_KEYCLOAK_URL:?Set TB_KEYCLOAK_URL in infrastructure/docker/.env}/realms/teman-belajar
       KEYCLOAK_AUDIENCE: teman-belajar-api
       MINIO_ENDPOINT: minio:9000
       MINIO_ACCESS_KEY: ${TB_MINIO_ROOT_USER:?Set TB_MINIO_ROOT_USER in infrastructure/docker/.env}
@@ -251,12 +251,16 @@ services:
       MINIO_USE_SSL: "false"
       MEDIA_MAX_UPLOAD_BYTES: "20971520"
       TB_MOODLE_WEBSERVICE_TOKEN: ${TB_MOODLE_WEBSERVICE_TOKEN}
+      MOODLE_INTERNAL_BASE_URL: http://moodle
+      MOODLE_PUBLIC_BASE_URL: ${TB_MOODLE_URL:?Set TB_MOODLE_URL in infrastructure/docker/.env}
       MEILI_URL: http://search:7700
       MEILI_SEARCH_KEY: ${TB_MEILI_MASTER_KEY:?Set TB_MEILI_MASTER_KEY in infrastructure/docker/.env}
+      MEILI_INDEX_NAME: ${TB_MEILI_INDEX_NAME:?Set TB_MEILI_INDEX_NAME in infrastructure/docker/.env}
+      SEARCH_CAPTURE_RAW_QUERY: ${TB_SEARCH_CAPTURE_RAW_QUERY:?Set TB_SEARCH_CAPTURE_RAW_QUERY in infrastructure/docker/.env}
     extra_hosts:
       - keycloak.teman-belajar.localhost:host-gateway
     ports:
-      - "${TB_BIND_ADDRESS:-127.0.0.1}:${TB_API_PORT:-8080}:8080"
+      - "${TB_BIND_ADDRESS:?Set TB_BIND_ADDRESS in infrastructure/docker/.env}:${TB_API_PORT:?Set TB_API_PORT in infrastructure/docker/.env}:8080"
     depends_on:
       migrate:
         condition: service_completed_successfully
@@ -277,18 +281,24 @@ services:
   search-worker:
     image: teman-belajar-search-worker:local
     build:
-      context: ../../services/search-worker
-      dockerfile: Dockerfile
+      context: ../../services/portal-api
+      dockerfile: Dockerfile.search-worker
     restart: unless-stopped
     environment:
       DATABASE_URL: postgres://${TB_PORTAL_DB_USER:?Set TB_PORTAL_DB_USER in infrastructure/docker/.env}:${TB_PORTAL_DB_PASSWORD:?Set TB_PORTAL_DB_PASSWORD in infrastructure/docker/.env}@portal-db:5432/${TB_PORTAL_DB_NAME:?Set TB_PORTAL_DB_NAME in infrastructure/docker/.env}?sslmode=disable
       MEILI_URL: http://search:7700
       MEILI_MASTER_KEY: ${TB_MEILI_MASTER_KEY:?Set TB_MEILI_MASTER_KEY in infrastructure/docker/.env}
+      MEILI_INDEX_NAME: ${TB_MEILI_INDEX_NAME:?Set TB_MEILI_INDEX_NAME in infrastructure/docker/.env}
+      MOODLE_INTERNAL_BASE_URL: http://moodle
+      MOODLE_PUBLIC_BASE_URL: ${TB_MOODLE_URL:?Set TB_MOODLE_URL in infrastructure/docker/.env}
+      TB_MOODLE_WEBSERVICE_TOKEN: ${TB_MOODLE_WEBSERVICE_TOKEN:?Set TB_MOODLE_WEBSERVICE_TOKEN in infrastructure/docker/.env}
       SYNC_INTERVAL: 60s
     depends_on:
       portal-db:
         condition: service_healthy
       search:
+        condition: service_healthy
+      moodle:
         condition: service_healthy
     labels:
       com.teman-belajar.component: search-worker
@@ -300,17 +310,17 @@ services:
       dockerfile: Dockerfile
     restart: unless-stopped
     environment:
-      NEXTAUTH_URL: ${TB_WEB_URL:-http://localhost:3000}
+      NEXTAUTH_URL: ${TB_WEB_URL:?Set TB_WEB_URL in infrastructure/docker/.env}
       NEXTAUTH_SECRET: ${TB_WEB_NEXTAUTH_SECRET:?Set TB_WEB_NEXTAUTH_SECRET in infrastructure/docker/.env}
       KEYCLOAK_ID: teman-belajar-web
       KEYCLOAK_SECRET: ${TB_KEYCLOAK_WEB_CLIENT_SECRET:?Set TB_KEYCLOAK_WEB_CLIENT_SECRET in infrastructure/docker/.env}
-      KEYCLOAK_ISSUER: ${TB_KEYCLOAK_URL:-http://keycloak.teman-belajar.localhost:8081}/realms/teman-belajar
+      KEYCLOAK_ISSUER: ${TB_KEYCLOAK_URL:?Set TB_KEYCLOAK_URL in infrastructure/docker/.env}/realms/teman-belajar
       PORTAL_API_INTERNAL_URL: http://api:8080
-      MOODLE_PUBLIC_BASE_URL: ${TB_MOODLE_URL:-http://localhost:8082}
+      MOODLE_PUBLIC_BASE_URL: ${TB_MOODLE_URL:?Set TB_MOODLE_URL in infrastructure/docker/.env}
     extra_hosts:
       - keycloak.teman-belajar.localhost:host-gateway
     ports:
-      - "${TB_BIND_ADDRESS:-127.0.0.1}:${TB_WEB_PORT:-3000}:3000"
+      - "${TB_BIND_ADDRESS:?Set TB_BIND_ADDRESS in infrastructure/docker/.env}:${TB_WEB_PORT:?Set TB_WEB_PORT in infrastructure/docker/.env}:3000"
     depends_on:
       api:
         condition: service_healthy
@@ -333,16 +343,16 @@ services:
       dockerfile: Dockerfile
     restart: unless-stopped
     environment:
-      NEXTAUTH_URL: ${TB_ADMIN_URL:-http://localhost:3001}
+      NEXTAUTH_URL: ${TB_ADMIN_URL:?Set TB_ADMIN_URL in infrastructure/docker/.env}
       NEXTAUTH_SECRET: ${TB_ADMIN_NEXTAUTH_SECRET:?Set TB_ADMIN_NEXTAUTH_SECRET in infrastructure/docker/.env}
       KEYCLOAK_ID: teman-belajar-admin
       KEYCLOAK_SECRET: ${TB_KEYCLOAK_ADMIN_CLIENT_SECRET:?Set TB_KEYCLOAK_ADMIN_CLIENT_SECRET in infrastructure/docker/.env}
-      KEYCLOAK_ISSUER: ${TB_KEYCLOAK_URL:-http://keycloak.teman-belajar.localhost:8081}/realms/teman-belajar
+      KEYCLOAK_ISSUER: ${TB_KEYCLOAK_URL:?Set TB_KEYCLOAK_URL in infrastructure/docker/.env}/realms/teman-belajar
       PORTAL_API_INTERNAL_URL: http://api:8080
     extra_hosts:
       - keycloak.teman-belajar.localhost:host-gateway
     ports:
-      - "${TB_BIND_ADDRESS:-127.0.0.1}:${TB_ADMIN_PORT:-3001}:3000"
+      - "${TB_BIND_ADDRESS:?Set TB_BIND_ADDRESS in infrastructure/docker/.env}:${TB_ADMIN_PORT:?Set TB_ADMIN_PORT in infrastructure/docker/.env}:3000"
     depends_on:
       api:
         condition: service_healthy
@@ -365,6 +375,8 @@ networks:
 volumes:
   portal-db-data:
     name: teman-belajar-portal-db-data
+  meili-data:
+    name: teman-belajar-meili-data
   moodle-db-data:
     name: teman-belajar-moodle-db-data
   redis-data:

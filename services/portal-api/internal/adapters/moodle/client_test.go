@@ -20,9 +20,9 @@ func TestClient_MoodleError(t *testing.T) {
 	defer server.Close()
 
 	client := NewClient(Config{BaseURL: server.URL, Token: "test", Timeout: 1 * time.Second})
-	
+
 	err := client.callWS(context.Background(), "test_func", nil, nil)
-	
+
 	if err != learning.ErrMoodleAuthentication {
 		t.Errorf("expected ErrMoodleAuthentication, got %v", err)
 	}
@@ -36,9 +36,9 @@ func TestClient_Timeout(t *testing.T) {
 	defer server.Close()
 
 	client := NewClient(Config{BaseURL: server.URL, Token: "test", Timeout: 10 * time.Millisecond})
-	
+
 	err := client.callWS(context.Background(), "test_func", nil, nil)
-	
+
 	if err != learning.ErrMoodleTimeout {
 		t.Errorf("expected ErrMoodleTimeout, got %v", err)
 	}
@@ -51,9 +51,9 @@ func TestClient_HTTP500(t *testing.T) {
 	defer server.Close()
 
 	client := NewClient(Config{BaseURL: server.URL, Token: "test", Timeout: 1 * time.Second})
-	
+
 	err := client.callWS(context.Background(), "test_func", nil, nil)
-	
+
 	if err == nil {
 		t.Errorf("expected error, got nil")
 	}
@@ -67,10 +67,10 @@ func TestClient_MalformedJSON(t *testing.T) {
 	defer server.Close()
 
 	client := NewClient(Config{BaseURL: server.URL, Token: "test", Timeout: 1 * time.Second})
-	
+
 	var dst map[string]interface{}
 	err := client.callWS(context.Background(), "test_func", nil, &dst)
-	
+
 	if err == nil {
 		t.Errorf("expected error on malformed json")
 	}
@@ -85,10 +85,10 @@ func TestClient_LargeResponse(t *testing.T) {
 	defer server.Close()
 
 	client := NewClient(Config{BaseURL: server.URL, Token: "test", Timeout: 5 * time.Second})
-	
+
 	var dst map[string]interface{}
 	err := client.callWS(context.Background(), "test_func", nil, &dst)
-	
+
 	if err == nil || !strings.Contains(err.Error(), "response too large") {
 		t.Errorf("expected response too large error, got %v", err)
 	}
@@ -102,9 +102,9 @@ func TestClient_NullFalse(t *testing.T) {
 	defer server.Close()
 
 	client := NewClient(Config{BaseURL: server.URL, Token: "test", Timeout: 1 * time.Second})
-	
+
 	err := client.callWS(context.Background(), "test_func", nil, nil)
-	
+
 	if err == nil || !strings.Contains(err.Error(), "received null or false") {
 		t.Errorf("expected received null or false error, got %v", err)
 	}
@@ -118,7 +118,7 @@ func TestResolveCurrentUser_Mapped(t *testing.T) {
 	defer server.Close()
 
 	client := NewClient(Config{BaseURL: server.URL, Token: "test", Timeout: 1 * time.Second})
-	
+
 	user, err := client.ResolveCurrentUser(context.Background(), learning.FederatedIdentity{Subject: "testuser"})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -136,7 +136,7 @@ func TestResolveCurrentUser_Unmapped(t *testing.T) {
 	defer server.Close()
 
 	client := NewClient(Config{BaseURL: server.URL, Token: "test", Timeout: 1 * time.Second})
-	
+
 	_, err := client.ResolveCurrentUser(context.Background(), learning.FederatedIdentity{Subject: "unknown"})
 	if err != learning.ErrLearningUserNotMapped {
 		t.Errorf("expected ErrLearningUserNotMapped, got %v", err)
@@ -151,7 +151,7 @@ func TestResolveCurrentUser_Ambiguous(t *testing.T) {
 	defer server.Close()
 
 	client := NewClient(Config{BaseURL: server.URL, Token: "test", Timeout: 1 * time.Second})
-	
+
 	_, err := client.ResolveCurrentUser(context.Background(), learning.FederatedIdentity{Subject: "ambiguous"})
 	if err == nil || err != learning.ErrLearningUserNotMapped {
 		t.Errorf("expected ErrLearningUserNotMapped, got %v", err)
@@ -171,7 +171,7 @@ func TestListCourses_Filters(t *testing.T) {
 
 	client := NewClient(Config{BaseURL: server.URL, Token: "test", Timeout: 1 * time.Second})
 	courses, err := client.ListCourses(context.Background(), learning.CourseFilter{})
-	
+
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -194,7 +194,7 @@ func TestMyCourses(t *testing.T) {
 
 	client := NewClient(Config{BaseURL: server.URL, Token: "test", Timeout: 1 * time.Second})
 	courses, err := client.ListUserCourses(context.Background(), &learning.LearningUser{ID: 12})
-	
+
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -215,7 +215,7 @@ func TestGetCourseCompletion(t *testing.T) {
 
 	client := NewClient(Config{BaseURL: server.URL, Token: "test", Timeout: 1 * time.Second})
 	completion, err := client.GetCourseCompletion(context.Background(), &learning.LearningUser{ID: 12}, 2)
-	
+
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -236,7 +236,7 @@ func TestGetCourseGrades(t *testing.T) {
 
 	client := NewClient(Config{BaseURL: server.URL, Token: "test", Timeout: 1 * time.Second})
 	grades, err := client.GetCourseGrades(context.Background(), &learning.LearningUser{ID: 12}, 2)
-	
+
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -258,18 +258,18 @@ func TestClient_Redaction(t *testing.T) {
 
 	token := "secret_moodle_token_123"
 	client := NewClient(Config{BaseURL: server.URL, Token: token, Timeout: 1 * time.Second})
-	
+
 	err := client.callWS(context.Background(), "test_func", nil, nil)
 	if err == nil {
 		t.Fatal("expected error")
 	}
-	
+
 	// Error message must not contain the token
 	errStr := err.Error()
 	if strings.Contains(errStr, token) {
 		t.Errorf("error message leaked token! %s", errStr)
 	}
-	
+
 	// Print JSON to ensure it also doesn't leak. (It's an internal error struct anyway)
 	errBytes, _ := json.Marshal(err)
 	if strings.Contains(string(errBytes), token) {

@@ -30,6 +30,36 @@ Status:
 | Accessibility Helpers | N | N | S |
 | Light/Dark Theme Toggle | R/Adapt | R/Adapt | Application-specific controller, shared persistence contract |
 
+## Implementation Baseline (TASK-007R UI reconciliation)
+
+Status implementasi berikut wajib dipertahankan. `Implemented` berarti pola vendor sudah diadaptasi ke React/Next.js dan token Teman Belajar; bukan berarti seluruh halaman demo vendor disalin.
+
+| Area | Portal / Techwind | Admin / Cuba | Canonical implementation |
+|---|---|---|---|
+| Brand and global navigation | Implemented | Implemented | `portal-chrome.tsx`, `admin-shell.tsx` |
+| Responsive menu/sidebar | Implemented | Implemented | mobile navigation, overlay drawer, grouped sidebar |
+| Topbar utilities | Search, theme, authentication | Search, notifications placeholder, theme, profile menu | application shell only |
+| Hero and landing sections | Implemented | Not applicable | Portal home |
+| Cards and dashboard widgets | Content/path/stat cards | Welcome/stat/module/workflow cards | semantic app content only |
+| Tables and toolbars | Not required yet | Implemented | admin content and media lists |
+| Forms | Search and public controls | Implemented | admin create/detail/metadata forms |
+| Modal/dialog | Not required by current public feature | Implemented | authenticated Media Picker |
+| Gallery/media | Implemented landing pattern | Implemented Media Library | no vendor demo data |
+| FAQ accordion | Implemented | Feature not implemented | native `details/summary` on Portal home |
+| Footer | Implemented | Implemented | global shell footer/page footer |
+| Back to top | Implemented | Not required in fixed Cuba shell | scroll-aware floating action |
+| Empty/error/loading/unauthorized | Implemented where data-driven | Implemented | reusable state patterns |
+| Light/dark theme | Implemented | Implemented | shared persistence key, separate tokens |
+
+### Strict maintenance rules
+
+1. New Portal UI must start from a relevant Techwind pattern and use `portal-*` semantic classes.
+2. New Admin UI must render inside `AdminShell` and use `admin-*` semantic classes.
+3. Never import vendor JavaScript, Pug, precompiled CSS, demo data, or global theme into product code.
+4. A vendor demo component is only implemented when a product feature needs it. Unsupported menu entries must be visibly disabled or omitted; never create deceptive links.
+5. Every interactive component requires keyboard behavior, an accessible name, and loading/error/empty states where applicable.
+6. Portal and Admin theme tokens must remain isolated even though their stored light/dark preference uses the same contract.
+
 Inventory updated based on actual Techwind and Cuba sources in `vendor/ui-templates`.
 
 ## Vendor Intake Report

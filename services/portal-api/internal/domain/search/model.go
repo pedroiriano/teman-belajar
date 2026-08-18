@@ -1,36 +1,58 @@
 package search
 
-import "context"
+import (
+	"context"
+	"time"
+)
 
-// SearchDocument represents a unified item in the search engine.
-type SearchDocument struct {
-	ID          string   `json:"id"`
-	Type        string   `json:"type"`
-	Title       string   `json:"title"`
-	Description string   `json:"description"`
-	URL         string   `json:"url"`
-	ImageURL    *string  `json:"image_url,omitempty"`
-	Tags        []string `json:"tags,omitempty"`
+type ContentType string
+
+const (
+	ContentTypeCourse       ContentType = "course"
+	ContentTypeKnowledge    ContentType = "knowledge"
+	ContentTypeNews         ContentType = "news"
+	ContentTypeAnnouncement ContentType = "announcement"
+)
+
+type Sort string
+
+const (
+	SortRelevance Sort = "relevance"
+	SortNewest    Sort = "newest"
+	SortOldest    Sort = "oldest"
+)
+
+// Query is engine-neutral. Every field is validated by the application service
+// before it reaches a SearchProvider implementation.
+type Query struct {
+	Text        string
+	ContentType ContentType
+	CategoryID  string
+	Tag         string
+	Page        int
+	PageSize    int
+	Sort        Sort
 }
 
-// SearchQuery contains parameters for a unified search request.
-type SearchQuery struct {
-	Query  string
-	Type   string
-	Limit  int
-	Offset int
+// Hit is the Teman Belajar-owned public search DTO. It deliberately excludes
+// source IDs, index generations, engine ranking data, and personal data.
+type Hit struct {
+	ID          string     `json:"id"`
+	ContentType string     `json:"content_type"`
+	Title       string     `json:"title"`
+	Snippet     string     `json:"snippet"`
+	URL         string     `json:"url"`
+	Category    string     `json:"category,omitempty"`
+	Tags        []string   `json:"tags"`
+	PublishedAt *time.Time `json:"published_at,omitempty"`
 }
 
-// SearchResult is the paginated response from the search engine.
-type SearchResult struct {
-	Hits       []SearchDocument `json:"hits"`
-	TotalHits  int              `json:"total_hits"`
-	Limit      int              `json:"limit"`
-	Offset     int              `json:"offset"`
-	Processing int              `json:"processing_time_ms"`
+type Result struct {
+	Hits  []Hit
+	Total int
 }
 
-// SearchProvider defines the contract for communicating with an external search engine.
-type SearchProvider interface {
-	Search(ctx context.Context, query SearchQuery) (*SearchResult, error)
+// Provider isolates the application layer from the selected search engine.
+type Provider interface {
+	Search(ctx context.Context, query Query) (Result, error)
 }

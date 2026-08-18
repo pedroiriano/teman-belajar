@@ -13,7 +13,8 @@ import (
 
 	"teman-belajar-api/internal/adapters/minio"
 	"teman-belajar-api/internal/adapters/moodle"
-	"teman-belajar-api/internal/adapters/search"
+	searchadapter "teman-belajar-api/internal/adapters/search"
+	searchapplication "teman-belajar-api/internal/application/search"
 	"teman-belajar-api/internal/domain/cms"
 	"teman-belajar-api/internal/domain/knowledge"
 	"teman-belajar-api/internal/domain/learning"
@@ -53,21 +54,29 @@ func main() {
 
 	moodleToken := os.Getenv("TB_MOODLE_WEBSERVICE_TOKEN")
 	moodleBaseURL := os.Getenv("MOODLE_INTERNAL_BASE_URL")
+	moodlePublicBaseURL := os.Getenv("MOODLE_PUBLIC_BASE_URL")
 	if moodleBaseURL == "" {
 		moodleBaseURL = "http://moodle"
 	}
-	
+
 	if moodleToken == "" {
 		log.Fatal("Missing required environment variable: TB_MOODLE_WEBSERVICE_TOKEN")
 	}
 	if _, err := url.ParseRequestURI(moodleBaseURL); err != nil {
 		log.Fatalf("Invalid MOODLE_INTERNAL_BASE_URL: %v", err)
 	}
+	if moodlePublicBaseURL == "" {
+		log.Fatal("Missing required environment variable: MOODLE_PUBLIC_BASE_URL")
+	}
+	if _, err := url.ParseRequestURI(moodlePublicBaseURL); err != nil {
+		log.Fatalf("Invalid MOODLE_PUBLIC_BASE_URL: %v", err)
+	}
 
 	moodleClient := moodle.NewClient(moodle.Config{
-		BaseURL: moodleBaseURL,
-		Token:   moodleToken,
-		Timeout: 10 * time.Second,
+		BaseURL:       moodleBaseURL,
+		PublicBaseURL: moodlePublicBaseURL,
+		Token:         moodleToken,
+		Timeout:       10 * time.Second,
 	})
 	learningSvc := learning.NewService(moodleClient)
 
@@ -82,22 +91,22 @@ func main() {
 	minioSecretKey := os.Getenv("MINIO_SECRET_KEY")
 	minioBucket := os.Getenv("MINIO_BUCKET")
 	minioUseSSL := os.Getenv("MINIO_USE_SSL") == "true"
-	
+
 	var mediaSvc *media.Service
 	if minioEndpoint != "" {
 		minioStorage, err := minio.NewStorage(minioEndpoint, minioAccessKey, minioSecretKey, minioUseSSL)
 		if err != nil {
 			log.Fatalf("Failed to initialize MinIO storage: %v", err)
 		}
-		
+
 		if err := minioStorage.EnsureBucket(context.Background(), minioBucket); err != nil {
 			log.Fatalf("Failed to ensure MinIO bucket %s: %v", minioBucket, err)
 		}
-		
+
 		mediaRepo := postgres.NewMediaRepository(db)
 		mediaSvc = media.NewService(mediaRepo, minioStorage, auditRepo, minioBucket, 20*1024*1024)
 	}
-	
+
 	var mediaHandler *handler.MediaHandler
 	if mediaSvc != nil {
 		mediaHandler = handler.NewMediaHandler(mediaSvc)
@@ -105,10 +114,24 @@ func main() {
 
 	meiliURL := os.Getenv("MEILI_URL")
 	meiliKey := os.Getenv("MEILI_SEARCH_KEY")
+	meiliIndexName := os.Getenv("MEILI_INDEX_NAME")
+	if rawQueryCapture := os.Getenv("SEARCH_CAPTURE_RAW_QUERY"); rawQueryCapture != "" && rawQueryCapture != "false" {
+		log.Fatal("SEARCH_CAPTURE_RAW_QUERY must be false; raw query capture is disabled by policy")
+	}
 	var searchHandler *handler.SearchHandler
 	if meiliURL != "" {
-		meiliClient := search.NewMeilisearchClient(meiliURL, meiliKey, "teman_belajar")
-		searchHandler = handler.NewSearchHandler(meiliClient)
+		if _, err := url.ParseRequestURI(meiliURL); err != nil {
+			log.Fatalf("Invalid MEILI_URL: %v", err)
+		}
+		if meiliKey == "" {
+			log.Fatal("Missing required environment variable: MEILI_SEARCH_KEY")
+		}
+		if meiliIndexName == "" {
+			log.Fatal("Missing required environment variable: MEILI_INDEX_NAME")
+		}
+		meiliClient := searchadapter.NewMeilisearchClient(meiliURL, meiliKey, meiliIndexName)
+		searchService := searchapplication.NewService(meiliClient)
+		searchHandler = handler.NewSearchHandler(searchService)
 	}
 
 	issuerURL := os.Getenv("KEYCLOAK_ISSUER_URL")
@@ -155,14 +178,14 @@ func main() {
 		cmsHandler.GetPublicNews(w, r)
 	})
 	mux.HandleFunc("/api/v1/announcements", cmsHandler.ListActiveAnnouncements)
-	
+
 	if searchHandler != nil {
 		mux.HandleFunc("GET /api/v1/search", searchHandler.Search)
 	}
 
 	// Protected endpoints
 	mux.Handle("/api/v1/me", authMiddleware(http.HandlerFunc(handler.GetMe)))
-	
+
 	// Learning endpoints
 	mux.Handle("GET /api/v1/learning/courses", authMiddleware(http.HandlerFunc(learningHandler.ListCourses)))
 	mux.Handle("GET /api/v1/learning/me", authMiddleware(http.HandlerFunc(learningHandler.GetMe)))
@@ -193,7 +216,7 @@ func main() {
 
 	if mediaHandler != nil {
 		mux.HandleFunc("GET /api/v1/media/{id}/content", mediaHandler.GetMediaContent)
-		
+
 		// Admin Media Endpoints
 		mux.Handle("GET /api/v1/admin/media", adminAuthMiddleware(http.HandlerFunc(mediaHandler.ListAdminMedia)))
 		mux.Handle("POST /api/v1/admin/media", adminAuthMiddleware(http.HandlerFunc(mediaHandler.CreateMedia)))
@@ -201,7 +224,7 @@ func main() {
 		mux.Handle("GET /api/v1/admin/media/{id}/content", adminAuthMiddleware(http.HandlerFunc(mediaHandler.GetAdminMediaContent)))
 		mux.Handle("PATCH /api/v1/admin/media/{id}", adminAuthMiddleware(http.HandlerFunc(mediaHandler.UpdateMediaMetadata)))
 		mux.Handle("POST /api/v1/admin/media/{id}/archive", adminAuthMiddleware(http.HandlerFunc(mediaHandler.ArchiveMedia)))
-		
+
 		mux.Handle("POST /api/v1/admin/media/{id}/attach", adminAuthMiddleware(http.HandlerFunc(mediaHandler.AttachMediaUsage)))
 		mux.Handle("POST /api/v1/admin/media/{id}/detach", adminAuthMiddleware(http.HandlerFunc(mediaHandler.DetachMediaUsage)))
 	}

@@ -6,14 +6,14 @@ import (
 )
 
 var (
-	ErrMoodleUnavailable        = errors.New("moodle is currently unavailable")
-	ErrMoodleTimeout            = errors.New("moodle request timed out")
-	ErrMoodleAuthentication     = errors.New("moodle authentication failed")
-	ErrMoodlePermission         = errors.New("moodle permission denied")
-	ErrMoodleFunction           = errors.New("moodle function unavailable")
-	ErrMoodleInvalidResponse    = errors.New("moodle returned invalid response")
-	ErrLearningUserNotMapped    = errors.New("learning user identity not mapped")
-	ErrCourseNotFound           = errors.New("course not found")
+	ErrMoodleUnavailable     = errors.New("moodle is currently unavailable")
+	ErrMoodleTimeout         = errors.New("moodle request timed out")
+	ErrMoodleAuthentication  = errors.New("moodle authentication failed")
+	ErrMoodlePermission      = errors.New("moodle permission denied")
+	ErrMoodleFunction        = errors.New("moodle function unavailable")
+	ErrMoodleInvalidResponse = errors.New("moodle returned invalid response")
+	ErrLearningUserNotMapped = errors.New("learning user identity not mapped")
+	ErrCourseNotFound        = errors.New("course not found")
 )
 
 // FederatedIdentity represents the authenticated user from Keycloak
@@ -47,13 +47,13 @@ type CourseFilter struct {
 
 // EnrolledCourse represents a course the user is enrolled in
 type EnrolledCourse struct {
-	ID              int     `json:"id"`
-	ShortName       string  `json:"short_name"`
-	FullName        string  `json:"full_name"`
-	EnrolledAt      *int64  `json:"enrolled_at,omitempty"`
-	LastAccess      *int64  `json:"last_access,omitempty"`
-	Progress        *float64 `json:"progress,omitempty"`
-	Completed       bool    `json:"completed"`
+	ID         int      `json:"id"`
+	ShortName  string   `json:"short_name"`
+	FullName   string   `json:"full_name"`
+	EnrolledAt *int64   `json:"enrolled_at,omitempty"`
+	LastAccess *int64   `json:"last_access,omitempty"`
+	Progress   *float64 `json:"progress,omitempty"`
+	Completed  bool     `json:"completed"`
 }
 
 // CourseCompletion represents completion status
@@ -65,14 +65,14 @@ type CourseCompletion struct {
 
 // GradeItem represents a user's grade in a course
 type GradeItem struct {
-	ID         int     `json:"id"`
-	ItemName   string  `json:"item_name"`
-	Grade      *float64 `json:"grade,omitempty"`
-	GradeMin   float64 `json:"grade_min"`
-	GradeMax   float64 `json:"grade_max"`
-	GradeFormatted string `json:"grade_formatted"`
-	Feedback   string  `json:"feedback"`
-	Hidden     bool    `json:"hidden"`
+	ID             int      `json:"id"`
+	ItemName       string   `json:"item_name"`
+	Grade          *float64 `json:"grade,omitempty"`
+	GradeMin       float64  `json:"grade_min"`
+	GradeMax       float64  `json:"grade_max"`
+	GradeFormatted string   `json:"grade_formatted"`
+	Feedback       string   `json:"feedback"`
+	Hidden         bool     `json:"hidden"`
 }
 
 // LearningProvider defines the port for communicating with the LMS

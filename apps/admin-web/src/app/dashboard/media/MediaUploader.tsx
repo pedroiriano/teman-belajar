@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { AdminIcon } from "@/components/admin-icon";
 
 export default function MediaUploader() {
   const [file, setFile] = useState<File | null>(null);
@@ -51,9 +52,10 @@ export default function MediaUploader() {
   };
 
   return (
-    <div className="bg-white p-6 rounded-lg shadow-sm border border-slate-200 mb-8">
-      <h2 className="text-lg font-semibold text-slate-800 mb-4">Upload Media Baru</h2>
-      <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+    <section className="admin-card mb-7 overflow-hidden" aria-labelledby="media-upload-title">
+      <div className="border-b border-slate-100 p-5 sm:px-6"><div className="flex items-center gap-3"><span className="admin-stat-icon"><AdminIcon name="media" className="h-5 w-5" /></span><div><h2 id="media-upload-title" className="font-black text-slate-900">Unggah media baru</h2><p className="mt-1 text-xs text-slate-500">Aset divalidasi sebelum tersedia untuk konten.</p></div></div></div>
+      <div className="p-5 sm:p-6">
+      <div className="flex flex-col gap-4 rounded-xl border border-dashed border-slate-300 bg-slate-50 p-5 sm:flex-row sm:items-center">
         <input 
           id="file-upload"
           type="file" 
@@ -61,10 +63,10 @@ export default function MediaUploader() {
           accept="image/jpeg,image/png,image/webp,application/pdf"
           className="block w-full text-sm text-slate-500
             file:mr-4 file:py-2 file:px-4
-            file:rounded-full file:border-0
+            file:rounded-lg file:border-0
             file:text-sm file:font-semibold
-            file:bg-indigo-50 file:text-indigo-700
-            hover:file:bg-indigo-100
+            file:bg-orange-100 file:text-orange-700
+            hover:file:bg-orange-200
           "
         />
         <button 
@@ -72,11 +74,12 @@ export default function MediaUploader() {
           disabled={!file || uploading}
           className="admin-button disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
         >
-          {uploading ? "Mengunggah..." : "Mulai Unggah"}
+          {uploading ? "Mengunggah…" : "Mulai unggah"}
         </button>
       </div>
-      {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
-      <p className="text-slate-500 text-xs mt-2">Mendukung: JPEG, PNG, WEBP, PDF (Maks 20MB). SVG DILARANG.</p>
-    </div>
+      {error && <p className="admin-alert-error mt-4" role="alert">{error}</p>}
+      <p className="mt-3 text-xs text-slate-500">JPEG, PNG, WEBP, atau PDF · Maksimum 20 MB · SVG tidak diizinkan.</p>
+      </div>
+    </section>
   );
 }

@@ -91,13 +91,13 @@ func (c *Client) ListUserCourses(ctx context.Context, user *learning.LearningUse
 	params.Set("userid", strconv.Itoa(user.ID))
 
 	var response []struct {
-		ID         int     `json:"id"`
-		ShortName  string  `json:"shortname"`
-		FullName   string  `json:"fullname"`
-		TimeAccess int64   `json:"timeaccess"` // timeaccess used as last access
-		TimeEnrolled int64 `json:"timeenrolled,omitempty"`
-		Progress   *float64 `json:"progress"`
-		Completed  bool    `json:"completed"`
+		ID           int      `json:"id"`
+		ShortName    string   `json:"shortname"`
+		FullName     string   `json:"fullname"`
+		TimeAccess   int64    `json:"timeaccess"` // timeaccess used as last access
+		TimeEnrolled int64    `json:"timeenrolled,omitempty"`
+		Progress     *float64 `json:"progress"`
+		Completed    bool     `json:"completed"`
 	}
 
 	err := c.callWS(ctx, "core_enrol_get_users_courses", params, &response)
@@ -115,7 +115,7 @@ func (c *Client) ListUserCourses(ctx context.Context, user *learning.LearningUse
 		if crs.TimeEnrolled > 0 {
 			enrolledAt = &crs.TimeEnrolled
 		}
-		
+
 		courses = append(courses, learning.EnrolledCourse{
 			ID:         crs.ID,
 			ShortName:  crs.ShortName,
@@ -187,14 +187,14 @@ func (c *Client) GetCourseGrades(ctx context.Context, user *learning.LearningUse
 	var response struct {
 		UserGrades []struct {
 			GradeItems []struct {
-				ID             int     `json:"id"`
-				ItemName       string  `json:"itemname"`
-				GradeFormatted string  `json:"gradeformatted"`
+				ID             int      `json:"id"`
+				ItemName       string   `json:"itemname"`
+				GradeFormatted string   `json:"gradeformatted"`
 				GradeRaw       *float64 `json:"graderaw"`
-				GradeMin       float64 `json:"grademin"`
-				GradeMax       float64 `json:"grademax"`
-				Feedback       string  `json:"feedback"`
-				Hidden         bool    `json:"hidden"`
+				GradeMin       float64  `json:"grademin"`
+				GradeMax       float64  `json:"grademax"`
+				Feedback       string   `json:"feedback"`
+				Hidden         bool     `json:"hidden"`
 			} `json:"gradeitems"`
 		} `json:"usergrades"`
 		Warnings []struct {
@@ -217,7 +217,7 @@ func (c *Client) GetCourseGrades(ctx context.Context, user *learning.LearningUse
 		if gi.Hidden {
 			continue
 		}
-		
+
 		items = append(items, learning.GradeItem{
 			ID:             gi.ID,
 			ItemName:       gi.ItemName,
