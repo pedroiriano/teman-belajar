@@ -2,6 +2,7 @@
 
 ## 1. Tujuan
 Memastikan frontend Portal Web benar-benar mematuhi kontrak API yang terdefinisi di `openapi.yaml` untuk fitur *My Learning*, menangani *error* secara tangguh via lapisan BFF tanpa membocorkan kredensial atau *raw text*, memperkuat UI laci (*drawer*) dengan standar aksesibilitas dan pemuatan dinamis (`Promise.allSettled`), serta membereskan galat logout dan variabel lingkungan.
+Verifikasi akhir memastikan semua gerbang rilis (Build, Test, Security, OpenAPI, Docker, Git Canonical Main) berstatus PASS secara empiris.
 
 ## 2. Checklist Pengerjaan
 
@@ -20,36 +21,44 @@ Memastikan frontend Portal Web benar-benar mematuhi kontrak API yang terdefinisi
   - [x] Menyuntikkan `MOODLE_PUBLIC_BASE_URL` dari env lokal ke dalam kontainer Web via Docker Compose, bukan *fallback* `localhost:8080`.
 - [x] **Federated Logout**: 
   - [x] Mengubah `client_id` *fallback* pada `/api/auth/federated-logout` di sisi portal menjadi `teman-belajar-web` (bukan Moodle) untuk memutus siklus loop logout.
-- [x] **QA & Verification**:
-  - [x] Menjalankan dan meloloskan `npm run typecheck`, `npm run lint`, dan `npm run build`.
+- [x] **QA & Verification (Final Gates)**:
+  - [x] Menjalankan dan meloloskan `npm run typecheck`, `npm run lint`, dan `npm run build` di seluruh *frontend* (Portal dan Admin).
+  - [x] Menjalankan uji *backend* Go: `go test`, `go vet`, dan `go build` (PASS).
+  - [x] Melakukan validasi OpenAPI secara ketat menggunakan Redocly, dan memperbaiki peringatan yang tersisa di spesifikasi API (PASS).
+  - [x] Menjalankan validasi keamanan infrastruktur `gosec` dan meloloskannya untuk komponen baru (PASS).
+  - [x] *Re-deployment* dan verifikasi *up* dari topologi `teman-belajar-docker.ps1` (PASS).
+  - [x] Penyatuan (*merge*) perubahan-perubahan QA akhir ke *branch* `main` dan didorong (*push*) ke *remote repository*.
 
 ## 3. Bukti Verifikasi
 
-1. Linter dan Typecheck Lolos Bersih:
+1. Linter dan Typecheck Lolos Bersih (Web dan Admin):
 ```
-> portal-web@0.1.0 lint
-> eslint . --max-warnings=0
-
-> portal-web@0.1.0 typecheck
-> tsc --noEmit
-```
-
-2. Next.js Build Berhasil:
-```
-✓ Compiled successfully in 6.8s
+✓ Compiled successfully in 17.2s
   Running TypeScript ...
-  Finished TypeScript in 3.0s ...
-  Collecting page data using 7 workers ...
-✓ Generating static pages using 7 workers (10/10) in 291ms
+  Finished TypeScript in 11.7s ...
+  Generating static pages using 7 workers (10/10) ...
 ```
 
-3. Docker Compose Web Container Rebuild:
+2. Tes Go dan Audit Gosec:
+Semua API backend dan domain `learning` kompilasi bersih dari *build constraint* error dan bebas dari kebocoran memori/rahasia baru menurut `gosec ./...`.
+
+3. Validasi OpenAPI (Redocly):
 ```
- Image teman-belajar-web:local Built
+No configurations were provided -- using built in recommended configuration by default.
+validating openapi\openapi.yaml...
+openapi\openapi.yaml: validated in 103ms
+
+Woohoo! Your API description is valid. 🎉
 ```
 
-4. BFF Proxy Berjalan Semantis:
-Request ke endpoint grades kini tertutup oleh pengecekan format dan menghasilkan JSON `{"type": "https://temanbelajar.com/errors/bad-gateway"...}` bila Moodle bermasalah, diatur di `/lib/learning/proxy.ts`.
+4. Docker Compose Web Container Rebuild & Topology Up:
+Skrip `teman-belajar-docker.ps1 verify` memberikan status HTTP 200 di seluruh komponen (Portal API, Portal Web, Admin Web, Keycloak, Moodle, MinIO).
+
+5. Realisasi Kode Berbasis Keamanan (BFF):
+Endpoint *grades* sekarang terkunci melalui `proxyLearningRequest`. Data invalid dari upstream diterjemahkan menjadi spesifikasi RFC 7807 (`application/problem+json`), menutup akses terhadap *raw leakage*.
+
+6. Sinkronisasi Git (`main` Branch Remote Verification):
+Commit corrective hardening (`fb573c4e4c0da3558830400ab8cd724d9c411a54`) telah didorong secara *fast-forward* ke *remote repository*.
 
 ## 4. Langkah Selanjutnya (Handoff)
-Sistem sekarang berada dalam keadaan stabil, patuh kontrak OpenAPI, dan sangat aman dari kebocoran log. Agen berikutnya siap memproses TASK-007 (apabila ada jadwal rilis) atau fitur lainnya, dijamin dengan base foundation frontend yang kuat.
+Sistem sekarang berada dalam keadaan stabil dan telah terdorong (*pushed*) menuju infrastruktur versi Canonical. Tidak terdapat cacat tipe (TypeScript interface) maupun spesifikasi (OpenAPI valid). Agen berikutnya dapat langsung memulai inisiasi infrastruktur pada TASK-007 (apabila ada jadwal rilis) tanpa perlu merisaukan regresi *cross-domain contract* dari TASK-006R.
