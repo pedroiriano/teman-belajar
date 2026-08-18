@@ -2,7 +2,7 @@
 
 ## 1. Executive Summary
 
-TASK-007R mengoreksi implementasi Unified Search, merapikan Portal Publik berbasis pola Techwind dan Portal Admin berbasis pola Cuba, mengunci konfigurasi Docker lokal, serta menghapus artefak operasional yang tidak layak dilacak. Implementasi dan verifikasi lokal lulus; rilis GitHub tertahan oleh insiden histori publik yang memerlukan persetujuan eksplisit untuk rewrite dan force-push terkoordinasi.
+TASK-007R mengoreksi implementasi Unified Search, merapikan Portal Publik berbasis pola Techwind dan Portal Admin berbasis pola Cuba, mengunci konfigurasi Docker lokal, serta menghapus artefak operasional yang tidak layak dilacak. Implementasi dan verifikasi lokal lulus; insiden histori publik ditutup melalui rewrite dan force-push terkoordinasi yang disetujui manusia, remote refs bersih, dan CI GitHub lulus.
 
 ## 2. Task Scope
 
@@ -58,7 +58,7 @@ Production memerlukan private network, TLS, external secret manager, scoped quer
 
 ## 15. Local Secret Scan
 
-Tracked/staged source diperiksa terhadap pola private key, provider tokens, JWT, dan local secret files tanpa mencetak nilai. Ignored local `.env` dan backup tidak dianggap source repository.
+Tracked/staged source dan seluruh active development refs diperiksa terhadap pola private key, provider tokens, JWT, local secret files, serta tujuh path insiden tanpa mencetak nilai. Ignored local `.env`, backup, recovery bundle, dan `refs/original` incident recovery tidak termasuk source yang akan diterbitkan.
 
 ## 16. Staged Secret Scan
 
@@ -66,11 +66,11 @@ Hasil: 0 pola secret, 0 `infrastructure/docker/.env`, 0 vendor `ORIGINAL`, dan 0
 
 ## 17. Local History Secret Scan
 
-INCIDENT: tujuh path operasional ditemukan pada tiga commit lama. SQL memuat data row-level; nilai tidak ditampilkan dalam log/handoff.
+PASS untuk seluruh active development refs setelah rewrite: tujuh path menghasilkan 0 reachable commit pada calon main dan dua branch yang dirilis. Bundle recovery ignored dan `refs/original` lokal sengaja dipertahankan karena penghapusan/prune irreversible tidak termasuk persetujuan; keduanya tidak diterbitkan.
 
 ## 18. Remote Secret Scan
 
-INCIDENT: `origin/main`, `origin/antigravity/task-005-moodle-adapter`, dan `origin/codex/light-dark-themes` menjangkau commit yang memuat artefak tersebut. Tip baru saja tidak cukup; remote history rewrite wajib untuk hasil bersih.
+PASS: setelah approved rewrite, `origin/main`, `origin/antigravity/task-005-moodle-adapter`, dan `origin/codex/light-dark-themes` masing-masing menghasilkan 0 reachable commit untuk tujuh path insiden.
 
 ## 19. Vendor Asset Protection
 
@@ -394,47 +394,47 @@ AGENTS, repository structure, Docker governance/README, design-system mapping/in
 
 ## 99. Commit SHA(s)
 
-Implementation commit: `d19df38` (`d19df38...` full SHA tersedia melalui `git rev-parse`). Handoff evidence commit dibuat setelah dokumen ini.
+Rewritten implementation commit: `278f8c63edb18d7d6658597060282d860c2c17a7`. Rewritten initial handoff evidence commit: `b308f4c1bda84fc36c44b76c3d488f743359ea24`. Commit evidence final dibuat setelah pembaruan dokumen ini.
 
 ## 100. Commit Messages
 
-`feat(platform): secure search and reconcile portal UI`; commit dokumentasi menggunakan `docs(handoff): record TASK-007R verification evidence`.
+`feat(platform): secure search and reconcile portal UI`; `docs(handoff): record TASK-007R verification evidence`; dan commit evidence final menggunakan `docs(handoff): close TASK-007R release incident`.
 
 ## 101. Main Fast-Forward
 
-BLOCKED BY INCIDENT: implementation lineage adalah fast-forward terhadap initial `origin/main`, tetapi remote history sanitization tidak mungkin dilakukan dengan fast-forward karena artefak sensitif sudah berada di ancestor publik.
+APPROVED INCIDENT EXCEPTION: implementation lineage awal adalah fast-forward, tetapi sanitasi ancestor publik secara teknis memerlukan non-fast-forward. Human menyetujui rewrite/force-push tepat tiga branch; push memakai exact `--force-with-lease`, bukan force tanpa lease.
 
 ## 102. Final Main SHA
 
-Belum ada final main SHA yang sah sampai human memilih incident-response rewrite atau menerima remote history incident. Git commit tidak dapat memuat SHA dirinya sendiri; final immutable SHA wajib dibuktikan out-of-band setelah tindakan.
+Release baseline setelah rewrite adalah `b308f4c1bda84fc36c44b76c3d488f743359ea24`. SHA final setelah evidence-only commit tidak dapat ditanamkan ke commit itu sendiri dan dibuktikan out-of-band melalui `git rev-parse`, `git ls-remote`, serta final response.
 
 ## 103. GitHub Push
 
-Belum dilakukan karena normal push akan mempertahankan public-history incident dan melanggar hard blocker TASK-007R.
+PASS: ketiga rewritten lineage dipush dengan exact lease; evidence-only commit berikutnya dipush normal fast-forward ke `main`.
 
 ## 104. Remote SHA Verification
 
-Belum dapat dinyatakan PASS sebelum push/rewrite yang diotorisasi selesai dan `git ls-remote origin refs/heads/main` sama dengan local main.
+PASS untuk rewrite baseline: `git ls-remote` mengembalikan `b308f4c1bda84fc36c44b76c3d488f743359ea24` pada `main`, `0ce0906261202b0c234fef8b14690645346012f3` pada TASK-005, dan `d770e3aa8d11b31c31aa0ea6d0fba865a917ce09` pada light-dark branch. Final evidence commit diverifikasi kembali setelah push.
 
 ## 105. Remote Content Verification
 
-Tip content siap menghapus artefak dan script unsafe, tetapi ancestor remote masih memuatnya; verifikasi remote content tetap INCIDENT.
+PASS: seluruh tiga remote refs menghasilkan `incident_commits=0`; tip `main` juga tidak melacak backup, dump, video, debug scripts, duplicate OpenAPI fragments, atau module worker lama.
 
 ## 106. Post-Push Public Security
 
-Belum dapat dinyatakan PASS. Setelah rewrite, seluruh public refs harus dipindai ulang dan credential yang pernah digunakan wajib dirotasi.
+PASS untuk reachable public refs: post-fetch scan seluruh remote branch menghasilkan 0 incident commit. Credential yang mungkin pernah terekspos tetap wajib dirotasi karena history rewrite tidak membatalkan credential.
 
 ## 107. GitHub Actions
 
-Belum tersedia evidence post-push untuk SHA baru. Local gates yang ekuivalen sudah lulus; remote Actions wajib diperiksa setelah release.
+PASS: GitHub Actions `CI Baseline` run `32098906026` untuk SHA `b308f4c1bda84fc36c44b76c3d488f743359ea24` selesai sukses. Workflow kemudian diperketat dengan immutable SHA pins untuk action v7, Go version dari `go.mod`, Node 22, real Portal/Admin install-lint-typecheck-build matrix, API build-test-vet, dan Redocly OpenAPI gate; run final diverifikasi out-of-band setelah evidence commit.
 
 ## 108. Acceptance Criteria
 
-Architecture, document consistency, UI boundary, repository tip hygiene, dev security, Search correctness, source isolation, API/UI/privacy/performance/resilience, Portal/Admin/API/OpenAPI/Docker/Moodle/CMS, ADR/runbook/handoff, dan real implementation commit: PASS. Remote secret scan, main fast-forward, GitHub push, remote SHA match, post-push security: BLOCKED/INCIDENT.
+Architecture, document consistency, UI boundary, repository hygiene, dev security, Search correctness, source isolation, API/UI/privacy/performance/resilience, Portal/Admin/API/OpenAPI/Docker/Moodle/CMS, ADR/runbook/handoff, real commits, remote secret scan, approved incident release, GitHub push, remote SHA verification, post-push security, dan CI: PASS.
 
 ## 109. Definition of Done
 
-Local engineering DoD terpenuhi. Canonical release DoD belum terpenuhi karena prompt melarang force-push sementara incident cleanup secara teknis memerlukannya; status tidak boleh dipalsukan menjadi PASS.
+PASS dengan documented human-approved incident exception untuk non-fast-forward history sanitization. Semua local engineering dan canonical release gates yang dapat diverifikasi telah terpenuhi.
 
 ## 110. Full Canonical Source Coverage
 
@@ -446,12 +446,12 @@ Production harus membuat scoped query-only Meilisearch key, menambah automated g
 
 ## 112. Human Decisions Required
 
-Wajib: otorisasi eksplisit untuk coordinated rewrite/force-push terhadap tiga affected remote branches atau keputusan alternatif repository replacement; rotasi/revocation setiap credential yang mungkin pernah hidup di SQL/backups; koordinasi contributor untuk re-clone setelah rewrite.
+Tindak lanjut manusia: rotasi/revocation setiap credential yang mungkin pernah hidup di SQL/backups; minta contributor re-clone setelah rewrite; dan putuskan kapan recovery bundle serta `refs/original` lokal aman dihapus.
 
 ## 113. TASK-007R Status
 
-BLOCKED — implementation PASS, canonical GitHub release blocked by confirmed public-history incident and the no-force-push hard rule.
+PASS — implementation, canonical documentation, approved incident rewrite, three-branch push, remote scan, SHA verification, dan CI baseline selesai.
 
 ## 114. TASK-008 Readiness
 
-NOT READY. TASK-008 tidak dimulai sampai TASK-007R remote history incident ditutup, final main SHA diverifikasi, Actions lulus, dan post-push public security scan PASS.
+READY setelah evidence-only commit final dipush dan CI untuk SHA tersebut lulus. TASK-008 tetap belum dimulai oleh pekerjaan ini.

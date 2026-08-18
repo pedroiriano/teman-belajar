@@ -2,38 +2,67 @@ name: CI Baseline
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
   pull_request:
-    branches: [ "main" ]
+    branches: ["main"]
+
+permissions:
+  contents: read
 
 jobs:
-  test:
+  api:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Set up Go
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: services/portal-api/go.mod
+          cache-dependency-path: services/portal-api/go.sum
+      - name: Build
+        working-directory: services/portal-api
+        run: go build ./...
+      - name: Test
+        working-directory: services/portal-api
+        run: go test ./...
+      - name: Vet
+        working-directory: services/portal-api
+        run: go vet ./...
 
-    - name: Set up Go
-      uses: actions/setup-go@v4
-      with:
-        go-version: '1.21'
+  frontend:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        app: [apps/portal-web, apps/admin-web]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Use Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "22.x"
+          cache: npm
+          cache-dependency-path: ${{ matrix.app }}/package-lock.json
+      - name: Install dependencies
+        working-directory: ${{ matrix.app }}
+        run: npm ci
+      - name: Lint
+        working-directory: ${{ matrix.app }}
+        run: npm run lint
+      - name: Typecheck
+        working-directory: ${{ matrix.app }}
+        run: npm run typecheck
+      - name: Build
+        working-directory: ${{ matrix.app }}
+        run: npm run build
 
-    - name: Go Build
-      working-directory: services/portal-api
-      run: go build -v ./...
-
-    - name: Go Test
-      working-directory: services/portal-api
-      run: go test -v ./...
-
-  lint-frontend:
+  openapi:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
-
-    - name: Use Node.js
-      uses: actions/setup-node@v3
-      with:
-        node-version: '18.x'
-
-    # Skipping frontend linting if no package.json exists yet for CI
-    # Will add proper linting commands later
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Use Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "22.x"
+      - name: Validate OpenAPI
+        run: npx --yes @redocly/cli@2.7.0 lint openapi/openapi.yaml
