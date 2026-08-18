@@ -29,3 +29,9 @@ Untuk Unified Search, `TASK-007R-HANDOFF.md` dan ADR-014 menggantikan klaim
 kelengkapan pada `TASK-007-HANDOFF.md`. Worker kanonis berada di
 `services/portal-api/cmd/search-worker`; kontrak API bertipe dan source
 isolation tidak boleh diturunkan ke implementasi TASK-007 lama.
+
+Untuk Engagement Platform dan aturan lintas-agent terbaru, baca
+`TASK-008-HANDOFF.md`, ADR-015, root `GEMINI.md`, dan
+`docs/governance/AI-AGENT-ALIGNMENT.md`. TASK-008 mengaktifkan engagement hanya
+untuk Knowledge, menggunakan OIDC `sub`, dan melarang Gemini/Codex/Antigravity
+membuat struktur, service, konfigurasi, atau aturan keamanan alternatif.
