@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import type { CourseCompletion, GradeItem } from "@/lib/learning/types";
 
 export function CourseDetailDrawer({ courseId, onClose }: { courseId: string | null, onClose: () => void }) {
@@ -24,16 +24,14 @@ export function CourseDetailDrawer({ courseId, onClose }: { courseId: string | n
     };
   }, [courseId, onClose]);
 
-  useEffect(() => {
-    if (!courseId) {
-      return;
-    }
+  const loadData = useCallback(() => {
+    if (!courseId) return;
     
     const controller = new AbortController();
     const signal = controller.signal;
 
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoading(true);
+    setData(null);
     
     Promise.allSettled([
       fetch(`/api/learning/me/courses/${courseId}/completion`, { signal }).then(async r => {
@@ -71,21 +69,21 @@ export function CourseDetailDrawer({ courseId, onClose }: { courseId: string | n
       }
     });
 
-    return () => { 
-      controller.abort(); 
-    };
+    return controller;
   }, [courseId]);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    const controller = loadData();
+    return () => { 
+      if (controller) controller.abort(); 
+    };
+  }, [loadData]);
 
   if (!courseId) return null;
 
   const handleRetry = () => {
-    setData(null);
-    setLoading(true);
-    // triggering a re-render will re-run the effect if we reset courseId, but here we can just close/reopen 
-    // or let the user try again later. For simplicity, onClose is safest to reset state properly, 
-    // but we can also just rely on remounting or setting state. 
-    // A full retry requires extracting the fetch logic.
-    window.location.reload(); 
+    loadData();
   };
 
   return (
@@ -124,7 +122,15 @@ export function CourseDetailDrawer({ courseId, onClose }: { courseId: string | n
             <div className="grid gap-8">
               {data?.error && (
                 <div className="rounded-xl border border-amber-200 bg-amber-50 p-5 text-amber-900 dark:border-amber-900/50 dark:bg-amber-900/20 dark:text-amber-300">
-                  <h3 className="font-bold">Peringatan</h3>
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-bold">Peringatan</h3>
+                    <button 
+                      onClick={handleRetry}
+                      className="rounded bg-amber-200/50 px-2 py-1 text-xs font-bold hover:bg-amber-300/50 dark:bg-amber-800/30 dark:hover:bg-amber-700/50 transition-colors"
+                    >
+                      Coba Lagi
+                    </button>
+                  </div>
                   <p className="mt-1 text-sm">{data.error}</p>
                 </div>
               )}

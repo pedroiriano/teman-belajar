@@ -128,6 +128,26 @@ services:
     labels:
       com.teman-belajar.component: minio
 
+  search:
+    image: getmeili/meilisearch:v1.6
+    restart: unless-stopped
+    environment:
+      MEILI_MASTER_KEY: ${TB_MEILI_MASTER_KEY:?Set TB_MEILI_MASTER_KEY in infrastructure/docker/.env}
+      MEILI_NO_ANALYTICS: "true"
+      MEILI_ENV: "development"
+    ports:
+      - "${TB_BIND_ADDRESS:-127.0.0.1}:${TB_MEILI_PORT:-7700}:7700"
+    volumes:
+      - meili-data:/meili_data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://127.0.0.1:7700/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    labels:
+      com.teman-belajar.component: search
+
   moodle:
     image: teman-belajar-moodle:local
     build:
@@ -231,6 +251,8 @@ services:
       MINIO_USE_SSL: "false"
       MEDIA_MAX_UPLOAD_BYTES: "20971520"
       TB_MOODLE_WEBSERVICE_TOKEN: ${TB_MOODLE_WEBSERVICE_TOKEN}
+      MEILI_URL: http://search:7700
+      MEILI_SEARCH_KEY: ${TB_MEILI_MASTER_KEY:?Set TB_MEILI_MASTER_KEY in infrastructure/docker/.env}
     extra_hosts:
       - keycloak.teman-belajar.localhost:host-gateway
     ports:
@@ -251,6 +273,25 @@ services:
     labels:
       com.teman-belajar.component: api
       com.teman-belajar.service-name: teman-belajar-api
+
+  search-worker:
+    image: teman-belajar-search-worker:local
+    build:
+      context: ../../services/search-worker
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgres://${TB_PORTAL_DB_USER:?Set TB_PORTAL_DB_USER in infrastructure/docker/.env}:${TB_PORTAL_DB_PASSWORD:?Set TB_PORTAL_DB_PASSWORD in infrastructure/docker/.env}@portal-db:5432/${TB_PORTAL_DB_NAME:?Set TB_PORTAL_DB_NAME in infrastructure/docker/.env}?sslmode=disable
+      MEILI_URL: http://search:7700
+      MEILI_MASTER_KEY: ${TB_MEILI_MASTER_KEY:?Set TB_MEILI_MASTER_KEY in infrastructure/docker/.env}
+      SYNC_INTERVAL: 60s
+    depends_on:
+      portal-db:
+        condition: service_healthy
+      search:
+        condition: service_healthy
+    labels:
+      com.teman-belajar.component: search-worker
 
   web:
     image: teman-belajar-web:local

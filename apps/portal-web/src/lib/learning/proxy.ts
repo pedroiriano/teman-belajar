@@ -84,8 +84,7 @@ export async function proxyLearningRequest(
       data = await response.json();
     } else {
       // Non-JSON upstream response, prevent raw text leakage
-      const text = await response.text();
-      console.error(`proxyLearningRequest: Unexpected non-JSON response from ${upstreamUrl}:`, text.substring(0, 100));
+      console.error(`proxyLearningRequest: Unexpected non-JSON response from ${upstreamUrl}. Status: ${response.status}, Content-Type: ${contentType}`);
       return NextResponse.json(
         {
           type: "https://temanbelajar.com/errors/bad-gateway",

@@ -60,6 +60,16 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
               {navItems.map((item) => <Link key={item.href} href={item.href} className="text-sm font-semibold text-slate-600 transition hover:text-teal-700">{item.label}</Link>)}
             </nav>
             <div className="ml-auto flex items-center gap-2 lg:ml-0">
+              <form action="/search" method="GET" className="hidden sm:block relative mr-2">
+                <input 
+                  type="search" 
+                  name="q" 
+                  placeholder="Cari kelas, berita..." 
+                  className="w-48 xl:w-64 rounded-full border border-slate-200 bg-slate-50 py-2 pl-10 pr-4 text-sm outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500 dark:border-slate-800 dark:bg-slate-900 dark:focus:border-teal-500"
+                  aria-label="Cari"
+                />
+                <svg className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+              </form>
               <ThemeToggle />
               <div className="hidden items-center gap-3 sm:flex">
                 {session ? (
@@ -76,6 +86,18 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
                 <summary className="portal-menu-button grid h-11 w-11 cursor-pointer list-none place-items-center rounded-xl border" aria-label="Buka navigasi"><svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></summary>
                 <div className="portal-mobile-menu absolute right-0 top-14 w-72 rounded-2xl border p-3 shadow-2xl">
                   <nav className="grid" aria-label="Navigasi seluler">{navItems.map((item) => <Link key={item.href} href={item.href} className="rounded-xl px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-teal-50 hover:text-teal-800">{item.label}</Link>)}</nav>
+                  <form action="/search" method="GET" className="mt-2 px-2">
+                    <div className="relative">
+                      <input 
+                        type="search" 
+                        name="q" 
+                        placeholder="Cari..." 
+                        className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 pl-10 pr-4 text-sm outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500 dark:border-slate-800 dark:bg-slate-900"
+                        aria-label="Cari"
+                      />
+                      <svg className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                    </div>
+                  </form>
                   <div className="mt-2 border-t border-slate-100 pt-3">
                     {session ? (
                       <div className="grid gap-2">

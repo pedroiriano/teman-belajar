@@ -13,6 +13,7 @@ import (
 
 	"teman-belajar-api/internal/adapters/minio"
 	"teman-belajar-api/internal/adapters/moodle"
+	"teman-belajar-api/internal/adapters/search"
 	"teman-belajar-api/internal/domain/cms"
 	"teman-belajar-api/internal/domain/knowledge"
 	"teman-belajar-api/internal/domain/learning"
@@ -102,6 +103,14 @@ func main() {
 		mediaHandler = handler.NewMediaHandler(mediaSvc)
 	}
 
+	meiliURL := os.Getenv("MEILI_URL")
+	meiliKey := os.Getenv("MEILI_SEARCH_KEY")
+	var searchHandler *handler.SearchHandler
+	if meiliURL != "" {
+		meiliClient := search.NewMeilisearchClient(meiliURL, meiliKey, "teman_belajar")
+		searchHandler = handler.NewSearchHandler(meiliClient)
+	}
+
 	issuerURL := os.Getenv("KEYCLOAK_ISSUER_URL")
 	if issuerURL == "" {
 		log.Fatal("Missing required environment variable: KEYCLOAK_ISSUER_URL")
@@ -146,6 +155,10 @@ func main() {
 		cmsHandler.GetPublicNews(w, r)
 	})
 	mux.HandleFunc("/api/v1/announcements", cmsHandler.ListActiveAnnouncements)
+	
+	if searchHandler != nil {
+		mux.HandleFunc("GET /api/v1/search", searchHandler.Search)
+	}
 
 	// Protected endpoints
 	mux.Handle("/api/v1/me", authMiddleware(http.HandlerFunc(handler.GetMe)))
