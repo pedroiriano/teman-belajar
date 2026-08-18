@@ -330,7 +330,7 @@ Implementation commit: `75f6f61de8dc5783ca79ae4ea1bff4325326c975`. The handoff p
 
 ## 83. Commit Messages
 
-Implementation: `feat: implement deterministic engagement platform`. Handoff: `docs: close TASK-008 engagement handoff`.
+Implementation: `feat: implement deterministic engagement platform`. Handoff: `docs: close TASK-008 engagement handoff`. Readiness clarification: `docs: clarify TASK-009 development readiness`.
 
 ## 84. Main Fast-Forward
 
@@ -378,8 +378,8 @@ Confirm production credential rotation/revocation and the TASK-007R production S
 
 ## 95. TASK-008 Status
 
-Implementation status is PASS subject only to the normal release/remote/CI gates documented above. Production deployment status is HOLD because credential rotation confirmation is human-owned.
+TASK-008 development status is PASS. Production deployment status remains HOLD because credential rotation confirmation is human-owned; that production gate does not invalidate the completed development task.
 
 ## 96. TASK-009 Readiness
 
-`NOT READY` for production sequencing until credential rotation is confirmed. After that confirmation and successful TASK-008 remote CI, TASK-009 may start from the verified remote `main`; it must not reinterpret or replace the engagement architecture.
+`READY` for development sequencing from verified remote `main` after TASK-008 remote CI. Production deployment remains separately on HOLD until credential rotation is confirmed. TASK-009 must not reinterpret or replace the engagement architecture and was not implemented in this task.
