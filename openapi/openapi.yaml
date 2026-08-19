@@ -1339,6 +1339,67 @@ paths:
         '503':
           $ref: '#/components/responses/DependencyUnavailable'
       operationId: listLearningCourseGrades
+
+  /api/v1/analytics/events:
+    post:
+      summary: Submit a public product analytics event
+      tags: [Analytics]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AnalyticsEventRequest'
+      responses:
+        '202':
+          description: Event accepted
+        '413':
+          description: Payload Too Large
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+  /api/v1/internal/analytics/events:
+    post:
+      summary: Submit a trusted internal analytics event
+      tags: [Analytics]
+      parameters:
+        - in: header
+          name: X-Internal-Token
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AnalyticsEventRequest'
+      responses:
+        '202':
+          description: Event accepted
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+  /api/v1/admin/analytics/statistics:
+    get:
+      summary: Get platform statistics (Admin)
+      tags: [Analytics]
+      parameters:
+        - in: query
+          name: days
+          schema:
+            type: integer
+            enum: [1, 7, 30, 90, 180, 365]
+            default: 30
+      responses:
+        '200':
+          description: Statistics successfully retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminStatisticsResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
   /api/v1/search:
     get:
       operationId: searchPublicContent

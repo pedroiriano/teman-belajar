@@ -134,13 +134,23 @@ export function PortalChrome({ authenticated, children }: { authenticated: boole
     if (basePath === "/" || basePath === "") return false;
     if (!pathname.startsWith(basePath)) return false;
     
+    // If the navigation item has a query string, ensure every parameter matches
     const queryPart = item.href.split("?")[1]?.split("#")[0];
     if (queryPart) {
       const itemParams = new URLSearchParams(queryPart);
-      for (const [key, value] of itemParams.entries()) {
+      let match = true;
+      itemParams.forEach((value, key) => {
         if (searchParams.get(key) !== value) {
-          return false;
+          match = false;
         }
+      });
+      if (!match) return false;
+    } else {
+      // If the navigation item DOES NOT have a query string, but we are on a path with a query string,
+      // and it's an exact match on basePath, we might want to return false if it's a specific route like /search
+      // But for things like /knowledge we want it to match /knowledge/article-1
+      if (basePath === "/search" && searchParams.toString() !== "") {
+          return false;
       }
     }
     return true;

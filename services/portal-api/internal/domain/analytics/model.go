@@ -10,7 +10,7 @@ import (
 
 type Event struct {
 	ID        uuid.UUID       `json:"id"`
-	VisitorID uuid.UUID       `json:"visitor_id"`
+	VisitorID *uuid.UUID      `json:"visitor_id,omitempty"`
 	ActorID   *uuid.UUID      `json:"actor_id,omitempty"`
 	EventType string          `json:"event_type"`
 	URL       string          `json:"url,omitempty"`
@@ -45,8 +45,9 @@ type Repository interface {
 	GetLearningAnalytics(ctx context.Context, since time.Time) ([]LearningDaily, error)
 	GetSSOAnalytics(ctx context.Context, since time.Time) ([]SSODaily, error)
 	
-	RollupPageDaily(ctx context.Context, date time.Time) error
-	RollupSSODaily(ctx context.Context, date time.Time) error
+	RollupPageDaily(ctx context.Context, reportingDate time.Time, startUTC time.Time, endUTC time.Time) error
+	RollupSSODaily(ctx context.Context, reportingDate time.Time, startUTC time.Time, endUTC time.Time) error
 	UpdateLearningDaily(ctx context.Context, data LearningDaily) error
+	CleanupOldEvents(ctx context.Context, cutoffUTC time.Time) error
 }
 

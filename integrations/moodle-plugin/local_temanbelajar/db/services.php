@@ -17,6 +17,15 @@ $functions = array(
         'ajax'        => true,
         'services'    => array('teman_belajar_integration'),
     ),
+    'local_temanbelajar_get_learning_analytics' => array(
+        'classname'   => 'local_temanbelajar\external\get_learning_analytics',
+        'methodname'  => 'execute',
+        'classpath'   => 'local/temanbelajar/classes/external/get_learning_analytics.php',
+        'description' => 'Gets learning analytics data for a specific date.',
+        'type'        => 'read',
+        'ajax'        => true,
+        'services'    => array('teman_belajar_integration'),
+    ),
 );
 
 $services = array(

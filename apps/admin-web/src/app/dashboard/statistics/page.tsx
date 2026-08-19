@@ -1,19 +1,20 @@
 import { getServerAccessToken } from "@/lib/server-auth";
 import { StatisticsFilter } from "@/components/statistics-filter";
 import { Suspense } from "react";
+import type { StatisticsResponse, PageDaily, LearningDaily, SSODaily, APIStats } from "@/types/analytics";
 
 export const metadata = {
   title: "Statistik - Teman Belajar",
 };
 
-async function fetchStats(token: string, days: string = "30") {
+async function fetchStats(token: string, days: string = "30"): Promise<{ data?: StatisticsResponse; error?: boolean }> {
   const API_BASE = process.env.PORTAL_API_INTERNAL_URL || "http://localhost:8080";
   const res = await fetch(`${API_BASE}/api/v1/admin/analytics/statistics?days=${days}`, {
     headers: { Authorization: `Bearer ${token}` },
     cache: "no-store",
   });
   if (!res.ok) return { error: true };
-  return { data: await res.json() };
+  return { data: (await res.json()) as StatisticsResponse };
 }
 
 export default async function StatisticsPage({ searchParams }: { searchParams: Promise<{ [key: string]: string | string[] | undefined }> }) {
@@ -37,7 +38,17 @@ export default async function StatisticsPage({ searchParams }: { searchParams: P
     );
   }
 
-  const { page_views, learning, sso } = res.data as any;
+  const data: StatisticsResponse = res.data;
+  const { page_views, learning, sso, api } = data;
+
+  const totalPageViews = page_views?.reduce((acc: number, curr: PageDaily) => acc + curr.views, 0) || 0;
+  const totalUniqueVisitors = page_views?.reduce((acc: number, curr: PageDaily) => acc + curr.unique_visitors, 0) || 0;
+  
+  const totalActiveLearners = learning?.reduce((acc: number, curr: LearningDaily) => acc + curr.active_learners, 0) || 0;
+  const totalCompletions = learning?.reduce((acc: number, curr: LearningDaily) => acc + curr.completions, 0) || 0;
+
+  const successfulLogins = sso?.reduce((acc: number, curr: SSODaily) => acc + curr.successful_logins, 0) || 0;
+  const failedLogins = sso?.reduce((acc: number, curr: SSODaily) => acc + curr.failed_logins, 0) || 0;
 
   return (
     <div className="admin-page-container">
@@ -50,6 +61,25 @@ export default async function StatisticsPage({ searchParams }: { searchParams: P
         <Suspense fallback={<div className="h-9 w-40 animate-pulse rounded-lg bg-slate-200 dark:bg-slate-800"></div>}>
           <StatisticsFilter />
         </Suspense>
+      </div>
+
+      <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="admin-card p-6">
+          <p className="text-sm font-semibold text-slate-500">Total Page Views</p>
+          <p className="mt-2 text-3xl font-bold">{totalPageViews.toLocaleString()}</p>
+        </div>
+        <div className="admin-card p-6">
+          <p className="text-sm font-semibold text-slate-500">Unique Visitors</p>
+          <p className="mt-2 text-3xl font-bold">{totalUniqueVisitors.toLocaleString()}</p>
+        </div>
+        <div className="admin-card p-6">
+          <p className="text-sm font-semibold text-slate-500">Pembelajar Aktif</p>
+          <p className="mt-2 text-3xl font-bold">{totalActiveLearners.toLocaleString()}</p>
+        </div>
+        <div className="admin-card p-6">
+          <p className="text-sm font-semibold text-slate-500">Penyelesaian Kursus</p>
+          <p className="mt-2 text-3xl font-bold">{totalCompletions.toLocaleString()}</p>
+        </div>
       </div>
 
       <div className="mt-8 space-y-8">
@@ -67,8 +97,8 @@ export default async function StatisticsPage({ searchParams }: { searchParams: P
               </thead>
               <tbody className="divide-y dark:divide-slate-800">
                 {page_views?.length > 0 ? (
-                  page_views.map((pv: any, i: number) => {
-                    const maxViews = Math.max(...page_views.map((p: any) => p.views));
+                  page_views.map((pv: PageDaily, i: number) => {
+                    const maxViews = Math.max(...page_views.map((p: PageDaily) => p.views));
                     const percentage = maxViews > 0 ? (pv.views / maxViews) * 100 : 0;
                     return (
                       <tr key={i} className="hover:bg-slate-50 dark:hover:bg-slate-800/50">
@@ -107,8 +137,8 @@ export default async function StatisticsPage({ searchParams }: { searchParams: P
               </thead>
               <tbody className="divide-y dark:divide-slate-800">
                 {learning?.length > 0 ? (
-                  learning.map((l: any, i: number) => {
-                    const maxActive = Math.max(...learning.map((x: any) => x.active_learners));
+                  learning.map((l: LearningDaily, i: number) => {
+                    const maxActive = Math.max(...learning.map((x: LearningDaily) => x.active_learners));
                     const percentage = maxActive > 0 ? (l.active_learners / maxActive) * 100 : 0;
                     return (
                       <tr key={i} className="hover:bg-slate-50 dark:hover:bg-slate-800/50">
@@ -134,7 +164,7 @@ export default async function StatisticsPage({ searchParams }: { searchParams: P
         </section>
 
         <section>
-          <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100">Aktivitas SSO</h2>
+          <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100">Aktivitas SSO & Keamanan</h2>
           <div className="mt-4 overflow-hidden rounded-xl border bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
             <table className="w-full text-left text-sm">
               <thead className="bg-slate-50 text-slate-600 dark:bg-slate-800 dark:text-slate-400">
@@ -145,7 +175,7 @@ export default async function StatisticsPage({ searchParams }: { searchParams: P
               </thead>
               <tbody className="divide-y dark:divide-slate-800">
                 {sso?.length > 0 ? (
-                  sso.map((s: any, i: number) => {
+                  sso.map((s: SSODaily, i: number) => {
                     const total = s.successful_logins + s.failed_logins;
                     const successPct = total > 0 ? (s.successful_logins / total) * 100 : 0;
                     const failPct = total > 0 ? (s.failed_logins / total) * 100 : 0;
@@ -174,8 +204,27 @@ export default async function StatisticsPage({ searchParams }: { searchParams: P
             </table>
           </div>
         </section>
+
+        {api && (
+          <section>
+            <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100">Kesehatan API (Prometheus)</h2>
+            <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-3">
+              <div className="admin-card p-6">
+                <p className="text-sm font-semibold text-slate-500">Total HTTP Requests (5m)</p>
+                <p className="mt-2 text-3xl font-bold">{api.total_requests || "0"}</p>
+              </div>
+              <div className="admin-card p-6">
+                <p className="text-sm font-semibold text-slate-500">Error Rate (5m)</p>
+                <p className="mt-2 text-3xl font-bold">{api.error_rate && !isNaN(parseFloat(api.error_rate)) ? parseFloat(api.error_rate).toFixed(2) + "%" : "0%"}</p>
+              </div>
+              <div className="admin-card p-6">
+                <p className="text-sm font-semibold text-slate-500">p95 Latency (5m)</p>
+                <p className="mt-2 text-3xl font-bold">{api.p95_latency && !isNaN(parseFloat(api.p95_latency)) ? (parseFloat(api.p95_latency) * 1000).toFixed(0) + "ms" : "N/A"}</p>
+              </div>
+            </div>
+          </section>
+        )}
       </div>
     </div>
   );
 }
-

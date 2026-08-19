@@ -26,15 +26,25 @@ export const authOptions: NextAuthOptions = {
   events: {
     async signIn(message) {
       const API_BASE = process.env.PORTAL_API_INTERNAL_URL || "http://localhost:8080";
-      fetch("${API_BASE}/api/v1/analytics/events", {
-        method: "POST", headers: { "Content-Type": "application/json" },
+      const secret = process.env.PORTAL_INTERNAL_SECRET || "default_internal_secret";
+      fetch(`${API_BASE}/api/v1/internal/analytics/events`, {
+        method: "POST", 
+        headers: { 
+          "Content-Type": "application/json",
+          "X-Internal-Token": secret
+        },
         body: JSON.stringify({ event_type: "sso.login_success", url: "/sso", referrer: "", metadata: {} })
       }).catch(console.error);
     },
     async signOut(message) {
       const API_BASE = process.env.PORTAL_API_INTERNAL_URL || "http://localhost:8080";
-      fetch("${API_BASE}/api/v1/analytics/events", {
-        method: "POST", headers: { "Content-Type": "application/json" },
+      const secret = process.env.PORTAL_INTERNAL_SECRET || "default_internal_secret";
+      fetch(`${API_BASE}/api/v1/internal/analytics/events`, {
+        method: "POST", 
+        headers: { 
+          "Content-Type": "application/json",
+          "X-Internal-Token": secret
+        },
         body: JSON.stringify({ event_type: "sso.logout", url: "/sso", referrer: "", metadata: {} })
       }).catch(console.error);
     }

@@ -189,7 +189,8 @@ func main() {
 
 	mux.HandleFunc("/api/v1/health", handler.HealthCheck)
 	// Analytics endpoints
-	mux.Handle("POST /api/v1/analytics/events", http.HandlerFunc(analyticsHandler.HandleIngest))
+	mux.Handle("POST /api/v1/analytics/events", http.HandlerFunc(analyticsHandler.HandlePublicIngest))
+	mux.Handle("POST /api/v1/internal/analytics/events", http.HandlerFunc(analyticsHandler.HandleInternalIngest))
 	mux.Handle("GET /api/v1/admin/analytics/statistics", adminAuthMiddleware(http.HandlerFunc(analyticsHandler.HandleGetStatistics)))
 	mux.Handle("/metrics", promhttp.Handler())
 

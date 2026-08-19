@@ -78,41 +78,41 @@ func (r *PostgresRepository) GetSSOAnalytics(ctx context.Context, since time.Tim
 	return result, nil
 }
 
-func (r *PostgresRepository) RollupPageDaily(ctx context.Context, date time.Time) error {
+func (r *PostgresRepository) RollupPageDaily(ctx context.Context, reportingDate time.Time, startUTC time.Time, endUTC time.Time) error {
 	query := `
 		INSERT INTO analytics.page_daily (date, path, views, unique_visitors)
 		SELECT 
-			$1::date, 
+			$1, 
 			url, 
 			COUNT(*), 
 			COUNT(DISTINCT visitor_id)
 		FROM analytics.events
-		WHERE created_at >= $1 AND created_at < $1 + INTERVAL '1 day'
-		  AND event_type IN ('portal.page_view', 'admin.page_view')
+		WHERE created_at >= $2 AND created_at < $3
+		  AND event_type IN ('portal.page_view', 'admin.page_view', 'content.knowledge_view', 'content.news_view', 'content.announcement_view')
 		GROUP BY url
 		ON CONFLICT (date, path) DO UPDATE SET 
 			views = EXCLUDED.views, 
 			unique_visitors = EXCLUDED.unique_visitors;
 	`
-	_, err := r.db.ExecContext(ctx, query, date)
+	_, err := r.db.ExecContext(ctx, query, reportingDate, startUTC, endUTC)
 	return err
 }
 
-func (r *PostgresRepository) RollupSSODaily(ctx context.Context, date time.Time) error {
+func (r *PostgresRepository) RollupSSODaily(ctx context.Context, reportingDate time.Time, startUTC time.Time, endUTC time.Time) error {
 	query := `
 		INSERT INTO analytics.sso_daily (date, successful_logins, failed_logins)
 		SELECT 
-			$1::date, 
+			$1, 
 			SUM(CASE WHEN event_type = 'sso.login_success' THEN 1 ELSE 0 END),
 			SUM(CASE WHEN event_type = 'sso.login_failed' THEN 1 ELSE 0 END)
 		FROM analytics.events
-		WHERE created_at >= $1 AND created_at < $1 + INTERVAL '1 day'
+		WHERE created_at >= $2 AND created_at < $3
 		  AND event_type IN ('sso.login_success', 'sso.login_failed')
 		ON CONFLICT (date) DO UPDATE SET 
 			successful_logins = EXCLUDED.successful_logins, 
 			failed_logins = EXCLUDED.failed_logins;
 	`
-	_, err := r.db.ExecContext(ctx, query, date)
+	_, err := r.db.ExecContext(ctx, query, reportingDate, startUTC, endUTC)
 	return err
 }
 
@@ -128,3 +128,8 @@ func (r *PostgresRepository) UpdateLearningDaily(ctx context.Context, data Learn
 	return err
 }
 
+func (r *PostgresRepository) CleanupOldEvents(ctx context.Context, cutoffUTC time.Time) error {
+	query := `DELETE FROM analytics.events WHERE created_at < $1`
+	_, err := r.db.ExecContext(ctx, query, cutoffUTC)
+	return err
+}

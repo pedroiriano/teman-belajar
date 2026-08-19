@@ -232,3 +232,20 @@ func (c *Client) GetCourseGrades(ctx context.Context, user *learning.LearningUse
 
 	return items, nil
 }
+type GetLearningAnalyticsResponse struct {
+	ActiveLearners int `json:"active_learners"`
+	Completions    int `json:"completions"`
+}
+
+func (c *Client) GetLearningAnalytics(ctx context.Context, dateStr string) (*GetLearningAnalyticsResponse, error) {
+	args := url.Values{}
+	args.Set("date", dateStr)
+
+	var res GetLearningAnalyticsResponse
+	if err := c.callWS(ctx, "local_temanbelajar_get_learning_analytics", args, &res); err != nil {
+		return nil, err
+	}
+
+	return &res, nil
+}
+
