@@ -126,7 +126,7 @@ func (r *KnowledgeRepository) ListRevisions(ctx context.Context, articleID strin
 
 func (r *KnowledgeRepository) ListPublicArticles(ctx context.Context, page, pageSize int, categoryID *string) ([]knowledge.Article, int, error) {
 	offset := (page - 1) * pageSize
-	
+
 	// Base query
 	query := `
 		SELECT id, slug, title, summary, status, category_id, published_revision_no, current_revision_no, created_at, created_by, updated_at, updated_by, last_reviewed_at
@@ -134,22 +134,22 @@ func (r *KnowledgeRepository) ListPublicArticles(ctx context.Context, page, page
 		WHERE published_revision_no IS NOT NULL
 	`
 	countQuery := `SELECT COUNT(*) FROM knowledge_articles WHERE published_revision_no IS NOT NULL`
-	
+
 	args := []interface{}{}
 	countArgs := []interface{}{}
-	
+
 	if categoryID != nil && *categoryID != "" {
 		query += ` AND category_id = $1`
 		countQuery += ` AND category_id = $1`
 		args = append(args, *categoryID)
 		countArgs = append(countArgs, *categoryID)
 	}
-	
+
 	query += ` ORDER BY created_at DESC LIMIT $`
-	
+
 	// Add LIMIT and OFFSET placeholders
 	// Go does not support simple query building easily without libs, but this is safe and standard
-	
+
 	// Go does not support simple query building easily without libs, but this is safe and standard
 	// we will construct manually
 	if categoryID != nil && *categoryID != "" {
@@ -194,14 +194,14 @@ func (r *KnowledgeRepository) ListPublicArticles(ctx context.Context, page, page
 
 func (r *KnowledgeRepository) ListAdminArticles(ctx context.Context, page, pageSize int) ([]knowledge.Article, int, error) {
 	offset := (page - 1) * pageSize
-	
+
 	query := `
 		SELECT id, slug, title, summary, status, category_id, published_revision_no, current_revision_no, created_at, created_by, updated_at, updated_by, last_reviewed_at
 		FROM knowledge_articles 
 		ORDER BY created_at DESC LIMIT $1 OFFSET $2
 	`
 	countQuery := `SELECT COUNT(*) FROM knowledge_articles`
-	
+
 	var total int
 	if err := r.db.QueryRowContext(ctx, countQuery).Scan(&total); err != nil {
 		return nil, 0, err

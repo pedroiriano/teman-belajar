@@ -91,7 +91,7 @@ func TestCMSRepository_News(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to list public news: %v", err)
 	}
-	
+
 	found := false
 	for _, n := range publicList {
 		if n.Slug == slug {
@@ -99,7 +99,7 @@ func TestCMSRepository_News(t *testing.T) {
 			break
 		}
 	}
-	
+
 	if !found {
 		t.Errorf("Published news should appear in public list")
 	}

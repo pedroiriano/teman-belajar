@@ -11,18 +11,18 @@ import (
 
 	_ "github.com/lib/pq"
 
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"teman-belajar-api/internal/adapters/minio"
 	"teman-belajar-api/internal/adapters/moodle"
 	searchadapter "teman-belajar-api/internal/adapters/search"
 	engagementapplication "teman-belajar-api/internal/application/engagement"
 	searchapplication "teman-belajar-api/internal/application/search"
+	"teman-belajar-api/internal/domain/analytics"
 	"teman-belajar-api/internal/domain/cms"
 	"teman-belajar-api/internal/domain/knowledge"
 	"teman-belajar-api/internal/domain/learning"
 	"teman-belajar-api/internal/domain/media"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"teman-belajar-api/internal/observability"
-	"teman-belajar-api/internal/domain/analytics"
 	"teman-belajar-api/internal/repository/postgres"
 	"teman-belajar-api/internal/transport/http/handler"
 	"teman-belajar-api/internal/transport/http/middleware"
@@ -149,7 +149,7 @@ func main() {
 		searchService = searchapplication.NewService(meiliClient)
 		searchHandler = handler.NewSearchHandler(searchService)
 	}
-		
+
 	analyticsRepo := analytics.NewPostgresRepository(db)
 	analyticsHandler := handler.NewAnalyticsHandler(analyticsRepo)
 
@@ -288,10 +288,3 @@ func main() {
 		log.Fatalf("Server failed: %v", err)
 	}
 }
-
-
-
-
-
-
-

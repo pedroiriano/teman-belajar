@@ -1,16 +1,16 @@
 package handler
 
 import (
+	"crypto/subtle"
 	"encoding/json"
+	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 	"os"
 	"strconv"
 	"strings"
 	"time"
-	"fmt"
-	"io"
-	"crypto/subtle"
 
 	"teman-belajar-api/internal/domain/analytics"
 	"teman-belajar-api/internal/observability"
@@ -65,10 +65,10 @@ var ssoEvents = map[string]bool{
 func validateMetadata(eventType string, metadataRaw json.RawMessage) ([]byte, error) {
 	// First check forbidden strings directly in raw JSON to prevent any nested leaks
 	rawStr := string(metadataRaw)
-	if strings.Contains(rawStr, `"query"`) || strings.Contains(rawStr, `"q"`) || strings.Contains(rawStr, `"raw_query"`) || 
-	   strings.Contains(rawStr, `"email"`) || strings.Contains(rawStr, `"username"`) || strings.Contains(rawStr, `"sub"`) || 
-	   strings.Contains(rawStr, `"token"`) || strings.Contains(rawStr, `"cookie"`) || strings.Contains(rawStr, `"password"`) ||
-	   strings.Contains(rawStr, `"access_token"`) || strings.Contains(rawStr, `"id_token"`) || strings.Contains(rawStr, `"refresh_token"`) {
+	if strings.Contains(rawStr, `"query"`) || strings.Contains(rawStr, `"q"`) || strings.Contains(rawStr, `"raw_query"`) ||
+		strings.Contains(rawStr, `"email"`) || strings.Contains(rawStr, `"username"`) || strings.Contains(rawStr, `"sub"`) ||
+		strings.Contains(rawStr, `"token"`) || strings.Contains(rawStr, `"cookie"`) || strings.Contains(rawStr, `"password"`) ||
+		strings.Contains(rawStr, `"access_token"`) || strings.Contains(rawStr, `"id_token"`) || strings.Contains(rawStr, `"refresh_token"`) {
 		return nil, fmt.Errorf("forbidden metadata keys detected")
 	}
 
@@ -175,7 +175,7 @@ func (h *AnalyticsHandler) handleIngestCore(w http.ResponseWriter, r *http.Reque
 		respondAnalyticsProblem(w, http.StatusMethodNotAllowed, "Method Not Allowed", "Use POST")
 		return
 	}
-	
+
 	if !isInternal {
 		// Same-Origin / Origin Validation for public events
 		origin := r.Header.Get("Origin")
@@ -203,7 +203,7 @@ func (h *AnalyticsHandler) handleIngestCore(w http.ResponseWriter, r *http.Reque
 			respondAnalyticsProblem(w, http.StatusForbidden, "Forbidden", "Server misconfigured: missing internal secret")
 			return
 		}
-		
+
 		if subtle.ConstantTimeCompare([]byte(internalToken), []byte(expectedToken)) != 1 {
 			respondAnalyticsProblem(w, http.StatusForbidden, "Forbidden", "Internal events require trusted server origin")
 			return
@@ -343,9 +343,9 @@ func (h *AnalyticsHandler) HandleGetStatistics(w http.ResponseWriter, r *http.Re
 		}
 		days = parsedDays
 	}
-	
+
 	sinceDate := time.Now().UTC().AddDate(0, 0, -days).Format("2006-01-02")
-	
+
 	pageStats, err := h.repo.GetPageAnalytics(r.Context(), sinceDate)
 	if err != nil {
 		respondAnalyticsProblem(w, http.StatusInternalServerError, "Internal Server Error", "Error fetching page stats")
@@ -374,31 +374,41 @@ func (h *AnalyticsHandler) HandleGetStatistics(w http.ResponseWriter, r *http.Re
 		}
 	}
 
+	searchStats, _ := h.repo.GetSearchAnalytics(r.Context(), sinceDate)
+	contentStats, _ := h.repo.GetContentAnalytics(r.Context(), sinceDate)
+	engagementStats, _ := h.repo.GetEngagementStats(r.Context())
+
 	apiStats := fetchAPIStats()
 
 	type Freshness struct {
-		AnalyticsLastRollup string `json:"analytics_last_rollup"`
+		AnalyticsLastRollup  string `json:"analytics_last_rollup"`
 		PrometheusObservedAt string `json:"prometheus_observed_at"`
 	}
 
 	type StatsResponse struct {
-		API        map[string]interface{} `json:"api"`
-		PageViews  []analytics.PageDaily  `json:"page_views"`
-		Learning   []analytics.LearningDaily `json:"learning"`
-		SSO        []analytics.SSODaily   `json:"sso"`
-		PeriodUniqueVisitors int `json:"period_unique_visitors"`
-		Freshness  Freshness `json:"freshness"`
+		API                  map[string]interface{}    `json:"api"`
+		PageViews            []analytics.PageDaily     `json:"page_views"`
+		Learning             []analytics.LearningDaily `json:"learning"`
+		SSO                  []analytics.SSODaily      `json:"sso"`
+		Search               []analytics.SearchDaily   `json:"search"`
+		Content              []analytics.ContentDaily  `json:"content"`
+		Engagement           analytics.EngagementStats `json:"engagement"`
+		PeriodUniqueVisitors int                       `json:"period_unique_visitors"`
+		Freshness            Freshness                 `json:"freshness"`
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(StatsResponse{
-		API: apiStats,
-		PageViews: pageStats,
-		Learning: learningStats,
-		SSO: ssoStats,
+		API:                  apiStats,
+		PageViews:            pageStats,
+		Learning:             learningStats,
+		SSO:                  ssoStats,
+		Search:               searchStats,
+		Content:              contentStats,
+		Engagement:           engagementStats,
 		PeriodUniqueVisitors: periodUniqueVisitors,
 		Freshness: Freshness{
-			AnalyticsLastRollup: time.Now().UTC().Format(time.RFC3339),
+			AnalyticsLastRollup:  time.Now().UTC().Format(time.RFC3339),
 			PrometheusObservedAt: time.Now().UTC().Format(time.RFC3339),
 		},
 	})
@@ -414,7 +424,7 @@ func getPrometheusMetric(query string) PromValue {
 	if promURL == "" {
 		promURL = "http://prometheus:9090"
 	}
-	
+
 	req, err := http.NewRequest("GET", promURL+"/api/v1/query", nil)
 	if err != nil {
 		return PromValue{Available: false}
@@ -422,7 +432,7 @@ func getPrometheusMetric(query string) PromValue {
 	q := req.URL.Query()
 	q.Add("query", query)
 	req.URL.RawQuery = q.Encode()
-	
+
 	client := &http.Client{Timeout: 2 * time.Second}
 	resp, err := client.Do(req)
 	if err != nil {
@@ -438,7 +448,7 @@ func getPrometheusMetric(query string) PromValue {
 			} `json:"result"`
 		} `json:"data"`
 	}
-	
+
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
 		return PromValue{Available: false}
 	}
@@ -463,15 +473,15 @@ func fetchAPIStats() map[string]interface{} {
 	status2xx := getPrometheusMetric(`sum(rate(http_requests_total{status=~"2.."}[5m]))`)
 	status4xx := getPrometheusMetric(`sum(rate(http_requests_total{status=~"4.."}[5m]))`)
 	status5xx := getPrometheusMetric(`sum(rate(http_requests_total{status=~"5.."}[5m]))`)
-	
+
 	return map[string]interface{}{
 		"request_rate": requestRate,
-		"error_rate": errorRate,
-		"p50_latency": p50,
-		"p95_latency": p95,
-		"p99_latency": p99,
-		"status_2xx": status2xx,
-		"status_4xx": status4xx,
-		"status_5xx": status5xx,
+		"error_rate":   errorRate,
+		"p50_latency":  p50,
+		"p95_latency":  p95,
+		"p99_latency":  p99,
+		"status_2xx":   status2xx,
+		"status_4xx":   status4xx,
+		"status_5xx":   status5xx,
 	}
 }

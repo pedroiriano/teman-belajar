@@ -11,11 +11,11 @@ func TestCanTransitionTo(t *testing.T) {
 	noRoles := []string{"Learner"}
 
 	tests := []struct {
-		name      string
-		current   ContentStatus
-		next      ContentStatus
-		roles     []string
-		want      bool
+		name    string
+		current ContentStatus
+		next    ContentStatus
+		roles   []string
+		want    bool
 	}{
 		{"draft to in_review as editor", StatusDraft, StatusInReview, editorRoles, true},
 		{"draft to in_review as reviewer", StatusDraft, StatusInReview, reviewerRoles, false},

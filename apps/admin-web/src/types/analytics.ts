@@ -27,6 +27,27 @@ export interface SSODaily {
   failed_logins: number;
 }
 
+export interface SearchDaily {
+  date: string;
+  total_searches: number;
+  zero_results: number;
+  result_clicks: number;
+}
+
+export interface ContentDaily {
+  date: string;
+  content_type: string;
+  target_id: string;
+  views: number;
+  unique_visitors: number;
+}
+
+export interface EngagementStats {
+  bookmarks: number;
+  ratings: number;
+  avg_rating: number;
+}
+
 export interface PromValue {
   value: string;
   available: boolean;
@@ -53,6 +74,9 @@ export interface StatisticsResponse {
   page_views: PageDaily[];
   learning: LearningDaily[];
   sso: SSODaily[];
+  search: SearchDaily[];
+  content: ContentDaily[];
+  engagement: EngagementStats;
   period_unique_visitors: number;
   freshness: Freshness;
 }

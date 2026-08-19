@@ -144,3 +144,95 @@ func (r *PostgresRepository) CleanupOldEvents(ctx context.Context, cutoffUTC tim
 	_, err := r.db.ExecContext(ctx, query, cutoffUTC)
 	return err
 }
+
+func (r *PostgresRepository) GetSearchAnalytics(ctx context.Context, since string) ([]SearchDaily, error) {
+	query := `SELECT TO_CHAR(date, 'YYYY-MM-DD'), total_searches, zero_results, result_clicks FROM analytics.search_daily WHERE date >= $1::date ORDER BY date DESC`
+	rows, err := r.db.QueryContext(ctx, query, since)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var result []SearchDaily
+	for rows.Next() {
+		var d SearchDaily
+		if err := rows.Scan(&d.Date, &d.TotalSearches, &d.ZeroResults, &d.ResultClicks); err != nil {
+			return nil, err
+		}
+		result = append(result, d)
+	}
+	return result, nil
+}
+
+func (r *PostgresRepository) GetContentAnalytics(ctx context.Context, since string) ([]ContentDaily, error) {
+	query := `SELECT TO_CHAR(date, 'YYYY-MM-DD'), content_type, target_id, views, unique_visitors FROM analytics.content_daily WHERE date >= $1::date ORDER BY date DESC, views DESC`
+	rows, err := r.db.QueryContext(ctx, query, since)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var result []ContentDaily
+	for rows.Next() {
+		var d ContentDaily
+		if err := rows.Scan(&d.Date, &d.ContentType, &d.TargetID, &d.Views, &d.UniqueVisitors); err != nil {
+			return nil, err
+		}
+		result = append(result, d)
+	}
+	return result, nil
+}
+
+func (r *PostgresRepository) GetEngagementStats(ctx context.Context) (EngagementStats, error) {
+	var stats EngagementStats
+	err := r.db.QueryRowContext(ctx, `SELECT COUNT(*) FROM public.engagement_bookmarks`).Scan(&stats.Bookmarks)
+	if err != nil {
+		return stats, err
+	}
+
+	err = r.db.QueryRowContext(ctx, `SELECT COUNT(*), COALESCE(AVG(rating), 0) FROM public.engagement_ratings`).Scan(&stats.Ratings, &stats.AvgRating)
+	if err != nil {
+		return stats, err
+	}
+
+	return stats, nil
+}
+
+func (r *PostgresRepository) RollupSearchDaily(ctx context.Context, reportingDate string, startUTC time.Time, endUTC time.Time) error {
+	query := `
+		INSERT INTO analytics.search_daily (date, total_searches, zero_results, result_clicks)
+		SELECT 
+			$1::date, 
+			SUM(CASE WHEN event_type = 'search.executed' THEN 1 ELSE 0 END),
+			SUM(CASE WHEN event_type = 'search.zero_result' THEN 1 ELSE 0 END),
+			SUM(CASE WHEN event_type = 'search.result_clicked' THEN 1 ELSE 0 END)
+		FROM analytics.events
+		WHERE created_at >= $2 AND created_at < $3
+		ON CONFLICT (date) DO UPDATE SET 
+			total_searches = EXCLUDED.total_searches,
+			zero_results = EXCLUDED.zero_results,
+			result_clicks = EXCLUDED.result_clicks
+	`
+	_, err := r.db.ExecContext(ctx, query, reportingDate, startUTC, endUTC)
+	return err
+}
+
+func (r *PostgresRepository) RollupContentDaily(ctx context.Context, reportingDate string, startUTC time.Time, endUTC time.Time) error {
+	query := `
+		INSERT INTO analytics.content_daily (date, content_type, target_id, views, unique_visitors)
+		SELECT 
+			$1::date, 
+			metadata->>'content_type',
+			metadata->>'target_id',
+			COUNT(*), 
+			COUNT(DISTINCT visitor_id)
+		FROM analytics.events
+		WHERE created_at >= $2 AND created_at < $3 AND event_type = 'content.viewed'
+		GROUP BY 1, 2, 3
+		ON CONFLICT (date, content_type, target_id) DO UPDATE SET 
+			views = EXCLUDED.views, 
+			unique_visitors = EXCLUDED.unique_visitors
+	`
+	_, err := r.db.ExecContext(ctx, query, reportingDate, startUTC, endUTC)
+	return err
+}

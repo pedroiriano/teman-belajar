@@ -60,8 +60,6 @@ func MetricsMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-
-
 var (
 	SSOEventsTotal = promauto.NewCounterVec(prometheus.CounterOpts{
 		Name: "sso_events_total",
@@ -72,4 +70,3 @@ var (
 func RecordSSOEvent(eventType, status string) {
 	SSOEventsTotal.WithLabelValues(eventType, status).Inc()
 }
-

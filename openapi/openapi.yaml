@@ -2321,6 +2321,17 @@ components:
                 type: integer
               failed_logins:
                 type: integer
+
+        search:
+          type: array
+          items:
+            $ref: '#/components/schemas/SearchDaily'
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/ContentDaily'
+        engagement:
+          $ref: '#/components/schemas/EngagementStats'
         period_unique_visitors:
           type: integer
         freshness:

@@ -44,4 +44,3 @@ func InitTracer(ctx context.Context, serviceName string) (func(context.Context) 
 
 	return tp.Shutdown, nil
 }
-

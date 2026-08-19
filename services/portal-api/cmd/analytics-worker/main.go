@@ -3,13 +3,13 @@ package main
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"log"
 	"os"
 	"os/signal"
 	"strconv"
 	"syscall"
 	"time"
-	"encoding/json"
 
 	_ "github.com/lib/pq"
 	"teman-belajar-api/internal/adapters/moodle"
@@ -23,7 +23,7 @@ func reconcileDay(ctx context.Context, repo analytics.Repository, moodleClient *
 	nextMidnightLocal := midnightLocal.AddDate(0, 0, 1)
 
 	reportingDate := midnightLocal.Format("2006-01-02")
-	
+
 	startUTC := midnightLocal.UTC()
 	endUTC := nextMidnightLocal.UTC()
 
@@ -35,6 +35,13 @@ func reconcileDay(ctx context.Context, repo analytics.Repository, moodleClient *
 
 	if err := repo.RollupSSODaily(ctx, reportingDate, startUTC, endUTC); err != nil {
 		log.Printf("Error rolling up sso daily for %v: %v", reportingDate, err)
+	}
+
+	if err := repo.RollupSearchDaily(ctx, reportingDate, startUTC, endUTC); err != nil {
+		log.Printf("Error rolling up search daily for %v: %v", reportingDate, err)
+	}
+	if err := repo.RollupContentDaily(ctx, reportingDate, startUTC, endUTC); err != nil {
+		log.Printf("Error rolling up content daily for %v: %v", reportingDate, err)
 	}
 
 	// Moodle analytics
@@ -132,7 +139,7 @@ func main() {
 
 	ticker := time.NewTicker(5 * time.Minute)
 	defer ticker.Stop()
-	
+
 	cleanupTicker := time.NewTicker(24 * time.Hour)
 	defer cleanupTicker.Stop()
 
