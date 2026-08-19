@@ -27,9 +27,12 @@ $services = array(
             'core_completion_get_course_completion_status',
             'gradereport_user_get_grade_items',
             'local_temanbelajar_resolve_federated_user',
+            'local_temanbelajar_get_learning_analytics',
         ),
         'restrictedusers' => 1,
         'enabled' => 1,
         'shortname' => 'teman_belajar_integration'
     )
 );
+
+

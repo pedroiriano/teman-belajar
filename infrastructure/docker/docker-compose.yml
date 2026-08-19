@@ -262,6 +262,7 @@ services:
       MEILI_SEARCH_KEY: ${TB_MEILI_MASTER_KEY:?Set TB_MEILI_MASTER_KEY in infrastructure/docker/.env}
       MEILI_INDEX_NAME: ${TB_MEILI_INDEX_NAME:?Set TB_MEILI_INDEX_NAME in infrastructure/docker/.env}
       SEARCH_CAPTURE_RAW_QUERY: ${TB_SEARCH_CAPTURE_RAW_QUERY:?Set TB_SEARCH_CAPTURE_RAW_QUERY in infrastructure/docker/.env}
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
     extra_hosts:
       - keycloak.teman-belajar.localhost:host-gateway
     ports:
@@ -375,6 +376,92 @@ services:
       com.teman-belajar.component: admin
       com.teman-belajar.service-name: teman-belajar-admin
 
+  prometheus:
+    image: prom/prometheus:v2.53.1
+    restart: unless-stopped
+    volumes:
+      - ../observability/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+        - ../observability/prometheus/alert.rules:/etc/prometheus/alert.rules
+      - prometheus-data:/prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+    labels:
+      com.teman-belajar.component: prometheus
+
+  grafana:
+    image: grafana/grafana:11.1.0
+    restart: unless-stopped
+    volumes:
+      - ../observability/grafana/provisioning:/etc/grafana/provisioning
+      - ../observability/grafana/dashboards:/var/lib/grafana/dashboards
+      - grafana-data:/var/lib/grafana
+    environment:
+      - GF_SECURITY_ADMIN_USER=${TB_GRAFANA_ADMIN_USER:?Set TB_GRAFANA_ADMIN_USER in infrastructure/docker/.env}
+      - GF_SECURITY_ADMIN_PASSWORD=${TB_GRAFANA_ADMIN_PASSWORD:?Set TB_GRAFANA_ADMIN_PASSWORD in infrastructure/docker/.env}
+      - GF_USERS_ALLOW_SIGN_UP=false
+    ports:
+      - "${TB_BIND_ADDRESS:?Set TB_BIND_ADDRESS in infrastructure/docker/.env}:${TB_GRAFANA_PORT:?Set TB_GRAFANA_PORT in infrastructure/docker/.env}:3000"
+    depends_on:
+      - prometheus
+      - loki
+      - tempo
+    labels:
+      com.teman-belajar.component: grafana
+
+  otel-collector:
+    image: otel/opentelemetry-collector:0.106.1
+    restart: unless-stopped
+    command: ["--config=/etc/otel-collector.yml"]
+    volumes:
+      - ../observability/otel/otel-collector.yml:/etc/otel-collector.yml
+    depends_on:
+      - prometheus
+      - loki
+      - tempo
+    labels:
+      com.teman-belajar.component: otel-collector
+
+  loki:
+    image: grafana/loki:3.1.0
+    restart: unless-stopped
+    volumes:
+      - ../observability/loki/local-config.yaml:/etc/loki/local-config.yaml
+      - loki-data:/loki
+    command: -config.file=/etc/loki/local-config.yaml
+    labels:
+      com.teman-belajar.component: loki
+
+  tempo:
+    image: grafana/tempo:2.5.0
+    restart: unless-stopped
+    user: "0"
+    command: ["-config.file=/etc/tempo.yaml"]
+    volumes:
+      - ../observability/tempo/tempo.yaml:/etc/tempo.yaml
+      - tempo-data:/tmp/tempo
+    labels:
+      com.teman-belajar.component: tempo
+
+  analytics-worker:
+    image: teman-belajar-analytics-worker:local
+    build:
+      context: ../../services/portal-api
+      dockerfile: Dockerfile.analytics-worker
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgres://${TB_PORTAL_DB_USER:?Set TB_PORTAL_DB_USER in infrastructure/docker/.env}:${TB_PORTAL_DB_PASSWORD:?Set TB_PORTAL_DB_PASSWORD in infrastructure/docker/.env}@portal-db:5432/${TB_PORTAL_DB_NAME:?Set TB_PORTAL_DB_NAME in infrastructure/docker/.env}?sslmode=disable
+      MOODLE_INTERNAL_BASE_URL: http://moodle
+      TB_MOODLE_WEBSERVICE_TOKEN: ${TB_MOODLE_WEBSERVICE_TOKEN:?Set TB_MOODLE_WEBSERVICE_TOKEN in infrastructure/docker/.env}
+      SYNC_INTERVAL: 60s
+    depends_on:
+      portal-db:
+        condition: service_healthy
+      moodle:
+        condition: service_healthy
+    labels:
+      com.teman-belajar.component: analytics-worker
+
 networks:
   default:
     name: teman-belajar-network
@@ -394,3 +481,16 @@ volumes:
     name: teman-belajar-moodle-app-data
   moodle-data:
     name: teman-belajar-moodle-data
+  prometheus-data:
+    name: teman-belajar-prometheus-data
+  grafana-data:
+    name: teman-belajar-grafana-data
+  loki-data:
+    name: teman-belajar-loki-data
+  tempo-data:
+    name: teman-belajar-tempo-data
+
+
+
+
+

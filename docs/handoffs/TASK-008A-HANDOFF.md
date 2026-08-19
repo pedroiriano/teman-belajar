@@ -154,7 +154,7 @@ Diff contains exact intended SSO mechanisms, plugin configuration, navigation fi
 `60590f23bac02b2693350df5d0e678e314387960`
 
 ## 49b. Corrective Release Commit
-`566224a3f1f660ab7624bd830ef40f65b95c5f5c`
+`181ba7241ade0fb21ee24a721a4d695e2d099a30`
 
 ## 50. Commit Message
 `fix(auth): synchronize pre-opened portal sessions`

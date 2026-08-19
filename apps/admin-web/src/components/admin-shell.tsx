@@ -10,7 +10,7 @@ import { ThemeToggle } from "@/components/theme-toggle";
 type NavigationItem = { href?: string; label: string; icon: AdminIconName; disabled?: boolean };
 
 const navigationGroups: Array<{ label: string; items: NavigationItem[] }> = [
-  { label: "Workspace", items: [{ href: "/dashboard", label: "Ringkasan", icon: "dashboard" }] },
+  { label: "Workspace", items: [{ href: "/dashboard", label: "Ringkasan", icon: "dashboard" }, { href: "/dashboard/statistics", label: "Statistik", icon: "dashboard" }] },
   { label: "Konten", items: [
     { href: "/dashboard/knowledge", label: "Pusat Pengetahuan", icon: "knowledge" },
     { href: "/dashboard/news", label: "Berita", icon: "news" },
@@ -28,6 +28,7 @@ const navigationGroups: Array<{ label: string; items: NavigationItem[] }> = [
 
 const titleBySegment: Record<string, string> = {
   dashboard: "Dashboard",
+  statistics: "Statistik",
   knowledge: "Pusat Pengetahuan",
   news: "Berita",
   announcements: "Pengumuman",
@@ -215,3 +216,4 @@ export function AdminShell({ children, userName, userEmail, role }: { children: 
     </div>
   );
 }
+

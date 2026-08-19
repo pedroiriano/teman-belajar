@@ -26,7 +26,7 @@ $RequiredKeys = @(
     "TB_BIND_ADDRESS",
     "TB_WEB_PORT", "TB_ADMIN_PORT", "TB_PORTAL_DB_PORT", "TB_MOODLE_DB_PORT",
     "TB_REDIS_PORT", "TB_API_PORT", "TB_KEYCLOAK_PORT", "TB_MOODLE_PORT", "TB_MEILI_PORT",
-    "TB_MINIO_API_PORT", "TB_MINIO_CONSOLE_PORT",
+    "TB_MINIO_API_PORT", "TB_MINIO_CONSOLE_PORT", "TB_GRAFANA_PORT",
     "TB_WEB_URL", "TB_ADMIN_URL", "TB_KEYCLOAK_URL", "TB_MOODLE_URL",
     "TB_MEILI_ENV", "TB_MEILI_INDEX_NAME", "TB_SEARCH_CAPTURE_RAW_QUERY", "TB_MOODLE_ALLOW_INSECURE_OAUTH2",
     "TB_PORTAL_DB_NAME", "TB_PORTAL_DB_USER", "TB_PORTAL_DB_PASSWORD",
@@ -56,7 +56,7 @@ if ($Placeholders.Count -gt 0) {
 $PortKeys = @(
     "TB_WEB_PORT", "TB_ADMIN_PORT", "TB_PORTAL_DB_PORT", "TB_MOODLE_DB_PORT",
     "TB_REDIS_PORT", "TB_API_PORT", "TB_KEYCLOAK_PORT", "TB_MOODLE_PORT", "TB_MEILI_PORT",
-    "TB_MINIO_API_PORT", "TB_MINIO_CONSOLE_PORT"
+    "TB_MINIO_API_PORT", "TB_MINIO_CONSOLE_PORT", "TB_GRAFANA_PORT"
 )
 $Ports = foreach ($Key in $PortKeys) {
     $Port = 0
@@ -174,7 +174,8 @@ switch ($Action) {
             @{ Name = "Keycloak"; Url = "$($Environment['TB_KEYCLOAK_URL'])/realms/teman-belajar/.well-known/openid-configuration" },
             @{ Name = "Moodle"; Url = "http://127.0.0.1:$($Environment['TB_MOODLE_PORT'])/" },
             @{ Name = "MinIO"; Url = "http://127.0.0.1:$($Environment['TB_MINIO_API_PORT'])/minio/health/live" },
-            @{ Name = "Meilisearch"; Url = "http://127.0.0.1:$($Environment['TB_MEILI_PORT'])/health" }
+            @{ Name = "Meilisearch"; Url = "http://127.0.0.1:$($Environment['TB_MEILI_PORT'])/health" },
+            @{ Name = "Grafana"; Url = "http://127.0.0.1:$($Environment['TB_GRAFANA_PORT'])/api/health" }
         )
 
         foreach ($Check in $Checks) {

@@ -1,0 +1,21 @@
+groups:
+- name: API_Alerts
+  rules:
+  - alert: API_High_Error_Rate
+    expr: sum(rate(http_requests_total{status_class="5xx"}[5m])) / sum(rate(http_requests_total[5m])) > 0.05
+    for: 2m
+    labels:
+      severity: critical
+    annotations:
+      summary: "API Error rate is > 5%"
+      description: "More than 5% of API requests are failing in the last 5 minutes."
+
+  - alert: API_Unavailable
+    expr: up{job="portal-api"} == 0
+    for: 1m
+    labels:
+      severity: critical
+    annotations:
+      summary: "Portal API is down"
+      description: "Prometheus cannot scrape the API."
+
