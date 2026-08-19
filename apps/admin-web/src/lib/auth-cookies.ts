@@ -1,6 +1,6 @@
 import type { NextRequest, NextResponse } from "next/server";
 
-const sessionCookiePrefixes = ["next-auth.", "__Secure-next-auth.", "__Host-next-auth."];
+const sessionCookiePrefixes = ["next-auth.", "admin-next-auth.", "__Secure-next-auth.", "__Host-next-auth."];
 
 export function expireNextAuthCookies(request: NextRequest, response: NextResponse) {
   for (const cookie of request.cookies.getAll()) {
@@ -18,3 +18,4 @@ export function expireNextAuthCookies(request: NextRequest, response: NextRespon
   }
   return response;
 }
+

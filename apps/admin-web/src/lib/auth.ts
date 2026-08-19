@@ -22,7 +22,7 @@ export const authOptions: NextAuthOptions = {
       },
     }),
   ],
-  session: {
+  cookies: { sessionToken: { name: "admin-next-auth.session-token", options: { httpOnly: true, sameSite: "lax", path: "/", secure: process.env.NODE_ENV === "production" } }, callbackUrl: { name: "admin-next-auth.callback-url", options: { sameSite: "lax", path: "/", secure: process.env.NODE_ENV === "production" } }, csrfToken: { name: "admin-next-auth.csrf-token", options: { httpOnly: true, sameSite: "lax", path: "/", secure: process.env.NODE_ENV === "production" } }, pkceCodeVerifier: { name: "admin-next-auth.pkce.code_verifier", options: { httpOnly: true, sameSite: "lax", path: "/", secure: process.env.NODE_ENV === "production" } }, state: { name: "admin-next-auth.state", options: { httpOnly: true, sameSite: "lax", path: "/", secure: process.env.NODE_ENV === "production" } }, nonce: { name: "admin-next-auth.nonce", options: { httpOnly: true, sameSite: "lax", path: "/", secure: process.env.NODE_ENV === "production" } } }, session: {
     strategy: "jwt",
   },
   callbacks: {
@@ -58,3 +58,4 @@ export const authOptions: NextAuthOptions = {
     },
   },
 };
+

@@ -165,7 +165,7 @@ export function PortalChrome({ authenticated, children }: { authenticated: boole
             {authenticated ? (
               <Link href="/api/auth/federated-logout" prefetch={false} className="portal-button-secondary hidden sm:inline-flex">Keluar</Link>
             ) : (
-              <Link href="/api/auth/signin" className="portal-button-primary hidden sm:inline-flex">Masuk</Link>
+              <Link href="/api/auth/signin?callbackUrl=/" className="portal-button-primary hidden sm:inline-flex">Masuk</Link>
             )}
             <button type="button" className="portal-menu-button grid h-11 w-11 place-items-center rounded-xl border xl:hidden" aria-label={menuOpen ? "Tutup navigasi" : "Buka navigasi"} aria-expanded={menuOpen} aria-controls="portal-mobile-navigation" onClick={() => setMenuOpen((value) => !value)}>
               <PortalIcon name={menuOpen ? "close" : "menu"} className="h-6 w-6" />
@@ -190,7 +190,7 @@ export function PortalChrome({ authenticated, children }: { authenticated: boole
                 ))}
               </nav>
               <div className="mt-4 border-t border-slate-100 pt-4">
-                {authenticated ? <Link href="/api/auth/federated-logout" prefetch={false} className="portal-button-primary w-full">Keluar</Link> : <Link href="/api/auth/signin" className="portal-button-primary w-full">Masuk ke akun</Link>}
+                {authenticated ? <Link href="/api/auth/federated-logout" prefetch={false} className="portal-button-primary w-full">Keluar</Link> : <Link href="/api/auth/signin?callbackUrl=/" className="portal-button-primary w-full">Masuk ke akun</Link>}
               </div>
             </div>
           </div>
@@ -212,3 +212,4 @@ export function PortalChrome({ authenticated, children }: { authenticated: boole
     </>
   );
 }
+
