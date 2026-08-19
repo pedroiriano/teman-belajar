@@ -1,7 +1,7 @@
-export default function SsoCompletePage() {
+export default function SsoErrorPage() {
   return (
     <>
-      <p className="sr-only">Sesi organisasi telah disinkronkan.</p>
+      <p className="sr-only">Tidak ada sesi aktif.</p>
       <script
         dangerouslySetInnerHTML={{
           __html: `

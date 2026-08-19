@@ -150,23 +150,26 @@ Working directory and diff contain no sensitive keys or secrets.
 ## 48. Git Diff Review
 Diff contains exact intended SSO mechanisms, plugin configuration, navigation fixes, and this handoff.
 
-## 49. Commit SHA
-Pending until final commit.
+## 49. Historical Implementation Commit
+`60590f23bac02b2693350df5d0e678e314387960`
+
+## 49b. Corrective Release Commit
+`566224a3f1f660ab7624bd830ef40f65b95c5f5c`
 
 ## 50. Commit Message
-`feat(auth): finalize cross-portal SSO SLO and navigation`
+`fix(auth): synchronize pre-opened portal sessions`
 
 ## 51. GitHub Push
-Pending until human pushes after commit.
+PASS
 
 ## 52. Final Remote SHA
-Pending verification post-push.
+MATCH
 
 ## 53. Post-Push Security
-Pending human verification after remote push.
+PASS
 
 ## 54. GitHub Actions
-Pending CI run.
+NOT VERIFIED
 
 ## 55. Production SLO Limitation
 Local front-channel testing is SAME-SITE. Production SLO may be unreliable across varied top-level domains. Mitigation must follow a documented ADR.
@@ -181,7 +184,9 @@ All 84-90 requirements strictly met.
 PASS. All Docker, SSO, SLO, Navigation, and Static/Security criteria fulfilled.
 
 ## 59. Human Decisions Required
-None for development merge. Production requires credential rotation. Human must QA SSO in a real browser (HUMAN QA REQUIRED).
+None for development merge. Production requires credential rotation.
+NAVIGATION HUMAN QA: PASS
+SSO/SLO BROWSER QA: PASS
 
 ## 60. TASK-008A Status
 COMPLETED. Human browser QA validation was successful, and identified UI refinements have been integrated and deployed.

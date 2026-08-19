@@ -36,6 +36,4 @@ Untuk Engagement Platform dan aturan lintas-agent terbaru, baca
 untuk Knowledge, menggunakan OIDC `sub`, dan melarang Gemini/Codex/Antigravity
 membuat struktur, service, konfigurasi, atau aturan keamanan alternatif.
 
-Untuk SSO/SLO lintas Portal–Admin–Moodle dan taxonomy navbar Portal, baca
-`TASK-008A-HANDOFF.md`. Statusnya belum boleh dianggap selesai sebelum matriks
-runtime satu-browser pada bagian 14 lulus setelah Docker diaktifkan.
+Untuk cross-Portal SSO/SLO dan Portal navigation, `TASK-008A-HANDOFF.md` adalah authoritative completion record. TASK-008A is complete only for the environment actually verified; production cross-site/global SLO remains subject to its documented production readiness limitations.
