@@ -67,14 +67,25 @@ export default async function StatisticsPage({ searchParams }: { searchParams: P
               </thead>
               <tbody className="divide-y dark:divide-slate-800">
                 {page_views?.length > 0 ? (
-                  page_views.map((pv: any, i: number) => (
-                    <tr key={i} className="hover:bg-slate-50 dark:hover:bg-slate-800/50">
-                      <td className="p-4">{new Date(pv.date).toLocaleDateString()}</td>
-                      <td className="p-4 font-medium">{pv.path}</td>
-                      <td className="p-4">{pv.views}</td>
-                      <td className="p-4">{pv.unique_visitors}</td>
-                    </tr>
-                  ))
+                  page_views.map((pv: any, i: number) => {
+                    const maxViews = Math.max(...page_views.map((p: any) => p.views));
+                    const percentage = maxViews > 0 ? (pv.views / maxViews) * 100 : 0;
+                    return (
+                      <tr key={i} className="hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                        <td className="p-4">{new Date(pv.date).toLocaleDateString()}</td>
+                        <td className="p-4 font-medium truncate max-w-[200px]" title={pv.path}>{pv.path}</td>
+                        <td className="p-4">
+                          <div className="flex items-center gap-2">
+                            <span className="w-8">{pv.views}</span>
+                            <div className="h-2 flex-1 rounded-full bg-slate-100 dark:bg-slate-800">
+                              <div className="h-full rounded-full bg-blue-500" style={{ width: `${percentage}%` }} />
+                            </div>
+                          </div>
+                        </td>
+                        <td className="p-4">{pv.unique_visitors}</td>
+                      </tr>
+                    );
+                  })
                 ) : (
                   <tr><td colSpan={4} className="p-8 text-center text-slate-500">Belum ada data</td></tr>
                 )}
@@ -96,13 +107,24 @@ export default async function StatisticsPage({ searchParams }: { searchParams: P
               </thead>
               <tbody className="divide-y dark:divide-slate-800">
                 {learning?.length > 0 ? (
-                  learning.map((l: any, i: number) => (
-                    <tr key={i} className="hover:bg-slate-50 dark:hover:bg-slate-800/50">
-                      <td className="p-4">{new Date(l.date).toLocaleDateString()}</td>
-                      <td className="p-4">{l.active_learners}</td>
-                      <td className="p-4">{l.completions}</td>
-                    </tr>
-                  ))
+                  learning.map((l: any, i: number) => {
+                    const maxActive = Math.max(...learning.map((x: any) => x.active_learners));
+                    const percentage = maxActive > 0 ? (l.active_learners / maxActive) * 100 : 0;
+                    return (
+                      <tr key={i} className="hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                        <td className="p-4">{new Date(l.date).toLocaleDateString()}</td>
+                        <td className="p-4">
+                          <div className="flex items-center gap-2">
+                            <span className="w-8">{l.active_learners}</span>
+                            <div className="h-2 flex-1 rounded-full bg-slate-100 dark:bg-slate-800">
+                              <div className="h-full rounded-full bg-teal-500" style={{ width: `${percentage}%` }} />
+                            </div>
+                          </div>
+                        </td>
+                        <td className="p-4">{l.completions}</td>
+                      </tr>
+                    );
+                  })
                 ) : (
                   <tr><td colSpan={3} className="p-8 text-center text-slate-500">Belum ada data</td></tr>
                 )}
@@ -118,19 +140,33 @@ export default async function StatisticsPage({ searchParams }: { searchParams: P
               <thead className="bg-slate-50 text-slate-600 dark:bg-slate-800 dark:text-slate-400">
                 <tr>
                   <th className="p-4 font-semibold">Tanggal</th>
-                  <th className="p-4 font-semibold">Berhasil</th>
-                  <th className="p-4 font-semibold">Gagal</th>
+                  <th colSpan={2} className="p-4 font-semibold">Status Login (Berhasil / Gagal)</th>
                 </tr>
               </thead>
               <tbody className="divide-y dark:divide-slate-800">
                 {sso?.length > 0 ? (
-                  sso.map((s: any, i: number) => (
-                    <tr key={i} className="hover:bg-slate-50 dark:hover:bg-slate-800/50">
-                      <td className="p-4">{new Date(s.date).toLocaleDateString()}</td>
-                      <td className="p-4 text-emerald-600">{s.successful_logins}</td>
-                      <td className="p-4 text-red-600">{s.failed_logins}</td>
-                    </tr>
-                  ))
+                  sso.map((s: any, i: number) => {
+                    const total = s.successful_logins + s.failed_logins;
+                    const successPct = total > 0 ? (s.successful_logins / total) * 100 : 0;
+                    const failPct = total > 0 ? (s.failed_logins / total) * 100 : 0;
+                    return (
+                      <tr key={i} className="hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                        <td className="p-4">{new Date(s.date).toLocaleDateString()}</td>
+                        <td colSpan={2} className="p-4">
+                          <div className="flex flex-col gap-1">
+                            <div className="flex justify-between text-xs">
+                              <span className="text-emerald-600">{s.successful_logins} Berhasil</span>
+                              <span className="text-red-600">{s.failed_logins} Gagal</span>
+                            </div>
+                            <div className="flex h-2 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
+                              <div className="bg-emerald-500" style={{ width: `${successPct}%` }} />
+                              <div className="bg-red-500" style={{ width: `${failPct}%` }} />
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })
                 ) : (
                   <tr><td colSpan={3} className="p-8 text-center text-slate-500">Belum ada data</td></tr>
                 )}

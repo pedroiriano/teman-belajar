@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 	"os"
+	"time"
 
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
@@ -19,7 +20,9 @@ func InitTracer(ctx context.Context, serviceName string) (func(context.Context) 
 		return func(context.Context) error { return nil }, nil
 	}
 
-	exp, err := otlptracegrpc.New(ctx, otlptracegrpc.WithInsecure())
+	timeoutCtx, cancel := context.WithTimeout(ctx, 2*time.Second)
+	defer cancel()
+	exp, err := otlptracegrpc.New(timeoutCtx, otlptracegrpc.WithInsecure(), otlptracegrpc.WithTimeout(2*time.Second))
 	if err != nil {
 		return nil, err
 	}

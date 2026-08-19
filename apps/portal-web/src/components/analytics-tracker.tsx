@@ -35,7 +35,10 @@ function TrackerLogic() {
           event_type: "search.executed",
           url: window.location.pathname,
           referrer: document.referrer || "",
-          metadata: { query: q }
+          metadata: { 
+            has_query: !!q,
+            content_type: searchParams.get("content_type") || "all" 
+          }
         }),
       }).catch(console.error);
     }

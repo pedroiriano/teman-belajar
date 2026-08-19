@@ -20,9 +20,10 @@ func main() {
 
 	shutdown, err := observability.InitTracer(ctx, "teman-belajar-analytics-worker")
 	if err != nil {
-		log.Fatalf("Failed to init tracer: %v", err)
+		log.Printf("Failed to init tracer (non-critical): %v", err)
+	} else {
+		defer shutdown(ctx)
 	}
-	defer shutdown(ctx)
 
 	dbURL := os.Getenv("DATABASE_URL")
 	if dbURL == "" {
@@ -56,14 +57,20 @@ func main() {
 			return
 		case <-ticker.C:
 			log.Println("Running analytics rollup")
-			now := time.Now()
+			
+			loc, err := time.LoadLocation("Asia/Jakarta")
+			if err != nil {
+				loc = time.UTC
+			}
+			now := time.Now().In(loc)
+			midnight := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, loc)
 			
 			// Rollup page views
-			if err := repo.RollupPageDaily(ctx, now); err != nil {
+			if err := repo.RollupPageDaily(ctx, midnight); err != nil {
 				log.Printf("Error rolling up page daily: %v", err)
 			}
 			// Rollup SSO
-			if err := repo.RollupSSODaily(ctx, now); err != nil {
+			if err := repo.RollupSSODaily(ctx, midnight); err != nil {
 				log.Printf("Error rolling up sso daily: %v", err)
 			}
 			// (Moodle integration would happen here or in another cron)

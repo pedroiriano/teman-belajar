@@ -64,6 +64,20 @@ func (h *AnalyticsHandler) HandleIngest(w http.ResponseWriter, r *http.Request) 
 		}
 	}
 
+	// PRIVACY HARD GATE: Strip raw search queries from metadata
+	if len(req.Metadata) > 0 {
+		var metaMap map[string]interface{}
+		if err := json.Unmarshal(req.Metadata, &metaMap); err == nil {
+			delete(metaMap, "query")
+			delete(metaMap, "raw_query")
+			delete(metaMap, "q")
+			cleanMetadata, err := json.Marshal(metaMap)
+			if err == nil {
+				req.Metadata = cleanMetadata
+			}
+		}
+	}
+
 	event := &analytics.Event{
 		ID:        uuid.New(),
 		VisitorID: visitorID,

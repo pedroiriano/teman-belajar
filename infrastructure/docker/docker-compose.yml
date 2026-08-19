@@ -262,7 +262,7 @@ services:
       MEILI_SEARCH_KEY: ${TB_MEILI_MASTER_KEY:?Set TB_MEILI_MASTER_KEY in infrastructure/docker/.env}
       MEILI_INDEX_NAME: ${TB_MEILI_INDEX_NAME:?Set TB_MEILI_INDEX_NAME in infrastructure/docker/.env}
       SEARCH_CAPTURE_RAW_QUERY: ${TB_SEARCH_CAPTURE_RAW_QUERY:?Set TB_SEARCH_CAPTURE_RAW_QUERY in infrastructure/docker/.env}
-      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
+      OTEL_EXPORTER_OTLP_ENDPOINT: otel-collector:4317
     extra_hosts:
       - keycloak.teman-belajar.localhost:host-gateway
     ports:
@@ -381,7 +381,7 @@ services:
     restart: unless-stopped
     volumes:
       - ../observability/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
-        - ../observability/prometheus/alert.rules:/etc/prometheus/alert.rules
+      - ../observability/prometheus/alert.rules:/etc/prometheus/alert.rules
       - prometheus-data:/prometheus
     command:
       - "--config.file=/etc/prometheus/prometheus.yml"
@@ -410,7 +410,7 @@ services:
       com.teman-belajar.component: grafana
 
   otel-collector:
-    image: otel/opentelemetry-collector:0.106.1
+    image: otel/opentelemetry-collector-contrib:0.106.1
     restart: unless-stopped
     command: ["--config=/etc/otel-collector.yml"]
     volumes:

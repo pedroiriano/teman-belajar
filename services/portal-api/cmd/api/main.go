@@ -32,9 +32,10 @@ func main() {
 	ctx := context.Background()
 	shutdown, err := observability.InitTracer(ctx, "teman-belajar-api")
 	if err != nil {
-		log.Fatalf("Failed to init tracer: %v", err)
+		log.Printf("Failed to init tracer (non-critical): %v", err)
+	} else {
+		defer shutdown(ctx)
 	}
-	defer shutdown(ctx)
 
 	mux := http.NewServeMux()
 
