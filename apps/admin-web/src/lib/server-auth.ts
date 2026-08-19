@@ -8,6 +8,7 @@ export async function getServerAccessToken(): Promise<string | null> {
   const token = await getToken({
     req: { headers: { cookie: cookieStore.toString() } } as never,
     secret: process.env.NEXTAUTH_SECRET,
+    cookieName: "admin-next-auth.session-token",
   });
 
   return typeof token?.accessToken === "string" ? token.accessToken : null;
