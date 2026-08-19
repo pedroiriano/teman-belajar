@@ -3,6 +3,8 @@ package handler
 import (
 	"encoding/json"
 	"net/http"
+	"strconv"
+	"strings"
 	"time"
 
 	"teman-belajar-api/internal/domain/analytics"
@@ -35,6 +37,11 @@ func (h *AnalyticsHandler) HandleIngest(w http.ResponseWriter, r *http.Request) 
 	var req IngestEventRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "Bad request", http.StatusBadRequest)
+		return
+	}
+
+	if strings.Contains(req.URL, "<") || strings.Contains(req.URL, "%3C") || strings.Contains(req.URL, ">") || strings.Contains(req.URL, "%3E") {
+		http.Error(w, "Invalid URL payload", http.StatusBadRequest)
 		return
 	}
 
@@ -87,7 +94,14 @@ func (h *AnalyticsHandler) HandleGetStatistics(w http.ResponseWriter, r *http.Re
 	}
 
 	// Assuming authorization is handled by middleware
-	since := time.Now().AddDate(0, 0, -30)
+	daysStr := r.URL.Query().Get("days")
+	days := 30
+	if daysStr != "" {
+		if parsedDays, err := strconv.Atoi(daysStr); err == nil && parsedDays > 0 {
+			days = parsedDays
+		}
+	}
+	since := time.Now().AddDate(0, 0, -days)
 	
 	pageStats, err := h.repo.GetPageAnalytics(r.Context(), since)
 	if err != nil {

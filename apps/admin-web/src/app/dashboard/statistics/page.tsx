@@ -1,12 +1,14 @@
 import { getServerAccessToken } from "@/lib/server-auth";
+import { StatisticsFilter } from "@/components/statistics-filter";
+import { Suspense } from "react";
 
 export const metadata = {
   title: "Statistik - Teman Belajar",
 };
 
-async function fetchStats(token: string) {
+async function fetchStats(token: string, days: string = "30") {
   const API_BASE = process.env.PORTAL_API_INTERNAL_URL || "http://localhost:8080";
-  const res = await fetch(`${API_BASE}/api/v1/admin/analytics/statistics`, {
+  const res = await fetch(`${API_BASE}/api/v1/admin/analytics/statistics?days=${days}`, {
     headers: { Authorization: `Bearer ${token}` },
     cache: "no-store",
   });
@@ -14,11 +16,15 @@ async function fetchStats(token: string) {
   return { data: await res.json() };
 }
 
-export default async function StatisticsPage() {
+export default async function StatisticsPage({ searchParams }: { searchParams: Promise<{ [key: string]: string | string[] | undefined }> }) {
+  const resolvedParams = await searchParams;
   const token = await getServerAccessToken();
   if (!token) return <div className="admin-page-container">Unauthorized</div>;
 
-  const res = await fetchStats(token);
+  const daysParam = typeof resolvedParams.days === "string" ? resolvedParams.days : "30";
+  const daysLabel = daysParam === "1" ? "1 Hari" : daysParam === "7" ? "7 Hari" : daysParam === "30" ? "30 Hari" : daysParam === "90" ? "3 Bulan" : daysParam === "180" ? "6 Bulan" : daysParam === "365" ? "1 Tahun" : `${daysParam} Hari`;
+
+  const res = await fetchStats(token, daysParam);
   
   if (res.error || !res.data) {
     return (
@@ -35,17 +41,20 @@ export default async function StatisticsPage() {
 
   return (
     <div className="admin-page-container">
-      <div className="admin-page-header">
+      <div className="admin-page-header flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
         <div>
           <p className="admin-kicker">Analytics & Insight</p>
           <h1 className="admin-page-title">Statistik Platform</h1>
           <p className="admin-page-copy">Pantau penggunaan platform dan aktivitas belajar secara keseluruhan.</p>
         </div>
+        <Suspense fallback={<div className="h-9 w-40 animate-pulse rounded-lg bg-slate-200 dark:bg-slate-800"></div>}>
+          <StatisticsFilter />
+        </Suspense>
       </div>
 
       <div className="mt-8 space-y-8">
         <section>
-          <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100">Kunjungan Halaman (30 Hari Terakhir)</h2>
+          <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100">Kunjungan Halaman ({daysLabel} Terakhir)</h2>
           <div className="mt-4 overflow-hidden rounded-xl border bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
             <table className="w-full text-left text-sm">
               <thead className="bg-slate-50 text-slate-600 dark:bg-slate-800 dark:text-slate-400">
