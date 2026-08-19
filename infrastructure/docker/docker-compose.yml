@@ -162,7 +162,7 @@ services:
       MOODLE_DATABASE_PASSWORD: ${TB_MOODLE_DB_PASSWORD:?Set TB_MOODLE_DB_PASSWORD in infrastructure/docker/.env}
       MOODLE_BASE_URL: ${TB_MOODLE_URL:?Set TB_MOODLE_URL in infrastructure/docker/.env}
       MOODLE_KEYCLOAK_ISSUER: ${TB_KEYCLOAK_URL:?Set TB_KEYCLOAK_URL in infrastructure/docker/.env}/realms/teman-belajar
-      MOODLE_POST_LOGOUT_REDIRECT_URL: ${TB_WEB_URL:?Set TB_WEB_URL in infrastructure/docker/.env}
+      MOODLE_POST_LOGOUT_REDIRECT_URL: ${TB_MOODLE_URL:?Set TB_MOODLE_URL in infrastructure/docker/.env}
       MOODLE_ADMIN_USER: ${TB_MOODLE_ADMIN_USER:?Set TB_MOODLE_ADMIN_USER in infrastructure/docker/.env}
       MOODLE_ADMIN_PASSWORD: ${TB_MOODLE_ADMIN_PASSWORD:?Set TB_MOODLE_ADMIN_PASSWORD in infrastructure/docker/.env}
       MOODLE_ADMIN_EMAIL: ${TB_MOODLE_ADMIN_EMAIL:?Set TB_MOODLE_ADMIN_EMAIL in infrastructure/docker/.env}
@@ -202,7 +202,7 @@ services:
       MOODLE_DATABASE_PASSWORD: ${TB_MOODLE_DB_PASSWORD:?Set TB_MOODLE_DB_PASSWORD in infrastructure/docker/.env}
       MOODLE_BASE_URL: ${TB_MOODLE_URL:?Set TB_MOODLE_URL in infrastructure/docker/.env}
       MOODLE_KEYCLOAK_ISSUER: ${TB_KEYCLOAK_URL:?Set TB_KEYCLOAK_URL in infrastructure/docker/.env}/realms/teman-belajar
-      MOODLE_POST_LOGOUT_REDIRECT_URL: ${TB_WEB_URL:?Set TB_WEB_URL in infrastructure/docker/.env}
+      MOODLE_POST_LOGOUT_REDIRECT_URL: ${TB_MOODLE_URL:?Set TB_MOODLE_URL in infrastructure/docker/.env}
       MOODLE_ADMIN_USER: ${TB_MOODLE_ADMIN_USER:?Set TB_MOODLE_ADMIN_USER in infrastructure/docker/.env}
       MOODLE_ADMIN_PASSWORD: ${TB_MOODLE_ADMIN_PASSWORD:?Set TB_MOODLE_ADMIN_PASSWORD in infrastructure/docker/.env}
       MOODLE_ADMIN_EMAIL: ${TB_MOODLE_ADMIN_EMAIL:?Set TB_MOODLE_ADMIN_EMAIL in infrastructure/docker/.env}
@@ -489,6 +489,7 @@ volumes:
     name: teman-belajar-loki-data
   tempo-data:
     name: teman-belajar-tempo-data
+
 
 
 
