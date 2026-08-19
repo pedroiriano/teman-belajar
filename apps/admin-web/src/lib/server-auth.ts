@@ -1,15 +1,15 @@
 import "server-only";
 
-import { cookies } from "next/headers";
-import { getToken } from "next-auth/jwt";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "./auth";
 
+/**
+ * Retrieves the Keycloak access token from the current server-side session.
+ *
+ * Uses getServerSession (which respects the custom cookie config in authOptions)
+ * to read the JWT, then extracts the accessToken stored by the jwt callback.
+ */
 export async function getServerAccessToken(): Promise<string | null> {
-  const cookieStore = await cookies();
-  const token = await getToken({
-    req: { headers: { cookie: cookieStore.toString() } } as never,
-    secret: process.env.NEXTAUTH_SECRET,
-    cookieName: "admin-next-auth.session-token",
-  });
-
-  return typeof token?.accessToken === "string" ? token.accessToken : null;
+  const session: any = await getServerSession(authOptions);
+  return typeof session?.accessToken === "string" ? session.accessToken : null;
 }
