@@ -30,6 +30,12 @@
         "${PORTAL_WEB_URL}"
       ],
       "protocol": "openid-connect",
+      "frontchannelLogout": true,
+      "attributes": {
+        "frontchannel.logout.url": "${PORTAL_WEB_URL}/api/auth/frontchannel-logout",
+        "frontchannel.logout.session.required": "true",
+        "post.logout.redirect.uris": "${PORTAL_WEB_URL}/*"
+      },
       "fullScopeAllowed": true,
       "protocolMappers": [
         {
@@ -61,6 +67,12 @@
         "${ADMIN_WEB_URL}"
       ],
       "protocol": "openid-connect",
+      "frontchannelLogout": true,
+      "attributes": {
+        "frontchannel.logout.url": "${ADMIN_WEB_URL}/api/auth/frontchannel-logout",
+        "frontchannel.logout.session.required": "true",
+        "post.logout.redirect.uris": "${PORTAL_WEB_URL}/*"
+      },
       "fullScopeAllowed": true,
       "protocolMappers": [
         {
@@ -91,7 +103,13 @@
       "webOrigins": [
         "${MOODLE_BASE_URL}"
       ],
-      "protocol": "openid-connect"
+      "protocol": "openid-connect",
+      "frontchannelLogout": true,
+      "attributes": {
+        "frontchannel.logout.url": "${MOODLE_BASE_URL}/local/temanbelajar/federated_logout.php",
+        "frontchannel.logout.session.required": "true",
+        "post.logout.redirect.uris": "${PORTAL_WEB_URL}/*"
+      }
     }
   ],
   "users": [

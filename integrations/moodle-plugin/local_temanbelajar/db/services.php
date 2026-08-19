@@ -20,7 +20,7 @@ $functions = array(
 );
 
 $services = array(
-    'Teman Belajar Integration' => array(
+    'teman_belajar_integration' => array(
         'functions' => array(
             'core_course_get_courses',
             'core_enrol_get_users_courses',

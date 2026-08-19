@@ -63,8 +63,23 @@ a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visib
   .portal-nav-link::after { content: ""; @apply absolute inset-x-3 -bottom-[17px] h-0.5 origin-center scale-x-0 rounded-full transition-transform; background: var(--portal-primary); }
   .portal-nav-link:hover, .portal-nav-link.is-active { color: var(--portal-primary-hover); }
   .portal-nav-link.is-active::after { @apply scale-x-100; }
+  .portal-nav-group { @apply relative; }
+  .portal-nav-group > summary { @apply flex cursor-pointer list-none items-center gap-1; }
+  .portal-nav-group > summary::-webkit-details-marker { display: none; }
+  .portal-nav-group[open] > summary { color: var(--portal-primary-hover); }
+  .portal-nav-group[open] > summary svg { transform: rotate(180deg); }
+  .portal-nav-dropdown { @apply absolute left-1/2 top-[calc(100%+1rem)] w-[38rem] -translate-x-1/2 rounded-2xl border p-3; color: var(--portal-ink); background: var(--portal-panel); border-color: var(--portal-border); box-shadow: 0 24px 60px rgba(15, 23, 42, .18); }
+  .portal-nav-dropdown-grid { @apply grid grid-cols-2 gap-1; }
+  .portal-nav-dropdown-link, .portal-mobile-submenu-link { @apply flex flex-col rounded-xl px-4 py-3 text-left text-sm transition; color: var(--portal-ink); }
+  .portal-nav-dropdown-link > span:last-child, .portal-mobile-submenu-link > span:last-child { @apply mt-1 text-xs font-medium leading-5; color: var(--portal-muted); }
+  .portal-nav-dropdown-link:hover, .portal-mobile-submenu-link:hover { background: var(--portal-primary-soft); color: var(--portal-primary-hover); }
+  .portal-nav-dropdown-link.is-disabled, .portal-mobile-submenu-link.is-disabled { @apply cursor-not-allowed opacity-60; }
+  .portal-coming-soon { @apply rounded-full px-2 py-0.5 text-[9px] font-black uppercase tracking-wider; color: var(--portal-primary-hover); background: var(--portal-primary-soft); }
   .portal-mobile-link { @apply rounded-xl px-4 py-3 text-sm font-semibold transition; color: var(--portal-copy); }
   .portal-mobile-link:hover, .portal-mobile-link.is-active { color: var(--portal-primary-hover); background: var(--portal-primary-soft); }
+  .portal-mobile-group > summary { @apply flex cursor-pointer list-none items-center justify-between; }
+  .portal-mobile-group > summary::-webkit-details-marker { display: none; }
+  .portal-mobile-group[open] > summary svg { transform: rotate(180deg); }
   .portal-search-input { @apply min-h-11 rounded-full border py-2.5 pl-10 pr-4 text-sm outline-none transition; color: var(--portal-ink); background: var(--portal-panel-muted); border-color: var(--portal-border); }
   .portal-search-input:focus { border-color: var(--portal-primary); box-shadow: 0 0 0 3px rgba(20, 184, 166, .14); }
   .portal-label { @apply block text-sm font-bold; color: var(--portal-ink); }

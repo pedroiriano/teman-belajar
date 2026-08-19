@@ -3,6 +3,7 @@ import KeycloakProvider from "next-auth/providers/keycloak";
 import { jwtDecode } from "jwt-decode";
 
 interface KeycloakTokenParsed {
+  sid?: string;
   realm_access?: {
     roles: string[];
   };
@@ -39,6 +40,13 @@ export const authOptions: NextAuthOptions = {
           } catch (error) {
             console.error("Error decoding token", error);
             token.roles = [];
+          }
+        }
+        if (account.id_token) {
+          try {
+            token.oidcSid = jwtDecode<KeycloakTokenParsed>(account.id_token).sid;
+          } catch {
+            token.oidcSid = undefined;
           }
         }
       }

@@ -9,7 +9,9 @@ This is the `local_temanbelajar` plugin. It provides a dedicated external servic
 
 ## Features
 - Dedicated External Service definition.
-- Boilerplate for custom external functions (TASK-005).
+- Stable federated-user resolution for Portal integration.
+- Automatic OAuth2 login through the `teman-belajar-moodle` Keycloak client.
+- Moodle-initiated RP logout and Keycloak front-channel logout reception.
 
 ## Installation
 Map this directory to `local/temanbelajar` inside your Moodle installation and run Moodle upgrade.

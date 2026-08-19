@@ -35,3 +35,7 @@ Untuk Engagement Platform dan aturan lintas-agent terbaru, baca
 `docs/governance/AI-AGENT-ALIGNMENT.md`. TASK-008 mengaktifkan engagement hanya
 untuk Knowledge, menggunakan OIDC `sub`, dan melarang Gemini/Codex/Antigravity
 membuat struktur, service, konfigurasi, atau aturan keamanan alternatif.
+
+Untuk SSO/SLO lintas Portal–Admin–Moodle dan taxonomy navbar Portal, baca
+`TASK-008A-HANDOFF.md`. Statusnya belum boleh dianggap selesai sebelum matriks
+runtime satu-browser pada bagian 14 lulus setelah Docker diaktifkan.

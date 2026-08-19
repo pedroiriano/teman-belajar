@@ -112,6 +112,22 @@ Preferred:
 - Portal dan Moodle memiliki client/config yang terpisah.
 - Logout semantics diuji untuk local session dan IdP session.
 
+Kontrak implementasi:
+
+1. Moodle memakai client `teman-belajar-moodle`; jangan memakai client Portal
+   atau Admin dan jangan berbagi client secret.
+2. Moodle formal-learning routes memulai OAuth2 secara otomatis melalui
+   `local_temanbelajar/login.php`; recovery admin tetap tersedia melalui
+   mekanisme administratif terkontrol, bukan tautan publik alternatif.
+3. Logout dari Moodle memicu RP-Initiated Logout Keycloak dan kembali ke Portal
+   publik setelah sesi IdP berakhir.
+4. `local_temanbelajar/federated_logout.php` adalah receiver front-channel yang
+   idempotent, memvalidasi issuer, tidak menyimpan token, dan mengirim
+   `Cache-Control: no-store`.
+5. Portal/Admin/Moodle tetap memiliki cookie lokal masing-masing. “Otomatis
+   login” berarti aplikasi melakukan OIDC flow tanpa prompt ketika sesi
+   Keycloak aktif; bukan membaca atau menyalin cookie aplikasi lain.
+
 ## 11. Plugin Policy
 
 Custom plugin harus:

@@ -9,6 +9,8 @@ MOODLE_DATA_DIR="/var/www/moodledata"
 : "${MOODLE_DATABASE_USER:?MOODLE_DATABASE_USER is required}"
 : "${MOODLE_DATABASE_PASSWORD:?MOODLE_DATABASE_PASSWORD is required}"
 : "${MOODLE_BASE_URL:?MOODLE_BASE_URL is required}"
+: "${MOODLE_KEYCLOAK_ISSUER:?MOODLE_KEYCLOAK_ISSUER is required}"
+: "${MOODLE_POST_LOGOUT_REDIRECT_URL:?MOODLE_POST_LOGOUT_REDIRECT_URL is required}"
 : "${MOODLE_ADMIN_USER:?MOODLE_ADMIN_USER is required}"
 : "${MOODLE_ADMIN_PASSWORD:?MOODLE_ADMIN_PASSWORD is required}"
 : "${MOODLE_ADMIN_EMAIL:?MOODLE_ADMIN_EMAIL is required}"
@@ -47,6 +49,7 @@ if [ ! -f "$MOODLE_DIR/config.php" ]; then
         --dataroot="$MOODLE_DATA_DIR"
 
     echo "Installation complete."
+    php /usr/local/bin/sync-config.php
 else
     echo "Moodle is already configured."
     php /usr/local/bin/sync-config.php

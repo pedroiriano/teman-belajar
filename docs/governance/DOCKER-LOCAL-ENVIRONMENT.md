@@ -142,6 +142,9 @@ Saat perubahan:
 4. Jangan mengubah versi major atau menghapus volume atas asumsi.
 5. Tambahkan/ubah health check serta dokumentasi pada perubahan yang sama.
 6. Gunakan `docker compose`, bukan binary legacy `docker-compose`.
+7. Setelah perubahan client OIDC, jalankan wrapper action `sso`. Action ini
+   hanya merekonsiliasi tiga client kanonis dan tidak boleh membuat client,
+   realm, service, port, atau secret baru. Action `up` menjalankannya otomatis.
 
 Sebelum menyatakan selesai:
 
@@ -153,6 +156,12 @@ Sebelum menyatakan selesai:
 6. Verifikasi data invariants bila volume/database disentuh.
 7. Jalankan audit dependency; jangan menyembunyikan hasil yang butuh upgrade berisiko.
 8. Tulis handoff berisi perubahan, bukti, risiko tersisa, rollback, dan perintah berikutnya.
+
+Gate SSO/SLO tambahan: client `teman-belajar-web`, `teman-belajar-admin`, dan
+`teman-belajar-moodle` wajib memiliki front-channel logout URL sesuai origin
+masing-masing, session-required aktif, dan post-logout redirect hanya menuju
+URL Portal yang tervalidasi. Jangan menganggap `--import-realm` memperbarui
+realm yang sudah ada; gunakan action `sso` untuk rekonsiliasi idempotent.
 
 ## 9. Format Prompt Ketat untuk Gemini AI Pro
 

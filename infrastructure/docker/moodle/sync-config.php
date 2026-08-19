@@ -13,6 +13,12 @@ $settings = [
 ];
 
 $oauth2allowinsecure = filter_var(getenv('MOODLE_ALLOW_INSECURE_OAUTH2'), FILTER_VALIDATE_BOOLEAN);
+$keycloakissuer = getenv('MOODLE_KEYCLOAK_ISSUER');
+$postlogoutredirect = getenv('MOODLE_POST_LOGOUT_REDIRECT_URL');
+if ($keycloakissuer === false || $keycloakissuer === '' || $postlogoutredirect === false || $postlogoutredirect === '') {
+    fwrite(STDERR, "Missing Moodle SSO runtime URL.\n");
+    exit(1);
+}
 
 $config = file_get_contents($configPath);
 if ($config === false) {
@@ -45,6 +51,23 @@ $config = preg_replace($pattern, $replacement, $config, 1, $count);
 if ($count === 0) {
     // If not found, add it
     $config .= "\n\$CFG->oauth2allowinsecure = " . var_export($oauth2allowinsecure, true) . ";\n";
+}
+
+$managed = [
+    'alternateloginurl' => rtrim((string) $settings['wwwroot'], '/') . '/local/temanbelajar/login.php',
+    'forcelogin' => true,
+    'local_temanbelajar_keycloakissuer' => $keycloakissuer,
+    'local_temanbelajar_postlogoutredirect' => $postlogoutredirect,
+];
+foreach ($managed as $property => $value) {
+    $pattern = '/\$CFG->' . preg_quote($property, '/') . '\s*=\s*[^;]+;/';
+    $replacement = '$CFG->' . $property . ' = ' . var_export($value, true) . ';';
+    $updated = preg_replace($pattern, $replacement, $config, 1, $count);
+    if ($updated === null) {
+        fwrite(STDERR, "Unable to synchronize Moodle {$property}.\n");
+        exit(1);
+    }
+    $config = $count === 1 ? $updated : $config . "\n{$replacement}\n";
 }
 
 // Remove legacy curlsecurity overrides from config.php if they exist

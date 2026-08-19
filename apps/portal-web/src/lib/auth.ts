@@ -2,6 +2,7 @@ import { NextAuthOptions } from "next-auth";
 import KeycloakProvider from "next-auth/providers/keycloak";
 
 import { hasUsableAccessToken, refreshKeycloakToken } from "@/lib/keycloak-token";
+import { readOidcSessionId } from "@/lib/oidc-session";
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -26,6 +27,7 @@ export const authOptions: NextAuthOptions = {
         token.accessToken = account.access_token;
         token.refreshToken = account.refresh_token;
         token.expiresAt = account.expires_at;
+        token.oidcSid = readOidcSessionId(account.id_token);
         token.tokenError = undefined;
         return token;
       }

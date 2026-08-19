@@ -8,4 +8,5 @@
  */
 
 $string['pluginname'] = 'Teman Belajar Integration';
+$string['keycloakissuermissing'] = 'The Teman Belajar Keycloak login provider is not available. Contact the platform administrator.';
 $string['privacy:metadata'] = 'The Teman Belajar Integration plugin does not store any personal data itself.';

@@ -33,6 +33,9 @@ powershell -NoProfile -ExecutionPolicy Bypass -File infrastructure/docker/teman-
 # Tail 200 baris log seluruh service
 powershell -NoProfile -ExecutionPolicy Bypass -File infrastructure/docker/teman-belajar-docker.ps1 logs
 
+# Rekonsiliasi idempotent tiga client SSO/SLO Keycloak kanonis
+powershell -NoProfile -ExecutionPolicy Bypass -File infrastructure/docker/teman-belajar-docker.ps1 sso
+
 # Smoke test status + tujuh endpoint
 powershell -NoProfile -ExecutionPolicy Bypass -File infrastructure/docker/teman-belajar-docker.ps1 verify
 
@@ -40,7 +43,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File infrastructure/docker/teman-
 powershell -NoProfile -ExecutionPolicy Bypass -File infrastructure/docker/teman-belajar-docker.ps1 down
 ```
 
-Alias Makefile: `make docker-config`, `make up`, `make status`, `make logs`, `make verify`, dan `make down`.
+Alias Makefile: `make docker-config`, `make up`, `make status`, `make logs`, `make sso`, `make verify`, dan `make down`.
 
 ## URL Default
 

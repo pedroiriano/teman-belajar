@@ -37,6 +37,7 @@ Status implementasi berikut wajib dipertahankan. `Implemented` berarti pola vend
 | Area | Portal / Techwind | Admin / Cuba | Canonical implementation |
 |---|---|---|---|
 | Brand and global navigation | Implemented | Implemented | `portal-chrome.tsx`, `admin-shell.tsx` |
+| Navigation taxonomy/dropdown | Implemented | Not applicable | Portal: Beranda + Pembelajaran/Pengetahuan/Informasi; unsupported learning formats marked `Segera` |
 | Responsive menu/sidebar | Implemented | Implemented | mobile navigation, overlay drawer, grouped sidebar |
 | Topbar utilities | Search, theme, authentication | Search, notifications placeholder, theme, profile menu | application shell only |
 | Hero and landing sections | Implemented | Not applicable | Portal home |

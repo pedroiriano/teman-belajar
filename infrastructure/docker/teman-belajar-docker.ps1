@@ -1,7 +1,7 @@
 [CmdletBinding()]
 param(
     [Parameter(Position = 0)]
-    [ValidateSet("config", "up", "down", "status", "logs", "verify")]
+    [ValidateSet("config", "up", "down", "status", "logs", "sso", "verify")]
     [string]$Action = "status"
 )
 
@@ -145,6 +145,7 @@ switch ($Action) {
     }
     "up" {
         Invoke-Compose @("up", "-d", "--build", "--remove-orphans", "--wait")
+        Invoke-Compose @("exec", "-T", "keycloak", "bash", "/opt/keycloak/data/import/reconcile-sso-clients.sh")
         Invoke-Compose @("ps", "--all")
     }
     "down" {
@@ -156,6 +157,9 @@ switch ($Action) {
     }
     "logs" {
         Invoke-Compose @("logs", "--tail", "200")
+    }
+    "sso" {
+        Invoke-Compose @("exec", "-T", "keycloak", "bash", "/opt/keycloak/data/import/reconcile-sso-clients.sh")
     }
     "verify" {
         if (-not (Get-Command curl.exe -ErrorAction SilentlyContinue)) {

@@ -1,4 +1,4 @@
-.PHONY: all bootstrap build test lint docker-config up down status logs verify
+.PHONY: all bootstrap build test lint docker-config up down status logs sso verify
 
 all: bootstrap build test
 
@@ -33,6 +33,9 @@ status:
 
 logs:
 	powershell -NoProfile -ExecutionPolicy Bypass -File infrastructure/docker/teman-belajar-docker.ps1 logs
+
+sso:
+	powershell -NoProfile -ExecutionPolicy Bypass -File infrastructure/docker/teman-belajar-docker.ps1 sso
 
 verify:
 	powershell -NoProfile -ExecutionPolicy Bypass -File infrastructure/docker/teman-belajar-docker.ps1 verify

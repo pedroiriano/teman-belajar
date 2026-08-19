@@ -1,36 +1,26 @@
 import { getToken } from "next-auth/jwt";
 import { NextRequest, NextResponse } from "next/server";
-import { cookies } from "next/headers";
+
+import { expireNextAuthCookies } from "@/lib/auth-cookies";
 
 export async function GET(req: NextRequest) {
   try {
     const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
     
-    // Clear all NextAuth session cookies (including chunked cookies)
-    const cookieStore = await cookies();
-    cookieStore.getAll().forEach((cookie) => {
-      if (
-        cookie.name.startsWith("next-auth.") ||
-        cookie.name.startsWith("__Secure-next-auth.")
-      ) {
-        cookieStore.delete(cookie.name);
-      }
-    });
-
     const issuer = process.env.KEYCLOAK_ISSUER || "http://keycloak.teman-belajar.localhost:8081/realms/teman-belajar";
-    const postLogoutUrl = encodeURIComponent(process.env.NEXTAUTH_URL || "http://localhost:3001");
-    
-    let url = `${issuer}/protocol/openid-connect/logout?post_logout_redirect_uri=${postLogoutUrl}`;
-    if (token && token.idToken) {
-      url += `&id_token_hint=${token.idToken}`;
+    const postLogoutUrl = process.env.POST_LOGOUT_REDIRECT_URL || process.env.NEXTAUTH_URL || "http://localhost:3001";
+    const logoutUrl = new URL(`${issuer}/protocol/openid-connect/logout`);
+    logoutUrl.searchParams.set("post_logout_redirect_uri", postLogoutUrl);
+    if (token && typeof token.idToken === "string") {
+      logoutUrl.searchParams.set("id_token_hint", token.idToken);
     } else {
-      url += `&client_id=${process.env.KEYCLOAK_ID || "teman-belajar-admin"}`;
+      logoutUrl.searchParams.set("client_id", process.env.KEYCLOAK_ID || "teman-belajar-admin");
     }
-
-    return NextResponse.redirect(url);
-  } catch (e) {
-    console.error("Federated logout error:", e);
+    return expireNextAuthCookies(req, NextResponse.redirect(logoutUrl));
+  } catch {
+    return expireNextAuthCookies(
+      req,
+      NextResponse.redirect(process.env.POST_LOGOUT_REDIRECT_URL || process.env.NEXTAUTH_URL || "http://localhost:3001"),
+    );
   }
-  
-  return NextResponse.redirect(process.env.NEXTAUTH_URL || "http://localhost:3001");
 }
