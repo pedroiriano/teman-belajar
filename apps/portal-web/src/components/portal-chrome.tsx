@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
 
 import { PortalIcon } from "@/components/portal-icon";
@@ -75,6 +75,7 @@ function Brand({ inverted = false }: { inverted?: boolean }) {
 
 export function PortalChrome({ authenticated, children }: { authenticated: boolean; children: ReactNode }) {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [menuOpen, setMenuOpen] = useState(false);
   const [showBackToTop, setShowBackToTop] = useState(false);
 
@@ -84,7 +85,7 @@ export function PortalChrome({ authenticated, children }: { authenticated: boole
       document.querySelectorAll<HTMLDetailsElement>(".portal-nav-group[open], .portal-mobile-group[open]").forEach((group) => group.removeAttribute("open"));
     });
     return () => window.cancelAnimationFrame(frame);
-  }, [pathname]);
+  }, [pathname, searchParams]);
   useEffect(() => {
     const closeDropdowns = (event: KeyboardEvent) => {
       if (event.key !== "Escape") return;
@@ -128,9 +129,21 @@ export function PortalChrome({ authenticated, children }: { authenticated: boole
 
   const isGroupActive = (group: NavigationGroup) => group.items.some(item => {
     if (!item.href) return false;
-    const basePath = item.href.split(/[?#]/)[0];
+    const parts = item.href.split(/[?#]/);
+    const basePath = parts[0];
     if (basePath === "/" || basePath === "") return false;
-    return pathname.startsWith(basePath);
+    if (!pathname.startsWith(basePath)) return false;
+    
+    const queryPart = item.href.split("?")[1]?.split("#")[0];
+    if (queryPart) {
+      const itemParams = new URLSearchParams(queryPart);
+      for (const [key, value] of itemParams.entries()) {
+        if (searchParams.get(key) !== value) {
+          return false;
+        }
+      }
+    }
+    return true;
   });
 
   if (pathname.startsWith("/sso/")) return <main>{children}</main>;
