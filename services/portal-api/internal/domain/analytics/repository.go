@@ -21,8 +21,8 @@ func (r *PostgresRepository) InsertEvent(ctx context.Context, e *Event) error {
 	return err
 }
 
-func (r *PostgresRepository) GetPageAnalytics(ctx context.Context, since time.Time) ([]PageDaily, error) {
-	query := `SELECT date, path, views, unique_visitors FROM analytics.page_daily WHERE date >= $1 ORDER BY date DESC, views DESC`
+func (r *PostgresRepository) GetPageAnalytics(ctx context.Context, since string) ([]PageDaily, error) {
+	query := `SELECT TO_CHAR(date, 'YYYY-MM-DD'), path, views, unique_visitors FROM analytics.page_daily WHERE date >= $1::date ORDER BY date DESC, views DESC`
 	rows, err := r.db.QueryContext(ctx, query, since)
 	if err != nil {
 		return nil, err
@@ -40,8 +40,9 @@ func (r *PostgresRepository) GetPageAnalytics(ctx context.Context, since time.Ti
 	return result, nil
 }
 
-func (r *PostgresRepository) GetLearningAnalytics(ctx context.Context, since time.Time) ([]LearningDaily, error) {
-	query := `SELECT date, active_learners, completions FROM analytics.learning_daily WHERE date >= $1 ORDER BY date DESC`
+func (r *PostgresRepository) GetLearningAnalytics(ctx context.Context, since string) ([]LearningDaily, error) {
+	query := `SELECT TO_CHAR(date, 'YYYY-MM-DD'), active_learners, learning_starts, completions, completion_rate, top_courses 
+			  FROM analytics.learning_daily WHERE date >= $1::date ORDER BY date DESC`
 	rows, err := r.db.QueryContext(ctx, query, since)
 	if err != nil {
 		return nil, err
@@ -51,7 +52,7 @@ func (r *PostgresRepository) GetLearningAnalytics(ctx context.Context, since tim
 	var result []LearningDaily
 	for rows.Next() {
 		var p LearningDaily
-		if err := rows.Scan(&p.Date, &p.ActiveLearners, &p.Completions); err != nil {
+		if err := rows.Scan(&p.Date, &p.ActiveLearners, &p.LearningStarts, &p.Completions, &p.CompletionRate, &p.TopCourses); err != nil {
 			return nil, err
 		}
 		result = append(result, p)
@@ -59,8 +60,8 @@ func (r *PostgresRepository) GetLearningAnalytics(ctx context.Context, since tim
 	return result, nil
 }
 
-func (r *PostgresRepository) GetSSOAnalytics(ctx context.Context, since time.Time) ([]SSODaily, error) {
-	query := `SELECT date, successful_logins, failed_logins FROM analytics.sso_daily WHERE date >= $1 ORDER BY date DESC`
+func (r *PostgresRepository) GetSSOAnalytics(ctx context.Context, since string) ([]SSODaily, error) {
+	query := `SELECT TO_CHAR(date, 'YYYY-MM-DD'), successful_logins, failed_logins FROM analytics.sso_daily WHERE date >= $1::date ORDER BY date DESC`
 	rows, err := r.db.QueryContext(ctx, query, since)
 	if err != nil {
 		return nil, err
@@ -78,11 +79,18 @@ func (r *PostgresRepository) GetSSOAnalytics(ctx context.Context, since time.Tim
 	return result, nil
 }
 
-func (r *PostgresRepository) RollupPageDaily(ctx context.Context, reportingDate time.Time, startUTC time.Time, endUTC time.Time) error {
+func (r *PostgresRepository) GetPeriodUniqueVisitors(ctx context.Context, startUTC time.Time, endUTC time.Time) (int, error) {
+	query := `SELECT COUNT(DISTINCT visitor_id) FROM analytics.events WHERE created_at >= $1 AND created_at < $2`
+	var count int
+	err := r.db.QueryRowContext(ctx, query, startUTC, endUTC).Scan(&count)
+	return count, err
+}
+
+func (r *PostgresRepository) RollupPageDaily(ctx context.Context, reportingDate string, startUTC time.Time, endUTC time.Time) error {
 	query := `
 		INSERT INTO analytics.page_daily (date, path, views, unique_visitors)
 		SELECT 
-			$1, 
+			$1::date, 
 			url, 
 			COUNT(*), 
 			COUNT(DISTINCT visitor_id)
@@ -98,16 +106,16 @@ func (r *PostgresRepository) RollupPageDaily(ctx context.Context, reportingDate 
 	return err
 }
 
-func (r *PostgresRepository) RollupSSODaily(ctx context.Context, reportingDate time.Time, startUTC time.Time, endUTC time.Time) error {
+func (r *PostgresRepository) RollupSSODaily(ctx context.Context, reportingDate string, startUTC time.Time, endUTC time.Time) error {
 	query := `
 		INSERT INTO analytics.sso_daily (date, successful_logins, failed_logins)
 		SELECT 
-			$1, 
+			$1::date, 
 			SUM(CASE WHEN event_type = 'sso.login_success' THEN 1 ELSE 0 END),
 			SUM(CASE WHEN event_type = 'sso.login_failed' THEN 1 ELSE 0 END)
 		FROM analytics.events
 		WHERE created_at >= $2 AND created_at < $3
-		  AND event_type IN ('sso.login_success', 'sso.login_failed')
+		  AND event_type IN ('sso.login_success', 'sso.login_failed', 'auth.login')
 		ON CONFLICT (date) DO UPDATE SET 
 			successful_logins = EXCLUDED.successful_logins, 
 			failed_logins = EXCLUDED.failed_logins;
@@ -118,13 +126,16 @@ func (r *PostgresRepository) RollupSSODaily(ctx context.Context, reportingDate t
 
 func (r *PostgresRepository) UpdateLearningDaily(ctx context.Context, data LearningDaily) error {
 	query := `
-		INSERT INTO analytics.learning_daily (date, active_learners, completions)
-		VALUES ($1, $2, $3)
+		INSERT INTO analytics.learning_daily (date, active_learners, learning_starts, completions, completion_rate, top_courses)
+		VALUES ($1::date, $2, $3, $4, $5, $6)
 		ON CONFLICT (date) DO UPDATE SET 
 			active_learners = EXCLUDED.active_learners, 
-			completions = EXCLUDED.completions;
+			learning_starts = EXCLUDED.learning_starts,
+			completions = EXCLUDED.completions,
+			completion_rate = EXCLUDED.completion_rate,
+			top_courses = EXCLUDED.top_courses;
 	`
-	_, err := r.db.ExecContext(ctx, query, data.Date, data.ActiveLearners, data.Completions)
+	_, err := r.db.ExecContext(ctx, query, data.Date, data.ActiveLearners, data.LearningStarts, data.Completions, data.CompletionRate, data.TopCourses)
 	return err
 }
 

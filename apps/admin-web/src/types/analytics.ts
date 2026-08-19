@@ -5,10 +5,20 @@ export interface PageDaily {
   unique_visitors: number;
 }
 
+export interface CourseUtilization {
+  course_id: number;
+  course_name: string;
+  accesses: number;
+  unique_learners: number;
+}
+
 export interface LearningDaily {
   date: string;
   active_learners: number;
+  learning_starts: number;
   completions: number;
+  completion_rate: number;
+  top_courses: CourseUtilization[];
 }
 
 export interface SSODaily {
@@ -17,10 +27,25 @@ export interface SSODaily {
   failed_logins: number;
 }
 
+export interface PromValue {
+  value: string;
+  available: boolean;
+}
+
 export interface APIStats {
-  total_requests: string;
-  error_rate: string;
-  p95_latency: string;
+  request_rate: PromValue;
+  error_rate: PromValue;
+  p50_latency: PromValue;
+  p95_latency: PromValue;
+  p99_latency: PromValue;
+  status_2xx: PromValue;
+  status_4xx: PromValue;
+  status_5xx: PromValue;
+}
+
+export interface Freshness {
+  analytics_last_rollup: string;
+  prometheus_observed_at: string;
 }
 
 export interface StatisticsResponse {
@@ -28,4 +53,6 @@ export interface StatisticsResponse {
   page_views: PageDaily[];
   learning: LearningDaily[];
   sso: SSODaily[];
+  period_unique_visitors: number;
+  freshness: Freshness;
 }

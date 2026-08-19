@@ -24,30 +24,58 @@ export const authOptions: NextAuthOptions = {
     error: "/sso/error",
   },
   events: {
-    async signIn(message) {
-      const API_BASE = process.env.PORTAL_API_INTERNAL_URL || "http://localhost:8080";
-      const secret = process.env.PORTAL_INTERNAL_SECRET || "default_internal_secret";
-      fetch(`${API_BASE}/api/v1/internal/analytics/events`, {
-        method: "POST", 
-        headers: { 
-          "Content-Type": "application/json",
-          "X-Internal-Token": secret
-        },
-        body: JSON.stringify({ event_type: "sso.login_success", url: "/sso", referrer: "", metadata: {} })
-      }).catch(console.error);
-    },
-    async signOut(message) {
-      const API_BASE = process.env.PORTAL_API_INTERNAL_URL || "http://localhost:8080";
-      const secret = process.env.PORTAL_INTERNAL_SECRET || "default_internal_secret";
-      fetch(`${API_BASE}/api/v1/internal/analytics/events`, {
-        method: "POST", 
-        headers: { 
-          "Content-Type": "application/json",
-          "X-Internal-Token": secret
-        },
-        body: JSON.stringify({ event_type: "sso.logout", url: "/sso", referrer: "", metadata: {} })
-      }).catch(console.error);
-    }
+      async signIn(message) {
+        const API_BASE = process.env.PORTAL_API_INTERNAL_URL || "http://localhost:8080";
+        const secret = process.env.PORTAL_INTERNAL_SECRET;
+        if (!secret) {
+          console.warn("PORTAL_INTERNAL_SECRET is missing. SSO telemetry will not be sent.");
+          return;
+        }
+        
+        try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 2000);
+          
+          await fetch(`${API_BASE}/api/v1/internal/analytics/events`, {
+            method: "POST", 
+            headers: { 
+              "Content-Type": "application/json",
+              "X-Internal-Token": secret
+            },
+            body: JSON.stringify({ event_type: "auth.login", url: "/sso", referrer: "", metadata: { result: "success" } }),
+            signal: controller.signal
+          });
+          clearTimeout(timeoutId);
+        } catch (err) {
+          // Do not fail login if telemetry fails
+        }
+      },
+      async signOut(message) {
+        const API_BASE = process.env.PORTAL_API_INTERNAL_URL || "http://localhost:8080";
+        const secret = process.env.PORTAL_INTERNAL_SECRET;
+        if (!secret) {
+          console.warn("PORTAL_INTERNAL_SECRET is missing. SSO telemetry will not be sent.");
+          return;
+        }
+        
+        try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 2000);
+          
+          await fetch(`${API_BASE}/api/v1/internal/analytics/events`, {
+            method: "POST", 
+            headers: { 
+              "Content-Type": "application/json",
+              "X-Internal-Token": secret
+            },
+            body: JSON.stringify({ event_type: "auth.logout", url: "/sso", referrer: "", metadata: { result: "success" } }),
+            signal: controller.signal
+          });
+          clearTimeout(timeoutId);
+        } catch (err) {
+          // Do not fail logout if telemetry fails
+        }
+      }
   },
   callbacks: {
     async jwt({ token, account }) {

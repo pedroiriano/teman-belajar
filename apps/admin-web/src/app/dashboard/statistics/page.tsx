@@ -1,7 +1,7 @@
 import { getServerAccessToken } from "@/lib/server-auth";
 import { StatisticsFilter } from "@/components/statistics-filter";
 import { Suspense } from "react";
-import type { StatisticsResponse, PageDaily, LearningDaily, SSODaily, APIStats } from "@/types/analytics";
+import type { StatisticsResponse, PageDaily, LearningDaily, SSODaily, APIStats, PromValue, CourseUtilization } from "@/types/analytics";
 
 export const metadata = {
   title: "Statistik - Teman Belajar",
@@ -9,12 +9,22 @@ export const metadata = {
 
 async function fetchStats(token: string, days: string = "30"): Promise<{ data?: StatisticsResponse; error?: boolean }> {
   const API_BASE = process.env.PORTAL_API_INTERNAL_URL || "http://localhost:8080";
-  const res = await fetch(`${API_BASE}/api/v1/admin/analytics/statistics?days=${days}`, {
+  const res = await fetch(`${API_BASE}/api/v1/internal/analytics/statistics?days=${days}`, {
     headers: { Authorization: `Bearer ${token}` },
     cache: "no-store",
   });
   if (!res.ok) return { error: true };
   return { data: (await res.json()) as StatisticsResponse };
+}
+
+function renderPromValue(val: PromValue, format: "number" | "ms" | "percent" = "number") {
+  if (!val || !val.available) return "Tidak tersedia";
+  if (!val.value) return "0";
+  const num = parseFloat(val.value);
+  if (isNaN(num)) return "0";
+  if (format === "ms") return `${(num * 1000).toFixed(0)} ms`;
+  if (format === "percent") return `${num.toFixed(2)} %`;
+  return num.toFixed(2);
 }
 
 export default async function StatisticsPage({ searchParams }: { searchParams: Promise<{ [key: string]: string | string[] | undefined }> }) {
@@ -39,24 +49,27 @@ export default async function StatisticsPage({ searchParams }: { searchParams: P
   }
 
   const data: StatisticsResponse = res.data;
-  const { page_views, learning, sso, api } = data;
+  const { page_views, learning, sso, api, period_unique_visitors, freshness } = data;
 
   const totalPageViews = page_views?.reduce((acc: number, curr: PageDaily) => acc + curr.views, 0) || 0;
-  const totalUniqueVisitors = page_views?.reduce((acc: number, curr: PageDaily) => acc + curr.unique_visitors, 0) || 0;
   
   const totalActiveLearners = learning?.reduce((acc: number, curr: LearningDaily) => acc + curr.active_learners, 0) || 0;
   const totalCompletions = learning?.reduce((acc: number, curr: LearningDaily) => acc + curr.completions, 0) || 0;
-
-  const successfulLogins = sso?.reduce((acc: number, curr: SSODaily) => acc + curr.successful_logins, 0) || 0;
-  const failedLogins = sso?.reduce((acc: number, curr: SSODaily) => acc + curr.failed_logins, 0) || 0;
+  
+  const mostRecentLearning = learning?.length > 0 ? learning[0] : null;
 
   return (
     <div className="admin-page-container">
-      <div className="admin-page-header flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
+      <div className="flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
         <div>
-          <p className="admin-kicker">Analytics & Insight</p>
           <h1 className="admin-page-title">Statistik Platform</h1>
           <p className="admin-page-copy">Pantau penggunaan platform dan aktivitas belajar secara keseluruhan.</p>
+          {freshness && (
+            <p className="text-xs text-slate-500 mt-2">
+              Data Historis Terakhir: {new Date(freshness.analytics_last_rollup).toLocaleString('id-ID')} |
+              Sistem Realtime Terakhir: {new Date(freshness.prometheus_observed_at).toLocaleString('id-ID')}
+            </p>
+          )}
         </div>
         <Suspense fallback={<div className="h-9 w-40 animate-pulse rounded-lg bg-slate-200 dark:bg-slate-800"></div>}>
           <StatisticsFilter />
@@ -69,8 +82,8 @@ export default async function StatisticsPage({ searchParams }: { searchParams: P
           <p className="mt-2 text-3xl font-bold">{totalPageViews.toLocaleString()}</p>
         </div>
         <div className="admin-card p-6">
-          <p className="text-sm font-semibold text-slate-500">Unique Visitors</p>
-          <p className="mt-2 text-3xl font-bold">{totalUniqueVisitors.toLocaleString()}</p>
+          <p className="text-sm font-semibold text-slate-500">Unique Visitors (Periode)</p>
+          <p className="mt-2 text-3xl font-bold">{period_unique_visitors >= 0 ? period_unique_visitors.toLocaleString() : "Tidak Tersedia (>30 Hari)"}</p>
         </div>
         <div className="admin-card p-6">
           <p className="text-sm font-semibold text-slate-500">Pembelajar Aktif</p>
@@ -132,7 +145,8 @@ export default async function StatisticsPage({ searchParams }: { searchParams: P
                 <tr>
                   <th className="p-4 font-semibold">Tanggal</th>
                   <th className="p-4 font-semibold">Learner Aktif</th>
-                  <th className="p-4 font-semibold">Penyelesaian Kursus</th>
+                  <th className="p-4 font-semibold">Start / Completion</th>
+                  <th className="p-4 font-semibold">Tingkat Penyelesaian</th>
                 </tr>
               </thead>
               <tbody className="divide-y dark:divide-slate-800">
@@ -151,17 +165,46 @@ export default async function StatisticsPage({ searchParams }: { searchParams: P
                             </div>
                           </div>
                         </td>
-                        <td className="p-4">{l.completions}</td>
+                        <td className="p-4 text-slate-600">{l.learning_starts} / {l.completions}</td>
+                        <td className="p-4 font-medium">{l.completion_rate}%</td>
                       </tr>
                     );
                   })
                 ) : (
-                  <tr><td colSpan={3} className="p-8 text-center text-slate-500">Belum ada data</td></tr>
+                  <tr><td colSpan={4} className="p-8 text-center text-slate-500">Belum ada data</td></tr>
                 )}
               </tbody>
             </table>
           </div>
         </section>
+
+        {mostRecentLearning && mostRecentLearning.top_courses && mostRecentLearning.top_courses.length > 0 && (
+          <section>
+            <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100">Top Kursus Populer (Moodle Terkini)</h2>
+            <div className="mt-4 overflow-hidden rounded-xl border bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
+              <table className="w-full text-left text-sm">
+                <thead className="bg-slate-50 text-slate-600 dark:bg-slate-800 dark:text-slate-400">
+                  <tr>
+                    <th className="p-4 font-semibold">ID Kursus</th>
+                    <th className="p-4 font-semibold">Nama Kursus</th>
+                    <th className="p-4 font-semibold">Akses</th>
+                    <th className="p-4 font-semibold">Learner Unik</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y dark:divide-slate-800">
+                  {mostRecentLearning.top_courses.map((c: CourseUtilization, i: number) => (
+                    <tr key={i} className="hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                      <td className="p-4">{c.course_id}</td>
+                      <td className="p-4 font-medium">{c.course_name}</td>
+                      <td className="p-4">{c.accesses}</td>
+                      <td className="p-4">{c.unique_learners}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </section>
+        )}
 
         <section>
           <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100">Aktivitas SSO & Keamanan</h2>
@@ -207,19 +250,39 @@ export default async function StatisticsPage({ searchParams }: { searchParams: P
 
         {api && (
           <section>
-            <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100">Kesehatan API (Prometheus)</h2>
-            <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100">Kesehatan API (Prometheus 5m Realtime)</h2>
+            <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
               <div className="admin-card p-6">
-                <p className="text-sm font-semibold text-slate-500">Total HTTP Requests (5m)</p>
-                <p className="mt-2 text-3xl font-bold">{api.total_requests || "0"}</p>
+                <p className="text-sm font-semibold text-slate-500">Request Rate</p>
+                <p className="mt-2 text-3xl font-bold">{renderPromValue(api.request_rate)} /s</p>
               </div>
               <div className="admin-card p-6">
-                <p className="text-sm font-semibold text-slate-500">Error Rate (5m)</p>
-                <p className="mt-2 text-3xl font-bold">{api.error_rate && !isNaN(parseFloat(api.error_rate)) ? parseFloat(api.error_rate).toFixed(2) + "%" : "0%"}</p>
+                <p className="text-sm font-semibold text-slate-500">Error Rate</p>
+                <p className="mt-2 text-3xl font-bold">{renderPromValue(api.error_rate, "percent")}</p>
               </div>
               <div className="admin-card p-6">
-                <p className="text-sm font-semibold text-slate-500">p95 Latency (5m)</p>
-                <p className="mt-2 text-3xl font-bold">{api.p95_latency && !isNaN(parseFloat(api.p95_latency)) ? (parseFloat(api.p95_latency) * 1000).toFixed(0) + "ms" : "N/A"}</p>
+                <p className="text-sm font-semibold text-slate-500">p95 Latency</p>
+                <p className="mt-2 text-3xl font-bold">{renderPromValue(api.p95_latency, "ms")}</p>
+              </div>
+              <div className="admin-card p-6">
+                <p className="text-sm font-semibold text-slate-500">p99 Latency</p>
+                <p className="mt-2 text-3xl font-bold">{renderPromValue(api.p99_latency, "ms")}</p>
+              </div>
+              <div className="admin-card p-6">
+                <p className="text-sm font-semibold text-slate-500">2xx (OK)</p>
+                <p className="mt-2 text-2xl font-bold text-emerald-600">{renderPromValue(api.status_2xx)} /s</p>
+              </div>
+              <div className="admin-card p-6">
+                <p className="text-sm font-semibold text-slate-500">4xx (Client Error)</p>
+                <p className="mt-2 text-2xl font-bold text-orange-600">{renderPromValue(api.status_4xx)} /s</p>
+              </div>
+              <div className="admin-card p-6">
+                <p className="text-sm font-semibold text-slate-500">5xx (Server Error)</p>
+                <p className="mt-2 text-2xl font-bold text-red-600">{renderPromValue(api.status_5xx)} /s</p>
+              </div>
+              <div className="admin-card p-6">
+                <p className="text-sm font-semibold text-slate-500">p50 Latency (Median)</p>
+                <p className="mt-2 text-2xl font-bold text-slate-600">{renderPromValue(api.p50_latency, "ms")}</p>
               </div>
             </div>
           </section>

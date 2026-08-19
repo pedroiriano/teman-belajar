@@ -21,32 +21,40 @@ type Event struct {
 }
 
 type PageDaily struct {
-	Date           time.Time `json:"date"`
-	Path           string    `json:"path"`
-	Views          int       `json:"views"`
-	UniqueVisitors int       `json:"unique_visitors"`
+	Date           string `json:"date"` // YYYY-MM-DD
+	Path           string `json:"path"`
+	Views          int    `json:"views"`
+	UniqueVisitors int    `json:"unique_visitors"`
 }
 
 type LearningDaily struct {
-	Date           time.Time `json:"date"`
-	ActiveLearners int       `json:"active_learners"`
-	Completions    int       `json:"completions"`
+	Date           string          `json:"date"` // YYYY-MM-DD
+	ActiveLearners int             `json:"active_learners"`
+	LearningStarts int             `json:"learning_starts"`
+	Completions    int             `json:"completions"`
+	CompletionRate float64         `json:"completion_rate"`
+	TopCourses     json.RawMessage `json:"top_courses,omitempty"`
 }
 
 type SSODaily struct {
-	Date            time.Time `json:"date"`
-	SuccessfulLogins int       `json:"successful_logins"`
-	FailedLogins     int       `json:"failed_logins"`
+	Date             string `json:"date"` // YYYY-MM-DD
+	SuccessfulLogins int    `json:"successful_logins"`
+	FailedLogins     int    `json:"failed_logins"`
+}
+
+type PeriodUniqueVisitors struct {
+	UniqueVisitors int `json:"unique_visitors"`
 }
 
 type Repository interface {
 	InsertEvent(ctx context.Context, e *Event) error
-	GetPageAnalytics(ctx context.Context, since time.Time) ([]PageDaily, error)
-	GetLearningAnalytics(ctx context.Context, since time.Time) ([]LearningDaily, error)
-	GetSSOAnalytics(ctx context.Context, since time.Time) ([]SSODaily, error)
+	GetPageAnalytics(ctx context.Context, since string) ([]PageDaily, error)
+	GetLearningAnalytics(ctx context.Context, since string) ([]LearningDaily, error)
+	GetSSOAnalytics(ctx context.Context, since string) ([]SSODaily, error)
+	GetPeriodUniqueVisitors(ctx context.Context, startUTC time.Time, endUTC time.Time) (int, error)
 	
-	RollupPageDaily(ctx context.Context, reportingDate time.Time, startUTC time.Time, endUTC time.Time) error
-	RollupSSODaily(ctx context.Context, reportingDate time.Time, startUTC time.Time, endUTC time.Time) error
+	RollupPageDaily(ctx context.Context, reportingDate string, startUTC time.Time, endUTC time.Time) error
+	RollupSSODaily(ctx context.Context, reportingDate string, startUTC time.Time, endUTC time.Time) error
 	UpdateLearningDaily(ctx context.Context, data LearningDaily) error
 	CleanupOldEvents(ctx context.Context, cutoffUTC time.Time) error
 }

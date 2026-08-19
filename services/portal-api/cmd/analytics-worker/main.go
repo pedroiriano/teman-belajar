@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"syscall"
 	"time"
+	"encoding/json"
 
 	_ "github.com/lib/pq"
 	"teman-belajar-api/internal/adapters/moodle"
@@ -21,12 +22,12 @@ func reconcileDay(ctx context.Context, repo analytics.Repository, moodleClient *
 	midnightLocal := time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, loc)
 	nextMidnightLocal := midnightLocal.AddDate(0, 0, 1)
 
-	reportingDate := midnightLocal.UTC() // Using UTC time just to represent the date boundary cleanly in postgres if date type, but we pass it directly
+	reportingDate := midnightLocal.Format("2006-01-02")
 	
 	startUTC := midnightLocal.UTC()
 	endUTC := nextMidnightLocal.UTC()
 
-	log.Printf("Rolling up for %v (UTC: %v to %v)", midnightLocal.Format("2006-01-02"), startUTC.Format(time.RFC3339), endUTC.Format(time.RFC3339))
+	log.Printf("Rolling up for %v (UTC: %v to %v)", reportingDate, startUTC.Format(time.RFC3339), endUTC.Format(time.RFC3339))
 
 	if err := repo.RollupPageDaily(ctx, reportingDate, startUTC, endUTC); err != nil {
 		log.Printf("Error rolling up page daily for %v: %v", reportingDate, err)
@@ -37,20 +38,24 @@ func reconcileDay(ctx context.Context, repo analytics.Repository, moodleClient *
 	}
 
 	// Moodle analytics
-	dateStr := midnightLocal.Format("2006-01-02")
+	dateStr := reportingDate
 	learningRes, err := moodleClient.GetLearningAnalytics(ctx, dateStr)
 	if err != nil {
 		log.Printf("Error fetching learning analytics from Moodle for %s: %v", dateStr, err)
 	} else {
+		topCoursesJSON, _ := json.Marshal(learningRes.TopCourses)
 		err = repo.UpdateLearningDaily(ctx, analytics.LearningDaily{
 			Date:           reportingDate,
 			ActiveLearners: learningRes.ActiveLearners,
+			LearningStarts: learningRes.LearningStarts,
 			Completions:    learningRes.Completions,
+			CompletionRate: learningRes.CompletionRate,
+			TopCourses:     topCoursesJSON,
 		})
 		if err != nil {
 			log.Printf("Error updating learning daily for %v: %v", reportingDate, err)
 		} else {
-			log.Printf("Saved learning analytics for %s: %d active, %d completions", dateStr, learningRes.ActiveLearners, learningRes.Completions)
+			log.Printf("Saved learning analytics for %s: %d active, %d starts, %d completions", dateStr, learningRes.ActiveLearners, learningRes.LearningStarts, learningRes.Completions)
 		}
 	}
 }
@@ -127,6 +132,9 @@ func main() {
 
 	ticker := time.NewTicker(5 * time.Minute)
 	defer ticker.Stop()
+	
+	cleanupTicker := time.NewTicker(24 * time.Hour)
+	defer cleanupTicker.Stop()
 
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
@@ -141,6 +149,11 @@ func main() {
 		case <-ticker.C:
 			current := time.Now().In(loc)
 			reconcileDay(ctx, repo, moodleClient, loc, current)
+		case <-cleanupTicker.C:
+			curr := time.Now().UTC()
+			cutoffUTC := curr.AddDate(0, 0, -retentionDays)
+			log.Printf("Periodic cleanup for raw events older than %v", cutoffUTC)
+			repo.CleanupOldEvents(ctx, cutoffUTC)
 		}
 	}
 }

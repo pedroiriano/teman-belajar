@@ -232,9 +232,19 @@ func (c *Client) GetCourseGrades(ctx context.Context, user *learning.LearningUse
 
 	return items, nil
 }
+type CourseUtilization struct {
+	CourseID       int    `json:"course_id"`
+	CourseName     string `json:"course_name"`
+	Accesses       int    `json:"accesses"`
+	UniqueLearners int    `json:"unique_learners"`
+}
+
 type GetLearningAnalyticsResponse struct {
-	ActiveLearners int `json:"active_learners"`
-	Completions    int `json:"completions"`
+	ActiveLearners int                  `json:"active_learners"`
+	LearningStarts int                  `json:"learning_starts"`
+	Completions    int                  `json:"completions"`
+	CompletionRate float64              `json:"completion_rate"`
+	TopCourses     []CourseUtilization `json:"top_courses"`
 }
 
 func (c *Client) GetLearningAnalytics(ctx context.Context, dateStr string) (*GetLearningAnalyticsResponse, error) {
