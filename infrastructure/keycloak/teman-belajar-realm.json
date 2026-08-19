@@ -24,7 +24,7 @@
       "implicitFlowEnabled": false,
       "rootUrl": "${PORTAL_WEB_URL}",
       "redirectUris": [
-        "${PORTAL_WEB_URL}/*"
+        "${PORTAL_WEB_URL}/*##${MOODLE_BASE_URL}/*##${ADMIN_WEB_URL}/*"
       ],
       "webOrigins": [
         "${PORTAL_WEB_URL}"
@@ -34,7 +34,7 @@
       "attributes": {
         "frontchannel.logout.url": "${PORTAL_WEB_URL}/api/auth/frontchannel-logout",
         "frontchannel.logout.session.required": "true",
-        "post.logout.redirect.uris": "${PORTAL_WEB_URL}/*"
+        "post.logout.redirect.uris": "${PORTAL_WEB_URL}/*##${MOODLE_BASE_URL}/*##${ADMIN_WEB_URL}/*"
       },
       "fullScopeAllowed": true,
       "protocolMappers": [
@@ -71,7 +71,7 @@
       "attributes": {
         "frontchannel.logout.url": "${ADMIN_WEB_URL}/api/auth/frontchannel-logout",
         "frontchannel.logout.session.required": "true",
-        "post.logout.redirect.uris": "${PORTAL_WEB_URL}/*"
+        "post.logout.redirect.uris": "${PORTAL_WEB_URL}/*##${MOODLE_BASE_URL}/*##${ADMIN_WEB_URL}/*"
       },
       "fullScopeAllowed": true,
       "protocolMappers": [
@@ -108,7 +108,7 @@
       "attributes": {
         "frontchannel.logout.url": "${MOODLE_BASE_URL}/local/temanbelajar/federated_logout.php",
         "frontchannel.logout.session.required": "true",
-        "post.logout.redirect.uris": "${PORTAL_WEB_URL}/*"
+        "post.logout.redirect.uris": "${PORTAL_WEB_URL}/*##${MOODLE_BASE_URL}/*##${ADMIN_WEB_URL}/*"
       }
     }
   ],
@@ -151,3 +151,5 @@
     }
   ]
 }
+
+
