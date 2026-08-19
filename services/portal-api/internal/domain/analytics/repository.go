@@ -88,7 +88,7 @@ func (r *PostgresRepository) RollupPageDaily(ctx context.Context, date time.Time
 			COUNT(DISTINCT visitor_id)
 		FROM analytics.events
 		WHERE created_at >= $1 AND created_at < $1 + INTERVAL '1 day'
-		  AND event_type = 'portal.page_view'
+		  AND event_type IN ('portal.page_view', 'admin.page_view')
 		GROUP BY url
 		ON CONFLICT (date, path) DO UPDATE SET 
 			views = EXCLUDED.views, 
