@@ -20,12 +20,22 @@ import (
 	"teman-belajar-api/internal/domain/knowledge"
 	"teman-belajar-api/internal/domain/learning"
 	"teman-belajar-api/internal/domain/media"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"teman-belajar-api/internal/observability"
+	"teman-belajar-api/internal/domain/analytics"
 	"teman-belajar-api/internal/repository/postgres"
 	"teman-belajar-api/internal/transport/http/handler"
 	"teman-belajar-api/internal/transport/http/middleware"
 )
 
 func main() {
+	ctx := context.Background()
+	shutdown, err := observability.InitTracer(ctx, "teman-belajar-api")
+	if err != nil {
+		log.Fatalf("Failed to init tracer: %v", err)
+	}
+	defer shutdown(ctx)
+
 	mux := http.NewServeMux()
 
 	// Database Connection
@@ -137,6 +147,10 @@ func main() {
 		searchService = searchapplication.NewService(meiliClient)
 		searchHandler = handler.NewSearchHandler(searchService)
 	}
+		
+	analyticsRepo := analytics.NewPostgresRepository(db)
+	analyticsHandler := handler.NewAnalyticsHandler(analyticsRepo)
+
 	engagementService := engagementapplication.NewService(engagementRepo, engagementResolver, searchService)
 	engagementHandler := handler.NewEngagementHandler(engagementService)
 
@@ -172,6 +186,10 @@ func main() {
 	})
 
 	mux.HandleFunc("/api/v1/health", handler.HealthCheck)
+	// Analytics endpoints
+	mux.Handle("POST /api/v1/analytics/events", http.HandlerFunc(analyticsHandler.HandleIngest))
+	mux.Handle("GET /api/v1/admin/analytics/statistics", adminAuthMiddleware(http.HandlerFunc(analyticsHandler.HandleGetStatistics)))
+	mux.Handle("/metrics", promhttp.Handler())
 
 	// Public CMS Endpoints
 	mux.HandleFunc("/api/v1/news", cmsHandler.ListPublicNews)
@@ -267,3 +285,7 @@ func main() {
 		log.Fatalf("Server failed: %v", err)
 	}
 }
+
+
+
+

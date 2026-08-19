@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import { getServerSession } from "next-auth/next";
 import { PortalChrome } from "@/components/portal-chrome";
+import { AnalyticsTracker } from "@/components/analytics-tracker";
 import { authOptions } from "@/lib/auth";
 import "./globals.css";
 
@@ -33,8 +34,12 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
     <html lang="id" data-scroll-behavior="smooth" suppressHydrationWarning>
       <head><script dangerouslySetInnerHTML={{ __html: themeInitializationScript }} /></head>
       <body className={`${inter.className} portal-root min-h-screen antialiased`}>
+        <AnalyticsTracker />
         <PortalChrome authenticated={Boolean(session)}>{children}</PortalChrome>
       </body>
     </html>
   );
 }
+
+
+

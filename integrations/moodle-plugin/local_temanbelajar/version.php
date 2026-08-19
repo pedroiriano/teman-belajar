@@ -14,3 +14,4 @@ $plugin->requires  = 2023100900;        // Requires Moodle 4.3 or 4.4, or 5.2 as
 $plugin->component = 'local_temanbelajar'; // Full name of the plugin (used for diagnostics).
 $plugin->maturity  = MATURITY_ALPHA;
 $plugin->release   = 'v0.1.0';
+
