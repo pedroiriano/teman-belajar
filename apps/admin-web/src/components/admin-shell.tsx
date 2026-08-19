@@ -159,6 +159,17 @@ export function AdminShell({ children, userName, userEmail, role }: { children: 
     };
   }, [mobileSidebarOpen]);
 
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const details = document.querySelector<HTMLDetailsElement>('details.admin-profile-dropdown');
+      if (details && details.hasAttribute('open') && !details.contains(event.target as Node)) {
+        details.removeAttribute('open');
+      }
+    };
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, []);
+
   return (
     <div className={`min-h-screen lg:grid ${desktopSidebarOpen ? "lg:grid-cols-[276px_1fr]" : "lg:grid-cols-[1fr]"}`}>
       {desktopSidebarOpen && (
@@ -198,7 +209,7 @@ export function AdminShell({ children, userName, userEmail, role }: { children: 
             <div className="ml-auto flex items-center gap-2 sm:gap-3">
               <ThemeToggle />
               <button type="button" className="admin-icon-button hidden sm:grid" aria-label="Notifikasi" title="Notifikasi belum diaktifkan"><AdminIcon name="bell" className="h-5 w-5" /></button>
-              <details className="relative">
+              <details className="relative admin-profile-dropdown">
                 <summary className="flex cursor-pointer list-none items-center gap-2 rounded-xl p-1.5 transition hover:bg-slate-100 dark:hover:bg-slate-800/50">
                   <span className="grid h-10 w-10 place-items-center rounded-xl bg-orange-100 text-sm font-black text-orange-700 dark:bg-orange-900/30 dark:text-orange-400">{initials}</span>
                   <span className="hidden text-left xl:block"><span className="block max-w-40 truncate text-sm font-bold text-slate-800 dark:text-slate-200">{userName || userEmail}</span><span className="block text-xs text-slate-500 dark:text-slate-400">{role}</span></span>
