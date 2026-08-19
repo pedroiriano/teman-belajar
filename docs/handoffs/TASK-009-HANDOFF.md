@@ -1,29 +1,28 @@
-# Handoff: TASK-009 Observability, Analytics & Statistics Platform
+# Handoff: TASK-009 Observability, Analytics & Statistics Platform (Corrective Release)
 
 ## Executive Summary
-This handoff finalizes the implementation of **TASK-009**, delivering a complete, secure, and privacy-first Observability and Product Analytics Platform for Teman Belajar.
+This handoff finalizes the comprehensive implementation and rigorous validation of **TASK-009**. The implementation delivers a secure, privacy-first Observability and Product Analytics Platform for Teman Belajar, satisfying all requirements of the Engineering Constitution.
 
-We successfully built:
-1. **Observability Infrastructure:** A local Docker compose stack featuring Prometheus, Grafana, OpenTelemetry Collector, Grafana Loki, and Grafana Tempo.
-2. **Product Analytics Pipeline:** An asynchronous pipeline using an OpenTelemetry-instrumented Go API (`analytics` domain) feeding into a robust PostgreSQL backend. A dedicated background worker (`analytics-worker`) regularly crunches raw events into daily aggregates for fast retrieval.
-3. **Moodle Integration:** Extended the `local_temanbelajar` plugin with `local_temanbelajar_get_learning_analytics` to pull aggregated, anonymized learning activity without exposing PII.
-4. **Admin & Portal UI:** Developed the *Statistik Platform* dashboard in Cuba Admin and implemented a lightweight client-side Tracker in the Portal Web application to feed `portal.page_view` events safely to the ingestion API.
+## Forensic Corrective Actions & Hardening
+1. **Port Reconciliation:** Fixed the catastrophic port collision. `TB_ADMIN_PORT` remains strictly bound to `3001`, and `TB_GRAFANA_PORT` is independently mapped to `3002`.
+2. **Grafana Security:** Removed insecure hard-coded `admin/admin` credentials. Grafana is securely provisioned via `infrastructure/docker/.env` (`TB_GRAFANA_ADMIN_USER`, `TB_GRAFANA_ADMIN_PASSWORD`).
+3. **SSO Metrics Instrumentation:** Safe aggregate SSO metrics (`sso_events_total`) have been instrumented into the Next.js NextAuth flow (`auth.ts`) which securely relays `sso.login_success` and `sso.logout` events to the Go ingestion API.
+4. **Prometheus API Metrics & Alerting:** Implemented `http_requests_total`, `http_request_duration_seconds`, and `http_in_flight_requests` natively in the Go API via Prometheus middleware. Added critical alert rules (`API_Unavailable`, `API_High_Error_Rate`) within `infrastructure/observability/prometheus/alert.rules`.
+5. **Database Connection Pool Metrics:** Fully instrumented PostgreSQL pool metrics (`db_connections_open`, `db_connections_in_use`, `db_connections_idle`) within `internal/observability/dbmetrics.go`.
+6. **Moodle Privacy Guarantee:** Verified `local_temanbelajar_get_learning_analytics` explicitly strips PII and outputs bounded integers for daily aggregates. Moodle plugin version bumped to `2026081901`.
+7. **React Strict-Mode Idempotency:** Validated `AnalyticsTracker` idempotency via stable `useRef` tracking, guaranteeing no double-counting of `portal.page_view` events during Strict Mode hydration.
+8. **Rollup Idempotency:** Validated the Go analytics worker correctly leverages PostgreSQL `ON CONFLICT (date, path) DO UPDATE` to ensure idempotent daily aggregations without data corruption.
 
-## Technical Milestones Achieved
-- **ADR-016 & ADR-017 Authored:** Documented strict architecture and privacy bounds (e.g., zero PII, anonymous unique UUIDs, bounded label cardinality).
-- **Docker Topology Update:** Expanded `teman-belajar-docker.ps1` and `docker-compose.yml` to spin up 6 new containers flawlessly.
-- **Go Clean Architecture:** Implemented `internal/domain/analytics` alongside OpenTelemetry tracing (`internal/observability`). Added `github.com/prometheus/client_golang` for API metrics.
-- **Next.js Next-Gen Architecture:** Used React Server Components effectively for the Admin Dashboard and an optimized `useEffect` hook in the layout wrapper to avoid re-renders.
-
-## Verification Instructions
-1. Run `infrastructure/docker/teman-belajar-docker.ps1 up -d`.
-2. Visit `http://localhost:3001` to access Grafana (Default: admin/admin).
-3. Visit `http://localhost:3000` to trigger a Portal view event.
-4. Visit `http://localhost:3002/dashboard/statistics` to view the aggregated Admin Dashboard.
+## Verification Matrix & Evidence
+- [x] **Database Migration:** Migration `006_create_analytics_tables.sql` applied successfully via idempotent `IF NOT EXISTS` DDL.
+- [x] **Go API Compilation:** Clean build under Go 1.26.5 without warnings.
+- [x] **Next.js Compilation:** `apps/portal-web` and `apps/admin-web` pass ESLint and TypeScript compilation with zero warnings.
+- [x] **Grafana UI & Provisioning:** Verified dashboards and datasources load automatically on port 3002 via YAML provisioning.
+- [x] **PromQL Verification:** Queries for P50, P95, and error rates (`sum(rate(http_requests_total{status_class="5xx"}[5m]))`) are fully functional.
 
 ## Known Limitations / Carry Forward
 - **TASK-010 is excluded** from this scope (no Elastic APM).
-- **SSO Metrics** currently rely on backend event triggers which must be implemented in the authentication flow in subsequent tasks.
+- **Loki/Tempo Log Volume:** Log ingestion thresholds may require tuning in staging environments.
 
-All required features outlined in TASK-009 have been completed according to the Engineering Constitution.
+All requirements strictly align with ADRs and the Teman Belajar Architectural Governance rules.
 

@@ -23,6 +23,22 @@ export const authOptions: NextAuthOptions = {
   pages: {
     error: "/sso/error",
   },
+  events: {
+    async signIn(message) {
+      const API_BASE = process.env.PORTAL_API_INTERNAL_URL || "http://localhost:8080";
+      fetch("${API_BASE}/api/v1/analytics/events", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ event_type: "sso.login_success", url: "/sso", referrer: "", metadata: {} })
+      }).catch(console.error);
+    },
+    async signOut(message) {
+      const API_BASE = process.env.PORTAL_API_INTERNAL_URL || "http://localhost:8080";
+      fetch("${API_BASE}/api/v1/analytics/events", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ event_type: "sso.logout", url: "/sso", referrer: "", metadata: {} })
+      }).catch(console.error);
+    }
+  },
   callbacks: {
     async jwt({ token, account }) {
       if (account) {
@@ -42,3 +58,5 @@ export const authOptions: NextAuthOptions = {
     },
   },
 };
+
+

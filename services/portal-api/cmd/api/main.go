@@ -49,6 +49,7 @@ func main() {
 		log.Fatalf("Failed to open db: %v", err)
 	}
 	defer db.Close()
+	observability.InitDBMetrics(db, "portal")
 
 	if err := db.Ping(); err != nil {
 		log.Fatalf("Failed to connect to db: %v", err)
@@ -278,13 +279,16 @@ func main() {
 
 	server := &http.Server{
 		Addr:              ":" + port,
-		Handler:           mux,
+		Handler:           observability.MetricsMiddleware(mux),
 		ReadHeaderTimeout: 5 * time.Second,
 	}
 	if err := server.ListenAndServe(); err != nil {
 		log.Fatalf("Server failed: %v", err)
 	}
 }
+
+
+
 
 
 

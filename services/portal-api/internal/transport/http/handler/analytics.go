@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"teman-belajar-api/internal/domain/analytics"
+	"teman-belajar-api/internal/observability"
 
 	"github.com/google/uuid"
 )
@@ -72,6 +73,10 @@ func (h *AnalyticsHandler) HandleIngest(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
+	if len(req.EventType) > 4 && req.EventType[:4] == "sso." {
+		observability.RecordSSOEvent(req.EventType, "success")
+	}
+
 	w.WriteHeader(http.StatusAccepted)
 }
 
@@ -108,4 +113,5 @@ func (h *AnalyticsHandler) HandleGetStatistics(w http.ResponseWriter, r *http.Re
 		"sso":        ssoStats,
 	})
 }
+
 

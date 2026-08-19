@@ -381,6 +381,7 @@ services:
     restart: unless-stopped
     volumes:
       - ../observability/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+        - ../observability/prometheus/alert.rules:/etc/prometheus/alert.rules
       - prometheus-data:/prometheus
     command:
       - "--config.file=/etc/prometheus/prometheus.yml"
@@ -396,7 +397,8 @@ services:
       - ../observability/grafana/dashboards:/var/lib/grafana/dashboards
       - grafana-data:/var/lib/grafana
     environment:
-      - GF_SECURITY_ADMIN_PASSWORD=admin
+        - GF_SECURITY_ADMIN_USER=
+        - GF_SECURITY_ADMIN_PASSWORD=
       - GF_USERS_ALLOW_SIGN_UP=false
     ports:
       - "${TB_BIND_ADDRESS:?Set TB_BIND_ADDRESS in infrastructure/docker/.env}:${TB_GRAFANA_PORT:?Set TB_GRAFANA_PORT in infrastructure/docker/.env}:3000"
@@ -486,3 +488,8 @@ volumes:
     name: teman-belajar-loki-data
   tempo-data:
     name: teman-belajar-tempo-data
+
+
+
+
+
