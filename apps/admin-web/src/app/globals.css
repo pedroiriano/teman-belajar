@@ -84,9 +84,6 @@ a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visib
   .admin-theme-toggle__icon { @apply grid h-7 w-7 place-items-center rounded-lg; color: var(--admin-accent-text); background: rgba(14, 165, 233, .13); }
   .admin-theme-toggle__icon svg { @apply h-4 w-4; }
   .admin-theme-toggle__label { @apply hidden sm:inline; }
-  .admin-sidebar-link { @apply flex min-h-11 items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-400 transition; }
-  .admin-sidebar-link:hover { @apply bg-white/10 text-white; }
-  .admin-sidebar-link.is-active { @apply bg-sky-600 text-white shadow-lg shadow-sky-950/20; }
   .admin-topbar-search { @apply min-h-10 w-full rounded-xl border py-2 pl-10 pr-4 text-sm outline-none transition; color: var(--admin-ink); background: var(--admin-panel-muted); border-color: var(--admin-border); }
   .admin-topbar-search:focus { border-color: #0ea5e9; box-shadow: 0 0 0 3px rgba(14, 165, 233, .14); }
   .admin-search-results { @apply absolute inset-x-0 top-12 z-50 grid overflow-hidden rounded-xl border p-1 shadow-xl; color: var(--admin-ink); background: var(--admin-panel); border-color: var(--admin-border); }
