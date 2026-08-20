@@ -65,8 +65,8 @@ export default function MediaUploader() {
             file:mr-4 file:py-2 file:px-4
             file:rounded-lg file:border-0
             file:text-sm file:font-semibold
-            file:bg-orange-100 file:text-orange-700
-            hover:file:bg-orange-200
+            file:bg-sky-100 file:text-sky-700
+            hover:file:bg-sky-200
           "
         />
         <button 
@@ -83,3 +83,4 @@ export default function MediaUploader() {
     </section>
   );
 }
+

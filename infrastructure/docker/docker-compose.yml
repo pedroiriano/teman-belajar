@@ -323,7 +323,7 @@ services:
       KEYCLOAK_ISSUER: ${TB_KEYCLOAK_URL:?Set TB_KEYCLOAK_URL in infrastructure/docker/.env}/realms/teman-belajar
       POST_LOGOUT_REDIRECT_URL: ${TB_WEB_URL:?Set TB_WEB_URL in infrastructure/docker/.env}
       PORTAL_API_INTERNAL_URL: http://api:8080
-        PORTAL_INTERNAL_SECRET: ${TB_PORTAL_INTERNAL_SECRET:?Set TB_PORTAL_INTERNAL_SECRET in infrastructure/docker/.env}
+      PORTAL_INTERNAL_SECRET: ${TB_PORTAL_INTERNAL_SECRET:?Set TB_PORTAL_INTERNAL_SECRET in infrastructure/docker/.env}
       MOODLE_PUBLIC_BASE_URL: ${TB_MOODLE_URL:?Set TB_MOODLE_URL in infrastructure/docker/.env}
     extra_hosts:
       - keycloak.teman-belajar.localhost:host-gateway
@@ -356,9 +356,12 @@ services:
       KEYCLOAK_ID: teman-belajar-admin
       KEYCLOAK_SECRET: ${TB_KEYCLOAK_ADMIN_CLIENT_SECRET:?Set TB_KEYCLOAK_ADMIN_CLIENT_SECRET in infrastructure/docker/.env}
       KEYCLOAK_ISSUER: ${TB_KEYCLOAK_URL:?Set TB_KEYCLOAK_URL in infrastructure/docker/.env}/realms/teman-belajar
+      KEYCLOAK_INTERNAL_URL: http://keycloak:8080
+      KEYCLOAK_ADMIN_USER: ${TB_KEYCLOAK_ADMIN_USER:?Set TB_KEYCLOAK_ADMIN_USER in infrastructure/docker/.env}
+      KEYCLOAK_ADMIN_PASSWORD: ${TB_KEYCLOAK_ADMIN_PASSWORD:?Set TB_KEYCLOAK_ADMIN_PASSWORD in infrastructure/docker/.env}
       POST_LOGOUT_REDIRECT_URL: ${TB_ADMIN_URL:?Set TB_ADMIN_URL in infrastructure/docker/.env}
       PORTAL_API_INTERNAL_URL: http://api:8080
-        PORTAL_INTERNAL_SECRET: ${TB_PORTAL_INTERNAL_SECRET:?Set TB_PORTAL_INTERNAL_SECRET in infrastructure/docker/.env}
+      PORTAL_INTERNAL_SECRET: ${TB_PORTAL_INTERNAL_SECRET:?Set TB_PORTAL_INTERNAL_SECRET in infrastructure/docker/.env}
     extra_hosts:
       - keycloak.teman-belajar.localhost:host-gateway
     ports:

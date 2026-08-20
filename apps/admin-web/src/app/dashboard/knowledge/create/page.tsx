@@ -53,7 +53,7 @@ export default function CreateKnowledgePage() {
   return (
     <div className="admin-page max-w-5xl">
       <div className="admin-page-header">
-        <div><Link href="/dashboard/knowledge" className="text-sm font-bold text-orange-700">← Kembali ke Pusat Pengetahuan</Link><p className="admin-kicker mt-5">Editor pengetahuan</p><h1 className="admin-page-title">Buat artikel baru</h1><p className="admin-page-copy">Susun pengetahuan yang jelas dan siap melewati review editorial.</p></div>
+        <div><Link href="/dashboard/knowledge" className="text-sm font-bold text-sky-700">← Kembali ke Pusat Pengetahuan</Link><p className="admin-kicker mt-5">Editor pengetahuan</p><h1 className="admin-page-title">Buat artikel baru</h1><p className="admin-page-copy">Susun pengetahuan yang jelas dan siap melewati review editorial.</p></div>
         <span className="admin-status bg-slate-100 text-slate-600">Status: Draft</span>
       </div>
       <form onSubmit={handleSubmit} className="admin-form-card">
@@ -127,3 +127,4 @@ export default function CreateKnowledgePage() {
     </div>
   );
 }
+

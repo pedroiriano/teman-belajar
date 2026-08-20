@@ -100,7 +100,7 @@ export default async function AdminNewsPage() {
                       {news.published_at ? new Date(news.published_at).toLocaleDateString() : '-'}
                     </td>
                     <td className="p-4 text-sm">
-                      <Link href={`/dashboard/news/${news.id}`} className="mr-4 font-bold text-orange-700 hover:text-orange-600">
+                      <Link href={`/dashboard/news/${news.id}`} className="mr-4 font-bold text-sky-700 hover:text-sky-600">
                         Buka detail →
                       </Link>
                     </td>
@@ -114,3 +114,4 @@ export default async function AdminNewsPage() {
     </div>
   );
 }
+

@@ -61,8 +61,8 @@ export default function AdminNewsDetailPage() {
   return (
     <div className="admin-page max-w-5xl">
       <div className="admin-page-header">
-        <div><Link href="/dashboard/news" className="text-sm font-bold text-orange-700">&larr; Kembali ke Berita</Link><p className="admin-kicker mt-5">Detail editorial</p><h1 className="admin-page-title">{news.title}</h1><p className="admin-page-copy">Tinjau konten dan jalankan transisi sesuai peran editorial.</p></div>
-        <span className="admin-status bg-orange-50 text-orange-800">{news.status}</span>
+        <div><Link href="/dashboard/news" className="text-sm font-bold text-sky-700">&larr; Kembali ke Berita</Link><p className="admin-kicker mt-5">Detail editorial</p><h1 className="admin-page-title">{news.title}</h1><p className="admin-page-copy">Tinjau konten dan jalankan transisi sesuai peran editorial.</p></div>
+        <span className="admin-status bg-sky-50 text-sky-800">{news.status}</span>
       </div>
       {error && <div className="admin-alert-error mb-5" role="alert">{error}</div>}
       <section className="admin-form-card">

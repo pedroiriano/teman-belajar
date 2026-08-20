@@ -21,7 +21,7 @@ export function AdminSignIn() {
       >
         {isLoading ? (
           <span className="flex items-center justify-center gap-2">
-            <span className="h-4 w-4 animate-spin rounded-full border-2 border-orange-200 border-t-white" aria-hidden="true" />
+            <span className="h-4 w-4 animate-spin rounded-full border-2 border-sky-200 border-t-white" aria-hidden="true" />
             Menyambungkan sesi...
           </span>
         ) : (
@@ -31,3 +31,4 @@ export function AdminSignIn() {
     </div>
   );
 }
+

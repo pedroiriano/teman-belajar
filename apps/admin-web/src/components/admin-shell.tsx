@@ -19,7 +19,7 @@ const navigationGroups: Array<{ label: string; items: NavigationItem[] }> = [
   ] },
   { label: "Platform", items: [
     { label: "FAQ & Taksonomi", icon: "folder", disabled: true },
-    { label: "Pengguna & Profil", icon: "users", disabled: true },
+    { href: "/dashboard/users", label: "Pengguna & Profil", icon: "users" },
     { label: "Kesehatan Integrasi", icon: "health", disabled: true },
     { label: "Audit", icon: "audit", disabled: true },
     { label: "Konfigurasi", icon: "settings", disabled: true },
@@ -33,6 +33,7 @@ const titleBySegment: Record<string, string> = {
   news: "Berita",
   announcements: "Pengumuman",
   media: "Media Library",
+  users: "Pengguna & Profil",
   create: "Buat baru",
 };
 
@@ -40,7 +41,7 @@ function Brand({ desktopClose }: { desktopClose?: () => void }) {
   return (
     <div className="flex h-[76px] items-center gap-2 border-b border-white/10 px-4">
       <Link href="/dashboard" className="flex min-w-0 flex-1 items-center gap-3">
-        <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-orange-600 font-black text-white shadow-lg shadow-orange-950/20">TB</span>
+        <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-sky-600 font-black text-white shadow-lg shadow-sky-950/20">TB</span>
         <span className="min-w-0">
           <span className="block truncate font-extrabold text-white">Teman Belajar</span>
           <span className="block truncate text-[10px] font-bold uppercase tracking-[.18em] text-slate-400">Admin Console</span>
@@ -88,7 +89,7 @@ function Sidebar({ pathname, close, desktopClose }: { pathname: string; close?: 
                 >
                   <AdminIcon name={item.icon} className="h-5 w-5" />
                   <span>{item.label}</span>
-                  {isActive(item.href) && <span className="ml-auto h-1.5 w-1.5 rounded-full bg-orange-400" />}
+                  {isActive(item.href) && <span className="ml-auto h-1.5 w-1.5 rounded-full bg-sky-400" />}
                 </Link>
               ))}
             </div>
@@ -211,15 +212,15 @@ export function AdminShell({ children, userName, userEmail, role }: { children: 
               <button type="button" className="admin-icon-button hidden sm:grid" aria-label="Notifikasi" title="Notifikasi belum diaktifkan"><AdminIcon name="bell" className="h-5 w-5" /></button>
               <details className="relative admin-profile-dropdown">
                 <summary className="group flex cursor-pointer list-none items-center gap-2 rounded-xl p-1.5 transition hover:bg-slate-100 dark:hover:bg-slate-800/50">
-                  <span className="grid h-10 w-10 place-items-center rounded-xl bg-orange-100 text-sm font-black text-orange-700 dark:bg-orange-900/30 dark:text-orange-400">{initials}</span>
-                  <span className="hidden text-left xl:block"><span className="block max-w-40 truncate text-sm font-bold text-slate-900 group-hover:text-orange-700 dark:text-slate-100 dark:group-hover:text-orange-400">{userName || userEmail}</span><span className="block text-xs text-slate-500 dark:text-slate-400">{role}</span></span>
+                  <span className="grid h-10 w-10 place-items-center rounded-xl bg-sky-100 text-sm font-black text-sky-700 dark:bg-sky-900/30 dark:text-sky-400">{initials}</span>
+                  <span className="hidden text-left xl:block"><span className="block max-w-40 truncate text-sm font-bold text-slate-900 group-hover:text-sky-700 dark:text-slate-100 dark:group-hover:text-sky-400">{userName || userEmail}</span><span className="block text-xs text-slate-500 dark:text-slate-400">{role}</span></span>
                   <AdminIcon name="chevron" className="hidden h-4 w-4 text-slate-400 xl:block" />
                 </summary>
                 <div className="admin-profile-menu"><div className="border-b border-slate-100 p-4 dark:border-slate-800"><p className="text-sm font-bold text-slate-900 dark:text-slate-100">{userName || "Pengguna Teman Belajar"}</p><p className="mt-1 truncate text-xs text-slate-500 dark:text-slate-400">{userEmail}</p></div><Link href="/api/auth/federated-logout" prefetch={false}>Keluar dari Admin</Link></div>
               </details>
             </div>
           </div>
-          <div className="flex min-h-11 items-center gap-2 border-t px-4 text-xs text-slate-500 sm:px-6 lg:px-8"><Link href="/dashboard" className="font-bold text-orange-700">Admin</Link>{breadcrumbs.slice(1).map((crumb) => <span key={crumb} className="flex items-center gap-2"><span aria-hidden="true">/</span><span>{crumb}</span></span>)}</div>
+          <div className="flex min-h-11 items-center gap-2 border-t px-4 text-xs text-slate-500 sm:px-6 lg:px-8"><Link href="/dashboard" className="font-bold text-sky-700">Admin</Link>{breadcrumbs.slice(1).map((crumb) => <span key={crumb} className="flex items-center gap-2"><span aria-hidden="true">/</span><span>{crumb}</span></span>)}</div>
         </header>
         <main id="admin-content" className="min-h-[calc(100vh-154px)] p-4 sm:p-6 lg:p-8">{children}</main>
         <footer className="admin-footer"><span>© {new Date().getFullYear()} Teman Belajar</span><span>Admin Console · Cuba-derived experience</span></footer>
@@ -227,4 +228,5 @@ export function AdminShell({ children, userName, userEmail, role }: { children: 
     </div>
   );
 }
+
 

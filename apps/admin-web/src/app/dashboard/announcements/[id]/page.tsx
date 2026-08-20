@@ -60,7 +60,7 @@ export default function AdminAnnouncementDetailPage() {
 
   return (
     <div className="admin-page max-w-5xl">
-      <div className="admin-page-header"><div><Link href="/dashboard/announcements" className="text-sm font-bold text-orange-700">&larr; Kembali ke Pengumuman</Link><p className="admin-kicker mt-5">Detail editorial</p><h1 className="admin-page-title">{ann.title}</h1><p className="admin-page-copy">Tinjau jadwal tayang, isi, dan status publikasi.</p></div><span className="admin-status bg-orange-50 text-orange-800">{ann.status}</span></div>
+      <div className="admin-page-header"><div><Link href="/dashboard/announcements" className="text-sm font-bold text-sky-700">&larr; Kembali ke Pengumuman</Link><p className="admin-kicker mt-5">Detail editorial</p><h1 className="admin-page-title">{ann.title}</h1><p className="admin-page-copy">Tinjau jadwal tayang, isi, dan status publikasi.</p></div><span className="admin-status bg-sky-50 text-sky-800">{ann.status}</span></div>
       {error && <div className="admin-alert-error mb-5" role="alert">{error}</div>}
       <section className="admin-form-card">
           <div className="admin-form-header flex flex-wrap items-center justify-between gap-4"><div><h2 className="font-black text-slate-900">Alur publikasi</h2><p className="mt-1 text-xs text-slate-500">Aksi mengikuti status dan peran editorial.</p></div>

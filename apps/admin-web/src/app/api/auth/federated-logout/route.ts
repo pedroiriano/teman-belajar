@@ -8,7 +8,9 @@ export async function GET(req: NextRequest) {
     const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
     
     const issuer = process.env.KEYCLOAK_ISSUER || "http://keycloak.teman-belajar.localhost:8081/realms/teman-belajar";
-    const postLogoutUrl = process.env.POST_LOGOUT_REDIRECT_URL || process.env.NEXTAUTH_URL || "http://localhost:3001";
+    const baseUrl = process.env.POST_LOGOUT_REDIRECT_URL || process.env.NEXTAUTH_URL || "http://localhost:3001";
+    // Ensure the redirect URI matches the Keycloak wildcard pattern (e.g. http://localhost:3001/*)
+    const postLogoutUrl = baseUrl.endsWith("/") ? baseUrl : `${baseUrl}/`;
     const logoutUrl = new URL(`${issuer}/protocol/openid-connect/logout`);
     logoutUrl.searchParams.set("post_logout_redirect_uri", postLogoutUrl);
     if (token && typeof token.idToken === "string") {

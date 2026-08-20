@@ -8,6 +8,14 @@
         "description": "Administrator of the Teman Belajar Portal"
       },
       {
+        "name": "Content Editor",
+        "description": "Content editor and course creator"
+      },
+      {
+        "name": "Reviewer",
+        "description": "Content reviewer and approver"
+      },
+      {
         "name": "Learner",
         "description": "Standard Learner"
       }

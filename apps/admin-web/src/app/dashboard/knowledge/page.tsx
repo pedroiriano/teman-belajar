@@ -90,7 +90,7 @@ export default async function AdminKnowledgePage() {
                       Revisi {article.current_revision_no} {article.published_revision_no ? `(Terbit: ${article.published_revision_no})` : '(Belum terbit)'}
                     </td>
                     <td className="p-4 text-sm">
-                      <Link href={`/dashboard/knowledge/${article.id}`} className="mr-4 font-bold text-orange-700 hover:text-orange-600">
+                      <Link href={`/dashboard/knowledge/${article.id}`} className="mr-4 font-bold text-sky-700 hover:text-sky-600">
                         Buka detail →
                       </Link>
                     </td>
@@ -104,3 +104,4 @@ export default async function AdminKnowledgePage() {
     </div>
   );
 }
+

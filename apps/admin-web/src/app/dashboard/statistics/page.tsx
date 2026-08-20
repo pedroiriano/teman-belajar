@@ -9,7 +9,7 @@ export const metadata = {
 
 async function fetchStats(token: string, days: string = "30"): Promise<{ data?: StatisticsResponse; error?: boolean }> {
   const API_BASE = process.env.PORTAL_API_INTERNAL_URL || "http://localhost:8080";
-  const res = await fetch(`${API_BASE}/api/v1/internal/analytics/statistics?days=${days}`, {
+  const res = await fetch(`${API_BASE}/api/v1/admin/analytics/statistics?days=${days}`, {
     headers: { Authorization: `Bearer ${token}` },
     cache: "no-store",
   });
@@ -274,7 +274,7 @@ export default async function StatisticsPage({ searchParams }: { searchParams: P
               </div>
               <div className="admin-card p-6">
                 <p className="text-sm font-semibold text-slate-500">4xx (Client Error)</p>
-                <p className="mt-2 text-2xl font-bold text-orange-600">{renderPromValue(api.status_4xx)} /s</p>
+                <p className="mt-2 text-2xl font-bold text-sky-600">{renderPromValue(api.status_4xx)} /s</p>
               </div>
               <div className="admin-card p-6">
                 <p className="text-sm font-semibold text-slate-500">5xx (Server Error)</p>
@@ -291,3 +291,4 @@ export default async function StatisticsPage({ searchParams }: { searchParams: P
     </div>
   );
 }
+

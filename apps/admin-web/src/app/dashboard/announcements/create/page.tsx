@@ -61,7 +61,7 @@ export default function CreateAnnouncementPage() {
 
   return (
     <div className="admin-page max-w-5xl">
-      <div className="admin-page-header"><div><Link href="/dashboard/announcements" className="text-sm font-bold text-orange-700">← Kembali ke Pengumuman</Link><p className="admin-kicker mt-5">Editor pengumuman</p><h1 className="admin-page-title">Buat pengumuman baru</h1><p className="admin-page-copy">Atur periode tayang agar informasi muncul pada waktu yang tepat.</p></div><span className="admin-status bg-slate-100 text-slate-600">Status: Draft</span></div>
+      <div className="admin-page-header"><div><Link href="/dashboard/announcements" className="text-sm font-bold text-sky-700">← Kembali ke Pengumuman</Link><p className="admin-kicker mt-5">Editor pengumuman</p><h1 className="admin-page-title">Buat pengumuman baru</h1><p className="admin-page-copy">Atur periode tayang agar informasi muncul pada waktu yang tepat.</p></div><span className="admin-status bg-slate-100 text-slate-600">Status: Draft</span></div>
       <form onSubmit={handleSubmit} className="admin-form-card">
         <div className="admin-form-header"><div className="flex items-center gap-3"><span className="admin-stat-icon"><AdminIcon name="announcement" className="h-5 w-5" /></span><div><h2 className="font-black text-slate-900">Informasi pengumuman</h2><p className="mt-1 text-xs text-slate-500">Lengkapi isi dan jadwal publikasi.</p></div></div></div>
         <div className="admin-form-body">
@@ -142,3 +142,4 @@ export default function CreateAnnouncementPage() {
     </div>
   );
 }
+

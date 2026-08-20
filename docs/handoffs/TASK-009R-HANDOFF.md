@@ -53,3 +53,31 @@ This task resolved the final blockers to complete the security, privacy, observa
 `TASK-009R` is conclusively and comprehensively complete. The system is structurally secure, semantically accurate, fully covers all required statistics including Search, Content, and Engagement, and adheres strictly to the Enterprise design documentation without falling back to microservices or circumventing Moodle paradigms.
 
 No further blockers exist for TASK-009. Proceed to TASK-010.
+
+## Post-Handoff Work: UI Consistency and Authorization Finalization
+
+Menyusul penyelesaian TASK-009, dilakukan beberapa penyesuaian kritis terkait Manajemen Pengguna dan konsistensi desain UI Admin berdasarkan *feedback* lanjutan:
+
+### 11. Integrasi SSO Keycloak & RBAC Admin
+- **Defect:** Pengguna dengan role administrator gagal dikelola dari Portal Admin, integrasi OAuthCallback rusak karena environment desync, dan pengguna 'pedro' tidak memiliki akses Site Administrator di Moodle.
+- **Fix:** 
+  - Melakukan sinkronisasi .env *secrets* secara presisi antara Portal, Moodle, dan Keycloak.
+  - Memperbaiki koneksi BFF (Backend-for-Frontend) dari Next.js Server Actions ke Keycloak Admin REST API.
+  - Menyelaraskan akses role (Content Editor & Reviewer menjadi *read-only*, sementara Portal Administrator memiliki hak penuh).
+  - Menginjeksi *hard-update* ke dalam Moodle DB (mdl_role_assignments) untuk menjamin user 'pedro' memiliki otoritas Site Administrator secara langsung.
+
+### 12. Restrukturisasi Layout Manajemen Pengguna (Template Cuba)
+- **Defect:** Form 'Tambah Pengguna' dan 'Edit Pengguna' menggunakan desain vertikal standar yang kurang proporsional dan tidak memanfaatkan lebar layar dengan baik. Komponen tidak sepenuhnya mengadopsi standar semantik *Template Cuba*.
+- **Fix:** 
+  - Melakukan restrukturisasi pps/admin-web/src/app/dashboard/users/create/page.tsx dan pps/admin-web/src/app/dashboard/users/[id]/page.tsx.
+  - Mengimplementasikan layout *grid 2 kolom* (grid-cols-1 md:grid-cols-2) untuk input field yang berhubungan.
+  - Mengubah opsi checkbox *Role Platform* menjadi *Interactive Cards* berbasis grid yang responsif, memberikan batasan visual yang jelas (*border* dan *background highlight*) saat dipilih.
+
+### 13. Rebranding Warna Tema Utama Admin Web (Orange ke Biru Muda)
+- **Defect:** *Template Cuba* secara *default* menggunakan warna oranye (orange-600 / #c2410c) sebagai identitas utama, yang tidak sejalan dengan instruksi merek (brand identity) yang menginginkan warna **Biru Muda (Sky Blue)**.
+- **Fix:** 
+  - Merekayasa ulang file CSS global (pps/admin-web/src/app/globals.css), mengganti seluruh variabel CSS dmin-primary, dmin-primary-hover, dmin-accent-text, serta warna fokus dan border (misal: #c2410c, #f97316) menjadi turunan **Sky Blue** (#0284c7, #0ea5e9, #7dd3fc).
+  - Menjalankan pencarian dan penggantian (Find & Replace) secara global via skrip pada seluruh kode .tsx (termasuk form dan dashboard) untuk mengganti *utility classes* bawaan Tailwind dari varian orange-* ke sky-*.
+  - Memastikan transisi *Light Mode* dan *Dark Mode* tetap harmonis dengan warna biru muda baru.
+- **Validation:** Melakukan proses *build* ulang kontainer Docker 	eman-belajar-admin untuk menerapkan CSS terkompilasi ke lingkungan produksi lokal, memvalidasi nihilnya sisa-sisa warna oranye di kode sumber.
+

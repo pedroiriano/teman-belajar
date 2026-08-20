@@ -96,7 +96,7 @@ export default async function AdminAnnouncementsPage() {
                       <div><span className="font-medium">Selesai:</span> {ann.end_at ? new Date(ann.end_at).toLocaleDateString("id-ID") : '-'}</div>
                     </td>
                     <td className="p-4 text-sm">
-                      <Link href={`/dashboard/announcements/${ann.id}`} className="mr-4 font-bold text-orange-700 hover:text-orange-600">
+                      <Link href={`/dashboard/announcements/${ann.id}`} className="mr-4 font-bold text-sky-700 hover:text-sky-600">
                         Buka detail →
                       </Link>
                     </td>
@@ -110,3 +110,4 @@ export default async function AdminAnnouncementsPage() {
     </div>
   );
 }
+

@@ -125,7 +125,7 @@ export default async function AdminMediaPage() {
                     </td>
                     <td className="p-4 text-sm">
                       <div className="flex gap-3">
-                        <Link href={`/dashboard/media/${asset.id}`} className="font-bold text-orange-700 hover:text-orange-600">
+                        <Link href={`/dashboard/media/${asset.id}`} className="font-bold text-sky-700 hover:text-sky-600">
                           Kelola
                         </Link>
                         {/* We could add a public view link if active, e.g. /api/v1/media/{id}/content */}
@@ -151,3 +151,4 @@ export default async function AdminMediaPage() {
     </div>
   );
 }
+
