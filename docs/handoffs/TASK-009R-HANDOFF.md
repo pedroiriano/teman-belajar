@@ -33,3 +33,8 @@
 TASK-009R is comprehensively closed. All P0 architectural drift has been remediated.
 DO NOT CREATE TASK-009S.
 DO NOT IMPLEMENT TASK-010.
+
+## 8. DEPLOYMENT & ARTIFACTS
+- **Git Branch:** \ntigravity/task-009r-baseline-integrity-final\
+- **Final Commit Hash:** \3a1bc738577d2e1dc3208d34a640833494d630d1\
+- **E2E Testing Note:** Next.js build compilation for both Portal and Admin services completed successfully. Keycloak federated login/logout verification verified via HTTP state checks and architecture compliance validations.
