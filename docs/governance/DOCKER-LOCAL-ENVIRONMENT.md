@@ -158,6 +158,19 @@ Saat perubahan:
 7. Setelah perubahan client OIDC, jalankan wrapper action `sso`. Action ini
    hanya merekonsiliasi tiga client kanonis dan tidak boleh membuat client,
    realm, service, port, atau secret baru. Action `up` menjalankannya otomatis.
+8. Setelah perubahan plugin Moodle atau saat memperbaiki drift identitas
+   recovery pada volume lokal yang dipertahankan, jalankan wrapper action
+   `moodle-reconcile`. Action ini hanya menjalankan upgrade plugin resmi dan
+   rekonsiliasi idempoten melalui API Moodle; jangan menggantinya dengan query
+   atau perubahan langsung ke database Moodle. Di lingkungan lokal terkendali,
+   action ini juga menegakkan bahwa Moodle Site Administrator hanya terdiri dari
+   akun recovery aktif dengan auth `manual` dan, bila sudah terprovisi, satu akun
+   federasi exact yang ditentukan `TB_MOODLE_FEDERATED_ADMIN_USER`. Akun federasi
+   tersebut tetap wajib membawa role Keycloak `LMS Administrator` saat login;
+   `Portal Administrator` saja tidak cukup. Action menghapus assignment
+   system-level `Manager` dari akun non-recovery karena privilege federasi wajib
+   berasal dari jalur eksplisit di atas. Role integrasi least-privilege tidak
+   boleh ikut terhapus.
 
 Sebelum menyatakan selesai:
 
@@ -175,6 +188,18 @@ Gate SSO/SLO tambahan: client `teman-belajar-web`, `teman-belajar-admin`, dan
 masing-masing, session-required aktif, dan post-logout redirect hanya menuju
 URL Portal yang tervalidasi. Jangan menganggap `--import-realm` memperbarui
 realm yang sudah ada; gunakan action `sso` untuk rekonsiliasi idempotent.
+Portal/Admin initiated logout wajib memakai `TB_SSO_LOGOUT_BRIDGE_SECRET` yang
+unik (minimal 32 byte) untuk menandatangani rantai bridge top-level aplikasi
+pasangan dan Moodle. Service `web` wajib menerima `TB_ADMIN_URL` sebagai
+`ADMIN_PUBLIC_BASE_URL`; service `admin` wajib menerima `TB_WEB_URL` sebagai
+`PORTAL_PUBLIC_BASE_URL`. URL publik tidak boleh diturunkan dari hostname
+container/request internal. Setiap hop wajib fail closed terhadap signature,
+timestamp, parameter, origin, path, dan final return URL. Jangan memakai ulang
+secret client OIDC, NextAuth, atau `TB_PORTAL_INTERNAL_SECRET`.
+Moodle-initiated logout wajib memakai secret yang sama hanya untuk rantai
+top-level Moodle -> Portal -> Admin -> Keycloak yang exact-allowlisted. Route
+`/api/auth/moodle-logout-bridge` tidak boleh menerima next hop umum, arbitrary
+redirect, token, username, atau parameter tambahan/duplikat.
 
 ## 9. Format Prompt Ketat untuk Gemini AI Pro
 

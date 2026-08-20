@@ -33,7 +33,7 @@
             },
             {
                 "name": "LMS Administrator",
-                "description": "Administrator of LMS integrations without automatic Moodle site-admin grant"
+                "description": "Explicit Moodle Site Administrator entitlement; never implied by Portal Administrator"
             },
             {
                 "name": "Auditor",
@@ -141,7 +141,23 @@
                 "frontchannel.logout.url": "${MOODLE_BASE_URL}/local/temanbelajar/federated_logout.php",
                 "frontchannel.logout.session.required": "true",
                 "post.logout.redirect.uris": "${MOODLE_BASE_URL}/*"
-            }
+            },
+            "protocolMappers": [
+                {
+                    "name": "teman-belajar-realm-roles",
+                    "protocol": "openid-connect",
+                    "protocolMapper": "oidc-usermodel-realm-role-mapper",
+                    "consentRequired": false,
+                    "config": {
+                        "multivalued": "true",
+                        "userinfo.token.claim": "true",
+                        "id.token.claim": "true",
+                        "access.token.claim": "true",
+                        "claim.name": "teman_belajar_roles",
+                        "jsonType.label": "String"
+                    }
+                }
+            ]
         }
     ],
     "users": [

@@ -54,6 +54,10 @@ export default async function AdminMediaPage() {
     return <AdminUnauthorized resource="media" />;
   }
 
+  const canUpload = session.roles?.some((r: string) =>
+    ["Portal Administrator", "Content Editor"].includes(r)
+  );
+
   const mediaRes = accessToken ? await getAdminMedia(accessToken) : null;
   const mediaAssets = Array.isArray(mediaRes?.data) ? mediaRes.data : [];
 
@@ -66,7 +70,7 @@ export default async function AdminMediaPage() {
           </div>
         </div>
 
-        <MediaUploader />
+        {canUpload && <MediaUploader />}
 
         {mediaAssets.some((asset: any) => asset.detected_mime_type.startsWith("image/")) && <section className="mb-7" aria-labelledby="media-gallery-title"><div className="mb-4 flex items-end justify-between"><div><p className="text-xs font-black uppercase tracking-wider text-slate-400">Pratinjau visual</p><h2 id="media-gallery-title" className="mt-1 text-xl font-black text-slate-900">Galeri aset</h2></div><span className="admin-status bg-slate-100 text-slate-600">{mediaAssets.length} aset</span></div><div className="grid grid-cols-2 gap-4 md:grid-cols-4 xl:grid-cols-6">{mediaAssets.filter((asset: any) => asset.detected_mime_type.startsWith("image/")).slice(0, 6).map((asset: any) => <Link key={asset.id} href={`/dashboard/media/${asset.id}`} className="admin-card group overflow-hidden"><span className="block aspect-square overflow-hidden bg-slate-100"><img src={`/api/bff/media/${asset.id}/content`} alt={asset.alt_text || asset.original_filename} className="h-full w-full object-cover transition duration-300 group-hover:scale-105" /></span><span className="block truncate p-3 text-xs font-bold text-slate-700">{asset.original_filename}</span></Link>)}</div></section>}
 
@@ -79,7 +83,7 @@ export default async function AdminMediaPage() {
               {!mediaRes || !mediaRes.data || mediaRes.data.length === 0 ? (
                 <tr>
                   <td colSpan={5} className="admin-empty">
-                    Belum ada media. Silakan unggah berkas baru.
+                    {canUpload ? "Belum ada media. Silakan unggah berkas baru." : "Belum ada media yang dapat ditinjau."}
                   </td>
                 </tr>
               ) : (
@@ -126,7 +130,7 @@ export default async function AdminMediaPage() {
                     <td className="p-4 text-sm">
                       <div className="flex gap-3">
                         <Link href={`/dashboard/media/${asset.id}`} className="font-bold text-sky-700 hover:text-sky-600">
-                          Kelola
+                          {canUpload ? "Kelola" : "Lihat"}
                         </Link>
                         {/* We could add a public view link if active, e.g. /api/v1/media/{id}/content */}
                         {asset.status === 'active' && (

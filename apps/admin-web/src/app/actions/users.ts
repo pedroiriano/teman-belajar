@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { isProductRole, KeycloakRole, PRODUCT_ROLES, ProductRole } from "@/types/user";
+import { revalidatePath } from "next/cache";
 
 const MANAGED_ROLE_ALLOWLIST: readonly ProductRole[] = PRODUCT_ROLES;
 
@@ -42,6 +43,11 @@ function requestedRoles(formData: FormData): ProductRole[] {
     }
     return value;
   });
+}
+
+function validatedUserId(userId: string): string {
+  if (!/^[0-9a-f-]{36}$/i.test(userId)) throw new Error("Invalid user identifier.");
+  return userId;
 }
 
 export async function createUserAction(formData: FormData) {
@@ -100,6 +106,7 @@ export async function createUserAction(formData: FormData) {
 export async function toggleUserAction(userId: string, enabled: boolean) {
   const session = await checkAdmin();
   const actor = session.actorId || "unknown";
+  validatedUserId(userId);
   
   const res = await kcAdminFetch(`/users/${userId}`, {
     method: "PUT",
@@ -111,11 +118,35 @@ export async function toggleUserAction(userId: string, enabled: boolean) {
   }
   
   safeAudit(enabled ? "user.enabled" : "user.disabled", actor, userId);
+  revalidatePath(`/dashboard/users/${userId}`);
+  revalidatePath("/dashboard/users");
+}
+
+export async function updateUserProfileAction(userId: string, formData: FormData) {
+  const session = await checkAdmin();
+  const actor = session.actorId || "unknown";
+  validatedUserId(userId);
+
+  const firstName = requiredString(formData, "firstName", 255);
+  const lastName = requiredString(formData, "lastName", 255);
+  const email = requiredString(formData, "email", 320);
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error("Invalid email.");
+
+  const res = await kcAdminFetch(`/users/${userId}`, {
+    method: "PUT",
+    body: JSON.stringify({ firstName, lastName, email }),
+  });
+  if (!res.ok) throw new Error(`Failed to update user profile. Status: ${res.status}`);
+
+  safeAudit("user.profile_updated", actor, userId, { fields: ["firstName", "lastName", "email"] });
+  revalidatePath(`/dashboard/users/${userId}`);
+  revalidatePath("/dashboard/users");
 }
 
 export async function updateUserRolesAction(userId: string, formData: FormData) {
   const session = await checkAdmin();
   const actor = session.actorId || "unknown";
+  validatedUserId(userId);
 
   const selectedRoleNames = requestedRoles(formData);
   
@@ -153,4 +184,7 @@ export async function updateUserRolesAction(userId: string, formData: FormData) 
     if (!res.ok) throw new Error("Failed to remove product roles.");
     safeAudit("role.removed", actor, userId, { roles: rolesToRemoveNames });
   }
+
+  revalidatePath(`/dashboard/users/${userId}`);
+  revalidatePath("/dashboard/users");
 }

@@ -41,6 +41,49 @@ configure_client "teman-belajar-web" "$PORTAL_WEB_URL/api/auth/frontchannel-logo
 configure_client "teman-belajar-admin" "$ADMIN_WEB_URL/api/auth/frontchannel-logout" "$ADMIN_WEB_URL"
 configure_client "teman-belajar-moodle" "$MOODLE_BASE_URL/local/temanbelajar/federated_logout.php" "$MOODLE_BASE_URL"
 
+# Moodle consumes a dedicated, least-ambiguity realm-role claim. Do not infer
+# Moodle authority from Portal Administrator or other application roles.
+moodle_uuid=$("$kcadm" get clients --config "$config_file" -r "$realm" \
+  -q "clientId=teman-belajar-moodle" --fields id --format csv --noquotes)
+mapper_name="teman-belajar-realm-roles"
+mapper_rows=$("$kcadm" get "clients/$moodle_uuid/protocol-mappers/models" \
+  --config "$config_file" -r "$realm" --fields id,name --format csv --noquotes)
+mapper_id=""
+while IFS=, read -r candidate_id candidate_name; do
+  if [[ "$candidate_name" == "$mapper_name" ]]; then
+    mapper_id="$candidate_id"
+    break
+  fi
+done <<<"$mapper_rows"
+if [[ -z "$mapper_id" ]]; then
+  "$kcadm" create "clients/$moodle_uuid/protocol-mappers/models" \
+    --config "$config_file" -r "$realm" \
+    -s "name=$mapper_name" \
+    -s protocol=openid-connect \
+    -s protocolMapper=oidc-usermodel-realm-role-mapper \
+    -s consentRequired=false \
+    -s 'config."multivalued"=true' \
+    -s 'config."userinfo.token.claim"=true' \
+    -s 'config."id.token.claim"=true' \
+    -s 'config."access.token.claim"=true' \
+    -s 'config."claim.name"=teman_belajar_roles' \
+    -s 'config."jsonType.label"=String' >/dev/null
+else
+  "$kcadm" update "clients/$moodle_uuid/protocol-mappers/models/$mapper_id" \
+    --config "$config_file" -r "$realm" \
+    -s "name=$mapper_name" \
+    -s protocol=openid-connect \
+    -s protocolMapper=oidc-usermodel-realm-role-mapper \
+    -s consentRequired=false \
+    -s 'config."multivalued"=true' \
+    -s 'config."userinfo.token.claim"=true' \
+    -s 'config."id.token.claim"=true' \
+    -s 'config."access.token.claim"=true' \
+    -s 'config."claim.name"=teman_belajar_roles' \
+    -s 'config."jsonType.label"=String' >/dev/null
+fi
+echo "PASS Keycloak Moodle role claim mapper: $mapper_name"
+
 canonical_roles=(
   "Guest"
   "Learner"

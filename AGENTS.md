@@ -89,6 +89,10 @@ Rules:
 9. Audit third-party dependencies before introducing them into product code.
 10. Never commit purchase codes, license keys, invoices, or vendor credentials.
 11. Follow `docs/design-system/*` for UI implementation decisions.
+12. Cuba Admin dark mode uses the fixed bright-light-blue action/accent palette
+    documented in `docs/design-system/DESIGN-TOKENS.md`; orange or vendor violet
+    must not be used as the dark-mode primary/accent color. Light mode keeps its
+    separately documented Teman Belajar Admin palette.
 
 ## 4. Backend Rules
 

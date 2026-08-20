@@ -168,7 +168,7 @@ func main() {
 	log.Printf("Initializing OIDC Verifier for issuer %s", issuerURL)
 	verifier, err := middleware.InitVerifier(context.Background(), issuerURL, audience)
 	if err != nil {
-		log.Printf("Warning: OIDC init failed: %v. API will start but auth may fail if Keycloak isn't up yet.", err)
+		log.Fatalf("Failed to initialize OIDC verifier: %v", err)
 	}
 
 	authConfig := middleware.AuthConfig{

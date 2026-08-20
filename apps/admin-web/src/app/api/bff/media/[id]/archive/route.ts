@@ -1,12 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/lib/auth";
+import { getServerAccessToken } from "@/lib/server-auth";
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
-    const session: any = await getServerSession(authOptions);
-    if (!session || !session.accessToken) {
+    const accessToken = await getServerAccessToken();
+    if (!accessToken) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -16,7 +15,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     const backendRes = await fetch(backendUrl, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${session.accessToken}`,
+        Authorization: `Bearer ${accessToken}`,
       },
     });
 

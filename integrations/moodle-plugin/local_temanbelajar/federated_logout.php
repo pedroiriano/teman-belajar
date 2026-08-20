@@ -25,4 +25,18 @@ if (isloggedin() && !isguestuser()) {
     require_logout();
 }
 
+// Keycloak delivers Front-Channel Logout in a cross-origin iframe. Moodle's
+// core web session cookie is SameSite=Lax, so the browser may intentionally
+// omit it from that iframe request. Expire the governed Moodle session cookie
+// unconditionally after issuer/sid validation: this reconciles the browser on
+// its next navigation without querying Moodle's database or modifying core.
+setcookie(session_name(), '', [
+    'expires' => time() - HOURSECS,
+    'path' => $CFG->sessioncookiepath ?? '/',
+    'domain' => $CFG->sessioncookiedomain ?? '',
+    'secure' => is_moodle_cookie_secure(),
+    'httponly' => true,
+    'samesite' => 'Lax',
+]);
+
 http_response_code(204);

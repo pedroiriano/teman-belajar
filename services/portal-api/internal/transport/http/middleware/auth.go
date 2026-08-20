@@ -50,6 +50,12 @@ type OIDCVerifier interface {
 func AuthMiddleware(verifier OIDCVerifier, config AuthConfig) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if verifier == nil {
+				log.Printf("Token verification unavailable: OIDC verifier is not initialized")
+				http.Error(w, `{"type":"about:blank","title":"Service Unavailable","status":503,"detail":"Authentication service is temporarily unavailable"}`, http.StatusServiceUnavailable)
+				return
+			}
+
 			authHeader := r.Header.Get("Authorization")
 			if authHeader == "" {
 				http.Error(w, `{"type":"about:blank","title":"Unauthorized","status":401,"detail":"Missing Authorization header"}`, http.StatusUnauthorized)

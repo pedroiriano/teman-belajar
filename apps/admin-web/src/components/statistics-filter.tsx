@@ -23,7 +23,7 @@ export function StatisticsFilter() {
         id="days-filter"
         value={currentDays}
         onChange={handleChange}
-        className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300"
+        className="admin-input !w-auto !rounded-lg !px-3 !py-2 font-semibold"
       >
         <option value="1">1 Hari Terakhir</option>
         <option value="7">7 Hari Terakhir</option>

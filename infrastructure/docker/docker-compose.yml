@@ -167,7 +167,11 @@ services:
       MOODLE_ADMIN_USER: ${TB_MOODLE_ADMIN_USER:?Set TB_MOODLE_ADMIN_USER in infrastructure/docker/.env}
       MOODLE_ADMIN_PASSWORD: ${TB_MOODLE_ADMIN_PASSWORD:?Set TB_MOODLE_ADMIN_PASSWORD in infrastructure/docker/.env}
       MOODLE_ADMIN_EMAIL: ${TB_MOODLE_ADMIN_EMAIL:?Set TB_MOODLE_ADMIN_EMAIL in infrastructure/docker/.env}
+      MOODLE_FEDERATED_ADMIN_USER: ${TB_MOODLE_FEDERATED_ADMIN_USER:?Set TB_MOODLE_FEDERATED_ADMIN_USER in infrastructure/docker/.env}
       MOODLE_ALLOW_INSECURE_OAUTH2: ${TB_MOODLE_ALLOW_INSECURE_OAUTH2:?Set TB_MOODLE_ALLOW_INSECURE_OAUTH2 in infrastructure/docker/.env}
+      SSO_LOGOUT_BRIDGE_SECRET: ${TB_SSO_LOGOUT_BRIDGE_SECRET:?Set TB_SSO_LOGOUT_BRIDGE_SECRET in infrastructure/docker/.env}
+      PORTAL_WEB_URL: ${TB_WEB_URL:?Set TB_WEB_URL in infrastructure/docker/.env}
+      ADMIN_WEB_URL: ${TB_ADMIN_URL:?Set TB_ADMIN_URL in infrastructure/docker/.env}
     ports:
       - "${TB_BIND_ADDRESS:?Set TB_BIND_ADDRESS in infrastructure/docker/.env}:${TB_MOODLE_PORT:?Set TB_MOODLE_PORT in infrastructure/docker/.env}:80"
     extra_hosts:
@@ -207,7 +211,11 @@ services:
       MOODLE_ADMIN_USER: ${TB_MOODLE_ADMIN_USER:?Set TB_MOODLE_ADMIN_USER in infrastructure/docker/.env}
       MOODLE_ADMIN_PASSWORD: ${TB_MOODLE_ADMIN_PASSWORD:?Set TB_MOODLE_ADMIN_PASSWORD in infrastructure/docker/.env}
       MOODLE_ADMIN_EMAIL: ${TB_MOODLE_ADMIN_EMAIL:?Set TB_MOODLE_ADMIN_EMAIL in infrastructure/docker/.env}
+      MOODLE_FEDERATED_ADMIN_USER: ${TB_MOODLE_FEDERATED_ADMIN_USER:?Set TB_MOODLE_FEDERATED_ADMIN_USER in infrastructure/docker/.env}
       MOODLE_ALLOW_INSECURE_OAUTH2: ${TB_MOODLE_ALLOW_INSECURE_OAUTH2:?Set TB_MOODLE_ALLOW_INSECURE_OAUTH2 in infrastructure/docker/.env}
+      SSO_LOGOUT_BRIDGE_SECRET: ${TB_SSO_LOGOUT_BRIDGE_SECRET:?Set TB_SSO_LOGOUT_BRIDGE_SECRET in infrastructure/docker/.env}
+      PORTAL_WEB_URL: ${TB_WEB_URL:?Set TB_WEB_URL in infrastructure/docker/.env}
+      ADMIN_WEB_URL: ${TB_ADMIN_URL:?Set TB_ADMIN_URL in infrastructure/docker/.env}
     extra_hosts:
       - keycloak.teman-belajar.localhost:host-gateway
     depends_on:
@@ -324,9 +332,11 @@ services:
       KEYCLOAK_SECRET: ${TB_KEYCLOAK_WEB_CLIENT_SECRET:?Set TB_KEYCLOAK_WEB_CLIENT_SECRET in infrastructure/docker/.env}
       KEYCLOAK_ISSUER: ${TB_KEYCLOAK_URL:?Set TB_KEYCLOAK_URL in infrastructure/docker/.env}/realms/teman-belajar
       POST_LOGOUT_REDIRECT_URL: ${TB_WEB_URL:?Set TB_WEB_URL in infrastructure/docker/.env}
+      ADMIN_PUBLIC_BASE_URL: ${TB_ADMIN_URL:?Set TB_ADMIN_URL in infrastructure/docker/.env}
       PORTAL_API_INTERNAL_URL: http://api:8080
       PORTAL_INTERNAL_SECRET: ${TB_PORTAL_INTERNAL_SECRET:?Set TB_PORTAL_INTERNAL_SECRET in infrastructure/docker/.env}
       MOODLE_PUBLIC_BASE_URL: ${TB_MOODLE_URL:?Set TB_MOODLE_URL in infrastructure/docker/.env}
+      SSO_LOGOUT_BRIDGE_SECRET: ${TB_SSO_LOGOUT_BRIDGE_SECRET:?Set TB_SSO_LOGOUT_BRIDGE_SECRET in infrastructure/docker/.env}
     extra_hosts:
       - keycloak.teman-belajar.localhost:host-gateway
     ports:
@@ -362,6 +372,9 @@ services:
       KEYCLOAK_MANAGEMENT_CLIENT_ID: teman-belajar-admin-management
       KEYCLOAK_MANAGEMENT_CLIENT_SECRET: ${TB_KEYCLOAK_MANAGEMENT_CLIENT_SECRET:?Set TB_KEYCLOAK_MANAGEMENT_CLIENT_SECRET in infrastructure/docker/.env}
       POST_LOGOUT_REDIRECT_URL: ${TB_ADMIN_URL:?Set TB_ADMIN_URL in infrastructure/docker/.env}
+      PORTAL_PUBLIC_BASE_URL: ${TB_WEB_URL:?Set TB_WEB_URL in infrastructure/docker/.env}
+      MOODLE_PUBLIC_BASE_URL: ${TB_MOODLE_URL:?Set TB_MOODLE_URL in infrastructure/docker/.env}
+      SSO_LOGOUT_BRIDGE_SECRET: ${TB_SSO_LOGOUT_BRIDGE_SECRET:?Set TB_SSO_LOGOUT_BRIDGE_SECRET in infrastructure/docker/.env}
       PORTAL_API_INTERNAL_URL: http://api:8080
       PORTAL_INTERNAL_SECRET: ${TB_PORTAL_INTERNAL_SECRET:?Set TB_PORTAL_INTERNAL_SECRET in infrastructure/docker/.env}
     extra_hosts:

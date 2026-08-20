@@ -93,7 +93,7 @@ export default function CreateAnnouncementPage() {
                   required
                   value={slug}
                   onChange={(e) => setSlug(e.target.value)}
-                  className="admin-input !bg-slate-50"
+                  className="admin-input"
                 />
               </div>
             </div>

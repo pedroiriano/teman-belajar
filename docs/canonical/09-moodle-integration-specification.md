@@ -74,6 +74,63 @@ periode; guest, site admin, akun deleted/suspended, serta staf non-learner tidak
 dihitung. Completion rate adalah completed eligible enrolments sampai akhir
 periode dibagi eligible learner-course enrolments pada cohort yang sama. Role
 `Portal Administrator` tidak otomatis memberi Moodle Site Administrator.
+Observer login `local_temanbelajar` menegakkan batas ini saat runtime. Hanya
+username yang sama persis dengan `MOODLE_FEDERATED_ADMIN_USER` **dan** membawa
+claim Keycloak khusus `LMS Administrator` dari mapper
+`teman-belajar-realm-roles` yang boleh memperoleh Moodle Site Administrator.
+`Portal Administrator` maupun `Super Administrator` tidak menyiratkan hak ini.
+Login OAuth2 federasi lain yang terpetakan ke Site Administrator atau memperoleh
+kapabilitas administratif dari role `Manager` pada system context harus ditolak
+dan sesi Moodle yang baru dibuat harus dihancurkan. Administrator pemulihan Moodle
+tidak boleh ditautkan ke Keycloak dan tetap menjadi identitas lokal terpisah.
+Konfigurasi Docker wajib memberi administrator pemulihan tersebut email yang
+berbeda dari semua identitas Keycloak. Rekonsiliasi startup memperbarui profil
+pemulihan melalui Moodle user API dan menghapus setiap OAuth2 linked login yang
+menempel pada Site Administrator sebelum Apache melayani trafik.
+Administrator pemulihan wajib di-resolve dari username lokal yang dikonfigurasi,
+bukan dari urutan daftar Site Administrator. Pada lingkungan Docker lokal
+terkendali, akun recovery aktif dengan auth `manual` dan maksimal satu akun
+federasi yang dikonfigurasi eksplisit adalah satu-satunya Site Administrator;
+assignment lain yang drift wajib dilepas. OAuth2 linked login milik akun federasi
+yang disetujui harus dipertahankan, sedangkan link pada recovery dan administrator
+lain wajib dibersihkan. Rekonsiliasi juga
+wajib melepas setiap assignment role ber-archetype `manager` pada system context
+dari akun non-recovery tanpa menyentuh role integrasi least-privilege. Jika username recovery
+tidak ada, rekonsiliasi membuat ulang akun `manual` melalui Moodle user API
+menggunakan password hasil injeksi environment tanpa mencetaknya. Jika email
+recovery sudah dimiliki akun lokal `manual` aktif yang masih Site Administrator,
+record tersebut wajib diadopsi dengan memulihkan username/password konfigurasi,
+bukan membuat duplikat. Pembersihan linked login wajib
+memakai ID pada objek pengguna hasil API Moodle, bukan key koleksi. Pada volume
+lokal yang dipertahankan, action wrapper `moodle-reconcile` menjalankan upgrade
+plugin dan rekonsiliasi idempoten tanpa query database langsung. Jika core
+OAuth2 sempat memperbarui profil recovery sebelum observer memblokir login,
+observer wajib memulihkan email lokalnya sebelum sesi dihancurkan. Pencabutan
+role `LMS Administrator` wajib mencabut grant Site Administrator pada login
+federasi berikutnya; perubahan role sensitif harus diikuti terminasi sesi aktif.
+
+Logout yang dimulai dari Portal atau Admin wajib memakai rantai navigasi
+top-level: aplikasi pemulai -> `/api/auth/logout-bridge` aplikasi web pasangan
+-> Moodle `local/temanbelajar/logout_bridge.php` -> route final aplikasi pemulai
+-> Keycloak RP logout. Dengan demikian cookie NextAuth kedua aplikasi dan cookie
+Moodle dibersihkan sebagai first-party sebelum sesi Keycloak diakhiri. Setiap
+hop bridge wajib ditandatangani HMAC-SHA256 memakai secret khusus minimal 32
+byte, memiliki timestamp maksimum 60 detik dan nonce, serta memakai exact
+origin/path/return-URL allowlist. Parameter tambahan atau duplikat wajib ditolak.
+Ini diperlukan karena browser dapat menolak cookie NextAuth maupun Moodle pada
+iframe front-channel lintas-origin. Secret bridge harus berbeda dari secret
+NextAuth, client OIDC, dan internal API; nilai nyata hanya berada di environment
+yang diabaikan Git. Receiver iframe tetap dipertahankan sebagai defense in depth,
+bukan sebagai mekanisme tunggal yang menentukan keberhasilan logout global.
+Logout yang dimulai dari Moodle wajib lebih dahulu mengakhiri sesi lokal Moodle,
+lalu memakai rantai signed top-level Moodle -> Portal
+`/api/auth/moodle-logout-bridge` -> Admin
+`/api/auth/moodle-logout-bridge` -> Keycloak RP logout. Portal wajib memvalidasi
+signature request Moodle, origin/path Admin, signature hop Admin, dan URL logout
+Keycloak yang exact. Admin wajib memvalidasi signature hop-nya dan URL Keycloak
+yang exact. Kedua route web membersihkan seluruh chunk cookie NextAuth masing-
+masing sebelum HTTP 303; Moodle tidak boleh mengirim token atau identitas pada
+query string.
 
 Snapshot harus menyimpan:
 - source;
@@ -132,7 +189,10 @@ Kontrak implementasi:
    publik setelah sesi IdP berakhir.
 4. `local_temanbelajar/federated_logout.php` adalah receiver front-channel yang
    idempotent, memvalidasi issuer, tidak menyimpan token, dan mengirim
-   `Cache-Control: no-store`.
+   `Cache-Control: no-store`. Setelah validasi `iss` dan `sid`, receiver wajib
+   menghapus cookie browser Moodle secara idempotent meskipun cookie
+   `SameSite=Lax` tidak dikirim oleh iframe lintas-origin Keycloak; perubahan
+   Moodle core tetap dilarang.
 5. Portal/Admin/Moodle tetap memiliki cookie lokal masing-masing. “Otomatis
    login” berarti aplikasi melakukan OIDC flow tanpa prompt ketika sesi
    Keycloak aktif; bukan membaca atau menyalin cookie aplikasi lain.

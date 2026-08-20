@@ -2,6 +2,8 @@ import { NextAuthOptions } from "next-auth";
 import KeycloakProvider from "next-auth/providers/keycloak";
 import { jwtDecode } from "jwt-decode";
 
+import { ADMIN_SESSION_COOKIE_NAME } from "@/lib/auth-cookies";
+
 interface KeycloakTokenParsed {
   sid?: string;
   realm_access?: {
@@ -22,13 +24,12 @@ export const authOptions: NextAuthOptions = {
       },
     }),
   ],
-  cookies: { sessionToken: { name: "admin-next-auth.session-token", options: { httpOnly: true, sameSite: "lax", path: "/", secure: process.env.NODE_ENV === "production" } }, callbackUrl: { name: "admin-next-auth.callback-url", options: { sameSite: "lax", path: "/", secure: process.env.NODE_ENV === "production" } }, csrfToken: { name: "admin-next-auth.csrf-token", options: { httpOnly: true, sameSite: "lax", path: "/", secure: process.env.NODE_ENV === "production" } }, pkceCodeVerifier: { name: "admin-next-auth.pkce.code_verifier", options: { httpOnly: true, sameSite: "lax", path: "/", secure: process.env.NODE_ENV === "production" } }, state: { name: "admin-next-auth.state", options: { httpOnly: true, sameSite: "lax", path: "/", secure: process.env.NODE_ENV === "production" } }, nonce: { name: "admin-next-auth.nonce", options: { httpOnly: true, sameSite: "lax", path: "/", secure: process.env.NODE_ENV === "production" } } }, session: {
+  cookies: { sessionToken: { name: ADMIN_SESSION_COOKIE_NAME, options: { httpOnly: true, sameSite: "none", path: "/", secure: true } }, callbackUrl: { name: "admin-next-auth.callback-url", options: { sameSite: "lax", path: "/", secure: process.env.NODE_ENV === "production" } }, csrfToken: { name: "admin-next-auth.csrf-token", options: { httpOnly: true, sameSite: "lax", path: "/", secure: process.env.NODE_ENV === "production" } }, pkceCodeVerifier: { name: "admin-next-auth.pkce.code_verifier", options: { httpOnly: true, sameSite: "lax", path: "/", secure: process.env.NODE_ENV === "production" } }, state: { name: "admin-next-auth.state", options: { httpOnly: true, sameSite: "lax", path: "/", secure: process.env.NODE_ENV === "production" } }, nonce: { name: "admin-next-auth.nonce", options: { httpOnly: true, sameSite: "lax", path: "/", secure: process.env.NODE_ENV === "production" } } }, session: {
     strategy: "jwt",
   },
   callbacks: {
     async jwt({ token, account }) {
       if (account) {
-        token.idToken = account.id_token;
         token.accessToken = account.access_token;
         token.refreshToken = account.refresh_token;
         token.expiresAt = account.expires_at;
@@ -85,7 +86,6 @@ export const authOptions: NextAuthOptions = {
     },
     async session({ session, token }) {
 	  session.roles = Array.isArray(token.roles) ? token.roles : [];
-	  session.accessToken = token.accessToken;
 	  session.actorId = token.sub;
       return session;
     },
