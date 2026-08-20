@@ -1,4 +1,3 @@
-import { getToken } from "next-auth/jwt";
 import { NextRequest, NextResponse } from "next/server";
 
 import { expireNextAuthCookies } from "@/lib/auth-cookies";
@@ -13,7 +12,11 @@ export async function GET(request: NextRequest) {
   const sessionId = request.nextUrl.searchParams.get("sid");
   if (!expectedIssuer || issuer !== expectedIssuer || !sessionId) return response;
 
-  const token = await getToken({ req: request, secret: process.env.NEXTAUTH_SECRET });
-  if (typeof token?.oidcSid !== "string" || token.oidcSid !== sessionId) return response;
+  // OIDC Front-Channel Logout is an issuer-bound browser notification. The
+  // current HttpOnly cookie already identifies the local browser session;
+  // requiring a second sid decoded from that cookie made logout brittle after
+  // token rotation and left valid Admin sessions alive. Match the governed
+  // issuer exactly and require Keycloak's non-empty sid, consistent with the
+  // Moodle receiver, then expire every local NextAuth cookie chunk.
   return expireNextAuthCookies(request, response);
 }

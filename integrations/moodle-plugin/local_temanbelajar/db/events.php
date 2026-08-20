@@ -13,6 +13,11 @@ defined('MOODLE_INTERNAL') || die();
 
 $observers = [
     [
+        'eventname' => '\\core\\event\\user_loggedin',
+        'callback' => '\\local_temanbelajar\\observer::user_loggedin',
+        'priority' => 1000,
+    ],
+    [
         'eventname' => '\\core\\event\\user_loggedout',
         'callback' => '\\local_temanbelajar\\observer::user_loggedout',
         'priority' => 1000,

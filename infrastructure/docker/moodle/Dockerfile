@@ -36,7 +36,11 @@ RUN a2enmod rewrite \
     && sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf \
     && sed -ri -e 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf \
     && echo "AcceptPathInfo On" >> /etc/apache2/apache2.conf \
-    && echo "LimitRequestFieldSize 65536" >> /etc/apache2/apache2.conf
+    # Portal and Admin use independent encrypted OIDC cookies on localhost;
+    # cookie scope ignores ports, so Moodle receives both session envelopes.
+    # Keep a finite local-only ceiling and cap the number of header fields.
+    && echo "LimitRequestFieldSize 262144" >> /etc/apache2/apache2.conf \
+    && echo "LimitRequestFields 64" >> /etc/apache2/apache2.conf
 
 # Increase PHP limits for Moodle
 RUN echo "memory_limit = 512M" > /usr/local/etc/php/conf.d/moodle.ini \

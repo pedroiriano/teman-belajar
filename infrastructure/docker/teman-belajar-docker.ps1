@@ -1,7 +1,7 @@
 [CmdletBinding()]
 param(
     [Parameter(Position = 0)]
-    [ValidateSet("config", "up", "down", "status", "logs", "sso", "verify")]
+    [ValidateSet("config", "up", "down", "status", "logs", "sso", "moodle-reconcile", "verify")]
     [string]$Action = "status"
 )
 
@@ -38,9 +38,11 @@ $RequiredKeys = @(
     "TB_KEYCLOAK_MOODLE_CLIENT_SECRET", "TB_KEYCLOAK_SEED_ADMIN_PASSWORD",
     "TB_KEYCLOAK_SEED_LEARNER_PASSWORD", "TB_MOODLE_ADMIN_USER",
     "TB_MOODLE_ADMIN_PASSWORD", "TB_MOODLE_ADMIN_EMAIL",
+    "TB_MOODLE_FEDERATED_ADMIN_USER",
+    "TB_SSO_LOGOUT_BRIDGE_SECRET",
     "TB_WEB_NEXTAUTH_SECRET", "TB_ADMIN_NEXTAUTH_SECRET",
     "TB_GRAFANA_ADMIN_USER", "TB_GRAFANA_ADMIN_PASSWORD",
-    "TB_SEARCH_CAPTURE_RAW_QUERY", "TB_PORTAL_INTERNAL_SECRET"
+    "TB_KEYCLOAK_MANAGEMENT_CLIENT_SECRET"
 )
 
 $Missing = @($RequiredKeys | Where-Object {
@@ -119,12 +121,23 @@ if ($Environment["TB_MEILI_INDEX_NAME"] -notmatch "^[a-z][a-z0-9_]*$") {
     throw "TB_MEILI_INDEX_NAME must be a lowercase engine identifier."
 }
 
-if ($Environment["TB_SEARCH_CAPTURE_RAW_QUERY", "TB_PORTAL_INTERNAL_SECRET"] -ne "false") {
+if ($Environment["TB_SEARCH_CAPTURE_RAW_QUERY"] -ne "false") {
     throw "TB_SEARCH_CAPTURE_RAW_QUERY must remain false; raw search-query capture is prohibited by default."
 }
 
 if ($Environment["TB_MOODLE_ALLOW_INSECURE_OAUTH2"] -notin @("true", "false")) {
     throw "TB_MOODLE_ALLOW_INSECURE_OAUTH2 must be true or false. Production must use false."
+}
+
+$MoodleAdminEmail = $Environment["TB_MOODLE_ADMIN_EMAIL"].Trim().ToLowerInvariant()
+if ($MoodleAdminEmail -in @("admin@teman-belajar.local", "learner@teman-belajar.local")) {
+    throw "TB_MOODLE_ADMIN_EMAIL must be a unique local recovery identity and must not match a Keycloak seed user."
+}
+
+$MoodleFederatedAdminUser = $Environment["TB_MOODLE_FEDERATED_ADMIN_USER"].Trim()
+if ([string]::IsNullOrWhiteSpace($MoodleFederatedAdminUser) -or
+    $MoodleFederatedAdminUser -eq $Environment["TB_MOODLE_ADMIN_USER"].Trim()) {
+    throw "TB_MOODLE_FEDERATED_ADMIN_USER must identify a distinct federated Moodle account."
 }
 
 $ComposeArguments = @(
@@ -162,6 +175,10 @@ switch ($Action) {
     }
     "sso" {
         Invoke-Compose @("exec", "-T", "keycloak", "bash", "/opt/keycloak/data/import/reconcile-sso-clients.sh")
+    }
+    "moodle-reconcile" {
+        Invoke-Compose @("exec", "-T", "--user", "www-data", "moodle", "php", "/var/www/html/admin/cli/upgrade.php", "--non-interactive")
+        Invoke-Compose @("exec", "-T", "--user", "www-data", "moodle", "php", "/var/www/html/public/local/temanbelajar/cli/reconcile_integration.php")
     }
     "verify" {
         if (-not (Get-Command curl.exe -ErrorAction SilentlyContinue)) {

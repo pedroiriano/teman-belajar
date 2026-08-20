@@ -1341,30 +1341,12 @@ paths:
       operationId: listLearningCourseGrades
 
 
-  /api/v1/internal/analytics/statistics:
-    get:
-      summary: Retrieve product analytics and API statistics
-      security:
-        - KeycloakToken: []
-      parameters:
-        - name: days
-          in: query
-          required: false
-          schema:
-            type: integer
-            enum: [1, 7, 30, 90, 180, 365]
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StatisticsResponse'
-
   /api/v1/analytics/events:
     post:
+      operationId: createPublicAnalyticsEvent
       summary: Submit a public product analytics event
       tags: [Analytics]
+      security: []
       requestBody:
         required: true
         content:
@@ -1377,11 +1359,13 @@ paths:
         '413':
           description: Payload Too Large
         '422':
-          $ref: '#/components/responses/UnprocessableEntity'
+          $ref: '#/components/responses/ValidationError'
   /api/v1/internal/analytics/events:
     post:
+      operationId: createInternalAnalyticsEvent
       summary: Submit a trusted internal analytics event
       tags: [Analytics]
+      security: []
       parameters:
         - in: header
           name: X-Internal-Token
@@ -1400,11 +1384,14 @@ paths:
         '403':
           $ref: '#/components/responses/Forbidden'
         '422':
-          $ref: '#/components/responses/UnprocessableEntity'
+          $ref: '#/components/responses/ValidationError'
   /api/v1/admin/analytics/statistics:
     get:
+      operationId: getAdminAnalyticsStatistics
       summary: Get platform statistics (Admin)
       tags: [Analytics]
+      security:
+        - bearerAuth: []
       parameters:
         - in: query
           name: days
@@ -1418,7 +1405,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AdminStatisticsResponse'
+                $ref: '#/components/schemas/StatisticsResponse'
         '401':
           $ref: '#/components/responses/Unauthorized'
   /api/v1/search:
@@ -2249,9 +2236,11 @@ components:
 
     StatisticsResponse:
       type: object
+      required: [api, page_views, learning, sso, search, content, engagement, engagement_scope, period_unique_visitors, sources]
       properties:
         api:
           type: object
+          required: [request_rate, status_2xx, status_3xx, status_4xx, status_5xx, error_rate, p50_latency, p95_latency, p99_latency, availability, source]
           properties:
             request_rate:
               $ref: '#/components/schemas/PromValue'
@@ -2265,10 +2254,16 @@ components:
               $ref: '#/components/schemas/PromValue'
             status_2xx:
               $ref: '#/components/schemas/PromValue'
+            status_3xx:
+              $ref: '#/components/schemas/PromValue'
             status_4xx:
               $ref: '#/components/schemas/PromValue'
             status_5xx:
               $ref: '#/components/schemas/PromValue'
+            availability:
+              $ref: '#/components/schemas/PromValue'
+            source:
+              $ref: '#/components/schemas/AnalyticsSourceState'
         page_views:
           type: array
           items:
@@ -2293,6 +2288,8 @@ components:
                 type: integer
               learning_starts:
                 type: integer
+              eligible_enrolments:
+                type: integer
               completions:
                 type: integer
               completion_rate:
@@ -2310,6 +2307,10 @@ components:
                       type: integer
                     unique_learners:
                       type: integer
+        learning_period:
+          oneOf:
+            - $ref: '#/components/schemas/PeriodLearningStats'
+            - type: 'null'
         sso:
           type: array
           items:
@@ -2331,20 +2332,146 @@ components:
           items:
             $ref: '#/components/schemas/ContentDaily'
         engagement:
-          $ref: '#/components/schemas/EngagementStats'
+          oneOf:
+            - $ref: '#/components/schemas/EngagementStats'
+            - type: 'null'
+        engagement_scope:
+          type: string
+          enum: [all_time_current_state]
         period_unique_visitors:
-          type: integer
-        freshness:
+          $ref: '#/components/schemas/PeriodUniqueVisitors'
+        sources:
           type: object
+          required: [analytics, moodle, prometheus]
           properties:
-            analytics_last_rollup:
-              type: string
-            prometheus_observed_at:
-              type: string
+            analytics:
+              $ref: '#/components/schemas/AnalyticsSourceState'
+            moodle:
+              $ref: '#/components/schemas/AnalyticsSourceState'
+            prometheus:
+              $ref: '#/components/schemas/AnalyticsSourceState'
     PromValue:
       type: object
+      required: [value, available, observed_at]
       properties:
         value:
-          type: string
+          type: [number, 'null']
         available:
           type: boolean
+        reason:
+          type: string
+          enum: [no_data, unavailable, invalid_value, invalid_response, invalid_request]
+        observed_at:
+          type: [string, 'null']
+          format: date-time
+    AnalyticsSourceState:
+      type: object
+      required: [status, observed_at]
+      properties:
+        status:
+          type: string
+          enum: [fresh, stale, unavailable, empty]
+        observed_at:
+          type: [string, 'null']
+          format: date-time
+        reason:
+          type: string
+    PeriodUniqueVisitors:
+      type: object
+      required: [value, available]
+      properties:
+        value:
+          type: [integer, 'null']
+        available:
+          type: boolean
+        reason:
+          type: string
+          enum: [retention_limit, analytics_query_failed]
+    PeriodLearningStats:
+      type: object
+      required: [active_learners, learning_starts, eligible_enrolments, completions, completion_rate, top_courses]
+      properties:
+        active_learners:
+          type: integer
+          minimum: 0
+        learning_starts:
+          type: integer
+          minimum: 0
+        eligible_enrolments:
+          type: integer
+          minimum: 0
+        completions:
+          type: integer
+          minimum: 0
+        completion_rate:
+          type: number
+          minimum: 0
+          maximum: 100
+        top_courses:
+          type: array
+          items:
+            type: object
+            required: [course_id, course_name, accesses, unique_learners]
+            properties:
+              course_id:
+                type: integer
+              course_name:
+                type: string
+              accesses:
+                type: integer
+              unique_learners:
+                type: integer
+    SearchDaily:
+      type: object
+      required: [date, total_searches, zero_results, result_clicks]
+      properties:
+        date:
+          type: string
+          format: date
+        total_searches:
+          type: integer
+        zero_results:
+          type: integer
+        result_clicks:
+          type: integer
+    ContentDaily:
+      type: object
+      required: [date, content_type, target_id, views, unique_visitors]
+      properties:
+        date:
+          type: string
+          format: date
+        content_type:
+          type: string
+          enum: [knowledge, news, announcement]
+        target_id:
+          type: string
+        views:
+          type: integer
+        unique_visitors:
+          type: integer
+    EngagementStats:
+      type: object
+      required: [bookmarks, ratings, avg_rating]
+      properties:
+        bookmarks:
+          type: integer
+        ratings:
+          type: integer
+        avg_rating:
+          type: number
+    AnalyticsEventRequest:
+      type: object
+      required: [event_type, url]
+      additionalProperties: false
+      properties:
+        event_type:
+          type: string
+        url:
+          type: string
+          maxLength: 2048
+        referrer:
+          type: string
+          maxLength: 2048
+        metadata:
+          type: object

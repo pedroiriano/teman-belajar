@@ -1,10 +1,13 @@
 package handler
 
 import (
+	"context"
 	"crypto/subtle"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
+	"math"
 	"net/http"
 	"net/url"
 	"os"
@@ -19,11 +22,51 @@ import (
 )
 
 type AnalyticsHandler struct {
-	repo analytics.Repository
+	repo           analytics.Repository
+	learningSource analytics.LearningAnalyticsSource
 }
 
-func NewAnalyticsHandler(repo analytics.Repository) *AnalyticsHandler {
-	return &AnalyticsHandler{repo: repo}
+func NewAnalyticsHandler(repo analytics.Repository, learningSource analytics.LearningAnalyticsSource) *AnalyticsHandler {
+	return &AnalyticsHandler{repo: repo, learningSource: learningSource}
+}
+
+type SourceState struct {
+	Status     string     `json:"status"`
+	ObservedAt *time.Time `json:"observed_at"`
+	Reason     string     `json:"reason,omitempty"`
+}
+
+type SourceStates struct {
+	Analytics  SourceState `json:"analytics"`
+	Moodle     SourceState `json:"moodle"`
+	Prometheus SourceState `json:"prometheus"`
+}
+
+type PromValue struct {
+	Value      *float64   `json:"value"`
+	Available  bool       `json:"available"`
+	Reason     string     `json:"reason,omitempty"`
+	ObservedAt *time.Time `json:"observed_at"`
+}
+
+type APIStats struct {
+	RequestRate  PromValue   `json:"request_rate"`
+	Status2xx    PromValue   `json:"status_2xx"`
+	Status3xx    PromValue   `json:"status_3xx"`
+	Status4xx    PromValue   `json:"status_4xx"`
+	Status5xx    PromValue   `json:"status_5xx"`
+	ErrorRate    PromValue   `json:"error_rate"`
+	P50Latency   PromValue   `json:"p50_latency"`
+	P95Latency   PromValue   `json:"p95_latency"`
+	P99Latency   PromValue   `json:"p99_latency"`
+	Availability PromValue   `json:"availability"`
+	Source       SourceState `json:"source"`
+}
+
+type PeriodUniqueVisitors struct {
+	Value     *int   `json:"value"`
+	Available bool   `json:"available"`
+	Reason    string `json:"reason,omitempty"`
 }
 
 // Problem Details helper
@@ -40,25 +83,24 @@ func respondAnalyticsProblem(w http.ResponseWriter, status int, title, detail st
 
 // Allowed Events
 var allowedEvents = map[string]bool{
-	"portal.page_view":          true,
-	"admin.page_view":           true,
-	"search.executed":           true,
-	"search.zero_result":        true,
-	"search.result_clicked":     true,
-	"content.knowledge_view":    true,
-	"content.news_view":         true,
-	"content.announcement_view": true,
-	"engagement.bookmark":       true,
-	"engagement.rating":         true,
-	"engagement.recent_view":    true,
-	"learning.course_access":    true,
+	"portal.page_view":       true,
+	"admin.page_view":        true,
+	"search.executed":        true,
+	"search.zero_result":     true,
+	"search.result_clicked":  true,
+	"content.viewed":         true,
+	"engagement.bookmark":    true,
+	"engagement.rating":      true,
+	"engagement.recent_view": true,
+	"learning.course_access": true,
 }
 
 var ssoEvents = map[string]bool{
-	"sso.login_success": true,
-	"sso.login_failed":  true,
-	"sso.logout":        true,
-	"auth.silent_sso":   true,
+	"auth.login":         true,
+	"auth.logout":        true,
+	"auth.silent_sso":    true,
+	"auth.authorization": true,
+	"auth.oidc_callback": true,
 }
 
 // Event Metadata Validation
@@ -72,17 +114,21 @@ func validateMetadata(eventType string, metadataRaw json.RawMessage) ([]byte, er
 		return nil, fmt.Errorf("forbidden metadata keys detected")
 	}
 
-	if len(metadataRaw) == 0 || rawStr == "null" {
-		metadataRaw = []byte("{}")
+	if len(metadataRaw) == 0 || string(metadataRaw) == "{}" || string(metadataRaw) == "null" {
+		if eventType == "auth.login" || eventType == "auth.logout" {
+			return nil, fmt.Errorf("auth result is required")
+		}
+		if eventType == "content.viewed" {
+			return nil, fmt.Errorf("content metadata is required")
+		}
+		return []byte("{}"), nil
 	}
 
-	// Strictly decode based on event
 	switch {
-	case strings.HasPrefix(eventType, "search."):
+	case eventType == "search.executed" || eventType == "search.zero_result" || eventType == "search.result_clicked":
 		type SearchMetadata struct {
-			HasQuery    bool   `json:"has_query"`
-			ContentType string `json:"content_type,omitempty"`
-			ResultID    string `json:"result_id,omitempty"`
+			Filters map[string]string `json:"filters,omitempty"`
+			Count   int               `json:"count,omitempty"`
 		}
 		var m SearchMetadata
 		dec := json.NewDecoder(strings.NewReader(rawStr))
@@ -92,7 +138,27 @@ func validateMetadata(eventType string, metadataRaw json.RawMessage) ([]byte, er
 		}
 		return json.Marshal(m)
 
-	case strings.HasPrefix(eventType, "auth.") || strings.HasPrefix(eventType, "sso."):
+	case eventType == "content.viewed":
+		type ContentMetadata struct {
+			ContentType string `json:"content_type"`
+			TargetID    string `json:"target_id"`
+		}
+		var m ContentMetadata
+		dec := json.NewDecoder(strings.NewReader(rawStr))
+		dec.DisallowUnknownFields()
+		if err := dec.Decode(&m); err != nil {
+			return nil, fmt.Errorf("invalid content metadata: %v", err)
+		}
+		if m.ContentType != "knowledge" && m.ContentType != "news" && m.ContentType != "announcement" {
+			return nil, fmt.Errorf("content_type must be knowledge, news, or announcement")
+		}
+		m.TargetID = strings.TrimSpace(m.TargetID)
+		if m.TargetID == "" || len(m.TargetID) > 255 {
+			return nil, fmt.Errorf("target_id must contain 1 to 255 characters")
+		}
+		return json.Marshal(m)
+
+	case strings.HasPrefix(eventType, "auth."):
 		type AuthMetadata struct {
 			Result string `json:"result,omitempty"`
 		}
@@ -101,6 +167,13 @@ func validateMetadata(eventType string, metadataRaw json.RawMessage) ([]byte, er
 		dec.DisallowUnknownFields()
 		if err := dec.Decode(&m); err != nil {
 			return nil, fmt.Errorf("invalid auth metadata: %v", err)
+		}
+		if eventType == "auth.login" || eventType == "auth.logout" {
+			if m.Result != "success" && m.Result != "failure" {
+				return nil, fmt.Errorf("auth result must be success or failure")
+			}
+		} else if m.Result != "" && m.Result != "success" && m.Result != "failure" {
+			return nil, fmt.Errorf("auth result must be success or failure when supplied")
 		}
 		return json.Marshal(m)
 
@@ -278,6 +351,9 @@ func (h *AnalyticsHandler) handleIngestCore(w http.ResponseWriter, r *http.Reque
 
 		if needsNewCookie {
 			visitorID = uuid.New()
+			// #nosec G124 -- Secure is mandatory in production; governed local
+			// development intentionally runs on loopback HTTP. HttpOnly and
+			// SameSite=Lax remain enforced in both environments.
 			http.SetCookie(w, &http.Cookie{
 				Name:     "analytics_visitor_id",
 				Value:    visitorID.String(),
@@ -309,10 +385,17 @@ func (h *AnalyticsHandler) handleIngestCore(w http.ResponseWriter, r *http.Reque
 
 	if isSSO {
 		status := "success"
-		if strings.Contains(eventType, "failed") {
+		if eventType == "auth.login" || eventType == "auth.logout" {
+			var metadata struct {
+				Result string `json:"result"`
+			}
+			if err := json.Unmarshal(cleanMetadata, &metadata); err != nil {
+				respondAnalyticsProblem(w, http.StatusInternalServerError, "Internal Server Error", "Validated auth metadata could not be recorded")
+				return
+			}
+			status = metadata.Result
+		} else if eventType == "sso.login_failed" {
 			status = "failure"
-		} else if strings.Contains(eventType, "logout") {
-			status = "logout"
 		}
 		observability.RecordSSOEvent(eventType, status)
 	}
@@ -344,144 +427,247 @@ func (h *AnalyticsHandler) HandleGetStatistics(w http.ResponseWriter, r *http.Re
 		days = parsedDays
 	}
 
-	sinceDate := time.Now().UTC().AddDate(0, 0, -days).Format("2006-01-02")
+	now := time.Now().UTC()
+	endDate := now.Format("2006-01-02")
+	startDate := now.AddDate(0, 0, -(days - 1)).Format("2006-01-02")
 
-	pageStats, err := h.repo.GetPageAnalytics(r.Context(), sinceDate)
-	if err != nil {
-		respondAnalyticsProblem(w, http.StatusInternalServerError, "Internal Server Error", "Error fetching page stats")
-		return
+	workerState, workerStateErr := h.repo.GetWorkerState(r.Context())
+	sources := SourceStates{
+		Analytics: sourceState(workerState.LastRollupSuccessAt, now),
+		Moodle:    sourceState(workerState.LastMoodleSyncSuccessAt, now),
+	}
+	if workerStateErr != nil {
+		sources.Analytics = unavailableSource("worker_state_query_failed")
+		sources.Moodle = unavailableSource("worker_state_query_failed")
 	}
 
-	learningStats, err := h.repo.GetLearningAnalytics(r.Context(), sinceDate)
-	if err != nil {
-		respondAnalyticsProblem(w, http.StatusInternalServerError, "Internal Server Error", "Error fetching learning stats")
-		return
+	pageStats, pageErr := h.repo.GetPageAnalytics(r.Context(), startDate)
+	learningStats, learningErr := h.repo.GetLearningAnalytics(r.Context(), startDate)
+	ssoStats, ssoErr := h.repo.GetSSOAnalytics(r.Context(), startDate)
+	searchStats, searchErr := h.repo.GetSearchAnalytics(r.Context(), startDate)
+	contentStats, contentErr := h.repo.GetContentAnalytics(r.Context(), startDate)
+	engagementStats, engagementErr := h.repo.GetEngagementStats(r.Context())
+	var engagement *analytics.EngagementStats
+	if engagementErr == nil {
+		engagement = &engagementStats
 	}
 
-	ssoStats, err := h.repo.GetSSOAnalytics(r.Context(), sinceDate)
-	if err != nil {
-		respondAnalyticsProblem(w, http.StatusInternalServerError, "Internal Server Error", "Error fetching SSO stats")
-		return
+	if pageErr != nil || ssoErr != nil || searchErr != nil || contentErr != nil || engagementErr != nil {
+		sources.Analytics = unavailableSource("analytics_query_failed")
+	}
+	if learningErr != nil {
+		sources.Moodle = unavailableSource("learning_snapshot_query_failed")
 	}
 
-	periodUniqueVisitors := -1 // -1 means unavailable due to retention limit
+	periodVisitors := PeriodUniqueVisitors{Available: false, Reason: "retention_limit"}
 	if days <= 30 {
-		endUTC := time.Now().UTC()
-		startUTC := endUTC.AddDate(0, 0, -days)
-		uv, err := h.repo.GetPeriodUniqueVisitors(r.Context(), startUTC, endUTC)
-		if err == nil {
-			periodUniqueVisitors = uv
+		endUTC := now
+		startUTC := now.AddDate(0, 0, -days)
+		value, err := h.repo.GetPeriodUniqueVisitors(r.Context(), startUTC, endUTC)
+		if err != nil {
+			periodVisitors.Reason = "analytics_query_failed"
+			sources.Analytics = unavailableSource("analytics_query_failed")
+		} else {
+			periodVisitors.Value = &value
+			periodVisitors.Available = true
+			periodVisitors.Reason = ""
 		}
 	}
 
-	searchStats, _ := h.repo.GetSearchAnalytics(r.Context(), sinceDate)
-	contentStats, _ := h.repo.GetContentAnalytics(r.Context(), sinceDate)
-	engagementStats, _ := h.repo.GetEngagementStats(r.Context())
-
-	apiStats := fetchAPIStats()
-
-	type Freshness struct {
-		AnalyticsLastRollup  string `json:"analytics_last_rollup"`
-		PrometheusObservedAt string `json:"prometheus_observed_at"`
+	var periodLearning *analytics.PeriodLearningStats
+	if h.learningSource == nil {
+		sources.Moodle = unavailableSource("learning_source_not_configured")
+	} else {
+		var learningSourceErr error
+		periodLearning, learningSourceErr = h.learningSource.GetLearningAnalytics(r.Context(), startDate, endDate)
+		if learningSourceErr != nil {
+			sources.Moodle = unavailableSource("moodle_query_failed")
+		}
 	}
 
+	apiStats := fetchAPIStats(r.Context())
+	sources.Prometheus = apiStats.Source
+
 	type StatsResponse struct {
-		API                  map[string]interface{}    `json:"api"`
-		PageViews            []analytics.PageDaily     `json:"page_views"`
-		Learning             []analytics.LearningDaily `json:"learning"`
-		SSO                  []analytics.SSODaily      `json:"sso"`
-		Search               []analytics.SearchDaily   `json:"search"`
-		Content              []analytics.ContentDaily  `json:"content"`
-		Engagement           analytics.EngagementStats `json:"engagement"`
-		PeriodUniqueVisitors int                       `json:"period_unique_visitors"`
-		Freshness            Freshness                 `json:"freshness"`
+		API                  APIStats                       `json:"api"`
+		PageViews            []analytics.PageDaily          `json:"page_views"`
+		Learning             []analytics.LearningDaily      `json:"learning"`
+		LearningPeriod       *analytics.PeriodLearningStats `json:"learning_period"`
+		SSO                  []analytics.SSODaily           `json:"sso"`
+		Search               []analytics.SearchDaily        `json:"search"`
+		Content              []analytics.ContentDaily       `json:"content"`
+		Engagement           *analytics.EngagementStats     `json:"engagement"`
+		EngagementScope      string                         `json:"engagement_scope"`
+		PeriodUniqueVisitors PeriodUniqueVisitors           `json:"period_unique_visitors"`
+		Sources              SourceStates                   `json:"sources"`
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(StatsResponse{
+	if err := json.NewEncoder(w).Encode(StatsResponse{
 		API:                  apiStats,
 		PageViews:            pageStats,
 		Learning:             learningStats,
+		LearningPeriod:       periodLearning,
 		SSO:                  ssoStats,
 		Search:               searchStats,
 		Content:              contentStats,
-		Engagement:           engagementStats,
-		PeriodUniqueVisitors: periodUniqueVisitors,
-		Freshness: Freshness{
-			AnalyticsLastRollup:  time.Now().UTC().Format(time.RFC3339),
-			PrometheusObservedAt: time.Now().UTC().Format(time.RFC3339),
-		},
-	})
-}
-
-type PromValue struct {
-	Value     string `json:"value"`
-	Available bool   `json:"available"`
-}
-
-func getPrometheusMetric(query string) PromValue {
-	promURL := os.Getenv("PROMETHEUS_INTERNAL_URL")
-	if promURL == "" {
-		promURL = "http://prometheus:9090"
+		Engagement:           engagement,
+		EngagementScope:      "all_time_current_state",
+		PeriodUniqueVisitors: periodVisitors,
+		Sources:              sources,
+	}); err != nil {
+		return
 	}
+}
 
-	req, err := http.NewRequest("GET", promURL+"/api/v1/query", nil)
+func sourceState(observedAt *time.Time, now time.Time) SourceState {
+	if observedAt == nil {
+		return SourceState{Status: "empty", ObservedAt: nil, Reason: "no_success_recorded"}
+	}
+	observedUTC := observedAt.UTC()
+	status := "fresh"
+	if now.Sub(observedUTC) > 15*time.Minute {
+		status = "stale"
+	}
+	return SourceState{Status: status, ObservedAt: &observedUTC}
+}
+
+func unavailableSource(reason string) SourceState {
+	return SourceState{Status: "unavailable", ObservedAt: nil, Reason: reason}
+}
+
+func validatePrometheusURL(rawURL string) (*url.URL, error) {
+	parsed, err := url.Parse(rawURL)
+	if err != nil || parsed.Scheme != "http" || parsed.User != nil || parsed.RawQuery != "" || parsed.Fragment != "" {
+		return nil, errors.New("invalid Prometheus URL")
+	}
+	host := parsed.Hostname()
+	if host != "prometheus" && host != "localhost" && host != "127.0.0.1" && host != "::1" {
+		return nil, errors.New("Prometheus host is not an approved internal endpoint")
+	}
+	parsed.Path = strings.TrimRight(parsed.Path, "/")
+	return parsed, nil
+}
+
+func getPrometheusMetric(ctx context.Context, client *http.Client, promURL *url.URL, query string) PromValue {
+	queryURL := *promURL
+	queryURL.Path = strings.TrimRight(queryURL.Path, "/") + "/api/v1/query"
+	// #nosec G704 -- promURL is restricted to the internal Prometheus or
+	// loopback allowlist by validatePrometheusURL before URL construction.
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, queryURL.String(), nil)
 	if err != nil {
-		return PromValue{Available: false}
+		return PromValue{Available: false, Reason: "invalid_request"}
 	}
 	q := req.URL.Query()
 	q.Add("query", query)
 	req.URL.RawQuery = q.Encode()
 
-	client := &http.Client{Timeout: 2 * time.Second}
+	// #nosec G704 -- promURL is restricted to the internal Prometheus or
+	// loopback allowlist by validatePrometheusURL before this request.
 	resp, err := client.Do(req)
 	if err != nil {
-		return PromValue{Available: false}
+		return PromValue{Available: false, Reason: "unavailable"}
 	}
 	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return PromValue{Available: false, Reason: "unavailable"}
+	}
 
 	var result struct {
 		Status string `json:"status"`
 		Data   struct {
 			Result []struct {
-				Value []interface{} `json:"value"`
+				Value []json.RawMessage `json:"value"`
 			} `json:"result"`
 		} `json:"data"`
 	}
 
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-		return PromValue{Available: false}
+		return PromValue{Available: false, Reason: "invalid_response"}
 	}
-	if result.Status == "success" && len(result.Data.Result) > 0 {
-		if len(result.Data.Result[0].Value) == 2 {
-			valStr, _ := result.Data.Result[0].Value[1].(string)
-			if valStr == "NaN" || valStr == "+Inf" || valStr == "-Inf" {
-				return PromValue{Available: true, Value: "0"}
-			}
-			return PromValue{Available: true, Value: valStr}
-		}
+	if result.Status != "success" {
+		return PromValue{Available: false, Reason: "unavailable"}
 	}
-	return PromValue{Available: true, Value: "0"} // Query success but no series -> assume 0 for rates
+	if len(result.Data.Result) == 0 {
+		return PromValue{Available: false, Reason: "no_data"}
+	}
+	if len(result.Data.Result[0].Value) != 2 {
+		return PromValue{Available: false, Reason: "invalid_response"}
+	}
+
+	var sampleTimestamp float64
+	var valueText string
+	if err := json.Unmarshal(result.Data.Result[0].Value[0], &sampleTimestamp); err != nil {
+		return PromValue{Available: false, Reason: "invalid_response"}
+	}
+	if err := json.Unmarshal(result.Data.Result[0].Value[1], &valueText); err != nil {
+		return PromValue{Available: false, Reason: "invalid_response"}
+	}
+	value, err := strconv.ParseFloat(valueText, 64)
+	if err != nil || math.IsNaN(value) || math.IsInf(value, 0) {
+		return PromValue{Available: false, Reason: "invalid_value"}
+	}
+	observedAt := time.Unix(0, int64(sampleTimestamp*float64(time.Second))).UTC()
+	return PromValue{Available: true, Value: &value, ObservedAt: &observedAt}
 }
 
-func fetchAPIStats() map[string]interface{} {
-	requestRate := getPrometheusMetric(`sum(rate(http_requests_total[5m]))`)
-	errorRate := getPrometheusMetric(`sum(rate(http_requests_total{status=~"5.."}[5m])) / (sum(rate(http_requests_total[5m])) > 0) * 100`)
-	p50 := getPrometheusMetric(`histogram_quantile(0.50, sum(rate(http_request_duration_seconds_bucket[5m])) by (le))`)
-	p95 := getPrometheusMetric(`histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[5m])) by (le))`)
-	p99 := getPrometheusMetric(`histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket[5m])) by (le))`)
-	status2xx := getPrometheusMetric(`sum(rate(http_requests_total{status=~"2.."}[5m]))`)
-	status4xx := getPrometheusMetric(`sum(rate(http_requests_total{status=~"4.."}[5m]))`)
-	status5xx := getPrometheusMetric(`sum(rate(http_requests_total{status=~"5.."}[5m]))`)
+func fetchAPIStats(ctx context.Context) APIStats {
+	promURL := os.Getenv("PROMETHEUS_INTERNAL_URL")
+	if promURL == "" {
+		promURL = "http://prometheus:9090"
+	}
+	validatedURL, err := validatePrometheusURL(promURL)
+	if err != nil {
+		return unavailableAPIStats("invalid_request")
+	}
+	client := &http.Client{Timeout: 2 * time.Second}
+	stats := APIStats{
+		RequestRate:  getPrometheusMetric(ctx, client, validatedURL, `sum(rate(http_requests_total[5m]))`),
+		Status2xx:    getPrometheusMetric(ctx, client, validatedURL, `sum(rate(http_requests_total{status=~"2.."}[5m]))`),
+		Status3xx:    getPrometheusMetric(ctx, client, validatedURL, `sum(rate(http_requests_total{status=~"3.."}[5m]))`),
+		Status4xx:    getPrometheusMetric(ctx, client, validatedURL, `sum(rate(http_requests_total{status=~"4.."}[5m]))`),
+		Status5xx:    getPrometheusMetric(ctx, client, validatedURL, `sum(rate(http_requests_total{status=~"5.."}[5m]))`),
+		ErrorRate:    getPrometheusMetric(ctx, client, validatedURL, `100 * sum(rate(http_requests_total{status=~"5.."}[5m])) / clamp_min(sum(rate(http_requests_total[5m])), 0.000000001)`),
+		P50Latency:   getPrometheusMetric(ctx, client, validatedURL, `histogram_quantile(0.50, sum(rate(http_request_duration_seconds_bucket[5m])) by (le))`),
+		P95Latency:   getPrometheusMetric(ctx, client, validatedURL, `histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[5m])) by (le))`),
+		P99Latency:   getPrometheusMetric(ctx, client, validatedURL, `histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket[5m])) by (le))`),
+		Availability: getPrometheusMetric(ctx, client, validatedURL, `100 * avg_over_time(up{job="teman-belajar-api"}[5m])`),
+	}
 
-	return map[string]interface{}{
-		"request_rate": requestRate,
-		"error_rate":   errorRate,
-		"p50_latency":  p50,
-		"p95_latency":  p95,
-		"p99_latency":  p99,
-		"status_2xx":   status2xx,
-		"status_4xx":   status4xx,
-		"status_5xx":   status5xx,
+	values := []PromValue{
+		stats.RequestRate, stats.Status2xx, stats.Status3xx, stats.Status4xx, stats.Status5xx,
+		stats.ErrorRate, stats.P50Latency, stats.P95Latency, stats.P99Latency, stats.Availability,
+	}
+	available := 0
+	noData := 0
+	var latest *time.Time
+	for _, value := range values {
+		if value.Available {
+			available++
+			if value.ObservedAt != nil && (latest == nil || value.ObservedAt.After(*latest)) {
+				observed := *value.ObservedAt
+				latest = &observed
+			}
+		} else if value.Reason == "no_data" {
+			noData++
+		}
+	}
+	switch {
+	case available == len(values):
+		stats.Source = SourceState{Status: "fresh", ObservedAt: latest}
+	case noData == len(values):
+		stats.Source = SourceState{Status: "empty", ObservedAt: nil, Reason: "no_data"}
+	default:
+		stats.Source = SourceState{Status: "unavailable", ObservedAt: latest, Reason: "partial_or_failed_queries"}
+	}
+	return stats
+}
+
+func unavailableAPIStats(reason string) APIStats {
+	value := PromValue{Available: false, Reason: reason}
+	return APIStats{
+		RequestRate: value, Status2xx: value, Status3xx: value, Status4xx: value, Status5xx: value,
+		ErrorRate: value, P50Latency: value, P95Latency: value, P99Latency: value, Availability: value,
+		Source: unavailableSource(reason),
 	}
 }

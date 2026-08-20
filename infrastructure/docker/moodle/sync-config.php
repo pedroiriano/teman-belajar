@@ -15,7 +15,13 @@ $settings = [
 $oauth2allowinsecure = filter_var(getenv('MOODLE_ALLOW_INSECURE_OAUTH2'), FILTER_VALIDATE_BOOLEAN);
 $keycloakissuer = getenv('MOODLE_KEYCLOAK_ISSUER');
 $postlogoutredirect = getenv('MOODLE_POST_LOGOUT_REDIRECT_URL');
-if ($keycloakissuer === false || $keycloakissuer === '' || $postlogoutredirect === false || $postlogoutredirect === '') {
+$logoutbridgesecret = getenv('SSO_LOGOUT_BRIDGE_SECRET');
+$portallogoutorigin = getenv('PORTAL_WEB_URL');
+$adminlogoutorigin = getenv('ADMIN_WEB_URL');
+if ($keycloakissuer === false || $keycloakissuer === '' || $postlogoutredirect === false || $postlogoutredirect === ''
+        || $logoutbridgesecret === false || strlen($logoutbridgesecret) < 32
+        || $portallogoutorigin === false || $portallogoutorigin === ''
+        || $adminlogoutorigin === false || $adminlogoutorigin === '') {
     fwrite(STDERR, "Missing Moodle SSO runtime URL.\n");
     exit(1);
 }
@@ -58,6 +64,8 @@ $managed = [
     'forcelogin' => true,
     'local_temanbelajar_keycloakissuer' => $keycloakissuer,
     'local_temanbelajar_postlogoutredirect' => $postlogoutredirect,
+    'local_temanbelajar_logoutbridgesecret' => $logoutbridgesecret,
+    'local_temanbelajar_logoutreturnorigins' => rtrim($portallogoutorigin, '/') . '|' . rtrim($adminlogoutorigin, '/'),
 ];
 foreach ($managed as $property => $value) {
     $pattern = '/\$CFG->' . preg_quote($property, '/') . '\s*=\s*[^;]+;/';

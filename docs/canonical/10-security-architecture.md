@@ -50,6 +50,12 @@ Role baseline:
 - Auditor
 - Super Administrator
 
+`LMS Administrator` adalah entitlement eksplisit untuk administrasi Moodle.
+Grant hanya berlaku bila claim role tersebut hadir pada client Moodle dan
+username sama persis dengan allowlist `MOODLE_FEDERATED_ADMIN_USER`.
+`Portal Administrator`/`Super Administrator` tidak otomatis mewariskan Moodle
+Site Administrator. Akun recovery Moodle tetap lokal dan terpisah dari SSO.
+
 ## 4. Sensitive Actions
 
 Require stronger control:

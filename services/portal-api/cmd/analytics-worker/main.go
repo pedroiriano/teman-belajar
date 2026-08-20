@@ -17,7 +17,17 @@ import (
 	"teman-belajar-api/internal/observability"
 )
 
-func reconcileDay(ctx context.Context, repo analytics.Repository, moodleClient *moodle.Client, loc *time.Location, t time.Time) {
+type workerRepository interface {
+	RollupPageDaily(context.Context, string, time.Time, time.Time) error
+	RollupSSODaily(context.Context, string, time.Time, time.Time) error
+	RollupSearchDaily(context.Context, string, time.Time, time.Time) error
+	RollupContentDaily(context.Context, string, time.Time, time.Time) error
+	UpdateLearningDaily(context.Context, analytics.LearningDaily) error
+	CleanupOldEvents(context.Context, time.Time) error
+	MarkWorkerSuccess(context.Context, analytics.WorkerStateKey, time.Time) error
+}
+
+func reconcileDay(ctx context.Context, repo workerRepository, moodleClient analytics.LearningAnalyticsSource, loc *time.Location, t time.Time) {
 	// Truncate to midnight in the target timezone
 	midnightLocal := time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, loc)
 	nextMidnightLocal := midnightLocal.AddDate(0, 0, 1)
@@ -29,40 +39,54 @@ func reconcileDay(ctx context.Context, repo analytics.Repository, moodleClient *
 
 	log.Printf("Rolling up for %v (UTC: %v to %v)", reportingDate, startUTC.Format(time.RFC3339), endUTC.Format(time.RFC3339))
 
+	rollupSucceeded := true
 	if err := repo.RollupPageDaily(ctx, reportingDate, startUTC, endUTC); err != nil {
 		log.Printf("Error rolling up page daily for %v: %v", reportingDate, err)
+		rollupSucceeded = false
 	}
 
 	if err := repo.RollupSSODaily(ctx, reportingDate, startUTC, endUTC); err != nil {
 		log.Printf("Error rolling up sso daily for %v: %v", reportingDate, err)
+		rollupSucceeded = false
 	}
 
 	if err := repo.RollupSearchDaily(ctx, reportingDate, startUTC, endUTC); err != nil {
 		log.Printf("Error rolling up search daily for %v: %v", reportingDate, err)
+		rollupSucceeded = false
 	}
 	if err := repo.RollupContentDaily(ctx, reportingDate, startUTC, endUTC); err != nil {
 		log.Printf("Error rolling up content daily for %v: %v", reportingDate, err)
+		rollupSucceeded = false
+	}
+	if rollupSucceeded {
+		if err := repo.MarkWorkerSuccess(ctx, analytics.WorkerStateRollup, time.Now().UTC()); err != nil {
+			log.Printf("Error recording successful analytics rollup for %v: %v", reportingDate, err)
+		}
 	}
 
 	// Moodle analytics
 	dateStr := reportingDate
-	learningRes, err := moodleClient.GetLearningAnalytics(ctx, dateStr)
+	learningRes, err := moodleClient.GetLearningAnalytics(ctx, reportingDate, reportingDate)
 	if err != nil {
 		log.Printf("Error fetching learning analytics from Moodle for %s: %v", dateStr, err)
 	} else {
 		topCoursesJSON, _ := json.Marshal(learningRes.TopCourses)
 		err = repo.UpdateLearningDaily(ctx, analytics.LearningDaily{
-			Date:           reportingDate,
-			ActiveLearners: learningRes.ActiveLearners,
-			LearningStarts: learningRes.LearningStarts,
-			Completions:    learningRes.Completions,
-			CompletionRate: learningRes.CompletionRate,
-			TopCourses:     topCoursesJSON,
+			Date:               reportingDate,
+			ActiveLearners:     learningRes.ActiveLearners,
+			LearningStarts:     learningRes.LearningStarts,
+			EligibleEnrolments: learningRes.EligibleEnrolments,
+			Completions:        learningRes.Completions,
+			CompletionRate:     learningRes.CompletionRate,
+			TopCourses:         topCoursesJSON,
 		})
 		if err != nil {
 			log.Printf("Error updating learning daily for %v: %v", reportingDate, err)
 		} else {
 			log.Printf("Saved learning analytics for %s: %d active, %d starts, %d completions", dateStr, learningRes.ActiveLearners, learningRes.LearningStarts, learningRes.Completions)
+			if err := repo.MarkWorkerSuccess(ctx, analytics.WorkerStateMoodleSync, time.Now().UTC()); err != nil {
+				log.Printf("Error recording successful Moodle analytics sync for %v: %v", reportingDate, err)
+			}
 		}
 	}
 }
@@ -100,13 +124,17 @@ func main() {
 	if moodleBaseURL == "" {
 		moodleBaseURL = "http://moodle"
 	}
+	moodlePublicBaseURL := os.Getenv("MOODLE_PUBLIC_BASE_URL")
+	if moodlePublicBaseURL == "" {
+		log.Fatal("Missing required environment variable: MOODLE_PUBLIC_BASE_URL")
+	}
 	if moodleToken == "" {
 		log.Fatal("Missing required environment variable: TB_MOODLE_WEBSERVICE_TOKEN")
 	}
 
 	moodleClient := moodle.NewClient(moodle.Config{
 		BaseURL:       moodleBaseURL,
-		PublicBaseURL: moodleBaseURL, // Not needed by worker for links, just for init
+		PublicBaseURL: moodlePublicBaseURL,
 		Token:         moodleToken,
 		Timeout:       15 * time.Second,
 	})
@@ -135,6 +163,8 @@ func main() {
 	log.Printf("Cleaning up raw events older than %v (retention: %d days)", cutoffUTC, retentionDays)
 	if err := repo.CleanupOldEvents(ctx, cutoffUTC); err != nil {
 		log.Printf("Error cleaning up old events: %v", err)
+	} else if err := repo.MarkWorkerSuccess(ctx, analytics.WorkerStateCleanup, time.Now().UTC()); err != nil {
+		log.Printf("Error recording successful analytics cleanup: %v", err)
 	}
 
 	ticker := time.NewTicker(5 * time.Minute)
@@ -160,7 +190,11 @@ func main() {
 			curr := time.Now().UTC()
 			cutoffUTC := curr.AddDate(0, 0, -retentionDays)
 			log.Printf("Periodic cleanup for raw events older than %v", cutoffUTC)
-			repo.CleanupOldEvents(ctx, cutoffUTC)
+			if err := repo.CleanupOldEvents(ctx, cutoffUTC); err != nil {
+				log.Printf("Error cleaning up old events: %v", err)
+			} else if err := repo.MarkWorkerSuccess(ctx, analytics.WorkerStateCleanup, time.Now().UTC()); err != nil {
+				log.Printf("Error recording successful analytics cleanup: %v", err)
+			}
 		}
 	}
 }

@@ -61,13 +61,7 @@ export default function MediaUploader() {
           type="file" 
           onChange={handleFileChange}
           accept="image/jpeg,image/png,image/webp,application/pdf"
-          className="block w-full text-sm text-slate-500
-            file:mr-4 file:py-2 file:px-4
-            file:rounded-lg file:border-0
-            file:text-sm file:font-semibold
-            file:bg-sky-100 file:text-sky-700
-            hover:file:bg-sky-200
-          "
+          className="admin-file-input"
         />
         <button 
           onClick={handleUpload} 

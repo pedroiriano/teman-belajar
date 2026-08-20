@@ -2,12 +2,12 @@ import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { kcAdminFetch } from "@/lib/keycloak-admin";
-import { toggleUserAction, updateUserRolesAction } from "@/app/actions/users";
+import { toggleUserAction, updateUserProfileAction, updateUserRolesAction } from "@/app/actions/users";
 import Link from "next/link";
-import { KeycloakUser, KeycloakRole } from "@/types/user";
+import { KeycloakUser, KeycloakRole, PRODUCT_ROLES } from "@/types/user";
 
 export default async function UserDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const session = (await getServerSession(authOptions)) as any;
+  const session = await getServerSession(authOptions);
   const roles = session?.roles || [];
   const hasAccess = roles.some((role: string) => ["Portal Administrator", "Content Editor", "Reviewer"].includes(role));
   const isPortalAdmin = roles.includes("Portal Administrator");
@@ -23,11 +23,7 @@ export default async function UserDetailPage({ params }: { params: Promise<{ id:
   if (!userRes.ok) throw new Error("Failed to fetch user");
   const user: KeycloakUser = await userRes.json();
 
-  // Fetch available roles
-  const rolesRes = await kcAdminFetch("/roles");
-  const allRoles: KeycloakRole[] = await rolesRes.json();
-  const internalRoles = ["uma_authorization", "offline_access"];
-  const availableRoles = allRoles.filter((r) => !internalRoles.includes(r.name) && !r.name.startsWith("default-roles-"));
+  const availableRoles: KeycloakRole[] = PRODUCT_ROLES.map((name) => ({ id: name, name }));
 
   // Fetch current user roles
   const currentRolesRes = await kcAdminFetch(`/users/${id}/role-mappings/realm`);
@@ -36,6 +32,7 @@ export default async function UserDetailPage({ params }: { params: Promise<{ id:
 
   // Bind actions
   const toggleUser = toggleUserAction.bind(null, id, !user.enabled);
+  const updateProfile = updateUserProfileAction.bind(null, id);
   const updateRoles = updateUserRolesAction.bind(null, id);
 
   return (
@@ -99,6 +96,38 @@ export default async function UserDetailPage({ params }: { params: Promise<{ id:
           </div>
 
           <div className="md:col-span-2">
+            <div className="admin-form-card mb-6">
+              <div className="admin-form-header">
+                <div>
+                  <h3 className="font-black text-slate-900">Edit Profil</h3>
+                  <p className="mt-1 text-sm text-slate-500">Perbarui identitas pengguna tanpa mengubah username permanen.</p>
+                </div>
+              </div>
+              <form action={updateProfile}>
+                <div className="admin-form-body space-y-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                    <div>
+                      <label htmlFor="firstName" className="admin-label">Nama Depan *</label>
+                      <input id="firstName" name="firstName" type="text" required maxLength={255} defaultValue={user.firstName || ""} disabled={!isPortalAdmin} className="admin-input" />
+                    </div>
+                    <div>
+                      <label htmlFor="lastName" className="admin-label">Nama Belakang *</label>
+                      <input id="lastName" name="lastName" type="text" required maxLength={255} defaultValue={user.lastName || ""} disabled={!isPortalAdmin} className="admin-input" />
+                    </div>
+                  </div>
+                  <div>
+                    <label htmlFor="email" className="admin-label">Email *</label>
+                    <input id="email" name="email" type="email" required maxLength={320} defaultValue={user.email || ""} disabled={!isPortalAdmin} className="admin-input" />
+                  </div>
+                </div>
+                {isPortalAdmin && (
+                  <div className="admin-form-footer">
+                    <button type="submit" className="admin-button">Simpan Profil</button>
+                  </div>
+                )}
+              </form>
+            </div>
+
             <div className="admin-form-card">
               <div className="admin-form-header">
                 <h3 className="font-black text-slate-900">Kelola Role</h3>
@@ -108,7 +137,7 @@ export default async function UserDetailPage({ params }: { params: Promise<{ id:
                   <p className="text-sm text-slate-500 mb-4">Centang role yang ingin diberikan kepada pengguna ini.</p>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {availableRoles.map(role => (
-                    <div key={role.id} className={`flex items-start p-4 rounded-xl border ${currentRoleNames.includes(role.name) ? 'border-sky-200 bg-sky-50/50 dark:bg-sky-500/5' : 'border-slate-200 bg-slate-50/50 dark:border-slate-700 dark:bg-slate-800/50'} transition-colors`}>
+                    <div key={role.id} className="admin-choice-card" data-selected={currentRoleNames.includes(role.name)}>
                       <div className="flex items-center h-5 mt-0.5">
                         <input
                           id={`role-${role.id}`}
@@ -117,7 +146,7 @@ export default async function UserDetailPage({ params }: { params: Promise<{ id:
                           type="checkbox"
                           defaultChecked={currentRoleNames.includes(role.name)}
                           disabled={!isPortalAdmin}
-                          className="h-4 w-4 rounded border-gray-300 text-sky-600 focus:ring-sky-500 disabled:opacity-50"
+                          className="admin-checkbox"
                         />
                       </div>
                       <div className="ml-3 text-sm">

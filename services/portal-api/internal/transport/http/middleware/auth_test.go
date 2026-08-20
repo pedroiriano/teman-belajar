@@ -79,5 +79,32 @@ func TestAuthMiddleware_InvalidToken(t *testing.T) {
 	}
 }
 
+func TestAuthMiddleware_UnavailableVerifierReturnsServiceUnavailable(t *testing.T) {
+	config := AuthConfig{
+		IssuerURL: "http://localhost:8081/realms/teman-belajar",
+		Audience:  "teman-belajar-api",
+	}
+
+	nextCalled := false
+	middleware := AuthMiddleware(nil, config)
+	handler := middleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		nextCalled = true
+		w.WriteHeader(http.StatusOK)
+	}))
+
+	req := httptest.NewRequest("GET", "/", nil)
+	req.Header.Set("Authorization", "Bearer token-that-must-not-be-verified")
+	rr := httptest.NewRecorder()
+
+	handler.ServeHTTP(rr, req)
+
+	if rr.Code != http.StatusServiceUnavailable {
+		t.Errorf("Expected 503, got %d", rr.Code)
+	}
+	if nextCalled {
+		t.Error("Expected protected handler not to be called")
+	}
+}
+
 // We rely on integration tests or manual tests to verify the claims decoding
 // and role validation since we can't easily mock *oidc.IDToken internal state.

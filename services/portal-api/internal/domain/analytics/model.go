@@ -28,12 +28,35 @@ type PageDaily struct {
 }
 
 type LearningDaily struct {
-	Date           string          `json:"date"` // YYYY-MM-DD
-	ActiveLearners int             `json:"active_learners"`
-	LearningStarts int             `json:"learning_starts"`
-	Completions    int             `json:"completions"`
-	CompletionRate float64         `json:"completion_rate"`
-	TopCourses     json.RawMessage `json:"top_courses,omitempty"`
+	Date               string          `json:"date"` // YYYY-MM-DD
+	ActiveLearners     int             `json:"active_learners"`
+	LearningStarts     int             `json:"learning_starts"`
+	EligibleEnrolments int             `json:"eligible_enrolments"`
+	Completions        int             `json:"completions"`
+	CompletionRate     float64         `json:"completion_rate"`
+	TopCourses         json.RawMessage `json:"top_courses,omitempty"`
+}
+
+// PeriodLearningStats is an aggregate returned by Moodle for one explicit
+// reporting window. It intentionally contains no learner identities.
+type PeriodLearningStats struct {
+	ActiveLearners     int                 `json:"active_learners"`
+	LearningStarts     int                 `json:"learning_starts"`
+	EligibleEnrolments int                 `json:"eligible_enrolments"`
+	Completions        int                 `json:"completions"`
+	CompletionRate     float64             `json:"completion_rate"`
+	TopCourses         []CourseUtilization `json:"top_courses"`
+}
+
+type CourseUtilization struct {
+	CourseID       int    `json:"course_id"`
+	CourseName     string `json:"course_name"`
+	Accesses       int    `json:"accesses"`
+	UniqueLearners int    `json:"unique_learners"`
+}
+
+type LearningAnalyticsSource interface {
+	GetLearningAnalytics(ctx context.Context, startDate, endDate string) (*PeriodLearningStats, error)
 }
 
 type SSODaily struct {
@@ -67,6 +90,20 @@ type PeriodUniqueVisitors struct {
 	UniqueVisitors int `json:"unique_visitors"`
 }
 
+type WorkerState struct {
+	LastRollupSuccessAt     *time.Time `json:"last_rollup_success_at,omitempty"`
+	LastMoodleSyncSuccessAt *time.Time `json:"last_moodle_sync_success_at,omitempty"`
+	LastCleanupSuccessAt    *time.Time `json:"last_cleanup_success_at,omitempty"`
+}
+
+type WorkerStateKey string
+
+const (
+	WorkerStateRollup     WorkerStateKey = "rollup"
+	WorkerStateMoodleSync WorkerStateKey = "moodle_sync"
+	WorkerStateCleanup    WorkerStateKey = "cleanup"
+)
+
 type Repository interface {
 	InsertEvent(ctx context.Context, e *Event) error
 	GetPageAnalytics(ctx context.Context, since string) ([]PageDaily, error)
@@ -76,6 +113,8 @@ type Repository interface {
 	GetSearchAnalytics(ctx context.Context, since string) ([]SearchDaily, error)
 	GetContentAnalytics(ctx context.Context, since string) ([]ContentDaily, error)
 	GetEngagementStats(ctx context.Context) (EngagementStats, error)
+	GetWorkerState(ctx context.Context) (WorkerState, error)
+	MarkWorkerSuccess(ctx context.Context, key WorkerStateKey, observedAt time.Time) error
 
 	RollupSearchDaily(ctx context.Context, reportingDate string, startUTC time.Time, endUTC time.Time) error
 	RollupContentDaily(ctx context.Context, reportingDate string, startUTC time.Time, endUTC time.Time) error

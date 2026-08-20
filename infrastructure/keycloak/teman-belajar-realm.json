@@ -1,163 +1,201 @@
 {
-  "realm": "teman-belajar",
-  "enabled": true,
-  "roles": {
-    "realm": [
-      {
-        "name": "Portal Administrator",
-        "description": "Administrator of the Teman Belajar Portal"
-      },
-      {
-        "name": "Content Editor",
-        "description": "Content editor and course creator"
-      },
-      {
-        "name": "Reviewer",
-        "description": "Content reviewer and approver"
-      },
-      {
-        "name": "Learner",
-        "description": "Standard Learner"
-      }
+    "realm": "teman-belajar",
+    "enabled": true,
+    "roles": {
+        "realm": [
+            {
+                "name": "Guest",
+                "description": "Unauthenticated or minimally authenticated guest"
+            },
+            {
+                "name": "Learner",
+                "description": "Standard learner"
+            },
+            {
+                "name": "Instructor",
+                "description": "Learning instructor"
+            },
+            {
+                "name": "Content Editor",
+                "description": "Content editor"
+            },
+            {
+                "name": "Reviewer",
+                "description": "Content reviewer and approver"
+            },
+            {
+                "name": "Course Manager",
+                "description": "Formal course manager"
+            },
+            {
+                "name": "Portal Administrator",
+                "description": "Administrator of the Teman Belajar Portal"
+            },
+            {
+                "name": "LMS Administrator",
+                "description": "Explicit Moodle Site Administrator entitlement; never implied by Portal Administrator"
+            },
+            {
+                "name": "Auditor",
+                "description": "Read-only audit and compliance reviewer"
+            },
+            {
+                "name": "Super Administrator",
+                "description": "Highest Teman Belajar product role; not a Keycloak realm-management role"
+            }
+        ]
+    },
+    "clients": [
+        {
+            "clientId": "teman-belajar-web",
+            "enabled": true,
+            "publicClient": false,
+            "secret": "${KEYCLOAK_WEB_CLIENT_SECRET}",
+            "directAccessGrantsEnabled": false,
+            "standardFlowEnabled": true,
+            "implicitFlowEnabled": false,
+            "rootUrl": "${PORTAL_WEB_URL}",
+            "redirectUris": [
+                "${PORTAL_WEB_URL}/*"
+            ],
+            "webOrigins": [
+                "${PORTAL_WEB_URL}"
+            ],
+            "protocol": "openid-connect",
+            "frontchannelLogout": true,
+            "attributes": {
+                "frontchannel.logout.url": "${PORTAL_WEB_URL}/api/auth/frontchannel-logout",
+                "frontchannel.logout.session.required": "true",
+                "post.logout.redirect.uris": "${PORTAL_WEB_URL}/*"
+            },
+            "fullScopeAllowed": true,
+            "protocolMappers": [
+                {
+                    "name": "audience-mapper",
+                    "protocol": "openid-connect",
+                    "protocolMapper": "oidc-audience-mapper",
+                    "consentRequired": false,
+                    "config": {
+                        "included.custom.audience": "teman-belajar-api",
+                        "id.token.claim": "false",
+                        "access.token.claim": "true"
+                    }
+                }
+            ]
+        },
+        {
+            "clientId": "teman-belajar-admin",
+            "enabled": true,
+            "publicClient": false,
+            "secret": "${KEYCLOAK_ADMIN_CLIENT_SECRET}",
+            "directAccessGrantsEnabled": false,
+            "standardFlowEnabled": true,
+            "implicitFlowEnabled": false,
+            "rootUrl": "${ADMIN_WEB_URL}",
+            "redirectUris": [
+                "${ADMIN_WEB_URL}/*"
+            ],
+            "webOrigins": [
+                "${ADMIN_WEB_URL}"
+            ],
+            "protocol": "openid-connect",
+            "frontchannelLogout": true,
+            "attributes": {
+                "frontchannel.logout.url": "${ADMIN_WEB_URL}/api/auth/frontchannel-logout",
+                "frontchannel.logout.session.required": "true",
+                "post.logout.redirect.uris": "${ADMIN_WEB_URL}/*"
+            },
+            "fullScopeAllowed": true,
+            "protocolMappers": [
+                {
+                    "name": "audience-mapper",
+                    "protocol": "openid-connect",
+                    "protocolMapper": "oidc-audience-mapper",
+                    "consentRequired": false,
+                    "config": {
+                        "included.custom.audience": "teman-belajar-api",
+                        "id.token.claim": "false",
+                        "access.token.claim": "true"
+                    }
+                }
+            ]
+        },
+        {
+            "clientId": "teman-belajar-moodle",
+            "enabled": true,
+            "publicClient": false,
+            "secret": "${KEYCLOAK_MOODLE_CLIENT_SECRET}",
+            "directAccessGrantsEnabled": false,
+            "standardFlowEnabled": true,
+            "implicitFlowEnabled": false,
+            "rootUrl": "${MOODLE_BASE_URL}",
+            "redirectUris": [
+                "${MOODLE_BASE_URL}/admin/oauth2callback.php"
+            ],
+            "webOrigins": [
+                "${MOODLE_BASE_URL}"
+            ],
+            "protocol": "openid-connect",
+            "frontchannelLogout": true,
+            "attributes": {
+                "frontchannel.logout.url": "${MOODLE_BASE_URL}/local/temanbelajar/federated_logout.php",
+                "frontchannel.logout.session.required": "true",
+                "post.logout.redirect.uris": "${MOODLE_BASE_URL}/*"
+            },
+            "protocolMappers": [
+                {
+                    "name": "teman-belajar-realm-roles",
+                    "protocol": "openid-connect",
+                    "protocolMapper": "oidc-usermodel-realm-role-mapper",
+                    "consentRequired": false,
+                    "config": {
+                        "multivalued": "true",
+                        "userinfo.token.claim": "true",
+                        "id.token.claim": "true",
+                        "access.token.claim": "true",
+                        "claim.name": "teman_belajar_roles",
+                        "jsonType.label": "String"
+                    }
+                }
+            ]
+        }
+    ],
+    "users": [
+        {
+            "username": "admin@temanbelajar.local",
+            "email": "admin@temanbelajar.local",
+            "enabled": true,
+            "emailVerified": true,
+            "firstName": "Super",
+            "lastName": "Admin",
+            "credentials": [
+                {
+                    "type": "password",
+                    "value": "${KEYCLOAK_SEED_ADMIN_PASSWORD}",
+                    "temporary": false
+                }
+            ],
+            "realmRoles": [
+                "Portal Administrator"
+            ]
+        },
+        {
+            "username": "learner@temanbelajar.local",
+            "email": "learner@temanbelajar.local",
+            "enabled": true,
+            "emailVerified": true,
+            "firstName": "John",
+            "lastName": "Learner",
+            "credentials": [
+                {
+                    "type": "password",
+                    "value": "${KEYCLOAK_SEED_LEARNER_PASSWORD}",
+                    "temporary": false
+                }
+            ],
+            "realmRoles": [
+                "Learner"
+            ]
+        }
     ]
-  },
-  "clients": [
-    {
-      "clientId": "teman-belajar-web",
-      "enabled": true,
-      "publicClient": false,
-      "secret": "${KEYCLOAK_WEB_CLIENT_SECRET}",
-      "directAccessGrantsEnabled": false,
-      "standardFlowEnabled": true,
-      "implicitFlowEnabled": false,
-      "rootUrl": "${PORTAL_WEB_URL}",
-      "redirectUris": [
-        "${PORTAL_WEB_URL}/*##${MOODLE_BASE_URL}/*##${ADMIN_WEB_URL}/*"
-      ],
-      "webOrigins": [
-        "${PORTAL_WEB_URL}"
-      ],
-      "protocol": "openid-connect",
-      "frontchannelLogout": true,
-      "attributes": {
-        "frontchannel.logout.url": "${PORTAL_WEB_URL}/api/auth/frontchannel-logout",
-        "frontchannel.logout.session.required": "true",
-        "post.logout.redirect.uris": "${PORTAL_WEB_URL}/*##${MOODLE_BASE_URL}/*##${ADMIN_WEB_URL}/*"
-      },
-      "fullScopeAllowed": true,
-      "protocolMappers": [
-        {
-          "name": "audience-mapper",
-          "protocol": "openid-connect",
-          "protocolMapper": "oidc-audience-mapper",
-          "consentRequired": false,
-          "config": {
-            "included.custom.audience": "teman-belajar-api",
-            "id.token.claim": "false",
-            "access.token.claim": "true"
-          }
-        }
-      ]
-    },
-    {
-      "clientId": "teman-belajar-admin",
-      "enabled": true,
-      "publicClient": false,
-      "secret": "${KEYCLOAK_ADMIN_CLIENT_SECRET}",
-      "directAccessGrantsEnabled": false,
-      "standardFlowEnabled": true,
-      "implicitFlowEnabled": false,
-      "rootUrl": "${ADMIN_WEB_URL}",
-      "redirectUris": [
-        "${ADMIN_WEB_URL}/*"
-      ],
-      "webOrigins": [
-        "${ADMIN_WEB_URL}"
-      ],
-      "protocol": "openid-connect",
-      "frontchannelLogout": true,
-      "attributes": {
-        "frontchannel.logout.url": "${ADMIN_WEB_URL}/api/auth/frontchannel-logout",
-        "frontchannel.logout.session.required": "true",
-        "post.logout.redirect.uris": "${PORTAL_WEB_URL}/*##${MOODLE_BASE_URL}/*##${ADMIN_WEB_URL}/*"
-      },
-      "fullScopeAllowed": true,
-      "protocolMappers": [
-        {
-          "name": "audience-mapper",
-          "protocol": "openid-connect",
-          "protocolMapper": "oidc-audience-mapper",
-          "consentRequired": false,
-          "config": {
-            "included.custom.audience": "teman-belajar-api",
-            "id.token.claim": "false",
-            "access.token.claim": "true"
-          }
-        }
-      ]
-    },
-    {
-      "clientId": "teman-belajar-moodle",
-      "enabled": true,
-      "publicClient": false,
-      "secret": "${KEYCLOAK_MOODLE_CLIENT_SECRET}",
-      "directAccessGrantsEnabled": false,
-      "standardFlowEnabled": true,
-      "implicitFlowEnabled": false,
-      "rootUrl": "${MOODLE_BASE_URL}",
-      "redirectUris": [
-        "${MOODLE_BASE_URL}/admin/oauth2callback.php"
-      ],
-      "webOrigins": [
-        "${MOODLE_BASE_URL}"
-      ],
-      "protocol": "openid-connect",
-      "frontchannelLogout": true,
-      "attributes": {
-        "frontchannel.logout.url": "${MOODLE_BASE_URL}/local/temanbelajar/federated_logout.php",
-        "frontchannel.logout.session.required": "true",
-        "post.logout.redirect.uris": "${PORTAL_WEB_URL}/*##${MOODLE_BASE_URL}/*##${ADMIN_WEB_URL}/*"
-      }
-    }
-  ],
-  "users": [
-    {
-      "username": "admin@temanbelajar.local",
-      "email": "admin@temanbelajar.local",
-      "enabled": true,
-      "emailVerified": true,
-      "firstName": "Super",
-      "lastName": "Admin",
-      "credentials": [
-        {
-          "type": "password",
-          "value": "${KEYCLOAK_SEED_ADMIN_PASSWORD}",
-          "temporary": false
-        }
-      ],
-      "realmRoles": [
-        "Portal Administrator"
-      ]
-    },
-    {
-      "username": "learner@temanbelajar.local",
-      "email": "learner@temanbelajar.local",
-      "enabled": true,
-      "emailVerified": true,
-      "firstName": "John",
-      "lastName": "Learner",
-      "credentials": [
-        {
-          "type": "password",
-          "value": "${KEYCLOAK_SEED_LEARNER_PASSWORD}",
-          "temporary": false
-        }
-      ],
-      "realmRoles": [
-        "Learner"
-      ]
-    }
-  ]
 }
-
-

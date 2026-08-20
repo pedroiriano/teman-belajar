@@ -13,7 +13,10 @@ export function expireNextAuthCookies(request: NextRequest, response: NextRespon
       maxAge: 0,
       httpOnly: true,
       sameSite: "lax",
-      secure: cookie.name.startsWith("__Secure-") || cookie.name.startsWith("__Host-"),
+      // Session cookies are explicitly Secure, including on governed localhost.
+      // Match that attribute when expiring every chunk so stale suffixes cannot
+      // accumulate across repeated federated-login cycles.
+      secure: true,
     });
   }
   return response;

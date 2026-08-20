@@ -124,11 +124,16 @@ and console/hydration errors.
    `draftMode` in Next server code.
 5. Do not add `--webpack` merely to silence Turbopack failures; diagnose the
    incompatibility and document any approved fallback.
-6. Do not accept a lockfile until clean Docker `npm ci` passes.
-7. Do not upgrade ESLint 9 to 10 without executing both flat configs.
-8. Do not downgrade Next.js to suppress a regression or security finding.
-9. Do not modify vendor UI originals as part of framework maintenance.
-10. Do not run force audit fixes; inspect the proposed dependency graph and
+6. Alpine Docker dependency stages must run `npm ci` with explicit
+   `--include=optional --os=linux --cpu=x64 --libc=musl`. This keeps the
+   platform-native Next.js SWC binding reproducible when the committed lockfile
+   was generated or refreshed on Windows; do not fall back to Webpack or a
+   post-`npm ci` unpinned install.
+7. Do not accept a lockfile until clean Docker `npm ci` passes.
+8. Do not upgrade ESLint 9 to 10 without executing both flat configs.
+9. Do not downgrade Next.js to suppress a regression or security finding.
+10. Do not modify vendor UI originals as part of framework maintenance.
+11. Do not run force audit fixes; inspect the proposed dependency graph and
     obtain approval for any new major version.
 
 ## 8. Rollback

@@ -14,6 +14,10 @@ MOODLE_DATA_DIR="/var/www/moodledata"
 : "${MOODLE_ADMIN_USER:?MOODLE_ADMIN_USER is required}"
 : "${MOODLE_ADMIN_PASSWORD:?MOODLE_ADMIN_PASSWORD is required}"
 : "${MOODLE_ADMIN_EMAIL:?MOODLE_ADMIN_EMAIL is required}"
+: "${MOODLE_FEDERATED_ADMIN_USER:?MOODLE_FEDERATED_ADMIN_USER is required}"
+: "${SSO_LOGOUT_BRIDGE_SECRET:?SSO_LOGOUT_BRIDGE_SECRET is required}"
+: "${PORTAL_WEB_URL:?PORTAL_WEB_URL is required}"
+: "${ADMIN_WEB_URL:?ADMIN_WEB_URL is required}"
 
 mkdir -p "$MOODLE_DATA_DIR"
 chown -R www-data:www-data "$MOODLE_DATA_DIR"
@@ -55,6 +59,12 @@ else
     php /usr/local/bin/sync-config.php
     sudo -u www-data php "$MOODLE_DIR/admin/cli/upgrade.php" --non-interactive
 fi
+
+sudo -u www-data env \
+    MOODLE_ADMIN_USER="$MOODLE_ADMIN_USER" \
+    MOODLE_ADMIN_EMAIL="$MOODLE_ADMIN_EMAIL" \
+    MOODLE_FEDERATED_ADMIN_USER="$MOODLE_FEDERATED_ADMIN_USER" \
+    php "$MOODLE_DIR/public/local/temanbelajar/cli/reconcile_integration.php"
 
 # config.php and moodledata are the only runtime-owned paths managed here.
 # The plugin source is intentionally mounted read-only and must never be chowned.

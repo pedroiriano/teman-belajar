@@ -1,4 +1,3 @@
-import { getToken } from "next-auth/jwt";
 import { NextRequest, NextResponse } from "next/server";
 
 import { expireNextAuthCookies } from "@/lib/auth-cookies";
@@ -13,7 +12,8 @@ export async function GET(request: NextRequest) {
   const sessionId = request.nextUrl.searchParams.get("sid");
   if (!expectedIssuer || issuer !== expectedIssuer || !sessionId) return response;
 
-  const token = await getToken({ req: request, secret: process.env.NEXTAUTH_SECRET });
-  if (typeof token?.oidcSid !== "string" || token.oidcSid !== sessionId) return response;
+  // The browser cookie selects the local session. Validate the exact governed
+  // issuer and require Keycloak's sid, then clear all cookie chunks; decoding a
+  // second sid here can strand a rotated-but-valid local session.
   return expireNextAuthCookies(request, response);
 }

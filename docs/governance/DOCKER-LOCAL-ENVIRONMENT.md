@@ -32,6 +32,12 @@ Dokumen ini adalah source of truth untuk nama service, port, environment, networ
 | `search-worker` | sinkronisasi indeks pencarian | `teman-belajar-search-worker-1` | tidak membuka port |
 | `moodle` | Moodle Learning Engine | `teman-belajar-moodle-1` | `moodle:80` |
 | `moodle-cron` | Moodle scheduled task runner | `teman-belajar-moodle-cron-1` | tidak membuka port |
+| `analytics-worker` | product analytics rollup + Moodle aggregate sync | `teman-belajar-analytics-worker-1` | tidak membuka port |
+| `prometheus` | operational metrics store | `teman-belajar-prometheus-1` | `prometheus:9090` |
+| `grafana` | technical observability UI | `teman-belajar-grafana-1` | `grafana:3000` |
+| `otel-collector` | OTLP gateway | `teman-belajar-otel-collector-1` | `otel-collector:4317` |
+| `loki` | centralized log store | `teman-belajar-loki-1` | `loki:3100` |
+| `tempo` | trace store | `teman-belajar-tempo-1` | `tempo:4317` / `tempo:3200` |
 
 Nama lama `portal-web`, `admin-web`, `portal-api`, `portal-migrate`, `postgres-portal`, dan `postgres-moodle` tidak boleh dipakai pada perintah baru. Jangan menambahkan `container_name`; project + service key sudah menghasilkan nama kanonis dan tetap mendukung recreate/scale.
 
@@ -50,6 +56,7 @@ Nama lama `portal-web`, `admin-web`, `portal-api`, `portal-migrate`, `postgres-p
 | MinIO API | `TB_MINIO_API_PORT` | `19000` | `9000` | S3 API |
 | MinIO Console | `TB_MINIO_CONSOLE_PORT` | `19001` | `9001` | browser |
 | Meilisearch | `TB_MEILI_PORT` | `7700` | `7700` | health/debug lokal |
+| Grafana | `TB_GRAFANA_PORT` | `3002` | `3000` | UI observability teknis |
 
 Aturan:
 
@@ -91,6 +98,10 @@ Satu-satunya network proyek adalah `teman-belajar-network`. Service berkomunikas
 | `teman-belajar-meili-data` | Meilisearch indexes; dapat dibangun ulang dari source data |
 | `teman-belajar-moodle-app-data` | Moodle application/config runtime |
 | `teman-belajar-moodle-data` | Moodle dataroot |
+| `teman-belajar-prometheus-data` | Prometheus time series lokal |
+| `teman-belajar-grafana-data` | konfigurasi runtime Grafana |
+| `teman-belajar-loki-data` | log lokal ber-retensi pendek |
+| `teman-belajar-tempo-data` | trace lokal ber-retensi pendek |
 
 Larangan mutlak tanpa persetujuan manusia:
 
@@ -111,6 +122,8 @@ Normal recreate container tidak menghapus volume. Sebelum migrasi volume: hentik
 - `web` dan `admin` menunggu API serta Keycloak sehat.
 - `moodle` menunggu `moodle-db` sehat.
 - `search-worker` menunggu Portal DB, Meilisearch, dan Moodle sehat; kegagalan satu source setelah startup tidak boleh menghapus snapshot source lain.
+- `analytics-worker` menunggu Portal DB dan Moodle sehat; timestamp freshness hanya maju setelah job terkait berhasil penuh.
+- Prometheus, Grafana, OpenTelemetry Collector, Loki, dan Tempo adalah topology ADR-016 dan tidak boleh diganti dengan iframe produk atau SaaS tracker tanpa ADR.
 - `api` tidak menunggu `search`, sehingga outage Search hanya menurunkan endpoint Search menjadi 503.
 - Moodle menyinkronkan enam nilai runtime yang diizinkan di `config.php` sebelum upgrade/start; sinkronisasi harus gagal tertutup bila struktur file tidak cocok.
 - Jangan menambahkan `|| true` pada migrasi, upgrade, atau health-critical bootstrap.
@@ -145,6 +158,19 @@ Saat perubahan:
 7. Setelah perubahan client OIDC, jalankan wrapper action `sso`. Action ini
    hanya merekonsiliasi tiga client kanonis dan tidak boleh membuat client,
    realm, service, port, atau secret baru. Action `up` menjalankannya otomatis.
+8. Setelah perubahan plugin Moodle atau saat memperbaiki drift identitas
+   recovery pada volume lokal yang dipertahankan, jalankan wrapper action
+   `moodle-reconcile`. Action ini hanya menjalankan upgrade plugin resmi dan
+   rekonsiliasi idempoten melalui API Moodle; jangan menggantinya dengan query
+   atau perubahan langsung ke database Moodle. Di lingkungan lokal terkendali,
+   action ini juga menegakkan bahwa Moodle Site Administrator hanya terdiri dari
+   akun recovery aktif dengan auth `manual` dan, bila sudah terprovisi, satu akun
+   federasi exact yang ditentukan `TB_MOODLE_FEDERATED_ADMIN_USER`. Akun federasi
+   tersebut tetap wajib membawa role Keycloak `LMS Administrator` saat login;
+   `Portal Administrator` saja tidak cukup. Action menghapus assignment
+   system-level `Manager` dari akun non-recovery karena privilege federasi wajib
+   berasal dari jalur eksplisit di atas. Role integrasi least-privilege tidak
+   boleh ikut terhapus.
 
 Sebelum menyatakan selesai:
 
@@ -162,6 +188,18 @@ Gate SSO/SLO tambahan: client `teman-belajar-web`, `teman-belajar-admin`, dan
 masing-masing, session-required aktif, dan post-logout redirect hanya menuju
 URL Portal yang tervalidasi. Jangan menganggap `--import-realm` memperbarui
 realm yang sudah ada; gunakan action `sso` untuk rekonsiliasi idempotent.
+Portal/Admin initiated logout wajib memakai `TB_SSO_LOGOUT_BRIDGE_SECRET` yang
+unik (minimal 32 byte) untuk menandatangani rantai bridge top-level aplikasi
+pasangan dan Moodle. Service `web` wajib menerima `TB_ADMIN_URL` sebagai
+`ADMIN_PUBLIC_BASE_URL`; service `admin` wajib menerima `TB_WEB_URL` sebagai
+`PORTAL_PUBLIC_BASE_URL`. URL publik tidak boleh diturunkan dari hostname
+container/request internal. Setiap hop wajib fail closed terhadap signature,
+timestamp, parameter, origin, path, dan final return URL. Jangan memakai ulang
+secret client OIDC, NextAuth, atau `TB_PORTAL_INTERNAL_SECRET`.
+Moodle-initiated logout wajib memakai secret yang sama hanya untuk rantai
+top-level Moodle -> Portal -> Admin -> Keycloak yang exact-allowlisted. Route
+`/api/auth/moodle-logout-bridge` tidak boleh menerima next hop umum, arbitrary
+redirect, token, username, atau parameter tambahan/duplikat.
 
 ## 9. Format Prompt Ketat untuk Gemini AI Pro
 

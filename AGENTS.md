@@ -52,7 +52,7 @@ Build and maintain a secure, modular **Learning Experience Platform + Moodle LMS
 
 1. Read `docs/governance/DOCKER-LOCAL-ENVIRONMENT.md` before changing Docker files.
 2. Docker Compose project name is always `teman-belajar`; do not pass another project name.
-3. Compose service keys are fixed: `web`, `admin`, `api`, `migrate`, `portal-db`, `moodle-db`, `redis`, `keycloak`, `minio`, `search`, `search-worker`, `moodle`, and `moodle-cron`. The Search worker is the separate runtime accepted by ADR-014 and is built from the Portal API module; this does not authorize additional services.
+3. Compose service keys are fixed: `web`, `admin`, `api`, `migrate`, `portal-db`, `moodle-db`, `redis`, `keycloak`, `minio`, `search`, `search-worker`, `moodle`, `moodle-cron`, `analytics-worker`, `prometheus`, `grafana`, `otel-collector`, `loki`, and `tempo`. `search-worker` is accepted by ADR-014; the analytics and observability runtimes are accepted by ADR-016. This does not authorize additional services.
 4. Do not add `container_name`. Compose must generate `<project>-<service>-<replica>` names.
 5. Host ports come only from `infrastructure/docker/.env`; internal container ports and service DNS names remain stable.
 6. Default host binding is `127.0.0.1`. Binding to `0.0.0.0` requires explicit human security approval.
@@ -89,6 +89,10 @@ Rules:
 9. Audit third-party dependencies before introducing them into product code.
 10. Never commit purchase codes, license keys, invoices, or vendor credentials.
 11. Follow `docs/design-system/*` for UI implementation decisions.
+12. Cuba Admin dark mode uses the fixed bright-light-blue action/accent palette
+    documented in `docs/design-system/DESIGN-TOKENS.md`; orange or vendor violet
+    must not be used as the dark-mode primary/accent color. Light mode keeps its
+    separately documented Teman Belajar Admin palette.
 
 ## 4. Backend Rules
 

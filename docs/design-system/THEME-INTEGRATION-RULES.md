@@ -1,7 +1,7 @@
 # Theme Integration Rules — Teman Belajar
 
 **Status:** Canonical UI Governance  
-**Version:** 4.0
+**Version:** 4.1
 
 ## 1. Techwind Boundary
 
@@ -71,13 +71,22 @@ or duplicate page-level toggle without an accepted design-system change.
 
 - Portal light/dark surfaces follow Techwind's white/slate hierarchy and Teman
   Belajar teal actions.
-- Admin light/dark surfaces follow Cuba's body/card/inset hierarchy and Teman
-  Belajar orange actions.
+- Admin light/dark surfaces follow Cuba's body/card/inset hierarchy. Admin light
+  mode uses Teman Belajar orange actions. Admin dark mode exclusively uses the
+  canonical bright-light-blue action/accent palette (`sky-400` primary,
+  `sky-500` hover, `sky-300` accent text, dark-blue text on primary); orange and
+  vendor violet are prohibited as dark-mode primary/accent colors.
 - Do not apply Portal CSS variables to Admin or Admin CSS variables to Portal.
 - Legacy utility colors may be normalized inside the owning application's
   stylesheet. Normalization must be scoped by `.portal-root` or `.admin-root`.
 - Text, borders, cards, inputs, tables, menus, overlays, status badges, loading,
   empty, error, and unauthorized states must remain readable in both themes.
+- Admin form controls must use the semantic primitives in
+  `apps/admin-web/src/app/globals.css`: `.admin-input`, `.admin-file-input`,
+  `.admin-checkbox`, and `.admin-choice-card`. Do not override their foreground,
+  background, or border with forced Tailwind color utilities.
+- Validate editable, read-only, disabled, selected, placeholder, native select,
+  date/time, file-picker, and browser-autofill states in both Admin themes.
 - Do not solve dark mode with `filter`, image inversion, opacity over the whole
   application, or a global imported vendor stylesheet.
 

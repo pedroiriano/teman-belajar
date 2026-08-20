@@ -16,6 +16,16 @@ export interface LearningDaily {
   date: string;
   active_learners: number;
   learning_starts: number;
+  eligible_enrolments: number;
+  completions: number;
+  completion_rate: number;
+  top_courses: CourseUtilization[];
+}
+
+export interface PeriodLearningStats {
+  active_learners: number;
+  learning_starts: number;
+  eligible_enrolments: number;
   completions: number;
   completion_rate: number;
   top_courses: CourseUtilization[];
@@ -49,8 +59,16 @@ export interface EngagementStats {
 }
 
 export interface PromValue {
-  value: string;
+  value: number | null;
   available: boolean;
+  reason?: "no_data" | "unavailable" | "invalid_value" | "invalid_response" | "invalid_request";
+  observed_at: string | null;
+}
+
+export interface SourceState {
+  status: "fresh" | "stale" | "unavailable" | "empty";
+  observed_at: string | null;
+  reason?: string;
 }
 
 export interface APIStats {
@@ -60,23 +78,35 @@ export interface APIStats {
   p95_latency: PromValue;
   p99_latency: PromValue;
   status_2xx: PromValue;
+  status_3xx: PromValue;
   status_4xx: PromValue;
   status_5xx: PromValue;
+  availability: PromValue;
+  source: SourceState;
 }
 
-export interface Freshness {
-  analytics_last_rollup: string;
-  prometheus_observed_at: string;
+export interface StatisticsSources {
+  analytics: SourceState;
+  moodle: SourceState;
+  prometheus: SourceState;
+}
+
+export interface PeriodUniqueVisitors {
+  value: number | null;
+  available: boolean;
+  reason?: "retention_limit" | "analytics_query_failed";
 }
 
 export interface StatisticsResponse {
   api: APIStats;
   page_views: PageDaily[];
   learning: LearningDaily[];
+  learning_period: PeriodLearningStats | null;
   sso: SSODaily[];
   search: SearchDaily[];
   content: ContentDaily[];
-  engagement: EngagementStats;
-  period_unique_visitors: number;
-  freshness: Freshness;
+  engagement: EngagementStats | null;
+  engagement_scope: "all_time_current_state";
+  period_unique_visitors: PeriodUniqueVisitors;
+  sources: StatisticsSources;
 }
