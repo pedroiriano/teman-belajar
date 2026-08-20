@@ -32,6 +32,12 @@ Dokumen ini adalah source of truth untuk nama service, port, environment, networ
 | `search-worker` | sinkronisasi indeks pencarian | `teman-belajar-search-worker-1` | tidak membuka port |
 | `moodle` | Moodle Learning Engine | `teman-belajar-moodle-1` | `moodle:80` |
 | `moodle-cron` | Moodle scheduled task runner | `teman-belajar-moodle-cron-1` | tidak membuka port |
+| `analytics-worker` | product analytics rollup + Moodle aggregate sync | `teman-belajar-analytics-worker-1` | tidak membuka port |
+| `prometheus` | operational metrics store | `teman-belajar-prometheus-1` | `prometheus:9090` |
+| `grafana` | technical observability UI | `teman-belajar-grafana-1` | `grafana:3000` |
+| `otel-collector` | OTLP gateway | `teman-belajar-otel-collector-1` | `otel-collector:4317` |
+| `loki` | centralized log store | `teman-belajar-loki-1` | `loki:3100` |
+| `tempo` | trace store | `teman-belajar-tempo-1` | `tempo:4317` / `tempo:3200` |
 
 Nama lama `portal-web`, `admin-web`, `portal-api`, `portal-migrate`, `postgres-portal`, dan `postgres-moodle` tidak boleh dipakai pada perintah baru. Jangan menambahkan `container_name`; project + service key sudah menghasilkan nama kanonis dan tetap mendukung recreate/scale.
 
@@ -50,6 +56,7 @@ Nama lama `portal-web`, `admin-web`, `portal-api`, `portal-migrate`, `postgres-p
 | MinIO API | `TB_MINIO_API_PORT` | `19000` | `9000` | S3 API |
 | MinIO Console | `TB_MINIO_CONSOLE_PORT` | `19001` | `9001` | browser |
 | Meilisearch | `TB_MEILI_PORT` | `7700` | `7700` | health/debug lokal |
+| Grafana | `TB_GRAFANA_PORT` | `3002` | `3000` | UI observability teknis |
 
 Aturan:
 
@@ -91,6 +98,10 @@ Satu-satunya network proyek adalah `teman-belajar-network`. Service berkomunikas
 | `teman-belajar-meili-data` | Meilisearch indexes; dapat dibangun ulang dari source data |
 | `teman-belajar-moodle-app-data` | Moodle application/config runtime |
 | `teman-belajar-moodle-data` | Moodle dataroot |
+| `teman-belajar-prometheus-data` | Prometheus time series lokal |
+| `teman-belajar-grafana-data` | konfigurasi runtime Grafana |
+| `teman-belajar-loki-data` | log lokal ber-retensi pendek |
+| `teman-belajar-tempo-data` | trace lokal ber-retensi pendek |
 
 Larangan mutlak tanpa persetujuan manusia:
 
@@ -111,6 +122,8 @@ Normal recreate container tidak menghapus volume. Sebelum migrasi volume: hentik
 - `web` dan `admin` menunggu API serta Keycloak sehat.
 - `moodle` menunggu `moodle-db` sehat.
 - `search-worker` menunggu Portal DB, Meilisearch, dan Moodle sehat; kegagalan satu source setelah startup tidak boleh menghapus snapshot source lain.
+- `analytics-worker` menunggu Portal DB dan Moodle sehat; timestamp freshness hanya maju setelah job terkait berhasil penuh.
+- Prometheus, Grafana, OpenTelemetry Collector, Loki, dan Tempo adalah topology ADR-016 dan tidak boleh diganti dengan iframe produk atau SaaS tracker tanpa ADR.
 - `api` tidak menunggu `search`, sehingga outage Search hanya menurunkan endpoint Search menjadi 503.
 - Moodle menyinkronkan enam nilai runtime yang diizinkan di `config.php` sebelum upgrade/start; sinkronisasi harus gagal tertutup bila struktur file tidak cocok.
 - Jangan menambahkan `|| true` pada migrasi, upgrade, atau health-critical bootstrap.

@@ -6,6 +6,7 @@ set -euo pipefail
 : "${PORTAL_WEB_URL:?PORTAL_WEB_URL is required}"
 : "${ADMIN_WEB_URL:?ADMIN_WEB_URL is required}"
 : "${MOODLE_BASE_URL:?MOODLE_BASE_URL is required}"
+: "${KEYCLOAK_MANAGEMENT_CLIENT_SECRET:?KEYCLOAK_MANAGEMENT_CLIENT_SECRET is required}"
 
 realm="teman-belajar"
 kcadm="/opt/keycloak/bin/kcadm.sh"
@@ -40,7 +41,32 @@ configure_client "teman-belajar-web" "$PORTAL_WEB_URL/api/auth/frontchannel-logo
 configure_client "teman-belajar-admin" "$ADMIN_WEB_URL/api/auth/frontchannel-logout" "$ADMIN_WEB_URL"
 configure_client "teman-belajar-moodle" "$MOODLE_BASE_URL/local/temanbelajar/federated_logout.php" "$MOODLE_BASE_URL"
 
-# Reconcile Management Client
+canonical_roles=(
+  "Guest"
+  "Learner"
+  "Instructor"
+  "Content Editor"
+  "Reviewer"
+  "Course Manager"
+  "Portal Administrator"
+  "LMS Administrator"
+  "Auditor"
+  "Super Administrator"
+)
+
+realm_roles=$("$kcadm" get roles --config "$config_file" -r "$realm" \
+  --fields name --format csv --noquotes)
+for role_name in "${canonical_roles[@]}"; do
+  if ! grep -Fxq "$role_name" <<<"$realm_roles"; then
+    "$kcadm" create roles --config "$config_file" -r "$realm" \
+      -s "name=$role_name" >/dev/null
+    realm_roles+=$'\n'"$role_name"
+  fi
+done
+
+# The reconciliation script is the sole owner of the management client for
+# both fresh and existing realms. The static realm import intentionally omits
+# this secret-bearing client.
 manage_uuid=$("$kcadm" get clients --config "$config_file" -r "$realm" -q "clientId=teman-belajar-admin-management" --fields id --format csv --noquotes)
 if [[ -z "$manage_uuid" || "$manage_uuid" == *$'\n'* ]]; then
   echo "Creating teman-belajar-admin-management client..."
@@ -58,22 +84,108 @@ if [[ -z "$manage_uuid" || "$manage_uuid" == *$'\n'* ]]; then
   manage_uuid=$("$kcadm" get clients --config "$config_file" -r "$realm" -q "clientId=teman-belajar-admin-management" --fields id --format csv --noquotes)
 fi
 
-if [[ -n "$manage_uuid" ]]; then
-  "$kcadm" update "clients/$manage_uuid" --config "$config_file" -r "$realm" \
-    -s serviceAccountsEnabled=true \
-    -s standardFlowEnabled=false \
-    -s implicitFlowEnabled=false \
-    -s publicClient=false \
-    -s bearerOnly=false \
-    -s directAccessGrantsEnabled=false >/dev/null
-    
-  sa_user_id=$("$kcadm" get "users" --config "$config_file" -r "$realm" -q "username=service-account-teman-belajar-admin-management" --fields id --format csv --noquotes)
-  rm_uuid=$("$kcadm" get clients --config "$config_file" -r "$realm" -q "clientId=realm-management" --fields id --format csv --noquotes)
-  
-  if [[ -n "$sa_user_id" && -n "$rm_uuid" ]]; then
-    # Assign least-privilege realm-management roles
-    "$kcadm" add-roles --config "$config_file" -r "$realm" --uusername "service-account-teman-belajar-admin-management" --cclientid "realm-management" --rolename "manage-users" --rolename "query-users" --rolename "view-users" >/dev/null 2>&1 || true
-    echo "PASS Keycloak Management client: teman-belajar-admin-management"
-  fi
+if [[ -z "$manage_uuid" || "$manage_uuid" == *$'\n'* ]]; then
+  echo "Expected exactly one Keycloak management client" >&2
+  exit 1
 fi
 
+"$kcadm" update "clients/$manage_uuid" --config "$config_file" -r "$realm" \
+  -s enabled=true \
+  -s clientAuthenticatorType=client-secret \
+  -s "secret=$KEYCLOAK_MANAGEMENT_CLIENT_SECRET" \
+  -s serviceAccountsEnabled=true \
+  -s standardFlowEnabled=false \
+  -s implicitFlowEnabled=false \
+  -s publicClient=false \
+  -s bearerOnly=false \
+  -s fullScopeAllowed=false \
+  -s directAccessGrantsEnabled=false >/dev/null
+
+sa_user_id=$("$kcadm" get users --config "$config_file" -r "$realm" \
+  -q "username=service-account-teman-belajar-admin-management" --fields id --format csv --noquotes)
+rm_uuid=$("$kcadm" get clients --config "$config_file" -r "$realm" \
+  -q "clientId=realm-management" --fields id --format csv --noquotes)
+if [[ -z "$sa_user_id" || "$sa_user_id" == *$'\n'* || -z "$rm_uuid" || "$rm_uuid" == *$'\n'* ]]; then
+  echo "Management service account or realm-management client is not unique" >&2
+  exit 1
+fi
+
+assigned_roles=$("$kcadm" get "users/$sa_user_id/role-mappings/clients/$rm_uuid" \
+  --config "$config_file" -r "$realm" --fields name --format csv --noquotes)
+for required_role in manage-users query-users view-users; do
+  if ! grep -Fxq "$required_role" <<<"$assigned_roles"; then
+    "$kcadm" add-roles --config "$config_file" -r "$realm" \
+      --uid "$sa_user_id" --cclientid realm-management --rolename "$required_role" >/dev/null
+  fi
+done
+
+assigned_roles=$("$kcadm" get "users/$sa_user_id/role-mappings/clients/$rm_uuid" \
+  --config "$config_file" -r "$realm" --fields name --format csv --noquotes)
+for required_role in manage-users query-users view-users; do
+  if ! grep -Fxq "$required_role" <<<"$assigned_roles"; then
+    echo "Missing required realm-management role: $required_role" >&2
+    exit 1
+  fi
+done
+for prohibited_role in realm-admin manage-realm; do
+  if grep -Fxq "$prohibited_role" <<<"$assigned_roles"; then
+    echo "Prohibited realm-management role assigned: $prohibited_role" >&2
+    exit 1
+  fi
+done
+
+# With fullScopeAllowed=false, service-account assignments are intentionally
+# absent from tokens unless the management client explicitly scopes them in.
+# Map only the three approved realm-management roles so client_credentials
+# tokens remain operational without gaining realm-admin/manage-realm.
+scope_roles=$("$kcadm" get "clients/$manage_uuid/scope-mappings/clients/$rm_uuid" \
+  --config "$config_file" -r "$realm" --fields name --format csv --noquotes)
+for required_role in manage-users query-users view-users; do
+  if ! grep -Fxq "$required_role" <<<"$scope_roles"; then
+    role_json=$("$kcadm" get "clients/$rm_uuid/roles/$required_role" \
+      --config "$config_file" -r "$realm" --compressed)
+    "$kcadm" create "clients/$manage_uuid/scope-mappings/clients/$rm_uuid" \
+      --config "$config_file" -r "$realm" -b "[$role_json]" >/dev/null
+    scope_roles+=$'\n'"$required_role"
+  fi
+done
+
+scope_roles=$("$kcadm" get "clients/$manage_uuid/scope-mappings/clients/$rm_uuid" \
+  --config "$config_file" -r "$realm" --fields name --format csv --noquotes)
+for required_role in manage-users query-users view-users; do
+  if ! grep -Fxq "$required_role" <<<"$scope_roles"; then
+    echo "Missing required management client scope: $required_role" >&2
+    exit 1
+  fi
+done
+for prohibited_role in realm-admin manage-realm; do
+  if grep -Fxq "$prohibited_role" <<<"$scope_roles"; then
+    echo "Prohibited management client scope present: $prohibited_role" >&2
+    exit 1
+  fi
+done
+
+for property in \
+  "serviceAccountsEnabled:true" \
+  "standardFlowEnabled:false" \
+  "implicitFlowEnabled:false" \
+  "directAccessGrantsEnabled:false" \
+  "publicClient:false"; do
+  property_name=${property%%:*}
+  expected_value=${property##*:}
+  actual_value=$("$kcadm" get "clients/$manage_uuid" --config "$config_file" -r "$realm" \
+    --fields "$property_name" --format csv --noquotes)
+  if [[ "$actual_value" != "$expected_value" ]]; then
+    echo "Unexpected management client property: $property_name" >&2
+    exit 1
+  fi
+done
+
+configured_secret=$("$kcadm" get "clients/$manage_uuid/client-secret" \
+  --config "$config_file" -r "$realm" --fields value --format csv --noquotes)
+if [[ "$configured_secret" != "$KEYCLOAK_MANAGEMENT_CLIENT_SECRET" ]]; then
+  echo "Management client secret reconciliation failed" >&2
+  exit 1
+fi
+
+echo "PASS Keycloak Management client: teman-belajar-admin-management"

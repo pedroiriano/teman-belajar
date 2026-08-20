@@ -46,6 +46,16 @@ analytics
 audit
 ```
 
+Schema `analytics` menyimpan raw event ber-retensi, rollup harian, dan tepat
+satu baris `analytics.worker_state`. Kolom `last_rollup_success_at`,
+`last_moodle_sync_success_at`, dan `last_cleanup_success_at` hanya diperbarui
+setelah job terkait berhasil; waktu raw event tidak boleh dipakai sebagai bukti
+freshness worker.
+
+`analytics.learning_daily` menyimpan `eligible_enrolments` bersama active
+learners, starts, completions, dan rate agar denominator cohort yang diterima
+dari Moodle tetap dapat diaudit setelah melewati analytics worker.
+
 ## 3. Core Tables
 
 ### portal

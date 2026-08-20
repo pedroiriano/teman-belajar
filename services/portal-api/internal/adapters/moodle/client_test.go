@@ -28,6 +28,20 @@ func TestClient_MoodleError(t *testing.T) {
 	}
 }
 
+func TestClient_MoodleErrorWithoutErrorCode(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte(`{"exception":"Error","message":"Runtime class not found"}`))
+	}))
+	defer server.Close()
+
+	client := NewClient(Config{BaseURL: server.URL, Token: "test", Timeout: time.Second})
+	err := client.callWS(context.Background(), "test_func", nil, nil)
+	if err == nil || !strings.Contains(err.Error(), "moodle is currently unavailable") {
+		t.Fatalf("expected Moodle error envelope to be rejected, got %v", err)
+	}
+}
+
 func TestClient_Timeout(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		time.Sleep(20 * time.Millisecond)
@@ -274,5 +288,31 @@ func TestClient_Redaction(t *testing.T) {
 	errBytes, _ := json.Marshal(err)
 	if strings.Contains(string(errBytes), token) {
 		t.Errorf("json serialization leaked token! %s", string(errBytes))
+	}
+}
+
+func TestGetLearningAnalyticsUsesExplicitPeriod(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if err := r.ParseForm(); err != nil {
+			t.Fatalf("ParseForm: %v", err)
+		}
+		if got := r.Form.Get("start_date"); got != "2026-08-01" {
+			t.Fatalf("start_date = %q", got)
+		}
+		if got := r.Form.Get("end_date"); got != "2026-08-10" {
+			t.Fatalf("end_date = %q", got)
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"active_learners":4,"learning_starts":5,"eligible_enrolments":10,"completions":4,"completion_rate":40,"top_courses":[]}`))
+	}))
+	defer server.Close()
+
+	client := NewClient(Config{BaseURL: server.URL, Token: "test", Timeout: time.Second})
+	result, err := client.GetLearningAnalytics(context.Background(), "2026-08-01", "2026-08-10")
+	if err != nil {
+		t.Fatalf("GetLearningAnalytics: %v", err)
+	}
+	if result.EligibleEnrolments != 10 || result.Completions != 4 || result.CompletionRate != 40 {
+		t.Fatalf("unexpected cohort result: %+v", result)
 	}
 }

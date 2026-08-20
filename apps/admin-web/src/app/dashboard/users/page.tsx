@@ -6,7 +6,7 @@ import Link from "next/link";
 import { KeycloakUser } from "@/types/user";
 
 export default async function UsersPage() {
-  const session = (await getServerSession(authOptions)) as any;
+  const session = await getServerSession(authOptions);
   const roles = session?.roles || [];
   const hasAccess = roles.some((role: string) => ["Portal Administrator", "Content Editor", "Reviewer"].includes(role));
   const isPortalAdmin = roles.includes("Portal Administrator");
@@ -108,4 +108,3 @@ export default async function UsersPage() {
     </div>
   );
 }
-

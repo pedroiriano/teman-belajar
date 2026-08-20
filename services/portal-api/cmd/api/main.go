@@ -151,7 +151,7 @@ func main() {
 	}
 
 	analyticsRepo := analytics.NewPostgresRepository(db)
-	analyticsHandler := handler.NewAnalyticsHandler(analyticsRepo)
+	analyticsHandler := handler.NewAnalyticsHandler(analyticsRepo, moodleClient)
 
 	engagementService := engagementapplication.NewService(engagementRepo, engagementResolver, searchService)
 	engagementHandler := handler.NewEngagementHandler(engagementService)

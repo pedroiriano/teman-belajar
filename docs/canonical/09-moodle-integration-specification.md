@@ -66,6 +66,15 @@ Portal boleh menyimpan snapshot/cache:
 - course summary;
 - learner progress summary.
 
+Untuk statistik, `local_temanbelajar_get_learning_analytics` menerima
+`start_date` dan `end_date` inklusif (maksimum 365 hari) dan mengembalikan
+agregat tanpa identitas. Pembelajar aktif adalah pengguna aktif dengan role
+Moodle `student`, enrolment aktif pada course nyata, dan aktivitas course dalam
+periode; guest, site admin, akun deleted/suspended, serta staf non-learner tidak
+dihitung. Completion rate adalah completed eligible enrolments sampai akhir
+periode dibagi eligible learner-course enrolments pada cohort yang sama. Role
+`Portal Administrator` tidak otomatis memberi Moodle Site Administrator.
+
 Snapshot harus menyimpan:
 - source;
 - external ID;

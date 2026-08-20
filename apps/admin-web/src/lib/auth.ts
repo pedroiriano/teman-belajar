@@ -83,9 +83,10 @@ export const authOptions: NextAuthOptions = {
         return { ...token, error: "RefreshAccessTokenError" };
       }
     },
-    async session({ session, token }: any) {
-      session.roles = token.roles;
-      session.accessToken = token.accessToken;
+    async session({ session, token }) {
+	  session.roles = Array.isArray(token.roles) ? token.roles : [];
+	  session.accessToken = token.accessToken;
+	  session.actorId = token.sub;
       return session;
     },
   },

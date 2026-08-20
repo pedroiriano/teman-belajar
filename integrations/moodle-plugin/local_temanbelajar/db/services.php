@@ -21,7 +21,7 @@ $functions = array(
         'classname'   => 'local_temanbelajar\external\get_learning_analytics',
         'methodname'  => 'execute',
         'classpath'   => 'local/temanbelajar/classes/external/get_learning_analytics.php',
-        'description' => 'Gets learning analytics data for a specific date.',
+        'description' => 'Gets privacy-safe learning analytics for an inclusive date range.',
         'type'        => 'read',
         'ajax'        => true,
         'services'    => array('teman_belajar_integration'),
@@ -29,7 +29,7 @@ $functions = array(
 );
 
 $services = array(
-    'teman_belajar_integration' => array(
+    'Teman Belajar Integration' => array(
         'functions' => array(
             'core_course_get_courses',
             'core_enrol_get_users_courses',

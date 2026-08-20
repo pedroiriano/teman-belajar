@@ -5,7 +5,22 @@ const REALM = "teman-belajar";
 
 let cachedToken: { token: string; expiresAt: number } | null = null;
 
+interface KeycloakTokenResponse {
+  access_token: string;
+  expires_in: number;
+}
+
+function isKeycloakTokenResponse(value: unknown): value is KeycloakTokenResponse {
+  if (typeof value !== "object" || value === null) return false;
+  const candidate = value as Record<string, unknown>;
+  return typeof candidate.access_token === "string" && candidate.access_token.length > 0 &&
+    typeof candidate.expires_in === "number" && candidate.expires_in > 0;
+}
+
 export async function getKeycloakAdminToken(): Promise<string> {
+  if (!KEYCLOAK_MANAGEMENT_CLIENT_SECRET) {
+    throw new Error("Keycloak management client is not configured.");
+  }
   if (cachedToken && Date.now() < cachedToken.expiresAt - 30000) {
     return cachedToken.token;
   }
@@ -23,7 +38,8 @@ export async function getKeycloakAdminToken(): Promise<string> {
       signal: controller.signal,
     });
     if (!res.ok) throw new Error("Keycloak management auth failed.");
-    const data = await res.json();
+    const data: unknown = await res.json();
+    if (!isKeycloakTokenResponse(data)) throw new Error("Keycloak management auth returned an invalid response.");
     cachedToken = { token: data.access_token, expiresAt: Date.now() + data.expires_in * 1000 };
     return data.access_token;
   } finally {

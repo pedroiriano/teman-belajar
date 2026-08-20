@@ -8,5 +8,7 @@
  */
 
 $string['pluginname'] = 'Teman Belajar Integration';
+$string['analyticsreaderrole'] = 'Teman Belajar analytics reader';
+$string['analyticsreaderroledescription'] = 'Least-privilege system role for the Teman Belajar analytics Web Service.';
 $string['keycloakissuermissing'] = 'The Teman Belajar Keycloak login provider is not available. Contact the platform administrator.';
 $string['privacy:metadata'] = 'The Teman Belajar Integration plugin does not store any personal data itself.';

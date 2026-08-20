@@ -4,10 +4,10 @@ import { redirect } from "next/navigation";
 import { kcAdminFetch } from "@/lib/keycloak-admin";
 import { createUserAction } from "@/app/actions/users";
 import Link from "next/link";
-import { KeycloakRole } from "@/types/user";
+import { isProductRole, KeycloakRole } from "@/types/user";
 
 export default async function CreateUserPage() {
-  const session = (await getServerSession(authOptions)) as any;
+  const session = await getServerSession(authOptions);
   if (!session?.roles?.includes("Portal Administrator")) {
     redirect("/dashboard");
   }
@@ -15,8 +15,7 @@ export default async function CreateUserPage() {
   const rolesRes = await kcAdminFetch("/roles");
   const allRoles: KeycloakRole[] = await rolesRes.json();
   
-  const internalRoles = ["uma_authorization", "offline_access"];
-  const availableRoles = allRoles.filter((r) => !internalRoles.includes(r.name) && !r.name.startsWith("default-roles-"));
+  const availableRoles = allRoles.filter((role) => isProductRole(role.name));
 
   return (
     <div className="admin-page">
@@ -38,28 +37,28 @@ export default async function CreateUserPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="admin-label">Nama Depan *</label>
-                  <input type="text" name="firstName" required className="admin-input" placeholder="Masukkan nama depan" />
+                  <input type="text" name="firstName" required maxLength={255} className="admin-input" placeholder="Masukkan nama depan" />
                 </div>
                 <div>
                   <label className="admin-label">Nama Belakang *</label>
-                  <input type="text" name="lastName" required className="admin-input" placeholder="Masukkan nama belakang" />
+                  <input type="text" name="lastName" required maxLength={255} className="admin-input" placeholder="Masukkan nama belakang" />
                 </div>
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="admin-label">Email *</label>
-                  <input type="email" name="email" required className="admin-input" placeholder="contoh@temanbelajar.local" />
+                  <input type="email" name="email" required maxLength={320} className="admin-input" placeholder="contoh@temanbelajar.local" />
                 </div>
                 <div>
                   <label className="admin-label">Username *</label>
-                  <input type="text" name="username" required className="admin-input" placeholder="Masukkan username unik" />
+                  <input type="text" name="username" required maxLength={255} className="admin-input" placeholder="Masukkan username unik" />
                 </div>
               </div>
 
               <div>
                 <label className="admin-label">Password Sementara *</label>
-                <input type="password" name="password" required className="admin-input max-w-md" placeholder="Minimal 8 karakter" />
+                <input type="password" name="password" required minLength={8} maxLength={1024} autoComplete="new-password" className="admin-input max-w-md" placeholder="Minimal 8 karakter" />
               </div>
               
               <div className="pt-2">

@@ -4,20 +4,44 @@
     "roles": {
         "realm": [
             {
-                "name": "Portal Administrator",
-                "description": "Administrator of the Teman Belajar Portal"
+                "name": "Guest",
+                "description": "Unauthenticated or minimally authenticated guest"
+            },
+            {
+                "name": "Learner",
+                "description": "Standard learner"
+            },
+            {
+                "name": "Instructor",
+                "description": "Learning instructor"
             },
             {
                 "name": "Content Editor",
-                "description": "Content editor and course creator"
+                "description": "Content editor"
             },
             {
                 "name": "Reviewer",
                 "description": "Content reviewer and approver"
             },
             {
-                "name": "Learner",
-                "description": "Standard Learner"
+                "name": "Course Manager",
+                "description": "Formal course manager"
+            },
+            {
+                "name": "Portal Administrator",
+                "description": "Administrator of the Teman Belajar Portal"
+            },
+            {
+                "name": "LMS Administrator",
+                "description": "Administrator of LMS integrations without automatic Moodle site-admin grant"
+            },
+            {
+                "name": "Auditor",
+                "description": "Read-only audit and compliance reviewer"
+            },
+            {
+                "name": "Super Administrator",
+                "description": "Highest Teman Belajar product role; not a Keycloak realm-management role"
             }
         ]
     },
@@ -32,7 +56,7 @@
             "implicitFlowEnabled": false,
             "rootUrl": "${PORTAL_WEB_URL}",
             "redirectUris": [
-                "${PORTAL_WEB_URL}/*##${MOODLE_BASE_URL}/*##${ADMIN_WEB_URL}/*"
+                "${PORTAL_WEB_URL}/*"
             ],
             "webOrigins": [
                 "${PORTAL_WEB_URL}"
@@ -42,7 +66,7 @@
             "attributes": {
                 "frontchannel.logout.url": "${PORTAL_WEB_URL}/api/auth/frontchannel-logout",
                 "frontchannel.logout.session.required": "true",
-                "post.logout.redirect.uris": "${PORTAL_WEB_URL}/*##${MOODLE_BASE_URL}/*##${ADMIN_WEB_URL}/*"
+                "post.logout.redirect.uris": "${PORTAL_WEB_URL}/*"
             },
             "fullScopeAllowed": true,
             "protocolMappers": [
@@ -79,7 +103,7 @@
             "attributes": {
                 "frontchannel.logout.url": "${ADMIN_WEB_URL}/api/auth/frontchannel-logout",
                 "frontchannel.logout.session.required": "true",
-                "post.logout.redirect.uris": "${PORTAL_WEB_URL}/*##${MOODLE_BASE_URL}/*##${ADMIN_WEB_URL}/*"
+                "post.logout.redirect.uris": "${ADMIN_WEB_URL}/*"
             },
             "fullScopeAllowed": true,
             "protocolMappers": [
@@ -116,28 +140,8 @@
             "attributes": {
                 "frontchannel.logout.url": "${MOODLE_BASE_URL}/local/temanbelajar/federated_logout.php",
                 "frontchannel.logout.session.required": "true",
-                "post.logout.redirect.uris": "${PORTAL_WEB_URL}/*##${MOODLE_BASE_URL}/*##${ADMIN_WEB_URL}/*"
+                "post.logout.redirect.uris": "${MOODLE_BASE_URL}/*"
             }
-        },
-        {
-            "clientId": "teman-belajar-admin-management",
-            "name": "Teman Belajar Admin Management",
-            "enabled": true,
-            "clientAuthenticatorType": "client-secret",
-            "secret": "",
-            "redirectUris": [],
-            "webOrigins": [],
-            "notBefore": 0,
-            "bearerOnly": false,
-            "consentRequired": false,
-            "standardFlowEnabled": false,
-            "implicitFlowEnabled": false,
-            "directAccessGrantsEnabled": false,
-            "serviceAccountsEnabled": true,
-            "publicClient": false,
-            "frontchannelLogout": false,
-            "protocol": "openid-connect",
-            "fullScopeAllowed": false
         }
     ],
     "users": [

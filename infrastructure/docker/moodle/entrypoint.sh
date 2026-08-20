@@ -56,6 +56,8 @@ else
     sudo -u www-data php "$MOODLE_DIR/admin/cli/upgrade.php" --non-interactive
 fi
 
+sudo -u www-data php "$MOODLE_DIR/public/local/temanbelajar/cli/reconcile_integration.php"
+
 # config.php and moodledata are the only runtime-owned paths managed here.
 # The plugin source is intentionally mounted read-only and must never be chowned.
 chown www-data:www-data "$MOODLE_DIR/config.php"

@@ -36,7 +36,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File infrastructure/docker/teman-
 # Rekonsiliasi idempotent tiga client SSO/SLO Keycloak kanonis
 powershell -NoProfile -ExecutionPolicy Bypass -File infrastructure/docker/teman-belajar-docker.ps1 sso
 
-# Smoke test status + tujuh endpoint
+# Smoke test status + delapan endpoint
 powershell -NoProfile -ExecutionPolicy Bypass -File infrastructure/docker/teman-belajar-docker.ps1 verify
 
 # Stop container/network; volume dipertahankan
@@ -55,6 +55,7 @@ Alias Makefile: `make docker-config`, `make up`, `make status`, `make logs`, `ma
 - MinIO API: `http://localhost:19000`
 - MinIO Console: `http://localhost:19001`
 - Meilisearch: `http://localhost:7700`
+- Grafana teknis: `http://localhost:3002`
 - Portal PostgreSQL: `127.0.0.1:15432`
 - Moodle PostgreSQL: `127.0.0.1:15433`
 - Redis: `127.0.0.1:16379`
@@ -62,10 +63,10 @@ Alias Makefile: `make docker-config`, `make up`, `make status`, `make logs`, `ma
 ## Kondisi Status yang Benar
 
 - `web`, `admin`, `api`, `portal-db`, `moodle-db`, `redis`, `keycloak`, `minio`, `search`, dan `moodle`: `healthy`.
-- `search-worker` dan `moodle-cron`: running; tidak membuka port host.
+- `search-worker`, `analytics-worker`, `moodle-cron`, `prometheus`, `grafana`, `otel-collector`, `loki`, dan `tempo`: running; hanya Grafana membuka port host.
 - `migrate`: `Exited (0)`.
 - Network: hanya `teman-belajar-network`.
-- Volume: tujuh nama pada registry governance; tidak ada prefix ganda `teman-belajar_teman-belajar_*`.
+- Volume: sebelas nama pada registry governance; tidak ada prefix ganda `teman-belajar_teman-belajar_*`.
 
 ## Port Bentrok
 

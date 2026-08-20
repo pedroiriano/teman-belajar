@@ -4,10 +4,10 @@ import { redirect } from "next/navigation";
 import { kcAdminFetch } from "@/lib/keycloak-admin";
 import { toggleUserAction, updateUserRolesAction } from "@/app/actions/users";
 import Link from "next/link";
-import { KeycloakUser, KeycloakRole } from "@/types/user";
+import { isProductRole, KeycloakUser, KeycloakRole } from "@/types/user";
 
 export default async function UserDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const session = (await getServerSession(authOptions)) as any;
+  const session = await getServerSession(authOptions);
   const roles = session?.roles || [];
   const hasAccess = roles.some((role: string) => ["Portal Administrator", "Content Editor", "Reviewer"].includes(role));
   const isPortalAdmin = roles.includes("Portal Administrator");
@@ -26,8 +26,7 @@ export default async function UserDetailPage({ params }: { params: Promise<{ id:
   // Fetch available roles
   const rolesRes = await kcAdminFetch("/roles");
   const allRoles: KeycloakRole[] = await rolesRes.json();
-  const internalRoles = ["uma_authorization", "offline_access"];
-  const availableRoles = allRoles.filter((r) => !internalRoles.includes(r.name) && !r.name.startsWith("default-roles-"));
+  const availableRoles = allRoles.filter((role) => isProductRole(role.name));
 
   // Fetch current user roles
   const currentRolesRes = await kcAdminFetch(`/users/${id}/role-mappings/realm`);

@@ -116,13 +116,11 @@ func (c *Client) callWS(ctx context.Context, wsfunction string, params url.Value
 		return fmt.Errorf("%w: response too large", learning.ErrMoodleInvalidResponse)
 	}
 
-	// Moodle often returns a 200 OK with an error JSON payload.
-	// Check if it's an error.
-	if strings.Contains(string(body), `"exception"`) && strings.Contains(string(body), `"errorcode"`) {
-		var moodleErr MoodleError
-		if err := json.Unmarshal(body, &moodleErr); err == nil && moodleErr.Exception != "" {
-			return c.mapError(&moodleErr)
-		}
+	// Moodle often returns a 200 OK with an error JSON payload. Some runtime
+	// errors omit errorcode, so exception is the authoritative discriminator.
+	var moodleErr MoodleError
+	if err := json.Unmarshal(body, &moodleErr); err == nil && moodleErr.Exception != "" {
+		return c.mapError(&moodleErr)
 	}
 
 	// Reject false or null

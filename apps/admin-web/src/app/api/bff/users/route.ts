@@ -4,7 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { kcAdminFetch } from "@/lib/keycloak-admin";
 
 export async function GET(req: NextRequest) {
-  const session = (await getServerSession(authOptions)) as any;
+  const session = await getServerSession(authOptions);
   if (!session?.roles?.includes("Portal Administrator")) {
     return NextResponse.json({ error: "Forbidden: Portal Administrator only" }, { status: 403 });
   }
@@ -16,7 +16,7 @@ export async function GET(req: NextRequest) {
     }
     const data = await res.json();
     return NextResponse.json(data);
-  } catch (err: any) {
+  } catch {
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

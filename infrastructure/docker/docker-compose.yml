@@ -459,6 +459,7 @@ services:
     environment:
       DATABASE_URL: postgres://${TB_PORTAL_DB_USER:?Set TB_PORTAL_DB_USER in infrastructure/docker/.env}:${TB_PORTAL_DB_PASSWORD:?Set TB_PORTAL_DB_PASSWORD in infrastructure/docker/.env}@portal-db:5432/${TB_PORTAL_DB_NAME:?Set TB_PORTAL_DB_NAME in infrastructure/docker/.env}?sslmode=disable
       MOODLE_INTERNAL_BASE_URL: http://moodle
+      MOODLE_PUBLIC_BASE_URL: ${TB_MOODLE_URL:?Set TB_MOODLE_URL in infrastructure/docker/.env}
       TB_MOODLE_WEBSERVICE_TOKEN: ${TB_MOODLE_WEBSERVICE_TOKEN:?Set TB_MOODLE_WEBSERVICE_TOKEN in infrastructure/docker/.env}
       SYNC_INTERVAL: 60s
     depends_on:
