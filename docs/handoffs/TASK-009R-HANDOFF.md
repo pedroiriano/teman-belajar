@@ -3,13 +3,14 @@
 ## Executive status
 
 - **Task:** `TASK-009R`
-- **Status:** **LOCAL RELEASE ACCEPTANCE COMPLETE — branch publication authorized**
+- **Status:** **LOCAL RELEASE ACCEPTANCE COMPLETE — corrective branch published**
 - **Corrective baseline commit:** `d19a6f9` (`fix(task-009r): close release integrity gaps`)
 - **Current continuation:** corrective worktree on the same branch; all mandatory local browser, static, security, runtime, and fixture-cleanup gates now pass.
 - **Corrective branch:** `antigravity/task-009r-baseline-integrity-final`
 - **Historical RC preserved:** `97f24c93336a09bf3765ce9e247ea64ead680940` remains an ancestor; no history rewrite occurred.
 - **Canonical main at audit start:** `1e56fc216b577aea7cf9f18905c2bd6da99e69a8`
-- **Release decision:** the corrective branch may be committed and pushed. Any `main` fast-forward remains a separate repository/CI decision after remote verification.
+- **Release decision:** the corrective branch was committed, pushed by fast-forward,
+  and verified remotely. Any `main` promotion remains a separate PR/CI decision.
 - **Next task:** `TASK-010` was not started in this change. Do not create `TASK-009S`.
 
 The former Browser trusted-path blocker has been resolved. Portal/Admin visual,
@@ -307,8 +308,10 @@ with no QA username present.
 
 ### Remaining non-local follow-up
 
-1. Verify the pushed branch SHA and GitHub CI result.
-2. Decide whether to fast-forward `main` only after that remote evidence.
+1. Open a PR to `main` only when separately authorized. The repository CI
+   workflow triggers only for a PR to `main` or a push to `main`; therefore the
+   corrective branch push alone correctly produced no CI run.
+2. Merge or fast-forward `main` only after the PR-triggered CI is green.
 3. Execute production SLO verification and production credential rotation in
    the authorized production change process.
 
@@ -558,13 +561,14 @@ unverified; localhost evidence must never be presented as production evidence.
 
 ## Canonical release decision
 
-- **Branch push:** authorized after all local browser/static gates and fixture
-  cleanup passed.
+- **Branch push:** **PERFORMED** by fast-forward after all local browser/static
+  gates and fixture cleanup passed; the remote branch SHA was verified.
 - **Main push:** **NOT PERFORMED** in this corrective worktree; require remote
   branch/CI verification before a fast-forward decision.
-- **CI:** must be read from GitHub after branch push; do not infer it from local
-  checks.
-- **Remote SHA/content:** must be verified after branch push.
+- **CI:** no run was expected or present for the branch push because `CI
+  Baseline` triggers only on a PR to `main` or push to `main`; do not infer a
+  remote CI pass from local checks.
+- **Remote SHA/content:** verified after branch push.
 - **TASK-010 readiness:** locally ready only after the branch is published and
   remote CI is verified; TASK-010 itself was not started here.
 - **Human action required:** none for local TASK-009R acceptance. Production SLO,
