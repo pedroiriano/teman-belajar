@@ -93,3 +93,9 @@ Menyusul penyelesaian TASK-009, dilakukan beberapa penyesuaian kritis terkait Ma
   - Proses *logout* dari Admin Web dan Portal Web dipastikan berhasil mengarah dengan tepat ke protocol/openid-connect/logout milik Keycloak.
   - *Build* ulang (Rebuild) *container* dmin dan web telah sukses, dan perubahan telah di-commit ke repositori utama.
 
+
+### 15. Penyempurnaan Tampilan Hover Sidebar Mode Terang
+- **Defect:** Pada mode terang (*Light Mode*), menu pada sidebar akan berubah menjadi putih polos saat disentuh (*hover*), sehingga teks menjadi tidak terbaca dan berbaur dengan latar belakang.
+- **Fix:** Menghapus kelas *utility* bawaan Tailwind Tailwind (g-white/10 text-white) pada state :hover yang tertinggal di globals.css. Elemen kini diarahkan secara penuh untuk mematuhi CSS dinamis (--admin-sidebar-hover dan --admin-sidebar-title) yang memberikan warna kontras yang tepat (abu-abu terang dan teks gelap) di mode terang.
+- **Validation:** Menjalankan kompilasi ulang pada *container* Admin untuk memasukkan perubahan CSS yang sudah distandardisasi.
+
