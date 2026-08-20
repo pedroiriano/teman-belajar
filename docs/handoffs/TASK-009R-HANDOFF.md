@@ -81,3 +81,15 @@ Menyusul penyelesaian TASK-009, dilakukan beberapa penyesuaian kritis terkait Ma
   - Memastikan transisi *Light Mode* dan *Dark Mode* tetap harmonis dengan warna biru muda baru.
 - **Validation:** Melakukan proses *build* ulang kontainer Docker 	eman-belajar-admin untuk menerapkan CSS terkompilasi ke lingkungan produksi lokal, memvalidasi nihilnya sisa-sisa warna oranye di kode sumber.
 
+
+### 14. Penyelesaian Bug Logout Admin Web & Analytics Fetching
+- **Defect 1 (Logout):** Admin Web mengalami *Invalid redirect uri* dari Keycloak saat melakukan proses logout karena URI *post-logout* (http://localhost:3001) tidak memiliki *trailing slash* (garis miring di akhir) sehingga ditolak oleh pencocokan *wildcard* Keycloak (http://localhost:3001/*).
+- **Defect 2 (Statistik):** Halaman Statistik Platform di Admin Web gagal memuat data (*Gagal memuat statistik. Pastikan API analytics berjalan.*) karena etchStats secara tidak sengaja memanggil rute /api/v1/internal/analytics/statistics yang sebenarnya ditujukan untuk komunikasi *server-to-server*, alih-alih menggunakan rute admin dengan otorisasi JWT Keycloak (/api/v1/admin/analytics/statistics).
+- **Fix:**
+  - Menambahkan baris validasi URL di ederated-logout/route.ts pada Portal Web dan Admin Web untuk memastikan penambahan *trailing slash* secara otomatis.
+  - Mengubah *endpoint URL* pada pemanggilan etchStats di pps/admin-web/src/app/dashboard/statistics/page.tsx menjadi /api/v1/admin/analytics/statistics.
+- **Validation (E2E Testing Keycloak):**
+  - Dilakukan simulasi *HTTP Redirect Tracking* dari portal Publik, portal Admin, dan Moodle.
+  - Proses *logout* dari Admin Web dan Portal Web dipastikan berhasil mengarah dengan tepat ke protocol/openid-connect/logout milik Keycloak.
+  - *Build* ulang (Rebuild) *container* dmin dan web telah sukses, dan perubahan telah di-commit ke repositori utama.
+

@@ -39,11 +39,11 @@ const titleBySegment: Record<string, string> = {
 
 function Brand({ desktopClose }: { desktopClose?: () => void }) {
   return (
-    <div className="flex h-[76px] items-center gap-2 border-b border-white/10 px-4">
+    <div className="flex h-[76px] items-center gap-2 border-b admin-sidebar-border px-4">
       <Link href="/dashboard" className="flex min-w-0 flex-1 items-center gap-3">
-        <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-sky-600 font-black text-white shadow-lg shadow-sky-950/20">TB</span>
+        <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-sky-600 font-black text-white shadow-lg shadow-sky-500/20">TB</span>
         <span className="min-w-0">
-          <span className="block truncate font-extrabold text-white">Teman Belajar</span>
+          <span className="block truncate font-extrabold admin-sidebar-title">Teman Belajar</span>
           <span className="block truncate text-[10px] font-bold uppercase tracking-[.18em] text-slate-400">Admin Console</span>
         </span>
       </Link>
@@ -71,13 +71,13 @@ function Sidebar({ pathname, close, desktopClose }: { pathname: string; close?: 
       <nav className="flex-1 overflow-y-auto px-3 py-4" aria-label="Navigasi admin">
         {navigationGroups.map((group) => (
           <div key={group.label} className="mb-5">
-            <p className="px-3 pb-2 text-[10px] font-black uppercase tracking-[.2em] text-slate-500">{group.label}</p>
+            <p className="px-3 pb-2 text-[10px] font-black uppercase tracking-[.2em] admin-sidebar-section-title">{group.label}</p>
             <div className="grid gap-1">
               {group.items.map((item) => item.disabled ? (
                 <span key={item.label} className="admin-sidebar-link cursor-not-allowed opacity-50" aria-disabled="true">
                   <AdminIcon name={item.icon} className="h-5 w-5" />
                   <span>{item.label}</span>
-                  <span className="ml-auto rounded-full bg-white/10 px-2 py-0.5 text-[9px] uppercase">Segera</span>
+                  <span className="ml-auto rounded-full admin-sidebar-badge-bg px-2 py-0.5 text-[9px] uppercase">Segera</span>
                 </span>
               ) : (
                 <Link
@@ -89,16 +89,16 @@ function Sidebar({ pathname, close, desktopClose }: { pathname: string; close?: 
                 >
                   <AdminIcon name={item.icon} className="h-5 w-5" />
                   <span>{item.label}</span>
-                  {isActive(item.href) && <span className="ml-auto h-1.5 w-1.5 rounded-full bg-sky-400" />}
+                  {isActive(item.href) && <span className="ml-auto h-1.5 w-1.5 rounded-full bg-sky-500" />}
                 </Link>
               ))}
             </div>
           </div>
         ))}
       </nav>
-      <div className="m-3 rounded-xl border border-white/10 bg-white/5 p-4">
-        <p className="text-xs font-bold text-white">Workflow editorial</p>
-        <p className="mt-1 text-[11px] leading-5 text-slate-400">Draft → Review → Setujui → Terbit → Arsip</p>
+      <div className="m-3 rounded-xl border admin-sidebar-border admin-sidebar-box-bg p-4">
+        <p className="text-xs font-bold admin-sidebar-title">Workflow editorial</p>
+        <p className="mt-1 text-[11px] leading-5 admin-sidebar-copy">Draft → Review → Setujui → Terbit → Arsip</p>
       </div>
     </div>
   );
@@ -182,7 +182,7 @@ export function AdminShell({ children, userName, userEmail, role }: { children: 
         <div className="fixed inset-0 z-50 lg:hidden">
           <button type="button" className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm" aria-label="Tutup navigasi admin" aria-controls="admin-mobile-sidebar" onClick={() => setMobileSidebarOpen(false)} />
           <aside ref={mobileDrawerRef} id="admin-mobile-sidebar" className="admin-sidebar relative h-full w-[min(86vw,310px)] shadow-2xl" role="dialog" aria-modal="true" aria-label="Navigasi admin" tabIndex={-1}>
-            <button type="button" className="absolute right-3 top-4 z-10 grid h-10 w-10 place-items-center rounded-lg border border-white/10 text-slate-300" aria-label="Tutup navigasi admin" aria-controls="admin-mobile-sidebar" aria-expanded="true" onClick={() => setMobileSidebarOpen(false)}>
+            <button type="button" className="absolute right-3 top-4 z-10 grid h-10 w-10 place-items-center rounded-lg border admin-sidebar-border admin-sidebar-copy" aria-label="Tutup navigasi admin" aria-controls="admin-mobile-sidebar" aria-expanded="true" onClick={() => setMobileSidebarOpen(false)}>
               <AdminIcon name="close" className="h-5 w-5" />
             </button>
             <Sidebar pathname={pathname} close={() => setMobileSidebarOpen(false)} />
