@@ -45,9 +45,7 @@ var allowedEvents = map[string]bool{
 	"search.executed":           true,
 	"search.zero_result":        true,
 	"search.result_clicked":     true,
-	"content.knowledge_view":    true,
-	"content.news_view":         true,
-	"content.announcement_view": true,
+	"content.viewed":            true,
 	"engagement.bookmark":       true,
 	"engagement.rating":         true,
 	"engagement.recent_view":    true,
@@ -55,10 +53,11 @@ var allowedEvents = map[string]bool{
 }
 
 var ssoEvents = map[string]bool{
-	"sso.login_success": true,
-	"sso.login_failed":  true,
-	"sso.logout":        true,
-	"auth.silent_sso":   true,
+	"auth.login":          true,
+	"auth.logout":         true,
+	"auth.silent_sso":     true,
+	"auth.authorization":  true,
+	"auth.oidc_callback":  true,
 }
 
 // Event Metadata Validation
@@ -72,17 +71,15 @@ func validateMetadata(eventType string, metadataRaw json.RawMessage) ([]byte, er
 		return nil, fmt.Errorf("forbidden metadata keys detected")
 	}
 
-	if len(metadataRaw) == 0 || rawStr == "null" {
-		metadataRaw = []byte("{}")
+	if len(metadataRaw) == 0 || string(metadataRaw) == "{}" || string(metadataRaw) == "null" {
+		return []byte("{}"), nil
 	}
 
-	// Strictly decode based on event
 	switch {
-	case strings.HasPrefix(eventType, "search."):
+	case eventType == "search.executed" || eventType == "search.zero_result" || eventType == "search.result_clicked":
 		type SearchMetadata struct {
-			HasQuery    bool   `json:"has_query"`
-			ContentType string `json:"content_type,omitempty"`
-			ResultID    string `json:"result_id,omitempty"`
+			Filters map[string]string `json:"filters,omitempty"`
+			Count   int               `json:"count,omitempty"`
 		}
 		var m SearchMetadata
 		dec := json.NewDecoder(strings.NewReader(rawStr))
@@ -92,7 +89,20 @@ func validateMetadata(eventType string, metadataRaw json.RawMessage) ([]byte, er
 		}
 		return json.Marshal(m)
 
-	case strings.HasPrefix(eventType, "auth.") || strings.HasPrefix(eventType, "sso."):
+	case eventType == "content.viewed":
+		type ContentMetadata struct {
+			ContentType string `json:"content_type,omitempty"`
+			TargetID    string `json:"target_id,omitempty"`
+		}
+		var m ContentMetadata
+		dec := json.NewDecoder(strings.NewReader(rawStr))
+		dec.DisallowUnknownFields()
+		if err := dec.Decode(&m); err != nil {
+			return nil, fmt.Errorf("invalid content metadata: %v", err)
+		}
+		return json.Marshal(m)
+
+	case strings.HasPrefix(eventType, "auth."):
 		type AuthMetadata struct {
 			Result string `json:"result,omitempty"`
 		}
@@ -378,7 +388,14 @@ func (h *AnalyticsHandler) HandleGetStatistics(w http.ResponseWriter, r *http.Re
 	contentStats, _ := h.repo.GetContentAnalytics(r.Context(), sinceDate)
 	engagementStats, _ := h.repo.GetEngagementStats(r.Context())
 
+	
+	lastEventTime, _ := h.repo.GetLatestEventTime(r.Context())
+	if lastEventTime.IsZero() {
+		lastEventTime = time.Now().UTC()
+	}
+
 	apiStats := fetchAPIStats()
+
 
 	type Freshness struct {
 		AnalyticsLastRollup  string `json:"analytics_last_rollup"`
@@ -408,7 +425,7 @@ func (h *AnalyticsHandler) HandleGetStatistics(w http.ResponseWriter, r *http.Re
 		Engagement:           engagementStats,
 		PeriodUniqueVisitors: periodUniqueVisitors,
 		Freshness: Freshness{
-			AnalyticsLastRollup:  time.Now().UTC().Format(time.RFC3339),
+			AnalyticsLastRollup:  lastEventTime.Format(time.RFC3339),
 			PrometheusObservedAt: time.Now().UTC().Format(time.RFC3339),
 		},
 	})

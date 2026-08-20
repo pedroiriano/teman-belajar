@@ -96,7 +96,7 @@ func (r *PostgresRepository) RollupPageDaily(ctx context.Context, reportingDate 
 			COUNT(DISTINCT visitor_id)
 		FROM analytics.events
 		WHERE created_at >= $2 AND created_at < $3
-		  AND event_type IN ('portal.page_view', 'admin.page_view', 'content.knowledge_view', 'content.news_view', 'content.announcement_view')
+		  AND event_type IN ('portal.page_view', 'admin.page_view', 'content.knowledge_view', 'content.news_view', 'content.announcement_view', 'content.viewed')
 		GROUP BY url
 		ON CONFLICT (date, path) DO UPDATE SET 
 			views = EXCLUDED.views, 
@@ -111,8 +111,8 @@ func (r *PostgresRepository) RollupSSODaily(ctx context.Context, reportingDate s
 		INSERT INTO analytics.sso_daily (date, successful_logins, failed_logins)
 		SELECT 
 			$1::date, 
-			SUM(CASE WHEN event_type = 'sso.login_success' THEN 1 ELSE 0 END),
-			SUM(CASE WHEN event_type = 'sso.login_failed' THEN 1 ELSE 0 END)
+			SUM(CASE WHEN event_type = 'sso.login_success' OR (event_type = 'auth.login' AND metadata->>'result' = 'success') THEN 1 ELSE 0 END),
+			SUM(CASE WHEN event_type = 'sso.login_failed' OR (event_type = 'auth.login' AND metadata->>'result' != 'success') THEN 1 ELSE 0 END)
 		FROM analytics.events
 		WHERE created_at >= $2 AND created_at < $3
 		  AND event_type IN ('sso.login_success', 'sso.login_failed', 'auth.login')
@@ -235,4 +235,17 @@ func (r *PostgresRepository) RollupContentDaily(ctx context.Context, reportingDa
 	`
 	_, err := r.db.ExecContext(ctx, query, reportingDate, startUTC, endUTC)
 	return err
+}
+
+
+func (r *PostgresRepository) GetLatestEventTime(ctx context.Context) (time.Time, error) {
+	query := \SELECT MAX(created_at) FROM analytics.events	var t sql.NullTime
+	err := r.db.QueryRowContext(ctx, query).Scan(&t)
+	if err != nil {
+		return time.Time{}, err
+	}
+	if !t.Valid {
+		return time.Time{}, nil
+	}
+	return t.Time, nil
 }

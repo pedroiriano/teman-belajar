@@ -40,7 +40,8 @@ $RequiredKeys = @(
     "TB_MOODLE_ADMIN_PASSWORD", "TB_MOODLE_ADMIN_EMAIL",
     "TB_WEB_NEXTAUTH_SECRET", "TB_ADMIN_NEXTAUTH_SECRET",
     "TB_GRAFANA_ADMIN_USER", "TB_GRAFANA_ADMIN_PASSWORD",
-    "TB_SEARCH_CAPTURE_RAW_QUERY", "TB_PORTAL_INTERNAL_SECRET"
+    "TB_SEARCH_CAPTURE_RAW_QUERY", "TB_PORTAL_INTERNAL_SECRET",
+    "TB_KEYCLOAK_MANAGEMENT_CLIENT_SECRET"
 )
 
 $Missing = @($RequiredKeys | Where-Object {
@@ -119,7 +120,7 @@ if ($Environment["TB_MEILI_INDEX_NAME"] -notmatch "^[a-z][a-z0-9_]*$") {
     throw "TB_MEILI_INDEX_NAME must be a lowercase engine identifier."
 }
 
-if ($Environment["TB_SEARCH_CAPTURE_RAW_QUERY", "TB_PORTAL_INTERNAL_SECRET"] -ne "false") {
+if ($Environment["TB_SEARCH_CAPTURE_RAW_QUERY"] -ne "false") {
     throw "TB_SEARCH_CAPTURE_RAW_QUERY must remain false; raw search-query capture is prohibited by default."
 }
 

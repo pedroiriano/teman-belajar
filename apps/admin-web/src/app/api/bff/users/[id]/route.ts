@@ -12,10 +12,10 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   const { id } = await params;
   try {
     const res = await kcAdminFetch(`/users/${id}`);
-    if (!res.ok) return NextResponse.json({ error: await res.text() }, { status: res.status });
+    if (!res.ok) return NextResponse.json({ error: `Keycloak fetch failed with status ${res.status}` }, { status: res.status });
     return NextResponse.json(await res.json());
   } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
 
@@ -32,9 +32,9 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       method: 'PUT', 
       body: JSON.stringify(body) 
     });
-    if (!res.ok) return NextResponse.json({ error: await res.text() }, { status: res.status });
+    if (!res.ok) return NextResponse.json({ error: `Keycloak fetch failed with status ${res.status}` }, { status: res.status });
     return NextResponse.json({ success: true });
   } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
