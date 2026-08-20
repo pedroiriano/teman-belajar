@@ -99,3 +99,10 @@ Menyusul penyelesaian TASK-009, dilakukan beberapa penyesuaian kritis terkait Ma
 - **Fix:** Menghapus kelas *utility* bawaan Tailwind Tailwind (g-white/10 text-white) pada state :hover yang tertinggal di globals.css. Elemen kini diarahkan secara penuh untuk mematuhi CSS dinamis (--admin-sidebar-hover dan --admin-sidebar-title) yang memberikan warna kontras yang tepat (abu-abu terang dan teks gelap) di mode terang.
 - **Validation:** Menjalankan kompilasi ulang pada *container* Admin untuk memasukkan perubahan CSS yang sudah distandardisasi.
 
+
+### 16. Perbaikan Tema Tabel (Sinkronisasi Tailwind Dark Mode)
+- **Defect:** Pada Admin Web (misalnya halaman Statistik), tabel dan komponen UI lainnya tetap berwarna gelap (*Navy Blue*) meskipun pengguna sudah menekan tombol *Theme Toggle* ke Mode Terang (*Light Mode*). Hal ini terjadi apabila sistem operasi (*OS*) pengguna menggunakan Mode Gelap.
+- **Root Cause:** Berkas \	ailwind.config.ts\ pada Next.js tidak memiliki pengaturan \darkMode: 'class'\. Secara *default*, Tailwind menggunakan pendekatan \media\, sehingga kelas \dark:*\ selalu aktif jika OS menggunakan mode gelap, mengabaikan status *toggle* di dalam aplikasi.
+- **Fix:** Menambahkan \darkMode: 'class'\ ke \	ailwind.config.ts\ baik pada proyek \dmin-web\ maupun \portal-web\. Ini memaksa Tailwind untuk hanya menerapkan gaya mode gelap saat kelas \.dark\ ditambahkan secara eksplisit oleh *Theme Toggle* ke tag \html\.
+- **Validation:** Melakukan kompilasi ulang (*rebuild*) *container* Docker \dmin\ dan \web\ agar perubahan konfigurasi Tailwind dikompilasi ulang oleh Turbopack/Next.js.
+
