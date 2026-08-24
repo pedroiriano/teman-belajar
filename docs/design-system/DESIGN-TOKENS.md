@@ -1,6 +1,6 @@
 # Design Tokens — Teman Belajar
 
-**Status:** Implemented baseline through TASK-003E.
+**Status:** Canonical through TASK-011C.
 
 ## Implemented Experience Tokens
 
@@ -26,13 +26,16 @@ Large surface radius: `1rem` to `1.5rem`. Dark surfaces follow the Techwind
 
 | Semantic token | Light | Dark |
 |---|---|---|
-| `admin-primary` (action surface) | `#c2410c` | `#38bdf8` |
-| `admin-primary-hover` | `#9a3412` | `#0ea5e9` |
-| `admin-on-primary` | `#ffffff` | `#082f49` |
-| `admin-accent-text` | `#c2410c` | `#7dd3fc` |
+| `admin-primary` (action surface) | `#38bdf8` | `#38bdf8` |
+| `admin-primary-hover` | `#0ea5e9` | `#0ea5e9` |
+| `admin-on-primary` | `#082f49` | `#082f49` |
+| `admin-accent-text` | `#0369a1` | `#7dd3fc` |
+| `admin-accent-border` | `#0284c7` | `#38bdf8` |
+| `admin-focus` | `#0284c7` | `#38bdf8` |
+| `admin-warning` | `#eab308` | `#fde047` |
 | `admin-ink` | `#1e293b` | `#f1f5f9` |
 | `admin-copy` | `#475569` | `#cbd5e1` |
-| `admin-muted` | `#64748b` | `#a8a9ad` |
+| `admin-muted` | `#475569` | `#a8a9ad` |
 | `admin-surface` | `#f6f7fb` | `#1d1e26` |
 | `admin-panel` | `#ffffff` | `#262932` |
 | `admin-panel-muted` | `#f8fafc` | `#323846` |
@@ -41,15 +44,16 @@ Large surface radius: `1rem` to `1.5rem`. Dark surfaces follow the Techwind
 | `admin-field-readonly` | `#f8fafc` | `#1f2533` |
 | `admin-field-disabled` | `#f1f5f9` | `#20242d` |
 | `admin-field-disabled-text` | `#94a3b8` | `#7d8594` |
-| `admin-sidebar` | `#111827` | `#171921` |
+| `admin-sidebar` | `#ffffff` | `#171921` |
 
 Large surface radius: `1rem`. Cuba surface hierarchy is adapted from its
-`dark-only` variables. Light mode uses the established Teman Belajar Admin
-orange action. **Dark mode is intentionally different and non-negotiable:** its
-primary/action color is bright light blue (`sky-400`), hover is `sky-500`, and
-accent text is `sky-300`. Dark blue `admin-on-primary` text keeps the bright
-button surface accessible. Do not use orange or vendor violet as the Cuba Admin
-dark-mode primary/accent palette.
+`dark-only` variables. **Both themes use the non-negotiable bright sky/light-blue
+action family.** Light mode uses a darker sky accent text and opaque sky focus
+border to preserve contrast on white. Dark blue `admin-on-primary` text keeps
+the bright button surface accessible. Orange and amber are prohibited across
+all application-controlled Cuba Admin UI; warning uses semantic yellow. Vendor
+violet is not an alternative action/accent palette. The exhaustive rule is in
+`ADMIN-UI-VISUAL-CONTRACT.md`.
 
 Portal and Admin deliberately use separate presentation tokens. Semantic success,
 warning, danger, focus, disabled, and neutral meanings stay consistent.
@@ -114,6 +118,7 @@ Gunakan skala konsisten yang compatible dengan Tailwind.
 10. Never attach `!bg-*`, `!text-*`, or `!border-*` color utilities to
     `.admin-input`. Forced colors bypass Cuba semantic tokens and can make text,
     placeholders, autofill, or native control states illegible in one theme.
-11. Cuba Admin dark mode must keep the fixed bright-light-blue contract above.
-    Any change to those four action tokens requires explicit human approval and
-    a simultaneous update to the automated Admin theme contract.
+11. Cuba Admin light and dark modes must keep the fixed bright-light-blue
+    contract above and the no-orange rule in `ADMIN-UI-VISUAL-CONTRACT.md`.
+    Any exception requires explicit human approval plus simultaneous canonical
+    documentation and automated-contract updates.

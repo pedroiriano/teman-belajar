@@ -59,6 +59,9 @@ a new convention.
   theme, or arbitrary top-level folder without accepted authority.
 - Portal UI uses Techwind-derived product components only; Admin uses
   Cuba-derived product components only. Vendor `ORIGINAL/` is read-only/local.
+- Cuba Admin uses bright sky/light blue in both themes and forbids orange/amber
+  across all application-controlled states. Agents must run the canonical
+  theme and no-orange guards; warning uses yellow, not an orange substitute.
 - Shared packages contain neutral contracts/primitives, not mixed vendor themes.
 - A new route/menu must have real authorized behavior; otherwise mark it
   `Segera` or omit it.

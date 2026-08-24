@@ -38,7 +38,7 @@ function siblingList(nodes: KnowledgeNode[], parentId?: string): KnowledgeNode[]
 function HierarchyTree({ nodes, selectedId, onSelect, onReorder, readOnly, nested = false }: { nodes: KnowledgeNode[]; selectedId?: string; onSelect: (node: KnowledgeNode) => void; onReorder: (parentId: string | null, ordered: string[]) => Promise<void>; readOnly: boolean; nested?: boolean }) {
   return <ul role={nested ? "group" : "tree"} aria-label={nested ? undefined : "Struktur pengetahuan"} className="space-y-2">{nodes.map((node, index) => (
     <li key={node.id} role="treeitem" aria-expanded={node.children?.length ? true : undefined} aria-selected={selectedId === node.id}>
-      <div className={`flex items-center gap-2 rounded-xl border px-3 py-2 ${selectedId === node.id ? "border-sky-500 bg-sky-50" : "border-slate-200 bg-white"}`}>
+      <div className="admin-tree-row" aria-selected={selectedId === node.id}>
         <button type="button" onClick={() => onSelect(node)} className="min-w-0 flex-1 text-left focus-visible:rounded-lg">
           <span className="block truncate text-sm font-extrabold text-slate-900">{node.title}</span>
           <span className="block text-[11px] font-semibold text-slate-500">{knowledgeNodeTypeLabels[node.type]} · {node.article_count} artikel · v{node.version}{node.status === "archived" ? " · Arsip" : ""}</span>

@@ -33,7 +33,7 @@ function SourceBadge({ label, source }: { label: string; source: SourceState }) 
   const style = source.status === "fresh"
     ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300"
     : source.status === "stale"
-      ? "bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300"
+      ? "bg-yellow-100 text-yellow-800"
       : "bg-rose-100 text-rose-700 dark:bg-rose-500/15 dark:text-rose-300";
   const detail = source.observed_at ? new Date(source.observed_at).toLocaleString("id-ID") : source.reason || "Belum ada bukti keberhasilan";
   return (

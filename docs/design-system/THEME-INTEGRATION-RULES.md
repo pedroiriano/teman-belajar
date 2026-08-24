@@ -1,7 +1,7 @@
 # Theme Integration Rules — Teman Belajar
 
 **Status:** Canonical UI Governance  
-**Version:** 4.1
+**Version:** 5.0
 
 ## 1. Techwind Boundary
 
@@ -71,11 +71,12 @@ or duplicate page-level toggle without an accepted design-system change.
 
 - Portal light/dark surfaces follow Techwind's white/slate hierarchy and Teman
   Belajar teal actions.
-- Admin light/dark surfaces follow Cuba's body/card/inset hierarchy. Admin light
-  mode uses Teman Belajar orange actions. Admin dark mode exclusively uses the
-  canonical bright-light-blue action/accent palette (`sky-400` primary,
-  `sky-500` hover, `sky-300` accent text, dark-blue text on primary); orange and
-  vendor violet are prohibited as dark-mode primary/accent colors.
+- Admin light/dark surfaces follow Cuba's body/card/inset hierarchy. Both Admin
+  themes use the canonical bright sky/light-blue action/accent family. Orange
+  and amber are prohibited across every application-controlled state, while
+  warning uses semantic yellow. Light mode uses its contrast-safe darker sky
+  text/border tokens; dark mode keeps `sky-300` accent text and dark-blue text
+  on primary. The binding contract is `ADMIN-UI-VISUAL-CONTRACT.md`.
 - Do not apply Portal CSS variables to Admin or Admin CSS variables to Portal.
 - Legacy utility colors may be normalized inside the owning application's
   stylesheet. Normalization must be scoped by `.portal-root` or `.admin-root`.
@@ -89,6 +90,8 @@ or duplicate page-level toggle without an accepted design-system change.
   date/time, file-picker, and browser-autofill states in both Admin themes.
 - Do not solve dark mode with `filter`, image inversion, opacity over the whole
   application, or a global imported vendor stylesheet.
+- Run both `npm run test:theme` and `npm run test:no-orange`; neither guard may
+  be weakened or bypassed to introduce a color exception.
 
 ## 4C. Required Verification Matrix
 

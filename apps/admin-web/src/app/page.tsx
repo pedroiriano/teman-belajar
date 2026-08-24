@@ -16,7 +16,7 @@ export default async function Home() {
           aria-hidden="true"
         />
         <div className="relative flex items-center gap-3">
-          <span className="grid h-11 w-11 place-items-center rounded-xl bg-sky-500 font-black">TB</span>
+          <span className="grid h-11 w-11 place-items-center rounded-xl bg-sky-400 font-black text-sky-950">TB</span>
           <div>
             <p className="font-extrabold">Teman Belajar</p>
             <p className="text-xs uppercase tracking-[.18em] text-slate-400">Admin Console</p>

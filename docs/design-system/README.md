@@ -36,6 +36,9 @@ Semua implementasi final:
   mengikuti pola Cuba tanpa mengimpor theme global Cuba.
 - Detail token, batas aplikasi, larangan, dan matriks verifikasi ada di
   `THEME-INTEGRATION-RULES.md` dan `DESIGN-TOKENS.md`.
+- Admin juga wajib mengikuti `ADMIN-UI-VISUAL-CONTRACT.md`: Cuba Admin memakai
+  bright sky/light blue pada kedua tema dan melarang orange/amber di seluruh
+  UI yang dikendalikan aplikasi.
 
 ## Documents
 
@@ -43,4 +46,5 @@ Semua implementasi final:
 - `DESIGN-TOKENS.md`
 - `COMPONENT-INVENTORY.md`
 - `THEME-INTEGRATION-RULES.md`
+- `ADMIN-UI-VISUAL-CONTRACT.md`
 - `PORTAL-NAVIGATION-TAXONOMY.md`

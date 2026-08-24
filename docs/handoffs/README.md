@@ -44,3 +44,10 @@ exploration, hierarchy-aware search, and hierarchy operations, read
 `docs/runbooks/KNOWLEDGE-HIERARCHY-OPERATIONS.md`. Do not weaken its maximum
 depth, archive-only lifecycle, optimistic conflict, server-side authorization,
 or active-ancestry publication rules.
+
+For Admin visual governance after TASK-011B, **TASK-011C — Admin Web Cuba UI
+Harmonization & No-Orange Enforcement** is the human-assigned canonical task
+identifier. Read `TASK-011C-HANDOFF.md` and
+`docs/design-system/ADMIN-UI-VISUAL-CONTRACT.md`. Cuba Admin uses bright
+sky/light blue in both themes; orange/amber is forbidden across all
+application-controlled states, and both static regression guards are required.
