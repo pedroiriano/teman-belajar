@@ -1,12 +1,18 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { transitionKnowledgeAction, getAdminKnowledgeDetailAction, createKnowledgeRevisionAction } from "@/app/actions/knowledge";
 import MediaPicker from "@/components/media/MediaPicker";
 import { mediaMarkdown, mediaUsagesFromMarkdown } from "@/components/media/insertion";
 import type { MediaSelection } from "@/components/media/types";
+import { DraftStatus } from "@/components/drafts/DraftStatus";
+import type { DraftPayload } from "@/components/drafts/types";
+import { useAutoSaveDraft } from "@/components/drafts/use-auto-save-draft";
+
+type KnowledgeEditDraft = DraftPayload & { body: string; media_asset_ids: string[] };
+const blankDraft: KnowledgeEditDraft = { body: "", media_asset_ids: [] };
 
 export default function AdminKnowledgeDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -40,6 +46,15 @@ export default function AdminKnowledgeDetailPage() {
     fetchArticle();
   }, [id]);
 
+  const isEditor = roles.includes("Content Editor") || roles.includes("Portal Administrator");
+  const isReviewer = roles.includes("Reviewer") || roles.includes("Portal Administrator");
+  const canCreateRevision = Boolean(article && isEditor && ["draft", "published"].includes(article.status));
+  const value = useMemo<KnowledgeEditDraft>(() => ({ body, media_asset_ids: [...new Set(mediaUsagesFromMarkdown(body).map((usage) => usage.media_id))] }), [body]);
+  const canonical = useMemo<KnowledgeEditDraft>(() => article ? { body: article.body || "", media_asset_ids: [...new Set(mediaUsagesFromMarkdown(article.body || "").map((usage) => usage.media_id))] } : blankDraft, [article]);
+  const applyDraft = (draft: KnowledgeEditDraft) => setBody(draft.body);
+  const autoSave = useAutoSaveDraft({ formKey: "knowledge.edit", entityType: "knowledge", entityId: id, baseEntityVersion: article ? String(article.current_revision_no) : undefined, value, emptyValue: canonical, enabled: canCreateRevision, onRecover: applyDraft, onStartNew: applyDraft });
+  const insertMedia = (selection: MediaSelection) => { setBody((current) => `${current}\n${mediaMarkdown(selection)}\n`); autoSave.requestImmediateSave(); };
+
   const handleTransition = async (status: string) => {
     setActionLoading(true);
     setError("");
@@ -55,11 +70,12 @@ export default function AdminKnowledgeDetailPage() {
   const handleSaveRevision = async () => {
     setActionLoading(true);
     setError("");
-    const res = await createKnowledgeRevisionAction(id, { body, media_usages: mediaUsagesFromMarkdown(body) });
+    const res = await createKnowledgeRevisionAction(id, { body, expected_revision_no: article.current_revision_no, media_usages: mediaUsagesFromMarkdown(body) });
     if (!res.success) {
       setError(res.error || "Revisi baru belum dapat disimpan");
       setActionLoading(false);
     } else {
+      await autoSave.finalize();
       router.push("/dashboard/knowledge");
     }
   };
@@ -67,15 +83,11 @@ export default function AdminKnowledgeDetailPage() {
   if (loading) return <div className="admin-card animate-pulse p-8"><div className="h-7 w-72 rounded bg-slate-100" /><div className="mt-6 h-72 rounded-xl bg-slate-100" /></div>;
   if (!article) return <div className="admin-card mx-auto max-w-xl p-8 text-center" role="alert"><h1 className="text-xl font-black text-slate-900">Artikel tidak tersedia</h1><p className="mt-3 text-sm text-slate-500">{error}</p><Link href="/dashboard/knowledge" className="admin-button mt-6">Kembali</Link></div>;
 
-  const isEditor = roles.includes("Content Editor") || roles.includes("Portal Administrator");
-  const isReviewer = roles.includes("Reviewer") || roles.includes("Portal Administrator");
-  const canCreateRevision = isEditor && ["draft", "published"].includes(article.status);
-  const insertMedia = (selection: MediaSelection) => setBody((current) => `${current}\n${mediaMarkdown(selection)}\n`);
-
   return (
     <div className="admin-page max-w-5xl">
       <div className="admin-page-header"><div><Link href="/dashboard/knowledge" className="text-sm font-bold text-sky-700">&larr; Kembali ke Pengetahuan</Link><p className="admin-kicker mt-5">Detail editorial</p><h1 className="admin-page-title">{article.title}</h1><p className="admin-page-copy">Kelola revisi serta transisi review dan publikasi.</p></div><span className="admin-status bg-sky-50 text-sky-800">{article.status}</span></div>
       {error && <div className="admin-alert-error mb-5" role="alert">{error}</div>}
+      {canCreateRevision && <DraftStatus state={autoSave.state} message={autoSave.message} lastSavedAt={autoSave.lastSavedAt} recovery={autoSave.recovery} onRecover={autoSave.recoverFrom} onKeepCurrent={autoSave.keepCurrent} onDiscard={autoSave.discard} onStartNew={autoSave.startNew} onRetry={autoSave.saveNow} allowStartNew={false} />}
       <section className="admin-form-card">
           <div className="admin-form-header flex flex-wrap items-center justify-between gap-4"><div><h2 className="font-black text-slate-900">Alur publikasi</h2><p className="mt-1 text-xs text-slate-500">Aksi mengikuti status dan peran editorial.</p></div>
             <div className="flex flex-wrap gap-2">

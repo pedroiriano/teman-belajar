@@ -100,7 +100,13 @@ Admin:
 - `/admin/news`
 - `/admin/knowledge`
 - `/admin/media`
+- `/admin/form-drafts`
 - `/admin/configuration`
+
+Admin form drafts are owned exclusively by validated access-token `sub`, require
+Content Editor or Portal Administrator, use optimistic `expected_revision`, and
+return 409 rather than overwriting a newer working copy. Browser clients access
+them through the Admin BFF only.
 
 Internal:
 - `/internal/v1/moodle/events`

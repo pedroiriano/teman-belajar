@@ -44,6 +44,7 @@ Status implementasi berikut wajib dipertahankan. `Implemented` berarti pola vend
 | Cards and dashboard widgets | Content/path/stat cards | Welcome/stat/module/workflow cards | semantic app content only |
 | Tables and toolbars | Not required yet | Implemented | admin content and media lists |
 | Forms | Search and public controls | Implemented | admin create/detail/metadata forms |
+| Authoring recovery | Not applicable | Implemented | shared auto-save status, conflict recovery, and IndexedDB fallback |
 | Modal/dialog | Not required by current public feature | Implemented | authenticated Media Picker |
 | Gallery/media | Implemented landing pattern | Implemented Media Library | no vendor demo data |
 | FAQ accordion | Implemented | Feature not implemented | native `details/summary` on Portal home |

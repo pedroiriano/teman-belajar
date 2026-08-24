@@ -15,6 +15,8 @@ Task awal:
 - TASK-009 Observability
 - TASK-010 Security Gates
 - TASK-011 Moodle Event Inbox
+- TASK-011A Auto-Save Draft & Crash Recovery
+- TASK-011B Hierarchical Knowledge Explorer
 - TASK-012 Production Readiness
 
 ## Rule

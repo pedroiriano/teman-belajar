@@ -52,6 +52,7 @@ func TestCMSRepository_News(t *testing.T) {
 		CreatedBy: &authorID,
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
+		Version:   1,
 	}
 
 	err := repo.CreateNews(ctx, news)
@@ -81,7 +82,9 @@ func TestCMSRepository_News(t *testing.T) {
 	now := time.Now()
 	news.PublishedAt = &now
 	news.UpdatedBy = &authorID
-	err = repo.UpdateNews(ctx, news)
+	expectedVersion := news.Version
+	news.Version++
+	err = repo.UpdateNews(ctx, news, expectedVersion)
 	if err != nil {
 		t.Fatalf("Failed to update status: %v", err)
 	}
@@ -132,6 +135,7 @@ func TestCMSRepository_Announcement(t *testing.T) {
 		CreatedBy: &authorID,
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
+		Version:   1,
 	}
 
 	err := repo.CreateAnnouncement(ctx, ann)

@@ -95,6 +95,10 @@ jobs:
       - name: Typecheck
         working-directory: ${{ matrix.app }}
         run: npm run typecheck
+      - name: Admin UI contract tests
+        if: matrix.app == 'apps/admin-web'
+        working-directory: apps/admin-web
+        run: npm run test:theme && npm run test:media && npm run test:drafts
       - name: Build
         working-directory: ${{ matrix.app }}
         run: npm run build

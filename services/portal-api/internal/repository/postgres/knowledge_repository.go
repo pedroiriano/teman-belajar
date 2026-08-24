@@ -82,6 +82,33 @@ func (r *KnowledgeRepository) CreateRevision(ctx context.Context, rev *knowledge
 	return err
 }
 
+func (r *KnowledgeRepository) CreateRevisionAtomically(ctx context.Context, article *knowledge.Article, rev *knowledge.Revision, expectedRevisionNo int) error {
+	tx, err := r.db.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback() // #nosec G104 -- rollback after commit is harmless
+	result, err := tx.ExecContext(ctx, `
+		UPDATE knowledge_articles
+		SET status=$1, current_revision_no=$2, updated_at=$3, updated_by=$4
+		WHERE id=$5 AND current_revision_no=$6 AND status IN ('draft','published')
+	`, article.Status, article.CurrentRevisionNo, article.UpdatedAt, article.UpdatedBy, article.ID, expectedRevisionNo)
+	if err != nil {
+		return err
+	}
+	rows, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rows != 1 {
+		return knowledge.ErrRevisionConflict
+	}
+	if _, err := tx.ExecContext(ctx, `INSERT INTO knowledge_revisions (id, article_id, revision_no, body, author_id, created_at) VALUES ($1,$2,$3,$4,$5,$6)`, rev.ID, rev.ArticleID, rev.RevisionNo, rev.Body, rev.AuthorID, rev.CreatedAt); err != nil {
+		return err
+	}
+	return tx.Commit()
+}
+
 func (r *KnowledgeRepository) GetRevision(ctx context.Context, articleID string, revisionNo int) (*knowledge.Revision, error) {
 	query := `
 		SELECT id, article_id, revision_no, body, author_id, created_at

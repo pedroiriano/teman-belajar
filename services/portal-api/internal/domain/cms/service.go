@@ -30,6 +30,7 @@ func (s *Service) CreateDraftNews(ctx context.Context, title, slug, excerpt, bod
 		CreatedBy: userID,
 		UpdatedAt: time.Now(),
 		UpdatedBy: userID,
+		Version:   1,
 	}
 
 	if err := n.Validate(); err != nil {
@@ -79,7 +80,9 @@ func (s *Service) TransitionNews(ctx context.Context, id string, nextStatus Cont
 		n.PublishedAt = &now
 	}
 
-	if err := s.repo.UpdateNews(ctx, n); err != nil {
+	expectedVersion := n.Version
+	n.Version++
+	if err := s.repo.UpdateNews(ctx, n, expectedVersion); err != nil {
 		return nil, err
 	}
 
@@ -100,6 +103,30 @@ func (s *Service) TransitionNews(ctx context.Context, id string, nextStatus Cont
 		})
 	}
 
+	return n, nil
+}
+
+func (s *Service) UpdateDraftNews(ctx context.Context, id, title, slug, excerpt, body string, expectedVersion int64, userID *string) (*News, error) {
+	n, err := s.repo.GetNewsByID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	if n.Status != StatusDraft {
+		return nil, ErrContentLocked
+	}
+	if expectedVersion < 1 || n.Version != expectedVersion {
+		return nil, ErrConflict
+	}
+	n.Title, n.Slug, n.Excerpt, n.Body = title, slug, excerpt, body
+	n.UpdatedAt, n.UpdatedBy = time.Now().UTC(), userID
+	if err := n.Validate(); err != nil {
+		return nil, err
+	}
+	n.Version++
+	if err := s.repo.UpdateNews(ctx, n, expectedVersion); err != nil {
+		return nil, err
+	}
+	s.logCMSAudit(ctx, userID, "UPDATE_NEWS_DRAFT", "News", n.ID)
 	return n, nil
 }
 
@@ -192,6 +219,7 @@ func (s *Service) CreateDraftAnnouncement(ctx context.Context, title, slug, body
 		CreatedBy: userID,
 		UpdatedAt: time.Now(),
 		UpdatedBy: userID,
+		Version:   1,
 	}
 
 	if err := a.Validate(); err != nil {
@@ -241,7 +269,9 @@ func (s *Service) TransitionAnnouncement(ctx context.Context, id string, nextSta
 		a.PublishedAt = &now
 	}
 
-	if err := s.repo.UpdateAnnouncement(ctx, a); err != nil {
+	expectedVersion := a.Version
+	a.Version++
+	if err := s.repo.UpdateAnnouncement(ctx, a, expectedVersion); err != nil {
 		return nil, err
 	}
 
@@ -263,6 +293,41 @@ func (s *Service) TransitionAnnouncement(ctx context.Context, id string, nextSta
 	}
 
 	return a, nil
+}
+
+func (s *Service) UpdateDraftAnnouncement(ctx context.Context, id, title, slug, body string, startAt, endAt *time.Time, expectedVersion int64, userID *string) (*Announcement, error) {
+	a, err := s.repo.GetAnnouncementByID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	if a.Status != StatusDraft {
+		return nil, ErrContentLocked
+	}
+	if expectedVersion < 1 || a.Version != expectedVersion {
+		return nil, ErrConflict
+	}
+	a.Title, a.Slug, a.Body, a.StartAt, a.EndAt = title, slug, body, startAt, endAt
+	a.UpdatedAt, a.UpdatedBy = time.Now().UTC(), userID
+	if err := a.Validate(); err != nil {
+		return nil, err
+	}
+	a.Version++
+	if err := s.repo.UpdateAnnouncement(ctx, a, expectedVersion); err != nil {
+		return nil, err
+	}
+	s.logCMSAudit(ctx, userID, "UPDATE_ANNOUNCEMENT_DRAFT", "Announcement", a.ID)
+	return a, nil
+}
+
+func (s *Service) logCMSAudit(ctx context.Context, userID *string, action, targetType, targetID string) {
+	if s.auditRepo == nil {
+		return
+	}
+	actorID := ""
+	if userID != nil {
+		actorID = *userID
+	}
+	_ = s.auditRepo.CreateEvent(ctx, &audit.AuditEvent{ID: uuid.NewString(), ActorUserID: actorID, Action: action, TargetType: targetType, TargetID: targetID, Result: "SUCCESS", OccurredAt: time.Now().UTC()})
 }
 
 func (s *Service) GetActiveAnnouncements(ctx context.Context) (*AnnouncementList, error) {

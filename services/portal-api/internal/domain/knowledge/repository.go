@@ -11,6 +11,7 @@ type Repository interface {
 	UpdateArticle(ctx context.Context, a *Article) error
 
 	CreateRevision(ctx context.Context, r *Revision) error
+	CreateRevisionAtomically(ctx context.Context, article *Article, revision *Revision, expectedRevisionNo int) error
 	GetRevision(ctx context.Context, articleID string, revisionNo int) (*Revision, error)
 	ListRevisions(ctx context.Context, articleID string) ([]Revision, error)
 

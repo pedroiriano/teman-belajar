@@ -1,9 +1,18 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { transitionNewsAction, getAdminNewsAction } from "@/app/actions/cms";
+import { transitionNewsAction, getAdminNewsAction, updateNewsAction } from "@/app/actions/cms";
+import { DraftStatus } from "@/components/drafts/DraftStatus";
+import type { DraftPayload } from "@/components/drafts/types";
+import { useAutoSaveDraft } from "@/components/drafts/use-auto-save-draft";
+import MediaPicker from "@/components/media/MediaPicker";
+import { mediaMarkdown, mediaUsagesFromMarkdown } from "@/components/media/insertion";
+import type { MediaSelection } from "@/components/media/types";
+
+type NewsEditDraft = DraftPayload & { title: string; slug: string; excerpt: string; body: string; media_asset_ids: string[] };
+const blankDraft: NewsEditDraft = { title: "", slug: "", excerpt: "", body: "", media_asset_ids: [] };
 
 export default function AdminNewsDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -13,6 +22,10 @@ export default function AdminNewsDetailPage() {
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
   const [error, setError] = useState("");
+  const [title, setTitle] = useState("");
+  const [slug, setSlug] = useState("");
+  const [excerpt, setExcerpt] = useState("");
+  const [body, setBody] = useState("");
 
   useEffect(() => {
     const fetchNews = async () => {
@@ -27,6 +40,7 @@ export default function AdminNewsDetailPage() {
 		setRoles(res.roles || []);
         if (found) {
           setNews(found);
+          setTitle(found.title); setSlug(found.slug); setExcerpt(found.excerpt || ""); setBody(found.body || "");
         } else {
           setError("Berita tidak ditemukan");
         }
@@ -40,6 +54,14 @@ export default function AdminNewsDetailPage() {
     fetchNews();
   }, [id]);
 
+  const isEditor = roles.includes("Content Editor") || roles.includes("Portal Administrator");
+  const isReviewer = roles.includes("Reviewer") || roles.includes("Portal Administrator");
+  const canEdit = Boolean(news && isEditor && news.status === "draft");
+  const value = useMemo<NewsEditDraft>(() => ({ title, slug, excerpt, body, media_asset_ids: [...new Set(mediaUsagesFromMarkdown(body).map((usage) => usage.media_id))] }), [body, excerpt, slug, title]);
+  const canonical = useMemo<NewsEditDraft>(() => news ? { title: news.title, slug: news.slug, excerpt: news.excerpt || "", body: news.body || "", media_asset_ids: [...new Set(mediaUsagesFromMarkdown(news.body || "").map((usage) => usage.media_id))] } : blankDraft, [news]);
+  const applyDraft = (draft: NewsEditDraft) => { setTitle(draft.title); setSlug(draft.slug); setExcerpt(draft.excerpt); setBody(draft.body); };
+  const autoSave = useAutoSaveDraft({ formKey: "news.edit", entityType: "news", entityId: id, baseEntityVersion: news ? String(news.version) : undefined, value, emptyValue: canonical, enabled: canEdit, onRecover: applyDraft, onStartNew: applyDraft });
+
   const handleTransition = async (status: string) => {
     setActionLoading(true);
     setError("");
@@ -52,11 +74,15 @@ export default function AdminNewsDetailPage() {
     }
   };
 
+  const handleSave = async () => {
+    setActionLoading(true); setError("");
+    const result = await updateNewsAction(id, { title, slug, excerpt, body, expected_version: news.version, media_usages: mediaUsagesFromMarkdown(body) });
+    if (!result.success) { setError(result.error || "Berita belum dapat diperbarui"); setActionLoading(false); return; }
+    await autoSave.finalize(); router.push("/dashboard/news");
+  };
+
   if (loading) return <div className="admin-card animate-pulse p-8"><div className="h-7 w-72 rounded bg-slate-100" /><div className="mt-6 h-52 rounded-xl bg-slate-100" /></div>;
   if (!news) return <div className="admin-card mx-auto max-w-xl p-8 text-center" role="alert"><h1 className="text-xl font-black text-slate-900">Berita tidak tersedia</h1><p className="mt-3 text-sm text-slate-500">{error}</p><Link href="/dashboard/news" className="admin-button mt-6">Kembali</Link></div>;
-
-  const isEditor = roles.includes("Content Editor") || roles.includes("Portal Administrator");
-  const isReviewer = roles.includes("Reviewer") || roles.includes("Portal Administrator");
 
   return (
     <div className="admin-page max-w-5xl">
@@ -65,6 +91,7 @@ export default function AdminNewsDetailPage() {
         <span className="admin-status bg-sky-50 text-sky-800">{news.status}</span>
       </div>
       {error && <div className="admin-alert-error mb-5" role="alert">{error}</div>}
+      {canEdit && <DraftStatus state={autoSave.state} message={autoSave.message} lastSavedAt={autoSave.lastSavedAt} recovery={autoSave.recovery} onRecover={autoSave.recoverFrom} onKeepCurrent={autoSave.keepCurrent} onDiscard={autoSave.discard} onStartNew={autoSave.startNew} onRetry={autoSave.saveNow} allowStartNew={false} />}
       <section className="admin-form-card">
           <div className="admin-form-header flex flex-wrap items-center justify-between gap-4">
             <div><h2 className="font-black text-slate-900">Alur publikasi</h2><p className="mt-1 text-xs text-slate-500">Aksi yang tersedia mengikuti status dan peran Anda.</p></div>
@@ -122,9 +149,9 @@ export default function AdminNewsDetailPage() {
           </div>
           
           <div className="admin-form-body">
-            <div><h3 className="admin-label">Ringkasan</h3><p className="rounded-xl bg-slate-50 p-4 text-sm leading-7 text-slate-600">{news.excerpt || "Belum ada ringkasan."}</p></div>
-            <div><h3 className="admin-label">Isi berita</h3><div className="rounded-xl border border-slate-200 bg-slate-50 p-4 font-mono text-sm leading-7 text-slate-600 whitespace-pre-wrap">{news.body}</div></div>
+            {canEdit ? <><div className="grid gap-6 md:grid-cols-2"><div><label htmlFor="news-edit-title" className="admin-label">Judul *</label><input id="news-edit-title" className="admin-input" value={title} onChange={(event) => setTitle(event.target.value)} /></div><div><label htmlFor="news-edit-slug" className="admin-label">Slug URL *</label><input id="news-edit-slug" className="admin-input" value={slug} onChange={(event) => setSlug(event.target.value)} /></div></div><div><label htmlFor="news-edit-excerpt" className="admin-label">Ringkasan</label><textarea id="news-edit-excerpt" className="admin-input" rows={3} value={excerpt} onChange={(event) => setExcerpt(event.target.value)} /></div><div><div className="mb-2 flex items-center justify-between gap-3"><label htmlFor="news-edit-body" className="admin-label !mb-0">Isi berita *</label><MediaPicker onSelect={(selection: MediaSelection) => { setBody((current) => `${current}\n${mediaMarkdown(selection)}\n`); autoSave.requestImmediateSave(); }} buttonLabel="Sisipkan media" /></div><textarea id="news-edit-body" className="admin-input font-mono" rows={14} value={body} onChange={(event) => setBody(event.target.value)} /></div></> : <><div><h3 className="admin-label">Ringkasan</h3><p className="rounded-xl bg-slate-50 p-4 text-sm leading-7 text-slate-600">{news.excerpt || "Belum ada ringkasan."}</p></div><div><h3 className="admin-label">Isi berita</h3><div className="rounded-xl border border-slate-200 bg-slate-50 p-4 font-mono text-sm leading-7 text-slate-600 whitespace-pre-wrap">{news.body}</div></div></>}
           </div>
+          {canEdit && <div className="admin-form-footer"><button type="button" className="admin-button" disabled={actionLoading || !title || !slug || !body} onClick={handleSave}>Simpan perubahan kanonis</button></div>}
       </section>
     </div>
   );

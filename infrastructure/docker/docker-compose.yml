@@ -271,6 +271,7 @@ services:
       MEILI_SEARCH_KEY: ${TB_MEILI_MASTER_KEY:?Set TB_MEILI_MASTER_KEY in infrastructure/docker/.env}
       MEILI_INDEX_NAME: ${TB_MEILI_INDEX_NAME:?Set TB_MEILI_INDEX_NAME in infrastructure/docker/.env}
       SEARCH_CAPTURE_RAW_QUERY: ${TB_SEARCH_CAPTURE_RAW_QUERY:?Set TB_SEARCH_CAPTURE_RAW_QUERY in infrastructure/docker/.env}
+      FORM_DRAFT_RETENTION_DAYS: ${TB_FORM_DRAFT_RETENTION_DAYS:?Set TB_FORM_DRAFT_RETENTION_DAYS in infrastructure/docker/.env}
       OTEL_EXPORTER_OTLP_ENDPOINT: otel-collector:4317
       PORTAL_INTERNAL_SECRET: ${TB_PORTAL_INTERNAL_SECRET:?Set TB_PORTAL_INTERNAL_SECRET in infrastructure/docker/.env}
       TB_MOODLE_EVENT_INGEST_SECRET: ${TB_MOODLE_EVENT_INGEST_SECRET:?Set TB_MOODLE_EVENT_INGEST_SECRET in infrastructure/docker/.env}
@@ -511,7 +512,6 @@ volumes:
     name: teman-belajar-loki-data
   tempo-data:
     name: teman-belajar-tempo-data
-
 
 
 

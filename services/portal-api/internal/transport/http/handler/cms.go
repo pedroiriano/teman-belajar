@@ -152,6 +152,48 @@ func (h *CMSHandler) CreateNews(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(res) // #nosec G104 -- response writer error after commit is non-actionable in HTTP handler
 }
 
+func (h *CMSHandler) UpdateNews(w http.ResponseWriter, r *http.Request) {
+	claims, ok := r.Context().Value(middleware.ClaimsContextKey).(middleware.CustomClaims)
+	if !ok {
+		respondProblem(w, http.StatusUnauthorized, "Unauthorized", "Missing claims")
+		return
+	}
+	if !hasAnyRole(claims.RealmAccess.Roles, "Portal Administrator", "Content Editor") {
+		respondProblem(w, http.StatusForbidden, "Forbidden", "Content Editor role required")
+		return
+	}
+	var req struct {
+		Title           string `json:"title"`
+		Slug            string `json:"slug"`
+		Excerpt         string `json:"excerpt"`
+		Body            string `json:"body"`
+		ExpectedVersion int64  `json:"expected_version"`
+	}
+	decoder := json.NewDecoder(r.Body)
+	decoder.DisallowUnknownFields()
+	if err := decoder.Decode(&req); err != nil {
+		respondProblem(w, http.StatusUnprocessableEntity, "Validation Error", "Invalid JSON body")
+		return
+	}
+	res, err := h.svc.UpdateDraftNews(r.Context(), r.PathValue("id"), req.Title, req.Slug, req.Excerpt, req.Body, req.ExpectedVersion, &claims.Subject)
+	if err != nil {
+		switch {
+		case err == cms.ErrValidationFailed:
+			respondProblem(w, http.StatusUnprocessableEntity, "Validation Error", "Invalid input data")
+		case err == cms.ErrContentLocked:
+			respondProblem(w, http.StatusConflict, "Conflict", err.Error())
+		case err == cms.ErrConflict:
+			respondProblem(w, http.StatusConflict, "Conflict", "A newer content version exists")
+		case err == cms.ErrNotFound:
+			respondProblem(w, http.StatusNotFound, "Not Found", "News not found")
+		default:
+			respondProblem(w, http.StatusInternalServerError, "Internal Server Error", "Unable to update news")
+		}
+		return
+	}
+	respondJSON(w, http.StatusOK, res)
+}
+
 func (h *CMSHandler) TransitionNews(w http.ResponseWriter, r *http.Request) {
 	claims, ok := r.Context().Value(middleware.ClaimsContextKey).(middleware.CustomClaims)
 	if !ok {
@@ -238,6 +280,49 @@ func (h *CMSHandler) CreateAnnouncement(w http.ResponseWriter, r *http.Request) 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(res) // #nosec G104 -- response writer error after commit is non-actionable in HTTP handler
+}
+
+func (h *CMSHandler) UpdateAnnouncement(w http.ResponseWriter, r *http.Request) {
+	claims, ok := r.Context().Value(middleware.ClaimsContextKey).(middleware.CustomClaims)
+	if !ok {
+		respondProblem(w, http.StatusUnauthorized, "Unauthorized", "Missing claims")
+		return
+	}
+	if !hasAnyRole(claims.RealmAccess.Roles, "Portal Administrator", "Content Editor") {
+		respondProblem(w, http.StatusForbidden, "Forbidden", "Content Editor role required")
+		return
+	}
+	var req struct {
+		Title           string     `json:"title"`
+		Slug            string     `json:"slug"`
+		Body            string     `json:"body"`
+		StartAt         *time.Time `json:"start_at"`
+		EndAt           *time.Time `json:"end_at"`
+		ExpectedVersion int64      `json:"expected_version"`
+	}
+	decoder := json.NewDecoder(r.Body)
+	decoder.DisallowUnknownFields()
+	if err := decoder.Decode(&req); err != nil {
+		respondProblem(w, http.StatusUnprocessableEntity, "Validation Error", "Invalid JSON body")
+		return
+	}
+	res, err := h.svc.UpdateDraftAnnouncement(r.Context(), r.PathValue("id"), req.Title, req.Slug, req.Body, req.StartAt, req.EndAt, req.ExpectedVersion, &claims.Subject)
+	if err != nil {
+		switch {
+		case err == cms.ErrValidationFailed:
+			respondProblem(w, http.StatusUnprocessableEntity, "Validation Error", "Invalid input data")
+		case err == cms.ErrContentLocked:
+			respondProblem(w, http.StatusConflict, "Conflict", err.Error())
+		case err == cms.ErrConflict:
+			respondProblem(w, http.StatusConflict, "Conflict", "A newer content version exists")
+		case err == cms.ErrNotFound:
+			respondProblem(w, http.StatusNotFound, "Not Found", "Announcement not found")
+		default:
+			respondProblem(w, http.StatusInternalServerError, "Internal Server Error", "Unable to update announcement")
+		}
+		return
+	}
+	respondJSON(w, http.StatusOK, res)
 }
 
 func (h *CMSHandler) TransitionAnnouncement(w http.ResponseWriter, r *http.Request) {

@@ -55,7 +55,8 @@ type CreateArticleRequest struct {
 }
 
 type CreateRevisionRequest struct {
-	Body string `json:"body"`
+	Body               string `json:"body"`
+	ExpectedRevisionNo int    `json:"expected_revision_no"`
 }
 
 type TransitionStatusRequest struct {
@@ -260,7 +261,7 @@ func (h *KnowledgeHandler) CreateRevision(w http.ResponseWriter, r *http.Request
 	}
 	userID := claims.Subject
 
-	revision, err := h.svc.CreateRevision(r.Context(), id, req.Body, &userID)
+	revision, err := h.svc.CreateRevisionExpected(r.Context(), id, req.Body, req.ExpectedRevisionNo, &userID)
 	if err != nil {
 		if errors.Is(err, knowledge.ErrBodyRequired) {
 			respondProblem(w, http.StatusUnprocessableEntity, "Validation Error", err.Error())
@@ -268,6 +269,10 @@ func (h *KnowledgeHandler) CreateRevision(w http.ResponseWriter, r *http.Request
 		}
 		if errors.Is(err, knowledge.ErrRevisionLocked) {
 			respondProblem(w, http.StatusConflict, "Conflict", err.Error())
+			return
+		}
+		if errors.Is(err, knowledge.ErrRevisionConflict) {
+			respondProblem(w, http.StatusConflict, "Conflict", "A newer knowledge revision exists")
 			return
 		}
 		respondProblem(w, http.StatusInternalServerError, "Internal Server Error", "Unable to create knowledge revision")

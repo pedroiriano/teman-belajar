@@ -106,6 +106,16 @@ func (m *mockKnowledgeRepo) CreateRevision(ctx context.Context, r *knowledge.Rev
 	return nil
 }
 
+func (m *mockKnowledgeRepo) CreateRevisionAtomically(ctx context.Context, article *knowledge.Article, revision *knowledge.Revision, expectedRevisionNo int) error {
+	current := m.articles[article.ID]
+	if current == nil || article.CurrentRevisionNo-1 != expectedRevisionNo {
+		return knowledge.ErrRevisionConflict
+	}
+	m.articles[article.ID] = article
+	m.revisions[revision.ID] = revision
+	return nil
+}
+
 func (m *mockKnowledgeRepo) GetRevision(ctx context.Context, articleID string, revisionNo int) (*knowledge.Revision, error) {
 	for _, r := range m.revisions {
 		if r.ArticleID == articleID && r.RevisionNo == revisionNo {

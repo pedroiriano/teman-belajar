@@ -11,7 +11,9 @@ type mockRepo struct{}
 
 func (m *mockRepo) CreateNews(ctx context.Context, n *cms.News) error             { return nil }
 func (m *mockRepo) GetNewsByID(ctx context.Context, id string) (*cms.News, error) { return nil, nil }
-func (m *mockRepo) UpdateNews(ctx context.Context, n *cms.News) error             { return nil }
+func (m *mockRepo) UpdateNews(ctx context.Context, n *cms.News, expectedVersion int64) error {
+	return nil
+}
 func (m *mockRepo) ListPublicNews(ctx context.Context, page, pageSize int) ([]cms.News, int, error) {
 	return nil, 0, nil
 }
@@ -28,7 +30,9 @@ func (m *mockRepo) GetAnnouncementByID(ctx context.Context, id string) (*cms.Ann
 func (m *mockRepo) GetAnnouncementBySlug(ctx context.Context, slug string) (*cms.Announcement, error) {
 	return nil, nil
 }
-func (m *mockRepo) UpdateAnnouncement(ctx context.Context, a *cms.Announcement) error { return nil }
+func (m *mockRepo) UpdateAnnouncement(ctx context.Context, a *cms.Announcement, expectedVersion int64) error {
+	return nil
+}
 func (m *mockRepo) ListActiveAnnouncements(ctx context.Context) ([]cms.Announcement, error) {
 	return nil, nil
 }

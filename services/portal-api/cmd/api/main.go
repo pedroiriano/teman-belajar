@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"os"
 	"os/signal"
+	"strconv"
 	"strings"
 	"sync"
 	"syscall"
@@ -24,6 +25,7 @@ import (
 	searchapplication "teman-belajar-api/internal/application/search"
 	"teman-belajar-api/internal/domain/analytics"
 	"teman-belajar-api/internal/domain/cms"
+	"teman-belajar-api/internal/domain/draft"
 	"teman-belajar-api/internal/domain/knowledge"
 	"teman-belajar-api/internal/domain/learning"
 	"teman-belajar-api/internal/domain/media"
@@ -69,6 +71,16 @@ func main() {
 
 	knowledgeRepo := postgres.NewKnowledgeRepository(db)
 	knowledgeSvc := knowledge.NewService(knowledgeRepo, auditRepo)
+	draftRetentionDays := 30
+	if configured := strings.TrimSpace(os.Getenv("FORM_DRAFT_RETENTION_DAYS")); configured != "" {
+		parsed, parseErr := strconv.Atoi(configured)
+		if parseErr != nil || parsed < 1 || parsed > 365 {
+			log.Fatal("FORM_DRAFT_RETENTION_DAYS must be an integer from 1 to 365")
+		}
+		draftRetentionDays = parsed
+	}
+	draftRepo := postgres.NewDraftRepository(db)
+	draftSvc := draft.NewService(draftRepo, auditRepo, draftRetentionDays)
 	engagementRepo := postgres.NewEngagementRepository(db)
 	engagementResolver := engagementapplication.NewKnowledgeTargetResolver(knowledgeRepo)
 
@@ -103,6 +115,7 @@ func main() {
 	// Handlers
 	cmsHandler := handler.NewCMSHandler(cmsSvc)
 	knowledgeHandler := handler.NewKnowledgeHandler(knowledgeSvc)
+	draftHandler := handler.NewDraftHandler(draftSvc)
 	learningHandler := handler.NewLearningHandler(learningSvc)
 
 	// Media Storage & Services
@@ -244,6 +257,7 @@ func main() {
 		cmsHandler.CreateNews(w, r)
 	})))
 	mux.Handle("/api/v1/admin/news/", adminAuthMiddleware(http.HandlerFunc(cmsHandler.TransitionNews)))
+	mux.Handle("PATCH /api/v1/admin/news/{id}", adminAuthMiddleware(http.HandlerFunc(cmsHandler.UpdateNews)))
 	mux.Handle("/api/v1/admin/announcements", adminAuthMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == http.MethodGet {
 			cmsHandler.ListAdminAnnouncements(w, r)
@@ -252,6 +266,7 @@ func main() {
 		cmsHandler.CreateAnnouncement(w, r)
 	})))
 	mux.Handle("/api/v1/admin/announcements/", adminAuthMiddleware(http.HandlerFunc(cmsHandler.TransitionAnnouncement)))
+	mux.Handle("PATCH /api/v1/admin/announcements/{id}", adminAuthMiddleware(http.HandlerFunc(cmsHandler.UpdateAnnouncement)))
 
 	mux.HandleFunc("GET /api/v1/knowledge", knowledgeHandler.ListPublicArticles)
 	mux.HandleFunc("GET /api/v1/knowledge/{slug}", knowledgeHandler.GetPublicArticle)
@@ -277,6 +292,13 @@ func main() {
 	mux.Handle("GET /api/v1/admin/knowledge/{id}", adminAuthMiddleware(http.HandlerFunc(knowledgeHandler.GetAdminArticle)))
 	mux.Handle("POST /api/v1/admin/knowledge/{id}/revisions", adminAuthMiddleware(http.HandlerFunc(knowledgeHandler.CreateRevision)))
 	mux.Handle("POST /api/v1/admin/knowledge/{id}/transition", adminAuthMiddleware(http.HandlerFunc(knowledgeHandler.TransitionStatus)))
+
+	// Owner-isolated authoring drafts (TASK-011A).
+	mux.Handle("GET /api/v1/admin/form-drafts", adminAuthMiddleware(http.HandlerFunc(draftHandler.List)))
+	mux.Handle("GET /api/v1/admin/form-drafts/{draftKey}", adminAuthMiddleware(http.HandlerFunc(draftHandler.Get)))
+	mux.Handle("PUT /api/v1/admin/form-drafts/{draftKey}", adminAuthMiddleware(http.HandlerFunc(draftHandler.Save)))
+	mux.Handle("DELETE /api/v1/admin/form-drafts/{draftKey}", adminAuthMiddleware(http.HandlerFunc(draftHandler.Delete)))
+	mux.Handle("POST /api/v1/admin/form-drafts/{draftKey}/recovered", adminAuthMiddleware(http.HandlerFunc(draftHandler.RecordRecovery)))
 
 	// Moodle Event Inbox (TASK-011)
 	eventIngestSecret := os.Getenv("TB_MOODLE_EVENT_INGEST_SECRET")

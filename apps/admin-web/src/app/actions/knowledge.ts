@@ -45,7 +45,7 @@ export async function createKnowledgeAction(data: { title: string; slug: string;
   }
 }
 
-export async function createKnowledgeRevisionAction(id: string, data: { body: string; media_usages?: MediaUsageInput[] }) {
+export async function createKnowledgeRevisionAction(id: string, data: { body: string; expected_revision_no: number; media_usages?: MediaUsageInput[] }) {
   const session: any = await getServerSession(authOptions);
   const accessToken = await getServerAccessToken();
   
@@ -64,6 +64,7 @@ export async function createKnowledgeRevisionAction(id: string, data: { body: st
       },
       body: JSON.stringify({
         body: data.body,
+        expected_revision_no: data.expected_revision_no,
       }),
     });
 

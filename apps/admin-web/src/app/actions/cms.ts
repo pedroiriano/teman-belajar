@@ -69,6 +69,26 @@ export async function transitionNewsAction(id: string, status: string) {
   return { success: true };
 }
 
+export async function updateNewsAction(id: string, data: { title: string; slug: string; excerpt: string; body: string; expected_version: number; media_usages?: MediaUsageInput[] }) {
+  const session: any = await getServerSession(authOptions);
+  const accessToken = await getServerAccessToken();
+  if (!session || !accessToken) return { success: false, error: "Unauthorized" };
+  const res = await fetch(`${API_BASE}/api/v1/admin/news/${id}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", "Authorization": `Bearer ${accessToken}` },
+    body: JSON.stringify({ title: data.title, slug: data.slug, excerpt: data.excerpt, body: data.body, expected_version: data.expected_version }),
+  });
+  if (!res.ok) {
+    const problem = await res.json().catch(() => null);
+    return { success: false, error: problem?.detail || "Berita belum dapat diperbarui", conflict: res.status === 409 };
+  }
+  const updated = await res.json();
+  const failed = await attachMediaUsages(API_BASE!, accessToken, "news", updated.id, data.media_usages ?? []);
+  revalidatePath(`/dashboard/news/${id}`); revalidatePath("/dashboard/news");
+  if (failed.length) return { success: false, error: "Berita diperbarui, tetapi sebagian relasi media gagal. Jangan ajukan review sebelum rekonsiliasi.", data: updated };
+  return { success: true, data: updated };
+}
+
 export async function createAnnouncementAction(data: { title: string, slug: string, body: string, start_at: Date | null, end_at: Date | null, media_usages?: MediaUsageInput[] }) {
   const session: any = await getServerSession(authOptions);
   const accessToken = await getServerAccessToken();
@@ -129,6 +149,26 @@ export async function transitionAnnouncementAction(id: string, status: string) {
   revalidatePath(`/dashboard/announcements/${id}`);
   revalidatePath("/dashboard/announcements");
   return { success: true };
+}
+
+export async function updateAnnouncementAction(id: string, data: { title: string; slug: string; body: string; start_at: Date | null; end_at: Date | null; expected_version: number; media_usages?: MediaUsageInput[] }) {
+  const session: any = await getServerSession(authOptions);
+  const accessToken = await getServerAccessToken();
+  if (!session || !accessToken) return { success: false, error: "Unauthorized" };
+  const res = await fetch(`${API_BASE}/api/v1/admin/announcements/${id}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", "Authorization": `Bearer ${accessToken}` },
+    body: JSON.stringify({ title: data.title, slug: data.slug, body: data.body, start_at: data.start_at?.toISOString() ?? null, end_at: data.end_at?.toISOString() ?? null, expected_version: data.expected_version }),
+  });
+  if (!res.ok) {
+    const problem = await res.json().catch(() => null);
+    return { success: false, error: problem?.detail || "Pengumuman belum dapat diperbarui", conflict: res.status === 409 };
+  }
+  const updated = await res.json();
+  const failed = await attachMediaUsages(API_BASE!, accessToken, "announcement", updated.id, data.media_usages ?? []);
+  revalidatePath(`/dashboard/announcements/${id}`); revalidatePath("/dashboard/announcements");
+  if (failed.length) return { success: false, error: "Pengumuman diperbarui, tetapi sebagian relasi media gagal. Jangan ajukan review sebelum rekonsiliasi.", data: updated };
+  return { success: true, data: updated };
 }
 
 export async function getAdminNewsAction() {
