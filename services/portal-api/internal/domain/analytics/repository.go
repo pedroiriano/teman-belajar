@@ -95,7 +95,7 @@ func (r *PostgresRepository) RollupPageDaily(ctx context.Context, reportingDate 
 	if err != nil {
 		return err
 	}
-	defer tx.Rollback()
+	defer _ = tx.Rollback()
 	if _, err := tx.ExecContext(ctx, `DELETE FROM analytics.page_daily WHERE date = $1::date`, reportingDate); err != nil {
 		return err
 	}
@@ -287,7 +287,7 @@ func (r *PostgresRepository) RollupContentDaily(ctx context.Context, reportingDa
 	if err != nil {
 		return err
 	}
-	defer tx.Rollback()
+	defer _ = tx.Rollback()
 	if _, err := tx.ExecContext(ctx, `DELETE FROM analytics.content_daily WHERE date = $1::date`, reportingDate); err != nil {
 		return err
 	}

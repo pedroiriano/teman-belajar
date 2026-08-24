@@ -76,7 +76,7 @@ func TestClient_HTTP500(t *testing.T) {
 func TestClient_MalformedJSON(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(`{malformed json`))
+		w.Write([]byte(`{malformed json`)) // #nosec G104
 	}))
 	defer server.Close()
 
@@ -94,7 +94,7 @@ func TestClient_LargeResponse(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		// Write 6MB of data
-		w.Write(make([]byte, 6*1024*1024))
+		w.Write(make([]byte, 6*1024*1024)) // #nosec G104
 	}))
 	defer server.Close()
 
@@ -111,7 +111,7 @@ func TestClient_LargeResponse(t *testing.T) {
 func TestClient_NullFalse(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(`null`))
+		w.Write([]byte(`null`)) // #nosec G104
 	}))
 	defer server.Close()
 
@@ -127,7 +127,7 @@ func TestClient_NullFalse(t *testing.T) {
 func TestResolveCurrentUser_Mapped(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(`{"id": 12, "username": "testuser", "email": "test@test.com"}`))
+		w.Write([]byte(`{"id": 12, "username": "testuser", "email": "test@test.com"}`)) // #nosec G104
 	}))
 	defer server.Close()
 
@@ -175,7 +175,7 @@ func TestResolveCurrentUser_Ambiguous(t *testing.T) {
 func TestListCourses_Filters(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(`[
+		w.Write([]byte(`[ // #nosec G104
 			{"id": 1, "shortname": "site", "visible": 1},
 			{"id": 2, "shortname": "visible course", "visible": 1},
 			{"id": 3, "shortname": "hidden course", "visible": 0}
@@ -200,7 +200,7 @@ func TestListCourses_Filters(t *testing.T) {
 func TestMyCourses(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(`[
+		w.Write([]byte(`[ // #nosec G104
 			{"id": 2, "shortname": "course 1", "progress": 50.5, "completed": false}
 		]`))
 	}))
@@ -223,7 +223,7 @@ func TestMyCourses(t *testing.T) {
 func TestGetCourseCompletion(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(`{"completionstatus": {"completed": true}}`))
+		w.Write([]byte(`{"completionstatus": {"completed": true}}`)) // #nosec G104
 	}))
 	defer server.Close()
 
@@ -241,7 +241,7 @@ func TestGetCourseCompletion(t *testing.T) {
 func TestGetCourseGrades(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(`{"usergrades": [{"gradeitems": [
+		w.Write([]byte(`{"usergrades": [{"gradeitems": [ // #nosec G104
 			{"id": 1, "itemname": "Visible Grade", "graderaw": 80, "hidden": false},
 			{"id": 2, "itemname": "Hidden Grade", "graderaw": 90, "hidden": true}
 		]}]}`))

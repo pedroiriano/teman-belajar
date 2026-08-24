@@ -26,7 +26,7 @@ func TestPostgresSourcesPublicationAndRevisionIsolation(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer tx.Rollback()
+	defer _ = tx.Rollback()
 
 	ctx := context.Background()
 	statements := []string{

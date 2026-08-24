@@ -105,7 +105,7 @@ func (r *EngagementRepository) UpsertRecentView(ctx context.Context, userKey str
 	if err != nil {
 		return engagement.RecentView{}, err
 	}
-	defer func() { _ = tx.Rollback() }()
+	defer func() { _ = _ = tx.Rollback() }()
 	row := engagement.RecentView{ID: uuid.NewString(), UserKey: userKey, Target: target}
 	err = tx.QueryRowContext(ctx, `
 		INSERT INTO engagement_recent_views (id, user_subject, target_type, target_id)

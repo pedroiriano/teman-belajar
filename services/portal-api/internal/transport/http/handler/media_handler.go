@@ -86,7 +86,7 @@ func (h *MediaHandler) CreateMedia(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(map[string]interface{}{"data": asset})
+	_ = json.NewEncoder(w).Encode(map[string]interface{}{"data": asset})
 }
 
 func (h *MediaHandler) GetMediaContent(w http.ResponseWriter, r *http.Request) {
@@ -147,7 +147,7 @@ func (h *MediaHandler) ListAdminMedia(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]interface{}{
+	_ = json.NewEncoder(w).Encode(map[string]interface{}{
 		"data": assets,
 		"meta": map[string]interface{}{
 			"page":      page,
@@ -170,7 +170,7 @@ func (h *MediaHandler) GetAdminMedia(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]interface{}{"data": asset})
+	_ = json.NewEncoder(w).Encode(map[string]interface{}{"data": asset})
 }
 
 func (h *MediaHandler) UpdateMediaMetadata(w http.ResponseWriter, r *http.Request) {
@@ -194,7 +194,7 @@ func (h *MediaHandler) UpdateMediaMetadata(w http.ResponseWriter, r *http.Reques
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]interface{}{"data": asset})
+	_ = json.NewEncoder(w).Encode(map[string]interface{}{"data": asset})
 }
 
 func (h *MediaHandler) ArchiveMedia(w http.ResponseWriter, r *http.Request) {
@@ -267,7 +267,7 @@ func (h *MediaHandler) DetachMediaUsage(w http.ResponseWriter, r *http.Request) 
 func (h *MediaHandler) respondProblem(w http.ResponseWriter, status int, title, detail string) {
 	w.Header().Set("Content-Type", "application/problem+json")
 	w.WriteHeader(status)
-	json.NewEncoder(w).Encode(map[string]interface{}{
+	_ = json.NewEncoder(w).Encode(map[string]interface{}{
 		"status": status,
 		"title":  title,
 		"detail": detail,

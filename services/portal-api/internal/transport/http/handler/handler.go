@@ -22,5 +22,5 @@ func HealthCheck(w http.ResponseWriter, r *http.Request) {
 		Status: "ok",
 	}
 
-	json.NewEncoder(w).Encode(resp)
+	_ = json.NewEncoder(w).Encode(resp)
 }

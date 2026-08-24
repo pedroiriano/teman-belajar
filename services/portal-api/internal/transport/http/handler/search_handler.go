@@ -65,7 +65,7 @@ func (h *SearchHandler) Search(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("Cache-Control", "no-store")
-	_ = json.NewEncoder(w).Encode(map[string]any{
+	_ = _ = json.NewEncoder(w).Encode(map[string]any{
 		"data":       result.Hits,
 		"pagination": map[string]int{"page": page, "page_size": pageSize, "total": result.Total, "total_pages": totalPages},
 	})
