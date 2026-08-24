@@ -8,7 +8,10 @@ ready for protected review after local implementation and acceptance. This
 status does not declare release, does not close the Admin UI pre-production
 gate, and does not authorize TASK-012.
 
-- Pull request: `PENDING`.
+- Pull request: `#17` — `TASK-011C: Admin Cuba harmonization and no-orange
+  enforcement`.
+- Verified implementation commit before PR metadata update:
+  `514ee51cace79cf1ed02c11b0072299113432b92`.
 - Protected checks: `PENDING` until the final pushed head is evaluated.
 - Merge authorization: **NOT GRANTED**; a separate explicit human approval is
   required after protected checks pass.
