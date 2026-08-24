@@ -129,13 +129,17 @@ production Admin image:
 - Before cleanup, read-only PostgreSQL evidence showed one selected QA draft
   with successful `DRAFT_CREATED` and `DRAFT_RECOVERED` audit events; the
   deliberate stale write also generated `DRAFT_CONFLICT`.
+- After explicit action-time human approval, **Buang draft tersimpan** cleared
+  the form, removed exactly draft
+  `c5c63097-7419-436f-889c-4c484348f68e`, and retained no QA row. Read-only
+  PostgreSQL evidence returned `draft_rows=0` and the lifecycle ended with
+  `DRAFT_DISCARDED:SUCCESS`. No other draft or canonical content was deleted.
 
-The destructive UI click used to prove `DRAFT_DISCARDED` is intentionally held
-until the human gives action-time approval. No canonical test content was
-created. Full browser network-offline injection was not performed because the
-governed Docker wrapper has no single-service pause action; the IndexedDB-first
-failure branch and non-destructive degraded state are covered by implementation
-contracts and review rather than an unauthorized Docker/network mutation.
+No canonical test content was created. Full browser network-offline injection
+was not performed because the governed Docker wrapper has no single-service
+pause action; the IndexedDB-first failure branch and non-destructive degraded
+state are covered by implementation contracts and review rather than an
+unauthorized Docker/network mutation.
 
 ## Configuration and operations
 
@@ -160,6 +164,6 @@ contracts and review rather than an unauthorized Docker/network mutation.
   collaborative editing remain intentionally out of scope.
 - This handoff is not canonical PASS until the separate TASK-011A PR is green
   and merged through protected-branch workflow, then updated with the final
-  commit, PR, CI, discard evidence, and merge SHA.
+  commit, PR, CI evidence, and merge SHA.
 - `latest_prompt.txt` is user-owned, remains untracked, and must not be staged or
   committed.

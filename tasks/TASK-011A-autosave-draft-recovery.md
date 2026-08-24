@@ -124,7 +124,7 @@ the canonical publication workflow.
 - [x] Admin hook and IndexedDB adapter contract/browser tests
 - [x] News, Announcement, and Knowledge finalization regression contracts
 - [x] direct-API authorization and malicious-payload negative tests
-- [ ] browser acceptance: refresh, restart-equivalent, offline/degraded, conflict, discard, final save
+- [ ] browser acceptance: refresh, restart-equivalent, conflict, and discard PASS; full network-offline injection and canonical final-save cleanup remain release evidence gaps
 - [x] Admin lint, typecheck, build, and production dependency audit
 - [x] Go format, vet/test, migration-from-clean, OpenAPI, ERD, and governance verification
 
