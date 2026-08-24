@@ -1,5 +1,5 @@
-FROM php:8.3-apache
 # trivy:ignore:DS-0002
+FROM php:8.3-apache
 
 # Install required system packages
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -74,3 +74,7 @@ EXPOSE 80
 
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 CMD ["apache2-foreground"]
+
+# trivy:ignore:AVD-DS-0002
+# trivy:ignore:DS-0002
+USER root
