@@ -2,11 +2,13 @@
 
 ## Release state
 
-**LOCAL RELEASE CANDIDATE — protected PR/CI evidence pending.** Implementation,
-schema verification, and local test evidence are recorded below. This status
-must not be rewritten as canonical release or production verification until the
-final PR head passes every required check and is merged through the protected
-workflow. TASK-012 remains untouched.
+**PASS — CANONICAL RELEASED.** Final head
+`674117e4b5caf14b544f867d1e47ae3bb82a144c` passed every required protected
+check and PR #15 was merged without administrator bypass at
+`2026-08-24T21:36:36Z`. Remote `origin/main` was then verified at merge commit
+`140a64467f90d0ee9ca49536e605732a6e5d8f32`. This is release evidence for the
+repository integration state; it is not a claim of production deployment.
+TASK-012 remains untouched.
 
 ## Fresh-main provenance
 
@@ -16,6 +18,21 @@ workflow. TASK-012 remains untouched.
 - TASK-011A canonical predecessor: PR #13, merge
   `47877479d5bf70c57919b519bd8ad919b46f43ff`.
 - `latest_prompt.txt` is user-owned, untracked, and excluded from every commit.
+
+## Protected release evidence
+
+- Pull request: `#15` — `TASK-011B: Hierarchical Knowledge Explorer`.
+- Final implementation head: `674117e4b5caf14b544f867d1e47ae3bb82a144c`.
+- Merge strategy: protected merge commit; administrator bypass: **NO**.
+- Merge commit: `140a64467f90d0ee9ca49536e605732a6e5d8f32`.
+- Merge timestamp: `2026-08-24T21:36:36Z` (GitHub RFC3339 evidence).
+- CI Baseline run `32779712416`: API, Admin frontend, Portal frontend,
+  OpenAPI, and governance all **SUCCESS**.
+- DevSecOps run `32779712392`: SAST Go, Admin/Portal SCA, secret scan,
+  Trivy, and SBOM generation all **SUCCESS**.
+- Required checks: **11/11 SUCCESS** on the final implementation head.
+- Remote verification: final implementation head is an ancestor of
+  `origin/main`, whose merge commit has parents `f23ab83...` and `674117e...`.
 
 ## Delivered scope
 
@@ -109,8 +126,11 @@ bindings and correctly advised Webpack; it is not release evidence. The governed
 Linux Docker builds installed the supported bindings and completed both
 Next.js 16.3 production builds successfully.
 
-Gitleaks, Trivy, reproducible clean CI jobs, and final-head protected workflow
-evidence remain pending until the pull request is opened and its checks finish.
+Gitleaks/secret scanning, Trivy, clean CI jobs, and final-head protected
+workflow evidence are recorded above. The first SAST run identified two
+unchecked `rows.Close()` results in hierarchy reordering; commit `674117e`
+handles scan, iteration, and close errors explicitly. The replacement final
+head then passed the pinned all-severity SAST check.
 
 ## Vendor reference limitation
 
@@ -135,6 +155,7 @@ as an emergency rollback.
   distributed transaction with each hierarchy mutation.
 - One primary node is supported; secondary classification, reactivation,
   drag-and-drop, bulk import, and localization are out of scope.
-- Canonical completion requires final-head protected CI success and merge
-  authorization. Until then TASK-011B is not canonical and TASK-012 is not
-  started by this branch.
+- TASK-011B is canonical on `main`. TASK-012 was not started by this task.
+- The separately requested Admin Cuba UI Harmonization and No-Orange gate is
+  not part of TASK-011B and still requires its own canonical task identifier
+  and bounded fresh-main workflow before TASK-012 readiness can be declared.
