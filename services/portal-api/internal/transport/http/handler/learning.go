@@ -65,7 +65,7 @@ func (h *LearningHandler) writeError(w http.ResponseWriter, err error) {
 
 	w.Header().Set("Content-Type", "application/problem+json")
 	w.WriteHeader(statusCode)
-	json.NewEncoder(w).Encode(map[string]interface{}{ // #nosec G104
+	json.NewEncoder(w).Encode(map[string]interface{}{ // #nosec G104 -- response writer error after commit is non-actionable in HTTP handler
 		"type":   "about:blank",
 		"title":  title,
 		"status": statusCode,
@@ -85,7 +85,7 @@ func (h *LearningHandler) ListCourses(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]interface{}{ // #nosec G104
+	json.NewEncoder(w).Encode(map[string]interface{}{ // #nosec G104 -- response writer error after commit is non-actionable in HTTP handler
 		"data": courses,
 	})
 }
@@ -95,7 +95,7 @@ func (h *LearningHandler) GetMe(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		w.Header().Set("Content-Type", "application/problem+json")
 		w.WriteHeader(http.StatusUnauthorized)
-		json.NewEncoder(w).Encode(map[string]interface{}{ // #nosec G104
+		json.NewEncoder(w).Encode(map[string]interface{}{ // #nosec G104 -- response writer error after commit is non-actionable in HTTP handler
 			"type":   "about:blank",
 			"title":  "Unauthorized",
 			"status": http.StatusUnauthorized,
@@ -110,7 +110,7 @@ func (h *LearningHandler) GetMe(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]interface{}{ // #nosec G104
+	json.NewEncoder(w).Encode(map[string]interface{}{ // #nosec G104 -- response writer error after commit is non-actionable in HTTP handler
 		"data": user,
 	})
 }
@@ -120,7 +120,7 @@ func (h *LearningHandler) ListMyCourses(w http.ResponseWriter, r *http.Request) 
 	if err != nil {
 		w.Header().Set("Content-Type", "application/problem+json")
 		w.WriteHeader(http.StatusUnauthorized)
-		json.NewEncoder(w).Encode(map[string]interface{}{ // #nosec G104
+		json.NewEncoder(w).Encode(map[string]interface{}{ // #nosec G104 -- response writer error after commit is non-actionable in HTTP handler
 			"type":   "about:blank",
 			"title":  "Unauthorized",
 			"status": http.StatusUnauthorized,
@@ -139,7 +139,7 @@ func (h *LearningHandler) ListMyCourses(w http.ResponseWriter, r *http.Request) 
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]interface{}{ // #nosec G104
+	json.NewEncoder(w).Encode(map[string]interface{}{ // #nosec G104 -- response writer error after commit is non-actionable in HTTP handler
 		"data": courses,
 	})
 }
@@ -149,7 +149,7 @@ func (h *LearningHandler) GetMyCourseCompletion(w http.ResponseWriter, r *http.R
 	if err != nil {
 		w.Header().Set("Content-Type", "application/problem+json")
 		w.WriteHeader(http.StatusUnauthorized)
-		json.NewEncoder(w).Encode(map[string]interface{}{ // #nosec G104
+		json.NewEncoder(w).Encode(map[string]interface{}{ // #nosec G104 -- response writer error after commit is non-actionable in HTTP handler
 			"type":   "about:blank",
 			"title":  "Unauthorized",
 			"status": http.StatusUnauthorized,
@@ -162,7 +162,7 @@ func (h *LearningHandler) GetMyCourseCompletion(w http.ResponseWriter, r *http.R
 	if err != nil {
 		w.Header().Set("Content-Type", "application/problem+json")
 		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(map[string]interface{}{ // #nosec G104
+		json.NewEncoder(w).Encode(map[string]interface{}{ // #nosec G104 -- response writer error after commit is non-actionable in HTTP handler
 			"type":   "about:blank",
 			"title":  "Bad Request",
 			"status": http.StatusBadRequest,
@@ -178,7 +178,7 @@ func (h *LearningHandler) GetMyCourseCompletion(w http.ResponseWriter, r *http.R
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]interface{}{ // #nosec G104
+	json.NewEncoder(w).Encode(map[string]interface{}{ // #nosec G104 -- response writer error after commit is non-actionable in HTTP handler
 		"data": completion,
 	})
 }
@@ -188,7 +188,7 @@ func (h *LearningHandler) GetMyCourseGrades(w http.ResponseWriter, r *http.Reque
 	if err != nil {
 		w.Header().Set("Content-Type", "application/problem+json")
 		w.WriteHeader(http.StatusUnauthorized)
-		json.NewEncoder(w).Encode(map[string]interface{}{ // #nosec G104
+		json.NewEncoder(w).Encode(map[string]interface{}{ // #nosec G104 -- response writer error after commit is non-actionable in HTTP handler
 			"type":   "about:blank",
 			"title":  "Unauthorized",
 			"status": http.StatusUnauthorized,
@@ -201,7 +201,7 @@ func (h *LearningHandler) GetMyCourseGrades(w http.ResponseWriter, r *http.Reque
 	if err != nil {
 		w.Header().Set("Content-Type", "application/problem+json")
 		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(map[string]interface{}{ // #nosec G104
+		json.NewEncoder(w).Encode(map[string]interface{}{ // #nosec G104 -- response writer error after commit is non-actionable in HTTP handler
 			"type":   "about:blank",
 			"title":  "Bad Request",
 			"status": http.StatusBadRequest,
@@ -221,7 +221,7 @@ func (h *LearningHandler) GetMyCourseGrades(w http.ResponseWriter, r *http.Reque
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]interface{}{ // #nosec G104
+	json.NewEncoder(w).Encode(map[string]interface{}{ // #nosec G104 -- response writer error after commit is non-actionable in HTTP handler
 		"data": grades,
 	})
 }

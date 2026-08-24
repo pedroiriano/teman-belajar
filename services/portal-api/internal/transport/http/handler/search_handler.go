@@ -65,7 +65,7 @@ func (h *SearchHandler) Search(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("Cache-Control", "no-store")
-	_ = json.NewEncoder(w).Encode(map[string]any{ // #nosec G104
+	_ = json.NewEncoder(w).Encode(map[string]any{ // #nosec G104 -- response writer error after commit is non-actionable in HTTP handler
 		"data":       result.Hits,
 		"pagination": map[string]int{"page": page, "page_size": pageSize, "total": result.Total, "total_pages": totalPages},
 	})
@@ -90,5 +90,5 @@ func searchProblem(w http.ResponseWriter, status int, title, detail, field strin
 	if field != "" {
 		payload["errors"] = []map[string]string{{"field": field, "message": detail}}
 	}
-	_ = json.NewEncoder(w).Encode(payload) // #nosec G104
+	_ = json.NewEncoder(w).Encode(payload) // #nosec G104 -- response writer error after commit is non-actionable in HTTP handler
 }

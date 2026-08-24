@@ -105,7 +105,7 @@ func (r *EngagementRepository) UpsertRecentView(ctx context.Context, userKey str
 	if err != nil {
 		return engagement.RecentView{}, err
 	}
-	defer func() { _ = tx.Rollback() }() // #nosec G104
+	defer func() { _ = tx.Rollback() }() // #nosec G104 -- defer rollback error is safe to ignore as transaction is already committed or context is canceled
 	row := engagement.RecentView{ID: uuid.NewString(), UserKey: userKey, Target: target}
 	err = tx.QueryRowContext(ctx, `
 		INSERT INTO engagement_recent_views (id, user_subject, target_type, target_id)

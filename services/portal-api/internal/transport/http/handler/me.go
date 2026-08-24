@@ -41,5 +41,5 @@ func GetMe(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(profile) // #nosec G104
+	json.NewEncoder(w).Encode(profile) // #nosec G104 -- response writer error after commit is non-actionable in HTTP handler
 }
