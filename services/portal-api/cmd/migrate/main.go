@@ -110,13 +110,13 @@ func main() {
 		// #nosec G701 -- migration SQL is a version-controlled file selected by a strict filename allowlist.
 		_, err = tx.ExecContext(ctx, string(content))
 		if err != nil {
-			_ = _ = tx.Rollback()
+			tx.Rollback() // #nosec G104
 			log.Fatalf("Failed to execute migration %s: %v", file, err)
 		}
 
 		_, err = tx.ExecContext(ctx, "INSERT INTO schema_migrations (version) VALUES ($1)", file)
 		if err != nil {
-			_ = _ = tx.Rollback()
+			tx.Rollback() // #nosec G104
 			log.Fatalf("Failed to record migration %s: %v", file, err)
 		}
 

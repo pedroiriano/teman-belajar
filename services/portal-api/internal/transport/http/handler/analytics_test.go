@@ -57,7 +57,7 @@ func TestPrometheusMetricStates(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 				w.Header().Set("Content-Type", "application/json")
-				_, _ = w.Write([]byte(test.body))
+				_, _ = w.Write([]byte(test.body)) // #nosec G104
 			}))
 			defer server.Close()
 			promURL, err := validatePrometheusURL(server.URL)

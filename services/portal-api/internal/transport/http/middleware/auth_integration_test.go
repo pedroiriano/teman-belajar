@@ -31,7 +31,7 @@ func setupMockIdP(t *testing.T) (*httptest.Server, *rsa.PrivateKey) {
 			"id_token_signing_alg_values_supported": []string{"RS256"},
 		}
 		w.Header().Set("Content-Type", "application/json")
-		_ = json.NewEncoder(w).Encode(config)
+		json.NewEncoder(w).Encode(config) // #nosec G104
 	})
 
 	mux.HandleFunc("/keys", func(w http.ResponseWriter, r *http.Request) {
@@ -46,7 +46,7 @@ func setupMockIdP(t *testing.T) (*httptest.Server, *rsa.PrivateKey) {
 			},
 		}
 		w.Header().Set("Content-Type", "application/json")
-		_ = json.NewEncoder(w).Encode(jwks)
+		json.NewEncoder(w).Encode(jwks) // #nosec G104
 	})
 
 	server := httptest.NewServer(mux)

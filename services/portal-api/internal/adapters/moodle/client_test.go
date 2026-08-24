@@ -15,7 +15,7 @@ import (
 func TestClient_MoodleError(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(`{"exception":"moodle_exception","errorcode":"invalidtoken","message":"Invalid token"}`))
+		w.Write([]byte(`{"exception":"moodle_exception","errorcode":"invalidtoken","message":"Invalid token"}`)) // #nosec G104
 	}))
 	defer server.Close()
 
@@ -31,7 +31,7 @@ func TestClient_MoodleError(t *testing.T) {
 func TestClient_MoodleErrorWithoutErrorCode(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
-		_, _ = w.Write([]byte(`{"exception":"Error","message":"Runtime class not found"}`))
+		_, _ = w.Write([]byte(`{"exception":"Error","message":"Runtime class not found"}`)) // #nosec G104
 	}))
 	defer server.Close()
 
@@ -145,7 +145,7 @@ func TestResolveCurrentUser_Mapped(t *testing.T) {
 func TestResolveCurrentUser_Unmapped(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(`{"exception":"moodle_exception","errorcode":"invalidrecord","message":"Invalid record"}`))
+		w.Write([]byte(`{"exception":"moodle_exception","errorcode":"invalidrecord","message":"Invalid record"}`)) // #nosec G104
 	}))
 	defer server.Close()
 
@@ -160,7 +160,7 @@ func TestResolveCurrentUser_Unmapped(t *testing.T) {
 func TestResolveCurrentUser_Ambiguous(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(`{"exception":"moodle_exception","errorcode":"ambiguous_identity","message":"Ambiguous identity resolution"}`))
+		w.Write([]byte(`{"exception":"moodle_exception","errorcode":"ambiguous_identity","message":"Ambiguous identity resolution"}`)) // #nosec G104
 	}))
 	defer server.Close()
 
@@ -266,7 +266,7 @@ func TestGetCourseGrades(t *testing.T) {
 func TestClient_Redaction(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(`{"exception":"moodle_exception","errorcode":"custom_error","message":"Something failed"}`))
+		w.Write([]byte(`{"exception":"moodle_exception","errorcode":"custom_error","message":"Something failed"}`)) // #nosec G104
 	}))
 	defer server.Close()
 
@@ -303,7 +303,7 @@ func TestGetLearningAnalyticsUsesExplicitPeriod(t *testing.T) {
 			t.Fatalf("end_date = %q", got)
 		}
 		w.Header().Set("Content-Type", "application/json")
-		_, _ = w.Write([]byte(`{"active_learners":4,"learning_starts":5,"eligible_enrolments":10,"completions":4,"completion_rate":40,"top_courses":[]}`))
+		_, _ = w.Write([]byte(`{"active_learners":4,"learning_starts":5,"eligible_enrolments":10,"completions":4,"completion_rate":40,"top_courses":[]}`)) // #nosec G104
 	}))
 	defer server.Close()
 

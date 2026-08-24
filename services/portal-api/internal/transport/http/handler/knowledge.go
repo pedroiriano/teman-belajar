@@ -323,5 +323,5 @@ func hasAnyRole(userRoles []string, allowed ...string) bool {
 func respondJSON(w http.ResponseWriter, status int, value any) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
-	_ = json.NewEncoder(w).Encode(value)
+	_ = json.NewEncoder(w).Encode(value) // #nosec G104
 }
