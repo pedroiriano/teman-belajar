@@ -9,6 +9,7 @@
     "lint": "eslint . --max-warnings=0",
     "typecheck": "tsc --noEmit",
     "test:theme": "node scripts/verify-theme-contract.mjs",
+    "test:media": "node scripts/verify-media-contract.mjs",
     "test:user-management": "node scripts/verify-user-management-contract.mjs"
   },
   "dependencies": {

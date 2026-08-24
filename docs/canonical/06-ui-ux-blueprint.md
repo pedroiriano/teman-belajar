@@ -178,6 +178,8 @@ Component library:
 - File uploader
 - Rich text content shell
 
+Admin content editors use one Cuba-aligned Integrated Media Manager with Library/Unggah Baru tabs, search, filter, pagination, consent-based image compression, accessible alt/decorative intent, and MIME-aware Markdown insertion. Parallel per-editor media pickers are forbidden.
+
 ## 9. Responsive
 
 Reference classes:

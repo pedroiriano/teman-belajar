@@ -4,6 +4,8 @@ import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import { getServerAccessToken } from "@/lib/server-auth";
+import { attachMediaUsages } from "@/lib/media-usages";
+import type { MediaUsageInput } from "@/components/media/types";
 
 const API_BASE = process.env.PORTAL_API_INTERNAL_URL;
 
@@ -11,7 +13,7 @@ if (!API_BASE) {
   throw new Error("Missing required environment variable: PORTAL_API_INTERNAL_URL");
 }
 
-export async function createNewsAction(data: { title: string, slug: string, excerpt: string, body: string }) {
+export async function createNewsAction(data: { title: string, slug: string, excerpt: string, body: string, media_usages?: MediaUsageInput[] }) {
   const session: any = await getServerSession(authOptions);
   const accessToken = await getServerAccessToken();
   
@@ -25,7 +27,7 @@ export async function createNewsAction(data: { title: string, slug: string, exce
       "Content-Type": "application/json",
       "Authorization": `Bearer ${accessToken}`
     },
-    body: JSON.stringify(data)
+    body: JSON.stringify({ title: data.title, slug: data.slug, excerpt: data.excerpt, body: data.body })
   });
 
   if (!res.ok) {
@@ -33,8 +35,11 @@ export async function createNewsAction(data: { title: string, slug: string, exce
     return { success: false, error: err?.detail || "Failed to create news" };
   }
 
+  const created = await res.json();
+  const failed = await attachMediaUsages(API_BASE!, accessToken, "news", created.id, data.media_usages ?? []);
   revalidatePath("/dashboard/news");
-  return { success: true };
+  if (failed.length) return { success: false, error: "Berita tersimpan, tetapi sebagian relasi media gagal. Jangan terbitkan sebelum rekonsiliasi.", createdId: created.id };
+  return { success: true, data: created };
 }
 
 export async function transitionNewsAction(id: string, status: string) {
@@ -64,7 +69,7 @@ export async function transitionNewsAction(id: string, status: string) {
   return { success: true };
 }
 
-export async function createAnnouncementAction(data: { title: string, slug: string, body: string, start_at: Date | null, end_at: Date | null }) {
+export async function createAnnouncementAction(data: { title: string, slug: string, body: string, start_at: Date | null, end_at: Date | null, media_usages?: MediaUsageInput[] }) {
   const session: any = await getServerSession(authOptions);
   const accessToken = await getServerAccessToken();
   
@@ -92,8 +97,11 @@ export async function createAnnouncementAction(data: { title: string, slug: stri
     return { success: false, error: err?.detail || "Failed to create announcement" };
   }
 
+  const created = await res.json();
+  const failed = await attachMediaUsages(API_BASE!, accessToken, "announcement", created.id, data.media_usages ?? []);
   revalidatePath("/dashboard/announcements");
-  return { success: true };
+  if (failed.length) return { success: false, error: "Pengumuman tersimpan, tetapi sebagian relasi media gagal. Jangan terbitkan sebelum rekonsiliasi.", createdId: created.id };
+  return { success: true, data: created };
 }
 
 export async function transitionAnnouncementAction(id: string, status: string) {

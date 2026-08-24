@@ -49,6 +49,8 @@ erDiagram
     uuid id PK
     string storage_key UK
     string bucket
+    string original_filename
+    string display_filename
     string detected_mime_type
     bigint size_bytes
     string status
@@ -59,6 +61,7 @@ erDiagram
     string entity_type
     string entity_id
     string usage_role
+    int sort_order
   }
   BOOKMARK {
     uuid id PK

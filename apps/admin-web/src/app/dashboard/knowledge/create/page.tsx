@@ -7,6 +7,8 @@ import { createKnowledgeAction } from "@/app/actions/knowledge";
 import { AdminIcon } from "@/components/admin-icon";
 
 import MediaPicker from "@/components/media/MediaPicker";
+import { mediaMarkdown, mediaUsagesFromMarkdown } from "@/components/media/insertion";
+import type { MediaSelection } from "@/components/media/types";
 
 export default function CreateKnowledgePage() {
   const router = useRouter();
@@ -25,9 +27,8 @@ export default function CreateKnowledgePage() {
     setSlug(val.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, ''));
   };
 
-  const insertMedia = (mediaId: string) => {
-    const mediaMarkdown = `\n![Media](/api/v1/media/${mediaId}/content)\n`;
-    setBody((prev) => prev + mediaMarkdown);
+  const insertMedia = (selection: MediaSelection) => {
+    setBody((prev) => `${prev}\n${mediaMarkdown(selection)}\n`);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -36,7 +37,7 @@ export default function CreateKnowledgePage() {
     setError("");
 
     try {
-      const res = await createKnowledgeAction({ title, slug, summary, body });
+      const res = await createKnowledgeAction({ title, slug, summary, body, media_usages: mediaUsagesFromMarkdown(body) });
 
       if (!res.success) {
         throw new Error(res.error || "Artikel pengetahuan belum dapat dibuat");

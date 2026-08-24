@@ -171,6 +171,15 @@ Rules:
 - Events must be idempotent.
 - Moodle outage must degrade gracefully.
 
+## 9A. Media Asset Rules — Mandatory
+
+1. Read `docs/governance/MEDIA-ASSET-MANAGEMENT.md` before changing media upload, library, editor insertion, delivery, metadata, usage, or object storage behavior.
+2. The Portal API policy endpoint is the source of truth for allowed extensions/MIME and byte limits; frontend copies of these constants are forbidden.
+3. `original_filename`, storage key, bucket, checksum, MIME, and stored bytes are immutable. Rename only `display_filename`; never move the MinIO object.
+4. Client validation/compression never replaces server filename, extension, magic-byte, extension↔MIME, and actual-size validation.
+5. Reviewer media mutations must remain denied server-side. Do not treat hidden UI as authorization.
+6. Migration 004 is immutable; media schema evolution is forward-only.
+
 ## 10. Testing Rules
 
 Every behavior change requires appropriate test:

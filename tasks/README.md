@@ -7,6 +7,7 @@ Task awal:
 - TASK-002 CMS News & Announcement
 - TASK-003 Knowledge Hub
 - TASK-004 Media/Object Storage
+- TASK-004E Integrated Media Asset Management (TASK-004A–004D identifiers are historical Moodle follow-ups)
 - TASK-005 Moodle Adapter
 - TASK-006 My Learning Dashboard
 - TASK-007 Unified Search

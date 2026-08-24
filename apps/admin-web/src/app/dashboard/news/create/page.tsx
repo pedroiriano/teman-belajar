@@ -7,6 +7,8 @@ import { useState } from "react";
 import { createNewsAction } from "@/app/actions/cms";
 import { AdminIcon } from "@/components/admin-icon";
 import MediaPicker from "@/components/media/MediaPicker";
+import { mediaMarkdown, mediaUsagesFromMarkdown } from "@/components/media/insertion";
+import type { MediaSelection } from "@/components/media/types";
 
 export default function CreateNewsPage() {
   const router = useRouter();
@@ -18,8 +20,8 @@ export default function CreateNewsPage() {
   const [loading, setLoading] = useState(false);
 
   const handleTitleChange = (value: string) => { setTitle(value); setSlug(value.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)+/g, "")); };
-  const insertMedia = (mediaId: string) => setBody((current) => `${current}\n![Media](/api/v1/media/${mediaId}/content)\n`);
-  const handleSubmit = async (event: React.FormEvent) => { event.preventDefault(); setLoading(true); setError(""); try { const result = await createNewsAction({ title, slug, excerpt, body }); if (!result.success) throw new Error(result.error || "Berita belum dapat disimpan"); router.push("/dashboard/news"); } catch (caught) { setError(caught instanceof Error ? caught.message : "Terjadi kesalahan yang tidak terduga"); } finally { setLoading(false); } };
+  const insertMedia = (selection: MediaSelection) => setBody((current) => `${current}\n${mediaMarkdown(selection)}\n`);
+  const handleSubmit = async (event: React.FormEvent) => { event.preventDefault(); setLoading(true); setError(""); try { const result = await createNewsAction({ title, slug, excerpt, body, media_usages: mediaUsagesFromMarkdown(body) }); if (!result.success) throw new Error(result.error || "Berita belum dapat disimpan"); router.push("/dashboard/news"); } catch (caught) { setError(caught instanceof Error ? caught.message : "Terjadi kesalahan yang tidak terduga"); } finally { setLoading(false); } };
 
   return <div className="admin-page max-w-5xl">
     <div className="admin-page-header"><div><Link href="/dashboard/news" className="inline-flex items-center text-sm font-bold text-sky-700">← Kembali ke Berita</Link><p className="admin-kicker mt-5">Editor berita</p><h1 className="admin-page-title">Buat berita baru</h1><p className="admin-page-copy">Berita disimpan sebagai draft sebelum masuk proses review.</p></div><span className="admin-status bg-slate-100 text-slate-600">Status: Draft</span></div>

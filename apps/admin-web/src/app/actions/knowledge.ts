@@ -3,8 +3,10 @@
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { getServerAccessToken } from "@/lib/server-auth";
+import { attachMediaUsages } from "@/lib/media-usages";
+import type { MediaUsageInput } from "@/components/media/types";
 
-export async function createKnowledgeAction(data: { title: string; slug: string; summary: string; body: string }) {
+export async function createKnowledgeAction(data: { title: string; slug: string; summary: string; body: string; media_usages?: MediaUsageInput[] }) {
   const session: any = await getServerSession(authOptions);
   const accessToken = await getServerAccessToken();
   
@@ -34,13 +36,16 @@ export async function createKnowledgeAction(data: { title: string; slug: string;
       return { success: false, error: errData.detail || errData.title || `Error ${res.status}` };
     }
 
-    return { success: true };
+    const created = await res.json();
+    const failed = await attachMediaUsages(API_BASE!, accessToken, "knowledge_revision", created.current_revision_id, data.media_usages ?? []);
+    if (failed.length) return { success: false, error: "Artikel tersimpan, tetapi sebagian relasi media gagal. Jangan terbitkan sebelum rekonsiliasi.", createdId: created.id };
+    return { success: true, data: created };
   } catch (err: any) {
     return { success: false, error: err.message || "Failed to communicate with API" };
   }
 }
 
-export async function createKnowledgeRevisionAction(id: string, data: { body: string }) {
+export async function createKnowledgeRevisionAction(id: string, data: { body: string; media_usages?: MediaUsageInput[] }) {
   const session: any = await getServerSession(authOptions);
   const accessToken = await getServerAccessToken();
   
@@ -67,7 +72,10 @@ export async function createKnowledgeRevisionAction(id: string, data: { body: st
       return { success: false, error: errData.detail || errData.title || `Error ${res.status}` };
     }
 
-    return { success: true };
+    const created = await res.json();
+    const failed = await attachMediaUsages(API_BASE!, accessToken, "knowledge_revision", created.id, data.media_usages ?? []);
+    if (failed.length) return { success: false, error: "Revisi tersimpan, tetapi sebagian relasi media gagal. Jangan terbitkan sebelum rekonsiliasi.", createdId: created.id };
+    return { success: true, data: created };
   } catch (err: any) {
     return { success: false, error: err.message || "Failed to communicate with API" };
   }

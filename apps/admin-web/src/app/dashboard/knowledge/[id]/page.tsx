@@ -4,6 +4,9 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { transitionKnowledgeAction, getAdminKnowledgeDetailAction, createKnowledgeRevisionAction } from "@/app/actions/knowledge";
+import MediaPicker from "@/components/media/MediaPicker";
+import { mediaMarkdown, mediaUsagesFromMarkdown } from "@/components/media/insertion";
+import type { MediaSelection } from "@/components/media/types";
 
 export default function AdminKnowledgeDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -52,7 +55,7 @@ export default function AdminKnowledgeDetailPage() {
   const handleSaveRevision = async () => {
     setActionLoading(true);
     setError("");
-    const res = await createKnowledgeRevisionAction(id, { body });
+    const res = await createKnowledgeRevisionAction(id, { body, media_usages: mediaUsagesFromMarkdown(body) });
     if (!res.success) {
       setError(res.error || "Revisi baru belum dapat disimpan");
       setActionLoading(false);
@@ -67,6 +70,7 @@ export default function AdminKnowledgeDetailPage() {
   const isEditor = roles.includes("Content Editor") || roles.includes("Portal Administrator");
   const isReviewer = roles.includes("Reviewer") || roles.includes("Portal Administrator");
   const canCreateRevision = isEditor && ["draft", "published"].includes(article.status);
+  const insertMedia = (selection: MediaSelection) => setBody((current) => `${current}\n${mediaMarkdown(selection)}\n`);
 
   return (
     <div className="admin-page max-w-5xl">
@@ -137,6 +141,7 @@ export default function AdminKnowledgeDetailPage() {
               </div>
             ) : (
               <div className="space-y-4">
+                <div className="flex justify-end"><MediaPicker onSelect={insertMedia} buttonLabel="Sisipkan media" /></div>
                 <textarea
                   value={body}
                   onChange={(e) => setBody(e.target.value)}
