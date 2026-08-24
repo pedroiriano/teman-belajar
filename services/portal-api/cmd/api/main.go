@@ -7,6 +7,10 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"os/signal"
+	"strings"
+	"sync"
+	"syscall"
 	"time"
 
 	_ "github.com/lib/pq"
@@ -16,6 +20,7 @@ import (
 	"teman-belajar-api/internal/adapters/moodle"
 	searchadapter "teman-belajar-api/internal/adapters/search"
 	engagementapplication "teman-belajar-api/internal/application/engagement"
+	integrationapplication "teman-belajar-api/internal/application/integration"
 	searchapplication "teman-belajar-api/internal/application/search"
 	"teman-belajar-api/internal/domain/analytics"
 	"teman-belajar-api/internal/domain/cms"
@@ -272,6 +277,27 @@ func main() {
 	mux.Handle("POST /api/v1/admin/knowledge/{id}/revisions", adminAuthMiddleware(http.HandlerFunc(knowledgeHandler.CreateRevision)))
 	mux.Handle("POST /api/v1/admin/knowledge/{id}/transition", adminAuthMiddleware(http.HandlerFunc(knowledgeHandler.TransitionStatus)))
 
+	// Moodle Event Inbox (TASK-011)
+	eventIngestSecret := os.Getenv("TB_MOODLE_EVENT_INGEST_SECRET")
+	if eventIngestSecret == "" || strings.HasPrefix(eventIngestSecret, "CHANGE_ME") {
+		log.Fatal("Missing or placeholder TB_MOODLE_EVENT_INGEST_SECRET — event ingest endpoint disabled for security")
+	}
+	integrationRepo := postgres.NewIntegrationRepository(db)
+	eventService := integrationapplication.NewEventService(integrationRepo, auditRepo)
+	integrationHandler := handler.NewIntegrationHandler(eventService)
+	hmacAuth := middleware.HMACAuthMiddleware(eventIngestSecret, auditRepo)
+	mux.Handle("POST /api/v1/internal/moodle/events", hmacAuth(http.HandlerFunc(integrationHandler.HandleMoodleEventIngest)))
+
+	// Start background event processor
+	processorCtx, processorCancel := context.WithCancel(ctx)
+	var processorWg sync.WaitGroup
+	processor := integrationapplication.NewEventProcessor(integrationRepo, integrationapplication.DefaultProcessorConfig())
+	processorWg.Add(1)
+	go func() {
+		defer processorWg.Done()
+		processor.Run(processorCtx)
+	}()
+
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"
@@ -284,7 +310,25 @@ func main() {
 		Handler:           observability.MetricsMiddleware(mux),
 		ReadHeaderTimeout: 5 * time.Second,
 	}
-	if err := server.ListenAndServe(); err != nil {
+
+	// Graceful shutdown on SIGINT/SIGTERM
+	sigCh := make(chan os.Signal, 1)
+	signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM)
+
+	go func() {
+		sig := <-sigCh
+		log.Printf("Received signal %v, shutting down...", sig)
+		processorCancel()
+		processorWg.Wait()
+		shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		if err := server.Shutdown(shutdownCtx); err != nil {
+			log.Printf("Server shutdown error: %v", err)
+		}
+	}()
+
+	if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 		log.Fatalf("Server failed: %v", err)
 	}
+	log.Println("Server stopped gracefully")
 }

@@ -65,8 +65,53 @@ var (
 		Name: "sso_events_total",
 		Help: "Total number of SSO events",
 	}, []string{"event_type", "status"})
+
+	// Event Inbox Metrics (TASK-011)
+	EventInboxIngestTotal = promauto.NewCounterVec(prometheus.CounterOpts{
+		Name: "event_inbox_ingest_total",
+		Help: "Total number of event inbox ingestion attempts",
+	}, []string{"event_type", "result"})
+
+	EventInboxProcessTotal = promauto.NewCounterVec(prometheus.CounterOpts{
+		Name: "event_inbox_process_total",
+		Help: "Total number of event inbox processing results",
+	}, []string{"event_type", "result"})
+
+	EventInboxBacklog = promauto.NewGaugeVec(prometheus.GaugeOpts{
+		Name: "event_inbox_backlog",
+		Help: "Current number of events in each inbox status",
+	}, []string{"status"})
+
+	EventInboxProcessDuration = promauto.NewHistogramVec(prometheus.HistogramOpts{
+		Name:    "event_inbox_process_duration_seconds",
+		Help:    "Duration of event processing",
+		Buckets: prometheus.DefBuckets,
+	}, []string{"event_type"})
 )
 
 func RecordSSOEvent(eventType, status string) {
 	SSOEventsTotal.WithLabelValues(eventType, status).Inc()
+}
+
+// RecordEventIngest records an event ingestion result metric.
+func RecordEventIngest(eventType, result string) {
+	if eventType == "" {
+		eventType = "unknown"
+	}
+	EventInboxIngestTotal.WithLabelValues(eventType, result).Inc()
+}
+
+// RecordEventProcess records an event processing result metric.
+func RecordEventProcess(eventType, result string) {
+	EventInboxProcessTotal.WithLabelValues(eventType, result).Inc()
+}
+
+// SetEventInboxBacklog sets the current backlog gauge for a given status.
+func SetEventInboxBacklog(status string, count float64) {
+	EventInboxBacklog.WithLabelValues(status).Set(count)
+}
+
+// RecordEventProcessDuration records event processing duration.
+func RecordEventProcessDuration(eventType string, durationSec float64) {
+	EventInboxProcessDuration.WithLabelValues(eventType).Observe(durationSec)
 }

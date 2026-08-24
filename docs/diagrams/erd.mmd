@@ -152,6 +152,27 @@ erDiagram
     timestamptz last_moodle_sync_success_at
     timestamptz last_cleanup_success_at
   }
+  EVENT_INBOX {
+    bigint id PK
+    string event_id UK
+    string event_type
+    string source
+    string subject_id
+    string status
+    timestamptz occurred_at
+    jsonb payload
+    string fingerprint
+    int attempts
+    timestamptz next_attempt_at
+    string error_category
+  }
+  EVENT_OUTBOX {
+    bigint id PK
+    bigint inbox_event_id FK
+    string event_type
+    jsonb payload
+    boolean published
+  }
 
   CATEGORY ||--o{ NEWS : categorizes
   CATEGORY ||--o{ KNOWLEDGE_ARTICLE : categorizes
@@ -159,9 +180,11 @@ erDiagram
   MEDIA_ASSET ||--o{ MEDIA_USAGES : used_in
   USER_PROFILE ||--o| MOODLE_USER_MAPPING : maps_to
   USER_PROFILE ||--o{ AUDIT_EVENT : acts
+  EVENT_INBOX ||--o| EVENT_OUTBOX : creates
   ANALYTICS_EVENTS }o--|| ANALYTICS_PAGE_DAILY : rolls_up
   ANALYTICS_EVENTS }o--|| ANALYTICS_SEARCH_DAILY : rolls_up
   ANALYTICS_EVENTS }o--|| ANALYTICS_CONTENT_DAILY : rolls_up
   ANALYTICS_EVENTS }o--|| ANALYTICS_SSO_DAILY : rolls_up
   ANALYTICS_WORKER_STATE ||--o{ ANALYTICS_PAGE_DAILY : records_success
   ANALYTICS_WORKER_STATE ||--o{ ANALYTICS_LEARNING_DAILY : records_sync
+
