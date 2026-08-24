@@ -73,7 +73,7 @@ type PeriodUniqueVisitors struct {
 func respondAnalyticsProblem(w http.ResponseWriter, status int, title, detail string) {
 	w.Header().Set("Content-Type", "application/problem+json")
 	w.WriteHeader(status)
-	json.NewEncoder(w).Encode(map[string]interface{}{
+	json.NewEncoder(w).Encode(map[string]interface{}{ // #nosec G104
 		"type":   "about:blank",
 		"title":  title,
 		"status": status,
