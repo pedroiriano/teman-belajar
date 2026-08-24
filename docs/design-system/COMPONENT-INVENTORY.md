@@ -67,6 +67,9 @@ Escape, focus containment/restore, and body-scroll locking.
 4. A vendor demo component is only implemented when a product feature needs it. Unsupported menu entries must be visibly disabled or omitted; never create deceptive links.
 5. Every interactive component requires keyboard behavior, an accessible name, and loading/error/empty states where applicable.
 6. Portal and Admin theme tokens must remain isolated even though their stored light/dark preference uses the same contract.
+7. Every Admin component/state must comply with
+   `ADMIN-UI-VISUAL-CONTRACT.md`: bright sky/light blue in both themes, no
+   orange/amber application color, and yellow-only warning semantics.
 
 Inventory is maintained against implemented product patterns. At TASK-011B
 verification time, each governed `ORIGINAL/` directory contains only its vendor

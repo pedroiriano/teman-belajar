@@ -9,6 +9,7 @@
     "lint": "eslint . --max-warnings=0",
     "typecheck": "tsc --noEmit",
     "test:theme": "node scripts/verify-theme-contract.mjs",
+    "test:no-orange": "node scripts/verify-no-orange-contract.mjs",
     "test:media": "node scripts/verify-media-contract.mjs",
     "test:drafts": "node scripts/verify-draft-contract.mjs",
     "test:hierarchy": "node scripts/verify-knowledge-hierarchy-contract.mjs",

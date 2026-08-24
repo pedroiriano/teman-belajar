@@ -4,15 +4,17 @@
 
 :root {
   color-scheme: light;
-  --admin-primary: #c2410c;
-  --admin-primary-hover: #9a3412;
-  --admin-on-primary: #ffffff;
-  --admin-accent-text: #c2410c;
-  --admin-accent-soft: rgba(194, 65, 12, .11);
-  --admin-focus: rgba(234, 88, 12, .28);
+  --admin-primary: #38bdf8;
+  --admin-primary-hover: #0ea5e9;
+  --admin-on-primary: #082f49;
+  --admin-accent-text: #0369a1;
+  --admin-accent-border: #0284c7;
+  --admin-accent-soft: rgba(56, 189, 248, .18);
+  --admin-focus: #0284c7;
+  --admin-warning: #eab308;
   --admin-ink: #1e293b;
   --admin-copy: #475569;
-  --admin-muted: #64748b;
+  --admin-muted: #475569;
   --admin-surface: #f6f7fb;
   --admin-panel: #ffffff;
   --admin-panel-muted: #f8fafc;
@@ -25,7 +27,7 @@
   --admin-sidebar: #ffffff;
     --admin-sidebar-border: #e2e8f0;
     --admin-sidebar-hover: #f1f5f9;
-    --admin-sidebar-text: #64748b;
+    --admin-sidebar-text: #475569;
     --admin-sidebar-title: #0f172a;
   --admin-topbar: rgba(255, 255, 255, .94);
   --admin-shadow: 0 8px 25px rgba(30, 41, 59, .06);
@@ -40,8 +42,10 @@
   --admin-copy: #cbd5e1;
   --admin-muted: #a8a9ad;
   --admin-accent-text: #7dd3fc;
+  --admin-accent-border: #38bdf8;
   --admin-accent-soft: rgba(56, 189, 248, .16);
-  --admin-focus: rgba(56, 189, 248, .35);
+  --admin-focus: #38bdf8;
+  --admin-warning: #fde047;
   --admin-surface: #1d1e26;
   --admin-panel: #262932;
   --admin-panel-muted: #323846;
@@ -72,10 +76,10 @@ a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visib
   .admin-button { @apply inline-flex min-h-10 items-center justify-center rounded-xl px-4 py-2 text-sm font-bold shadow-sm transition disabled:cursor-not-allowed disabled:opacity-50; color: var(--admin-on-primary); background: var(--admin-primary); }
   .admin-button:hover { background: var(--admin-primary-hover); }
   .admin-button-secondary { @apply inline-flex min-h-10 items-center justify-center rounded-xl border px-4 py-2 text-sm font-bold transition; color: var(--admin-copy); background: var(--admin-panel); border-color: var(--admin-border); }
-  .admin-button-secondary:hover { color: var(--admin-accent-text); border-color: var(--admin-primary); }
+  .admin-button-secondary:hover { color: var(--admin-accent-text); border-color: var(--admin-accent-border); }
   .admin-input { @apply w-full rounded-xl border px-4 py-3 text-sm focus:ring-2; color: var(--admin-ink); -webkit-text-fill-color: var(--admin-ink); caret-color: var(--admin-accent-text); background-color: var(--admin-field); border-color: var(--admin-border); --tw-ring-color: var(--admin-focus); }
   .admin-input::placeholder { color: var(--admin-muted); }
-  .admin-input:focus { border-color: var(--admin-primary); }
+  .admin-input:focus { border-color: var(--admin-accent-border); }
   .admin-input[readonly] { background-color: var(--admin-field-readonly); }
   .admin-input:disabled { color: var(--admin-field-disabled-text); -webkit-text-fill-color: var(--admin-field-disabled-text); background-color: var(--admin-field-disabled); cursor: not-allowed; opacity: 1; }
   .admin-input option { color: var(--admin-ink); background-color: var(--admin-field); }
@@ -88,8 +92,8 @@ a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visib
   .admin-choice-card { @apply flex items-start rounded-xl border p-4 transition-colors; color: var(--admin-copy); background: var(--admin-field-readonly); border-color: var(--admin-border); }
   .admin-choice-card:hover,
   .admin-choice-card[data-selected="true"],
-  .admin-choice-card:has(.admin-checkbox:checked) { background: var(--admin-accent-soft); border-color: var(--admin-primary); }
-  .admin-checkbox { @apply h-4 w-4 rounded border; color: var(--admin-primary); accent-color: var(--admin-primary); border-color: var(--admin-border); }
+  .admin-choice-card:has(.admin-checkbox:checked) { background: var(--admin-accent-soft); border-color: var(--admin-accent-border); }
+  .admin-checkbox { @apply h-4 w-4 rounded border; color: var(--admin-accent-border); accent-color: var(--admin-accent-border); border-color: var(--admin-border); }
   .admin-checkbox:disabled { cursor: not-allowed; opacity: .55; }
   .admin-label { @apply mb-2 block text-sm font-bold; color: var(--admin-copy); }
   .admin-page { @apply mx-auto w-full max-w-7xl; }
@@ -112,17 +116,17 @@ a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visib
   .admin-topbar { color: var(--admin-ink); background: var(--admin-topbar); border-color: var(--admin-border); }
   .admin-menu-button { color: var(--admin-copy); background: var(--admin-panel); border-color: var(--admin-border); }
   .admin-theme-toggle { @apply inline-flex h-10 items-center gap-2 rounded-xl border px-2 text-xs font-extrabold transition; color: var(--admin-copy); background: var(--admin-panel); border-color: var(--admin-border); }
-  .admin-theme-toggle:hover { color: var(--admin-accent-text); border-color: var(--admin-primary); transform: translateY(-1px); }
+  .admin-theme-toggle:hover { color: var(--admin-accent-text); border-color: var(--admin-accent-border); transform: translateY(-1px); }
   .admin-theme-toggle__icon { @apply grid h-7 w-7 place-items-center rounded-lg; color: var(--admin-accent-text); background: var(--admin-accent-soft); }
   .admin-theme-toggle__icon svg { @apply h-4 w-4; }
   .admin-theme-toggle__label { @apply hidden sm:inline; }
   .admin-topbar-search { @apply min-h-10 w-full rounded-xl border py-2 pl-10 pr-4 text-sm outline-none transition; color: var(--admin-ink); background: var(--admin-panel-muted); border-color: var(--admin-border); }
-  .admin-topbar-search:focus { border-color: var(--admin-primary); box-shadow: 0 0 0 3px var(--admin-focus); }
+  .admin-topbar-search:focus { border-color: var(--admin-accent-border); box-shadow: 0 0 0 3px var(--admin-focus); }
   .admin-search-results { @apply absolute inset-x-0 top-12 z-50 grid overflow-hidden rounded-xl border p-1 shadow-xl; color: var(--admin-ink); background: var(--admin-panel); border-color: var(--admin-border); }
   .admin-search-results a { @apply flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-semibold; }
   .admin-search-results a:hover { color: var(--admin-accent-text); background: var(--admin-panel-muted); }
   .admin-icon-button { @apply h-10 w-10 place-items-center rounded-xl border transition; color: var(--admin-copy); background: var(--admin-panel); border-color: var(--admin-border); }
-  .admin-icon-button:hover { color: var(--admin-accent-text); border-color: var(--admin-primary); }
+  .admin-icon-button:hover { color: var(--admin-accent-text); border-color: var(--admin-accent-border); }
   .admin-profile-menu { @apply absolute right-0 top-14 z-50 w-64 overflow-hidden rounded-xl border shadow-xl; color: var(--admin-ink); background: var(--admin-panel); border-color: var(--admin-border); }
   .admin-profile-menu > a { @apply block px-4 py-3 text-sm font-bold transition; color: var(--admin-copy); }
   .admin-profile-menu > a:hover { color: var(--admin-accent-text); background: var(--admin-panel-muted); }
@@ -150,11 +154,19 @@ a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visib
   .admin-alert-error { @apply rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm font-semibold text-rose-700; }
   .draft-status { @apply mb-5 flex flex-col gap-4 rounded-2xl border p-4 sm:flex-row sm:items-center sm:justify-between; color: var(--admin-copy); background: var(--admin-panel); border-color: var(--admin-border); }
   .draft-status-ok { border-left: 4px solid var(--admin-primary); }
-  .draft-status-warning { border-left: 4px solid #f59e0b; }
+  .draft-status-warning { border-left: 4px solid var(--admin-warning); }
   .draft-status-error { border-left: 4px solid #f43f5e; }
   .draft-recovery { @apply basis-full rounded-xl border p-4 sm:order-3; color: var(--admin-copy); background: var(--admin-panel-muted); border-color: var(--admin-border); }
   .admin-modal-overlay { @apply fixed inset-0 z-50 flex items-center justify-center bg-slate-950/65 p-4 backdrop-blur-sm; }
   .admin-modal { @apply flex max-h-[86vh] w-full max-w-5xl flex-col overflow-hidden rounded-2xl border shadow-2xl; color: var(--admin-ink); background: var(--admin-panel); border-color: var(--admin-border); }
+  .admin-brand-mark { color: var(--admin-on-primary); background: var(--admin-primary); }
+  .admin-accent-border { border-color: var(--admin-accent-border) !important; }
+  .admin-accent-control { color: var(--admin-accent-text); border-color: var(--admin-accent-border); }
+  .admin-accent-control:hover,
+  .admin-accent-control[aria-pressed="true"],
+  .admin-accent-control[aria-selected="true"] { border-color: var(--admin-accent-border); background: var(--admin-accent-soft); }
+  .admin-tree-row { @apply flex items-center gap-2 rounded-xl border px-3 py-2; color: var(--admin-copy); background: var(--admin-panel); border-color: var(--admin-border); }
+  .admin-tree-row[aria-selected="true"] { background: var(--admin-accent-soft); border-color: var(--admin-accent-border); }
 }
 
 /* Legacy actions are mapped to the Admin semantic blue instead of Cuba demo colors. */
@@ -163,19 +175,15 @@ a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visib
 .admin-root .text-indigo-600,
 .admin-root .hover\:text-indigo-800:hover,
 .admin-root .hover\:text-indigo-900:hover { color: var(--admin-accent-text) !important; }
-.admin-root .bg-orange-600,
 .admin-root .bg-sky-600 { background-color: var(--admin-primary) !important; }
-.admin-root .hover\:bg-orange-700:hover,
 .admin-root .hover\:bg-sky-700:hover { background-color: var(--admin-primary-hover) !important; }
-.admin-root .text-orange-600,
-.admin-root .text-orange-700,
-.admin-root .hover\:text-orange-600:hover,
-.admin-root .hover\:text-orange-700:hover,
 .admin-root .text-sky-600,
 .admin-root .text-sky-700,
 .admin-root .hover\:text-sky-600:hover,
 .admin-root .hover\:text-sky-700:hover { color: var(--admin-accent-text) !important; }
-.admin-root .focus\:border-indigo-500:focus { border-color: var(--admin-primary) !important; }
+.admin-root .text-slate-500,
+.admin-root .text-slate-400 { color: var(--admin-muted) !important; }
+.admin-root .focus\:border-indigo-500:focus { border-color: var(--admin-accent-border) !important; }
 .admin-root .focus\:ring-indigo-500:focus { --tw-ring-color: var(--admin-focus) !important; }
 
 :root[data-theme="dark"] .bg-white { background-color: var(--admin-panel) !important; }
@@ -204,9 +212,8 @@ a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visib
 :root[data-theme="dark"] .bg-green-100 { background-color: rgba(16, 185, 129, .14) !important; }
 :root[data-theme="dark"] .text-emerald-800,
 :root[data-theme="dark"] .text-green-800 { color: #6ee7b7 !important; }
-:root[data-theme="dark"] .bg-yellow-100,
-:root[data-theme="dark"] .bg-orange-100 { background-color: rgba(245, 158, 11, .15) !important; }
-:root[data-theme="dark"] .text-yellow-800 { color: #fcd34d !important; }
+:root[data-theme="dark"] .bg-yellow-100 { background-color: rgba(250, 204, 21, .16) !important; }
+:root[data-theme="dark"] .text-yellow-800 { color: #fde047 !important; }
 :root[data-theme="dark"] .bg-blue-100 { background-color: rgba(59, 130, 246, .15) !important; }
 :root[data-theme="dark"] .text-blue-800 { color: #93c5fd !important; }
 :root[data-theme="dark"] .bg-rose-100,

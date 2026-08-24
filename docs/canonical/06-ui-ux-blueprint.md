@@ -154,6 +154,12 @@ Navigation:
 
 Dangerous action memakai explicit confirmation dan authorization.
 
+The Cuba-derived Admin experience uses bright sky/light blue for actions and
+accents in both light and dark themes. Orange and amber are prohibited in every
+application-controlled Admin component and interaction state; warnings use
+semantic yellow. `docs/design-system/ADMIN-UI-VISUAL-CONTRACT.md` is the
+canonical token, component, static-guard, browser, and accessibility contract.
+
 Knowledge Hierarchy uses the Cuba shell and semantic Admin tokens. Portal
 Administrators and Content Editors can create, edit, move, reorder, archive,
 and assign one primary node to an article. Reviewers receive a read-only tree;

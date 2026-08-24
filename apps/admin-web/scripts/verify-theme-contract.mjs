@@ -47,6 +47,24 @@ for (const contract of [
   }
 }
 
+const lightTheme = globalCss.match(/:root\s*\{(?<body>[^}]+)\}/)?.groups?.body;
+if (!lightTheme) {
+  violations.push("src/app/globals.css is missing the Admin light-theme token block");
+} else {
+  for (const contract of [
+    "--admin-primary: #38bdf8;",
+    "--admin-primary-hover: #0ea5e9;",
+    "--admin-on-primary: #082f49;",
+    "--admin-accent-text: #0369a1;",
+    "--admin-accent-border: #0284c7;",
+    "--admin-focus: #0284c7;",
+  ]) {
+    if (!lightTheme.includes(contract)) {
+      violations.push(`Admin light theme is missing fixed Cuba blue contract: ${contract}`);
+    }
+  }
+}
+
 const darkTheme = globalCss.match(/:root\[data-theme="dark"\]\s*\{(?<body>[^}]+)\}/)?.groups?.body;
 if (!darkTheme) {
   violations.push("src/app/globals.css is missing the Admin dark-theme token block");
@@ -56,15 +74,14 @@ if (!darkTheme) {
     "--admin-primary-hover: #0ea5e9;",
     "--admin-on-primary: #082f49;",
     "--admin-accent-text: #7dd3fc;",
+    "--admin-accent-border: #38bdf8;",
+    "--admin-focus: #38bdf8;",
   ]) {
     if (!darkTheme.includes(contract)) {
       violations.push(`Admin dark theme is missing fixed Cuba blue contract: ${contract}`);
     }
   }
 
-  if (/#(?:c2410c|9a3412|fdba74)\b/i.test(darkTheme)) {
-    violations.push("Admin dark theme must not use the light-mode orange action/accent palette");
-  }
 }
 
 if (violations.length > 0) {

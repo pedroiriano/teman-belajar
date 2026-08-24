@@ -43,7 +43,7 @@ function Brand({ desktopClose }: { desktopClose?: () => void }) {
   return (
     <div className="flex h-[76px] items-center gap-2 border-b admin-sidebar-border px-4">
       <Link href="/dashboard" className="flex min-w-0 flex-1 items-center gap-3">
-        <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-sky-600 font-black text-white shadow-lg shadow-sky-500/20">TB</span>
+        <span className="admin-brand-mark grid h-11 w-11 shrink-0 place-items-center rounded-xl font-black shadow-lg shadow-sky-500/20">TB</span>
         <span className="min-w-0">
           <span className="block truncate font-extrabold admin-sidebar-title">Teman Belajar</span>
           <span className="block truncate text-[10px] font-bold uppercase tracking-[.18em] text-slate-400">Admin Console</span>
