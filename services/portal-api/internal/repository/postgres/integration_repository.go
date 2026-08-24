@@ -3,6 +3,7 @@ package postgres
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"math"
 	"time"
 
@@ -111,13 +112,23 @@ func (r *IntegrationRepository) ClaimPendingEvents(ctx context.Context, batchSiz
 
 // MarkProcessed marks an inbox event as processed within the given transaction.
 func (r *IntegrationRepository) MarkProcessed(ctx context.Context, tx *sql.Tx, event *integration.InboxEvent) error {
-	_, err := tx.ExecContext(ctx, `
+	result, err := tx.ExecContext(ctx, `
 		UPDATE integration.event_inbox
 		SET status = 'processed', processed_at = NOW(), updated_at = NOW()
-		WHERE id = $1`,
-		event.ID,
+		WHERE id = $1 AND status = 'processing' AND updated_at = $2`,
+		event.ID, event.UpdatedAt,
 	)
-	return err
+	if err != nil {
+		return err
+	}
+	rows, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rows == 0 {
+		return fmt.Errorf("stale worker lease lost for event_id=%s", event.EventID)
+	}
+	return nil
 }
 
 // MarkFailed increments the attempt counter, computes backoff, and transitions
@@ -136,14 +147,24 @@ func (r *IntegrationRepository) MarkFailed(ctx context.Context, event *integrati
 		nextAttempt = &t
 	}
 
-	_, err := r.db.ExecContext(ctx, `
+	result, err := r.db.ExecContext(ctx, `
 		UPDATE integration.event_inbox
 		SET status = $1, attempts = $2, next_attempt_at = $3,
 		    error_category = $4, updated_at = NOW()
-		WHERE id = $5`,
-		newStatus, newAttempts, nextAttempt, errCategory, event.ID,
+		WHERE id = $5 AND status = 'processing' AND updated_at = $6`,
+		newStatus, newAttempts, nextAttempt, errCategory, event.ID, event.UpdatedAt,
 	)
-	return err
+	if err != nil {
+		return err
+	}
+	rows, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rows == 0 {
+		return fmt.Errorf("stale worker lease lost for event_id=%s", event.EventID)
+	}
+	return nil
 }
 
 // CreateOutboxEntry inserts an outbox record within the given transaction.

@@ -41,17 +41,15 @@ The Moodle Event Inbox is an internal service-to-service endpoint hosted within 
 
 ## Dead-Letter Reconciliation
 ```sql
--- Inspect dead-letter events
+-- Inspect dead-letter events (Read-only)
 SELECT id, event_id, event_type, attempts, error_category, created_at
 FROM integration.event_inbox WHERE status = 'dead_letter' ORDER BY created_at DESC;
 ```
 
-To requeue a dead-letter event for reprocessing, use the reconciliation repository method or:
-```sql
--- Requeue specific event (preserves attempt history)
-UPDATE integration.event_inbox
-SET status = 'pending', next_attempt_at = NULL, error_category = NULL, updated_at = NOW()
-WHERE event_id = '<event_id>' AND status = 'dead_letter';
+To requeue a dead-letter event for reprocessing, use the governed CLI tool (`portal-cli`). Direct DML (`UPDATE`) is forbidden by governance.
+```bash
+# Exec into the api container or run locally with DATABASE_URL
+./portal-cli -action requeue-dlq -event-id "<event_id>"
 ```
 
 ## Stuck Processing Recovery

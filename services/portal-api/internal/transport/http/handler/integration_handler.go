@@ -18,17 +18,28 @@ func NewIntegrationHandler(eventService *integrationapp.EventService) *Integrati
 	return &IntegrationHandler{eventService: eventService}
 }
 
+func writeProblemDetails(w http.ResponseWriter, status int, title, detail string) {
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(status)
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"type":   "about:blank",
+		"title":  title,
+		"status": status,
+		"detail": detail,
+	})
+}
+
 // HandleMoodleEventIngest handles POST /api/v1/internal/moodle/events.
 // Authentication is enforced by the HMAC middleware wrapping this handler.
 func (h *IntegrationHandler) HandleMoodleEventIngest(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		http.Error(w, `{"type":"about:blank","title":"Method Not Allowed","status":405,"detail":"Only POST is accepted"}`, http.StatusMethodNotAllowed)
+		writeProblemDetails(w, http.StatusMethodNotAllowed, "Method Not Allowed", "Only POST is accepted")
 		return
 	}
 
 	ct := r.Header.Get("Content-Type")
 	if ct != "application/json" {
-		http.Error(w, `{"type":"about:blank","title":"Unsupported Media Type","status":415,"detail":"Content-Type must be application/json"}`, http.StatusUnsupportedMediaType)
+		writeProblemDetails(w, http.StatusUnsupportedMediaType, "Unsupported Media Type", "Content-Type must be application/json")
 		return
 	}
 
@@ -36,52 +47,38 @@ func (h *IntegrationHandler) HandleMoodleEventIngest(w http.ResponseWriter, r *h
 	decoder := json.NewDecoder(r.Body)
 	decoder.DisallowUnknownFields()
 	if err := decoder.Decode(&envelope); err != nil {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusUnprocessableEntity)
-		json.NewEncoder(w).Encode(map[string]interface{}{ // #nosec G104 -- response writer error after commit is non-actionable in HTTP handler
-			"type":   "about:blank",
-			"title":  "Unprocessable Entity",
-			"status": 422,
-			"detail": "Invalid JSON: " + err.Error(),
-		})
+		writeProblemDetails(w, http.StatusUnprocessableEntity, "Unprocessable Entity", "Invalid JSON: "+err.Error())
+		return
+	}
+
+	// Check for trailing JSON payload
+	if decoder.More() {
+		writeProblemDetails(w, http.StatusUnprocessableEntity, "Unprocessable Entity", "Trailing JSON document detected")
 		return
 	}
 
 	result, err := h.eventService.IngestEvent(r.Context(), &envelope)
 	if err != nil {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusUnprocessableEntity)
-		json.NewEncoder(w).Encode(map[string]interface{}{ // #nosec G104 -- response writer error after commit is non-actionable in HTTP handler
-			"type":   "about:blank",
-			"title":  "Unprocessable Entity",
-			"status": 422,
-			"detail": err.Error(),
-		})
+		writeProblemDetails(w, http.StatusUnprocessableEntity, "Unprocessable Entity", err.Error())
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-
 	switch result {
 	case integrationapp.IngestAccepted:
+		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusAccepted)
 		json.NewEncoder(w).Encode(map[string]interface{}{ // #nosec G104 -- response writer error after commit is non-actionable in HTTP handler
 			"status":   "accepted",
 			"event_id": envelope.EventID,
 		})
 	case integrationapp.IngestDuplicate:
+		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusAccepted)
 		json.NewEncoder(w).Encode(map[string]interface{}{ // #nosec G104 -- response writer error after commit is non-actionable in HTTP handler
 			"status":   "duplicate",
 			"event_id": envelope.EventID,
 		})
 	case integrationapp.IngestCollision:
-		w.WriteHeader(http.StatusConflict)
-		json.NewEncoder(w).Encode(map[string]interface{}{ // #nosec G104 -- response writer error after commit is non-actionable in HTTP handler
-			"type":   "about:blank",
-			"title":  "Conflict",
-			"status": 409,
-			"detail": "event_id collision: same ID with different content",
-		})
+		writeProblemDetails(w, http.StatusConflict, "Conflict", "event_id collision: same ID with different content")
 	}
 }

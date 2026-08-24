@@ -35,7 +35,7 @@ func signRequest(body []byte, secret string, ts int64) (string, string) {
 }
 
 func TestHMACAuth_ValidSignature(t *testing.T) {
-	secret := "test-secret-with-enough-entropy-1234567890"
+	secret := string(bytes.Repeat([]byte("a"), 32))
 	auditRepo := &mockAuditRepo{}
 	body := []byte(`{"event_id":"e1"}`)
 	ts := time.Now().Unix()
@@ -60,7 +60,7 @@ func TestHMACAuth_ValidSignature(t *testing.T) {
 }
 
 func TestHMACAuth_MissingHeaders(t *testing.T) {
-	secret := "test-secret-with-enough-entropy-1234567890"
+	secret := string(bytes.Repeat([]byte("a"), 32))
 	auditRepo := &mockAuditRepo{}
 
 	handler := HMACAuthMiddleware(secret, auditRepo)(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -83,7 +83,7 @@ func TestHMACAuth_MissingHeaders(t *testing.T) {
 }
 
 func TestHMACAuth_InvalidSignature(t *testing.T) {
-	secret := "test-secret-with-enough-entropy-1234567890"
+	secret := string(bytes.Repeat([]byte("a"), 32))
 	auditRepo := &mockAuditRepo{}
 	body := []byte(`{"event_id":"e1"}`)
 	ts := time.Now().Unix()
@@ -108,7 +108,7 @@ func TestHMACAuth_InvalidSignature(t *testing.T) {
 }
 
 func TestHMACAuth_ExpiredTimestamp(t *testing.T) {
-	secret := "test-secret-with-enough-entropy-1234567890"
+	secret := string(bytes.Repeat([]byte("a"), 32))
 	auditRepo := &mockAuditRepo{}
 	body := []byte(`{"event_id":"e1"}`)
 	// Use a timestamp 10 minutes in the past (beyond 5-minute window)
@@ -131,7 +131,7 @@ func TestHMACAuth_ExpiredTimestamp(t *testing.T) {
 }
 
 func TestHMACAuth_TamperedBody(t *testing.T) {
-	secret := "test-secret-with-enough-entropy-1234567890"
+	secret := string(bytes.Repeat([]byte("a"), 32))
 	auditRepo := &mockAuditRepo{}
 	originalBody := []byte(`{"event_id":"e1"}`)
 	ts := time.Now().Unix()

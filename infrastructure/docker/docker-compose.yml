@@ -273,6 +273,7 @@ services:
       SEARCH_CAPTURE_RAW_QUERY: ${TB_SEARCH_CAPTURE_RAW_QUERY:?Set TB_SEARCH_CAPTURE_RAW_QUERY in infrastructure/docker/.env}
       OTEL_EXPORTER_OTLP_ENDPOINT: otel-collector:4317
       PORTAL_INTERNAL_SECRET: ${TB_PORTAL_INTERNAL_SECRET:?Set TB_PORTAL_INTERNAL_SECRET in infrastructure/docker/.env}
+      TB_MOODLE_EVENT_INGEST_SECRET: ${TB_MOODLE_EVENT_INGEST_SECRET:?Set TB_MOODLE_EVENT_INGEST_SECRET in infrastructure/docker/.env}
     extra_hosts:
       - keycloak.teman-belajar.localhost:host-gateway
     ports:

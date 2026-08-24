@@ -3,21 +3,22 @@ package postgres_test
 import (
 	"context"
 	"database/sql"
+	"fmt"
+	"os"
 	"testing"
 	"time"
 
 	_ "github.com/lib/pq"
+	"teman-belajar-api/internal/domain/integration"
+	"teman-belajar-api/internal/repository/postgres"
 )
 
-// NOTE: In a real environment, we'd use testcontainers or a configured test DB.
-// Since we might not have a running test DB accessible in this test environment
-// out-of-the-box, we focus on interface and compile checks here, simulating
-// behavior where applicable, or skipping if no DB connection is present.
-
 func getTestDB(t *testing.T) *sql.DB {
-	// Normally we would parse an env var like TEST_DB_DSN
-	// For this test, we skip if we can't connect.
-	db, err := sql.Open("postgres", "postgres://teman_belajar_portal:CHANGE_ME_PORTAL_DB_PASSWORD@localhost:5433/teman_belajar_portal?sslmode=disable")
+	dsn := os.Getenv("TEST_DATABASE_URL")
+	if dsn == "" {
+		dsn = "postgres://teman_belajar_portal:secret123456_PORTAL_DB_PASSWORD@localhost:15432/teman_belajar?sslmode=disable"
+	}
+	db, err := sql.Open("postgres", dsn)
 	if err != nil {
 		t.Skip("Cannot open database connection")
 	}
@@ -29,8 +30,55 @@ func getTestDB(t *testing.T) *sql.DB {
 	return db
 }
 
-func TestIntegrationRepository_SaveEvent_Mock(t *testing.T) {
-	// This is a placeholder for repository tests that require a live database.
-	// We ensure it compiles and represents the testing strategy for the repository.
-	t.Log("Integration repository tests require a live database to verify idempotency, collision detection, and FOR UPDATE SKIP LOCKED behavior.")
+func TestIntegrationRepository_SaveEvent_Idempotency(t *testing.T) {
+	db := getTestDB(t)
+	defer db.Close()
+	repo := postgres.NewIntegrationRepository(db)
+
+	ctx := context.Background()
+	
+	// Create unique event for testing
+	now := time.Now().UTC()
+	env := &integration.EventEnvelope{
+		EventID:       fmt.Sprintf("test-evt-%d", now.UnixNano()),
+		EventType:     "learning.user_enrolled",
+		Source:        "moodle",
+		SubjectID:     "123",
+		OccurredAt:    now,
+		SchemaVersion: "1.0",
+		Payload:       []byte(`{"foo":"bar"}`),
+	}
+	
+	inboxEvt1 := integration.InboxEventFromEnvelope(env)
+	
+	// Save first time
+	res1, err := repo.SaveEvent(ctx, inboxEvt1)
+	if err != nil {
+		t.Fatalf("Failed to save event: %v", err)
+	}
+	if !res1.Saved || res1.Duplicate || res1.Collision {
+		t.Errorf("Expected Saved=true, got %+v", res1)
+	}
+
+	// Save second time (Exact Duplicate)
+	inboxEvt2 := integration.InboxEventFromEnvelope(env)
+	res2, err := repo.SaveEvent(ctx, inboxEvt2)
+	if err != nil {
+		t.Fatalf("Failed to save event duplicate: %v", err)
+	}
+	if !res2.Duplicate || res2.Saved || res2.Collision {
+		t.Errorf("Expected Duplicate=true, got %+v", res2)
+	}
+
+	// Save third time with modified payload (Collision)
+	envCollision := *env
+	envCollision.Payload = []byte(`{"foo":"baz"}`) // modified
+	inboxEvt3 := integration.InboxEventFromEnvelope(&envCollision)
+	res3, err := repo.SaveEvent(ctx, inboxEvt3)
+	if err != nil {
+		t.Fatalf("Failed to save event collision: %v", err)
+	}
+	if !res3.Collision || res3.Saved || res3.Duplicate {
+		t.Errorf("Expected Collision=true, got %+v", res3)
+	}
 }
