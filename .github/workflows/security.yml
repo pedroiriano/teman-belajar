@@ -28,8 +28,8 @@ jobs:
       - name: Run Gosec Security Scanner
         working-directory: services/portal-api
         run: |
-          go install github.com/securego/gosec/v2/cmd/gosec@v2.21.4
-          gosec ./...
+          curl -sfL https://raw.githubusercontent.com/securego/gosec/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v2.21.4
+          $(go env GOPATH)/bin/gosec ./...
       - name: Run Govulncheck
         working-directory: services/portal-api
         run: |
@@ -79,7 +79,7 @@ jobs:
           persist-credentials: false
       
       - name: Run Trivy vulnerability scanner (FS)
-        uses: aquasecurity/trivy-action@915b19bbe73b92a6cf82a1bc12b087c9a19a5fe2 # v0.28.0
+        uses: aquasecurity/trivy-action@a9c7b0f06e461e9d4b4d1711f154ee024b8d7ab8 # v0.36.0
         with:
           scan-type: 'fs'
           format: 'table'
@@ -87,7 +87,7 @@ jobs:
           exit-code: 1
 
       - name: Run Trivy misconfiguration scanner (Config)
-        uses: aquasecurity/trivy-action@915b19bbe73b92a6cf82a1bc12b087c9a19a5fe2 # v0.28.0
+        uses: aquasecurity/trivy-action@a9c7b0f06e461e9d4b4d1711f154ee024b8d7ab8 # v0.36.0
         with:
           scan-type: 'config'
           format: 'table'
@@ -98,7 +98,7 @@ jobs:
         run: docker build -t portal-api:latest -f services/portal-api/Dockerfile services/portal-api
 
       - name: Run Trivy vulnerability scanner (Image)
-        uses: aquasecurity/trivy-action@915b19bbe73b92a6cf82a1bc12b087c9a19a5fe2 # v0.28.0
+        uses: aquasecurity/trivy-action@a9c7b0f06e461e9d4b4d1711f154ee024b8d7ab8 # v0.36.0
         with:
           scan-type: 'image'
           image-ref: 'portal-api:latest'
