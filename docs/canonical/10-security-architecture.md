@@ -121,6 +121,8 @@ CI:
 - never execute uploaded content;
 - signed URL for private media.
 
+For the concrete Teman Belajar media policy, limits, rename immutability, authorization, and verification rules, `docs/governance/MEDIA-ASSET-MANAGEMENT.md` is mandatory. The Portal API magic-byte decision is authoritative; client checks never replace it.
+
 ## 10. Audit Events
 
 Minimum:

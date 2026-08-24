@@ -8,21 +8,25 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Proxy the request to the internal API
     const internalApiUrl = process.env.PORTAL_API_INTERNAL_URL || "http://api:8080";
     const backendUrl = `${internalApiUrl}/api/v1/admin/media`;
 
-    const formData = await req.formData();
-    
-    // We could just pass the formData to fetch, fetch will automatically set the 
-    // boundary in the Content-Type header.
-    const backendRes = await fetch(backendUrl, {
+    const policyRes = await fetch(`${backendUrl}/policy`, { headers: { Authorization: `Bearer ${accessToken}` }, cache: "no-store" });
+    const policyPayload = await policyRes.json().catch(() => ({}));
+    if (!policyRes.ok) return NextResponse.json(policyPayload, { status: policyRes.status });
+    const contentLength = Number(req.headers.get("content-length") || 0);
+    if (contentLength > Number(policyPayload.data?.max_multipart_bytes || 0)) {
+      return NextResponse.json({ type: "about:blank", title: "Payload Too Large", status: 413, detail: "Upload exceeds the request-wide media limit" }, { status: 413 });
+    }
+    const contentType = req.headers.get("content-type");
+    if (!contentType?.startsWith("multipart/form-data;")) return NextResponse.json({ title: "Invalid multipart request" }, { status: 400 });
+    const requestInit: RequestInit & { duplex: "half" } = {
       method: "POST",
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
-      body: formData,
-    });
+      headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": contentType },
+      body: req.body,
+      duplex: "half",
+    };
+    const backendRes = await fetch(backendUrl, requestInit);
 
     const data = await backendRes.text();
     return new NextResponse(data, {

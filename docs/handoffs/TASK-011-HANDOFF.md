@@ -59,7 +59,7 @@ This section supersedes any earlier release-governance or migration-immutability
 - **Final technical release PR:** [#9](https://github.com/pedroiriano/teman-belajar/pull/9).
 - **Final technical release SHA:** `61d321a26649a9ef0d61f95f1e939863a960be56`.
 - **Canonical task status:** **PASS — CANONICAL RELEASED** following the explicitly approved one-time pre-production migration-history exception below.
-- **TASK-004A readiness:** **READY**. This handoff does not implement TASK-004A.
+- **Integrated media follow-up readiness:** **READY**. The historical identifier TASK-004A was already used for Moodle readiness; the integrated-media follow-up therefore uses the next free identifier TASK-004E.
 - **TASK-012:** **NOT STARTED**. Migration checksums and administrator branch-protection enforcement are carried only as TASK-012 hardening recommendations; this handoff does not implement them.
 - **Identity Boundary:** **UNCHANGED**. No Keycloak, SSO, account-management, user-management, or RBAC logic was modified during this reconciliation.
 - **Moodle publisher:** **NOT IMPLEMENTED**. TASK-011 provides the authenticated Portal API inbox and processor; `local_temanbelajar` does not yet publish learning events to this endpoint.
@@ -156,11 +156,11 @@ This approval:
 | Branch protection | Blanket `no bypass` wording | Protection enabled, but administrator enforcement disabled | No | Medium governance exposure | Recorded; TASK-012 hardening recommendation |
 | Required checks | Not enumerated | 11 strict required checks | Partial | Low | Recorded factually |
 | Moodle publisher | Documented as not implemented in corrective notes | No publisher references exist in `local_temanbelajar` | Yes | None for TASK-011 scope | Remains NOT IMPLEMENTED |
-| TASK-004A readiness | Earlier wording pointed to TASK-012 | TASK-011 technical gate passed and exception is approved | No | Medium workflow drift | TASK-004A is READY; not implemented here |
+| Integrated media readiness | Earlier wording reused historical TASK-004A | TASK-011 technical gate passed and exception is approved | No | Medium workflow drift | TASK-004E is READY; not implemented here |
 
 ### Canonical Closure
 
 - **TASK-011:** PASS — CANONICAL RELEASED.
-- **TASK-004A READINESS:** READY.
+- **TASK-004E INTEGRATED MEDIA READINESS:** READY.
 - **TASK-012:** NOT STARTED.
-- **Next safe action:** review and merge this scoped documentation/governance PR through the normal protected-branch workflow; after merge, TASK-004A Integrated Media Asset Management may start separately.
+- **Next safe action:** after this canonical release, TASK-004E Integrated Media Asset Management may start separately; historical TASK-004A through TASK-004D remain immutable Moodle handoffs.

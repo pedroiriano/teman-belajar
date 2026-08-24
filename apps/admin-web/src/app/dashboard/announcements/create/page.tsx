@@ -7,6 +7,8 @@ import { createAnnouncementAction } from "@/app/actions/cms";
 import { AdminIcon } from "@/components/admin-icon";
 
 import MediaPicker from "@/components/media/MediaPicker";
+import { mediaMarkdown, mediaUsagesFromMarkdown } from "@/components/media/insertion";
+import type { MediaSelection } from "@/components/media/types";
 
 export default function CreateAnnouncementPage() {
   const router = useRouter();
@@ -25,9 +27,8 @@ export default function CreateAnnouncementPage() {
     setSlug(val.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, ''));
   };
 
-  const insertMedia = (mediaId: string) => {
-    const mediaMarkdown = `\n![Media](/api/v1/media/${mediaId}/content)\n`;
-    setBody((prev) => prev + mediaMarkdown);
+  const insertMedia = (selection: MediaSelection) => {
+    setBody((prev) => `${prev}\n${mediaMarkdown(selection)}\n`);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -44,7 +45,8 @@ export default function CreateAnnouncementPage() {
         slug, 
         body, 
         start_at: parsedStart, 
-        end_at: parsedEnd 
+        end_at: parsedEnd,
+        media_usages: mediaUsagesFromMarkdown(body)
       });
 
       if (!res.success) {

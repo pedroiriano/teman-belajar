@@ -43,6 +43,7 @@ type ArticleAdminResponse struct {
 	UpdatedAt           time.Time  `json:"updated_at"`
 	LastReviewedAt      *time.Time `json:"last_reviewed_at,omitempty"`
 	Body                string     `json:"body,omitempty"`
+	CurrentRevisionID   string     `json:"current_revision_id,omitempty"`
 }
 
 type CreateArticleRequest struct {
@@ -184,6 +185,7 @@ func (h *KnowledgeHandler) GetAdminArticle(w http.ResponseWriter, r *http.Reques
 	}
 	response := adminArticleResponse(*article)
 	response.Body = revision.Body
+	response.CurrentRevisionID = revision.ID
 	respondJSON(w, http.StatusOK, response)
 }
 
@@ -225,6 +227,9 @@ func (h *KnowledgeHandler) CreateArticle(w http.ResponseWriter, r *http.Request)
 		CreatedAt:         article.CreatedAt,
 		UpdatedAt:         article.UpdatedAt,
 	}
+	if _, revision, revisionErr := h.svc.GetAdminArticleWithRevision(r.Context(), article.ID); revisionErr == nil {
+		res.CurrentRevisionID = revision.ID
+	}
 
 	respondJSON(w, http.StatusCreated, res)
 }
@@ -255,7 +260,7 @@ func (h *KnowledgeHandler) CreateRevision(w http.ResponseWriter, r *http.Request
 	}
 	userID := claims.Subject
 
-	_, err := h.svc.CreateRevision(r.Context(), id, req.Body, &userID)
+	revision, err := h.svc.CreateRevision(r.Context(), id, req.Body, &userID)
 	if err != nil {
 		if errors.Is(err, knowledge.ErrBodyRequired) {
 			respondProblem(w, http.StatusUnprocessableEntity, "Validation Error", err.Error())
@@ -269,7 +274,7 @@ func (h *KnowledgeHandler) CreateRevision(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	w.WriteHeader(http.StatusCreated)
+	respondJSON(w, http.StatusCreated, map[string]interface{}{"id": revision.ID, "article_id": revision.ArticleID, "revision_no": revision.RevisionNo})
 }
 
 func (h *KnowledgeHandler) TransitionStatus(w http.ResponseWriter, r *http.Request) {

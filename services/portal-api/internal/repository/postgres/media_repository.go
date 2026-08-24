@@ -19,17 +19,17 @@ func NewMediaRepository(db *sql.DB) *MediaRepository {
 var _ media.Repository = (*MediaRepository)(nil)
 
 func (r *MediaRepository) CreateAsset(ctx context.Context, m *media.MediaAsset) error {
-	query := `INSERT INTO media_assets (id, storage_key, bucket, original_filename, detected_mime_type, size_bytes, checksum_sha256, title, alt_text, caption, status, created_at, created_by, updated_at, updated_by)
-			  VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)`
+	query := `INSERT INTO media_assets (id, storage_key, bucket, original_filename, display_filename, detected_mime_type, size_bytes, checksum_sha256, title, alt_text, caption, status, created_at, created_by, updated_at, updated_by)
+			  VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)`
 	_, err := r.db.ExecContext(ctx, query,
-		m.ID, m.StorageKey, m.Bucket, m.OriginalFilename, m.DetectedMimeType, m.SizeBytes, m.ChecksumSHA256,
+		m.ID, m.StorageKey, m.Bucket, m.OriginalFilename, m.DisplayFilename, m.DetectedMimeType, m.SizeBytes, m.ChecksumSHA256,
 		m.Title, m.AltText, m.Caption, m.Status, m.CreatedAt, m.CreatedBy, m.UpdatedAt, m.UpdatedBy,
 	)
 	return err
 }
 
 func (r *MediaRepository) GetAssetByID(ctx context.Context, id string) (*media.MediaAsset, error) {
-	query := `SELECT id, storage_key, bucket, original_filename, detected_mime_type, size_bytes, checksum_sha256, title, alt_text, caption, status, created_at, created_by, updated_at, updated_by, archived_at
+	query := `SELECT id, storage_key, bucket, original_filename, display_filename, detected_mime_type, size_bytes, checksum_sha256, title, alt_text, caption, status, created_at, created_by, updated_at, updated_by, archived_at
 			  FROM media_assets WHERE id = $1`
 	row := r.db.QueryRowContext(ctx, query, id)
 	return scanMediaAsset(row)
@@ -37,43 +37,56 @@ func (r *MediaRepository) GetAssetByID(ctx context.Context, id string) (*media.M
 
 func (r *MediaRepository) UpdateMetadata(ctx context.Context, id string, update media.MetadataUpdate, updatedBy string) (*media.MediaAsset, error) {
 	query := `UPDATE media_assets 
-			  SET title = COALESCE($1, title), 
-			      alt_text = COALESCE($2, alt_text), 
-			      caption = COALESCE($3, caption),
+			  SET display_filename = COALESCE($1, display_filename),
+			      title = COALESCE($2, title),
+			      alt_text = COALESCE($3, alt_text),
+			      caption = COALESCE($4, caption),
 			      updated_at = NOW(),
-			      updated_by = $4
-			  WHERE id = $5
-			  RETURNING id, storage_key, bucket, original_filename, detected_mime_type, size_bytes, checksum_sha256, title, alt_text, caption, status, created_at, created_by, updated_at, updated_by, archived_at`
+			      updated_by = $5
+			  WHERE id = $6
+			  RETURNING id, storage_key, bucket, original_filename, display_filename, detected_mime_type, size_bytes, checksum_sha256, title, alt_text, caption, status, created_at, created_by, updated_at, updated_by, archived_at`
 
-	row := r.db.QueryRowContext(ctx, query, update.Title, update.AltText, update.Caption, updatedBy, id)
+	row := r.db.QueryRowContext(ctx, query, update.DisplayFilename, update.Title, update.AltText, update.Caption, updatedBy, id)
 	return scanMediaAsset(row)
 }
 
 func (r *MediaRepository) ArchiveAsset(ctx context.Context, id string, archivedBy string) error {
 	query := `UPDATE media_assets SET status = $1, archived_at = NOW(), updated_at = NOW(), updated_by = $2 WHERE id = $3`
-	_, err := r.db.ExecContext(ctx, query, media.StatusArchived, archivedBy, id)
-	return err
+	result, err := r.db.ExecContext(ctx, query, media.StatusArchived, archivedBy, id)
+	if err != nil {
+		return err
+	}
+	rows, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rows == 0 {
+		return media.ErrAssetNotFound
+	}
+	return nil
 }
 
-func (r *MediaRepository) ListAdminAssets(ctx context.Context, page, pageSize int) ([]media.MediaAsset, int, error) {
-	offset := (page - 1) * pageSize
+func (r *MediaRepository) ListAdminAssets(ctx context.Context, filter media.ListFilter) ([]media.MediaAsset, int, error) {
+	offset := (filter.Page - 1) * filter.PageSize
+	where := `WHERE ($1 = '' OR strpos(lower(COALESCE(display_filename, '')), lower($1)) > 0 OR strpos(lower(COALESCE(original_filename, '')), lower($1)) > 0 OR strpos(lower(COALESCE(title, '')), lower($1)) > 0)
+		AND ($2 = 'all' OR ($2 = 'image' AND detected_mime_type LIKE 'image/%') OR ($2 = 'document' AND detected_mime_type = 'application/pdf'))`
 
 	var total int
-	err := r.db.QueryRowContext(ctx, `SELECT count(*) FROM media_assets`).Scan(&total)
+	err := r.db.QueryRowContext(ctx, `SELECT count(*) FROM media_assets `+where, filter.Query, filter.Kind).Scan(&total)
 	if err != nil {
 		return nil, 0, err
 	}
 
-	query := `SELECT id, storage_key, bucket, original_filename, detected_mime_type, size_bytes, checksum_sha256, title, alt_text, caption, status, created_at, created_by, updated_at, updated_by, archived_at
-			  FROM media_assets ORDER BY created_at DESC LIMIT $1 OFFSET $2`
+	query := `SELECT id, storage_key, bucket, original_filename, display_filename, detected_mime_type, size_bytes, checksum_sha256, title, alt_text, caption, status, created_at, created_by, updated_at, updated_by, archived_at
+			  FROM media_assets ` + where + ` ORDER BY created_at DESC, id DESC LIMIT $3 OFFSET $4`
 
-	rows, err := r.db.QueryContext(ctx, query, pageSize, offset)
+	rows, err := r.db.QueryContext(ctx, query, filter.Query, filter.Kind, filter.PageSize, offset)
 	if err != nil {
 		return nil, 0, err
 	}
 	defer rows.Close()
 
-	var items []media.MediaAsset
+	items := make([]media.MediaAsset, 0)
 	for rows.Next() {
 		a, err := scanMediaAssetRow(rows)
 		if err != nil {
@@ -82,6 +95,9 @@ func (r *MediaRepository) ListAdminAssets(ctx context.Context, page, pageSize in
 		items = append(items, *a)
 	}
 
+	if err := rows.Err(); err != nil {
+		return nil, 0, err
+	}
 	return items, total, nil
 }
 
@@ -119,9 +135,21 @@ func (r *MediaRepository) HasActiveUsages(ctx context.Context, assetID string) (
 	return exists, err
 }
 
+func (r *MediaRepository) UsageEntityExists(ctx context.Context, entityType, entityID string) (bool, error) {
+	query := `SELECT CASE $1
+		WHEN 'news' THEN EXISTS(SELECT 1 FROM news WHERE id::text = $2)
+		WHEN 'announcement' THEN EXISTS(SELECT 1 FROM announcements WHERE id::text = $2)
+		WHEN 'knowledge_revision' THEN EXISTS(SELECT 1 FROM knowledge_revisions WHERE id::text = $2)
+		ELSE FALSE END`
+	var exists bool
+	err := r.db.QueryRowContext(ctx, query, entityType, entityID).Scan(&exists)
+	return exists, err
+}
+
 func (r *MediaRepository) AttachUsage(ctx context.Context, usage media.MediaUsage) error {
 	query := `INSERT INTO media_usages (id, media_id, entity_type, entity_id, usage_role, sort_order, created_at, created_by)
-			  VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`
+			  VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+			  ON CONFLICT (media_id, entity_type, entity_id, usage_role) DO UPDATE SET sort_order = EXCLUDED.sort_order`
 	_, err := r.db.ExecContext(ctx, query,
 		usage.ID, usage.MediaID, usage.EntityType, usage.EntityID, usage.UsageRole, usage.SortOrder, usage.CreatedAt, usage.CreatedBy,
 	)
@@ -136,11 +164,11 @@ func (r *MediaRepository) DetachUsage(ctx context.Context, mediaID, entityType, 
 
 func scanMediaAsset(s rowScanner) (*media.MediaAsset, error) {
 	var m media.MediaAsset
-	var origFilename, title, altText, caption sql.NullString
+	var origFilename, displayFilename, title, altText, caption sql.NullString
 	var archivedAt sql.NullTime
 
 	err := s.Scan(
-		&m.ID, &m.StorageKey, &m.Bucket, &origFilename, &m.DetectedMimeType, &m.SizeBytes, &m.ChecksumSHA256,
+		&m.ID, &m.StorageKey, &m.Bucket, &origFilename, &displayFilename, &m.DetectedMimeType, &m.SizeBytes, &m.ChecksumSHA256,
 		&title, &altText, &caption, &m.Status, &m.CreatedAt, &m.CreatedBy, &m.UpdatedAt, &m.UpdatedBy, &archivedAt,
 	)
 	if err != nil {
@@ -152,6 +180,9 @@ func scanMediaAsset(s rowScanner) (*media.MediaAsset, error) {
 
 	if origFilename.Valid {
 		m.OriginalFilename = &origFilename.String
+	}
+	if displayFilename.Valid {
+		m.DisplayFilename = &displayFilename.String
 	}
 	if title.Valid {
 		m.Title = &title.String

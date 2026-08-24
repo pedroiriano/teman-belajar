@@ -14,22 +14,23 @@ const (
 
 // MediaAsset represents a binary asset tracked in the system.
 type MediaAsset struct {
-	ID               string
-	StorageKey       string
-	Bucket           string
-	OriginalFilename *string
-	DetectedMimeType string
-	SizeBytes        int64
-	ChecksumSHA256   string
-	Title            *string
-	AltText          *string
-	Caption          *string
-	Status           string
-	CreatedAt        time.Time
-	CreatedBy        *string
-	UpdatedAt        time.Time
-	UpdatedBy        *string
-	ArchivedAt       *time.Time
+	ID               string     `json:"id"`
+	StorageKey       string     `json:"-"`
+	Bucket           string     `json:"-"`
+	OriginalFilename *string    `json:"original_filename"`
+	DisplayFilename  *string    `json:"display_filename"`
+	DetectedMimeType string     `json:"detected_mime_type"`
+	SizeBytes        int64      `json:"size_bytes"`
+	ChecksumSHA256   string     `json:"-"`
+	Title            *string    `json:"title"`
+	AltText          *string    `json:"alt_text"`
+	Caption          *string    `json:"caption"`
+	Status           string     `json:"status"`
+	CreatedAt        time.Time  `json:"created_at"`
+	CreatedBy        *string    `json:"-"`
+	UpdatedAt        time.Time  `json:"updated_at"`
+	UpdatedBy        *string    `json:"-"`
+	ArchivedAt       *time.Time `json:"archived_at"`
 }
 
 // MediaUsage represents the relationship between a media asset and a domain entity.
@@ -46,9 +47,24 @@ type MediaUsage struct {
 
 // MetadataUpdate holds fields that can be updated.
 type MetadataUpdate struct {
-	Title   *string
-	AltText *string
-	Caption *string
+	DisplayFilename *string `json:"display_filename"`
+	Title           *string `json:"title"`
+	AltText         *string `json:"alt_text"`
+	Caption         *string `json:"caption"`
+}
+
+type ListFilter struct {
+	Page     int
+	PageSize int
+	Query    string
+	Kind     string
+}
+
+type Content struct {
+	Reader          io.ReadCloser
+	MimeType        string
+	SizeBytes       int64
+	DisplayFilename string
 }
 
 // StoragePort defines the interface for the object storage adapter (e.g. MinIO).
@@ -65,9 +81,10 @@ type Repository interface {
 	GetAssetByID(ctx context.Context, id string) (*MediaAsset, error)
 	UpdateMetadata(ctx context.Context, id string, update MetadataUpdate, updatedBy string) (*MediaAsset, error)
 	ArchiveAsset(ctx context.Context, id string, archivedBy string) error
-	ListAdminAssets(ctx context.Context, page, pageSize int) ([]MediaAsset, int, error)
+	ListAdminAssets(ctx context.Context, filter ListFilter) ([]MediaAsset, int, error)
 	CheckIsPubliclyEligible(ctx context.Context, assetID string) (bool, error)
 	HasActiveUsages(ctx context.Context, assetID string) (bool, error)
+	UsageEntityExists(ctx context.Context, entityType, entityID string) (bool, error)
 	AttachUsage(ctx context.Context, usage MediaUsage) error
 	DetachUsage(ctx context.Context, mediaID, entityType, entityID, usageRole string) error
 }

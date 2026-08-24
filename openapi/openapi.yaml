@@ -58,6 +58,19 @@ paths:
       parameters:
         - $ref: '#/components/parameters/Page'
         - $ref: '#/components/parameters/PageSize'
+        - name: q
+          in: query
+          required: false
+          schema:
+            type: string
+            maxLength: 100
+        - name: kind
+          in: query
+          required: false
+          schema:
+            type: string
+            default: all
+            enum: [all, image, document]
       responses:
         '200':
           description: Published news
@@ -754,6 +767,10 @@ paths:
       responses:
         '201':
           description: Article created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/KnowledgeArticle'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -815,6 +832,20 @@ paths:
       responses:
         '201':
           description: Revision created
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [id, article_id, revision_no]
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                  article_id:
+                    type: string
+                    format: uuid
+                  revision_no:
+                    type: integer
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -938,6 +969,27 @@ paths:
         '422':
           $ref: '#/components/responses/ValidationError'
       summary: create Media
+  /admin/media/policy:
+    get:
+      tags: [Admin, Media]
+      summary: get authoritative media upload policy
+      operationId: getAdminMediaPolicy
+      security:
+        - oidc:
+            - content:read
+      responses:
+        '200':
+          description: Authoritative media validation and size policy
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    $ref: '#/components/schemas/MediaUploadPolicy'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
   /admin/media/{id}:
     get:
       tags:
@@ -1031,7 +1083,9 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
-      security: []
+      security:
+        - oidc:
+            - content:read
   /admin/media/{id}/archive:
     post:
       tags:
@@ -1093,10 +1147,12 @@ paths:
               properties:
                 entity_type:
                   type: string
+                  enum: [news, announcement, knowledge_revision]
                 entity_id:
                   type: string
                 usage_role:
                   type: string
+                  enum: [inline, featured, attachment]
                 sort_order:
                   type: integer
                   default: 0
@@ -1107,6 +1163,8 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '404':
           $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationError'
       summary: attach Media
   /admin/media/{id}/detach:
     post:
@@ -2077,6 +2135,9 @@ components:
             - archived
         current_revision_no:
           type: integer
+        current_revision_id:
+          type: string
+          format: uuid
         published_revision_no:
           type:
             - integer
@@ -2154,6 +2215,13 @@ components:
           type:
             - string
             - 'null'
+          description: Immutable filename captured at upload.
+        display_filename:
+          type:
+            - string
+            - 'null'
+          maxLength: 255
+          description: Renameable display label; changing it never moves the storage object.
         detected_mime_type:
           type: string
         size_bytes:
@@ -2162,14 +2230,17 @@ components:
           type:
             - string
             - 'null'
+          maxLength: 255
         alt_text:
           type:
             - string
             - 'null'
+          maxLength: 255
         caption:
           type:
             - string
             - 'null'
+          maxLength: 2000
         status:
           type: string
           enum:
@@ -2187,14 +2258,22 @@ components:
       type: object
       required:
         - data
-        - pagination
+        - meta
       properties:
         data:
           type: array
           items:
             $ref: '#/components/schemas/MediaAsset'
-        pagination:
-          $ref: '#/components/schemas/Pagination'
+        meta:
+          type: object
+          required: [page, page_size, total]
+          properties:
+            page:
+              type: integer
+            page_size:
+              type: integer
+            total:
+              type: integer
     MediaUploadResponse:
       type: object
       required:
@@ -2205,18 +2284,51 @@ components:
     MediaMetadataUpdate:
       type: object
       properties:
+        display_filename:
+          type: string
+          minLength: 1
+          maxLength: 255
         title:
           type:
             - string
             - 'null'
+          maxLength: 255
         alt_text:
           type:
             - string
             - 'null'
+          maxLength: 255
         caption:
           type:
             - string
             - 'null'
+          maxLength: 2000
+    MediaUploadPolicy:
+      type: object
+      required: [allowed_extensions, allowed_mime_types, extension_mime_types, max_image_bytes, max_object_bytes, max_multipart_bytes]
+      properties:
+        allowed_extensions:
+          type: array
+          items:
+            type: string
+          example: [.jpg, .jpeg, .png, .webp, .pdf]
+        allowed_mime_types:
+          type: array
+          items:
+            type: string
+        extension_mime_types:
+          type: object
+          additionalProperties:
+            type: string
+        max_image_bytes:
+          type: integer
+          example: 2621440
+        max_object_bytes:
+          type: integer
+          example: 20971520
+        max_multipart_bytes:
+          type: integer
+          example: 33554432
     LearningCourse:
       type: object
       properties:

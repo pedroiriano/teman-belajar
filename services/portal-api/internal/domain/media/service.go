@@ -1,13 +1,13 @@
 package media
 
 import (
+	"bytes"
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
 	"errors"
 	"fmt"
 	"io"
-	"strings"
 	"time"
 
 	"teman-belajar-api/internal/domain/audit"
@@ -42,31 +42,48 @@ func NewService(repo Repository, storage StoragePort, auditRepo audit.Repository
 
 // Upload handles securely storing a binary asset in MinIO and saving its metadata to PostgreSQL.
 func (s *Service) Upload(ctx context.Context, reader io.Reader, originalFilename string, declaredSize int64, actorID string) (*MediaAsset, error) {
-	if declaredSize > s.maxUploadSize {
+	filename, err := NormalizeFilename(originalFilename)
+	if err != nil {
+		return nil, err
+	}
+	if declaredSize < 1 || declaredSize > s.maxUploadSize || declaredSize > MaxObjectBytes {
 		return nil, ErrPayloadTooLarge
 	}
 
 	// Sniff MIME type using first 512 bytes
 	header := make([]byte, 512)
-	n, err := reader.Read(header)
+	n, err := io.ReadFull(reader, header)
+	if errors.Is(err, io.ErrUnexpectedEOF) || errors.Is(err, io.EOF) {
+		err = nil
+	}
 	if err != nil && err != io.EOF {
 		return nil, err
 	}
 
-	mimeType := s.sniffMimeType(header[:n])
-	if !s.isMimeTypeAllowed(mimeType) {
+	mimeType := DetectMIME(header[:n])
+	if !IsAllowedMIME(mimeType) {
 		return nil, ErrInvalidMimeType
+	}
+	if _, err := ValidateFilenameForMIME(filename, mimeType); err != nil {
+		return nil, err
+	}
+	typeLimit := LimitForMIME(mimeType)
+	if declaredSize > typeLimit {
+		if typeLimit == MaxImageBytes {
+			return nil, ErrImageCompressionRequired
+		}
+		return nil, ErrPayloadTooLarge
 	}
 
 	// Reconstruct reader
-	multiReader := io.MultiReader(strings.NewReader(string(header[:n])), reader)
+	multiReader := io.MultiReader(bytes.NewReader(header[:n]), reader)
 
 	// Hash calculation during stream
 	hash := sha256.New()
 	teeReader := io.TeeReader(multiReader, hash)
 
 	// Enforce limit reader to protect memory
-	limitReader := io.LimitReader(teeReader, s.maxUploadSize+1)
+	limitReader := io.LimitReader(teeReader, typeLimit+1)
 
 	assetID := uuid.New().String()
 	now := time.Now()
@@ -85,9 +102,12 @@ func (s *Service) Upload(ctx context.Context, reader io.Reader, originalFilename
 		return nil, fmt.Errorf("failed to stat object: %w", err)
 	}
 
-	if actualSize > s.maxUploadSize {
+	if actualSize > typeLimit {
 		// Exceeded limit (limitReader reached EOF)
 		_ = s.storage.Delete(ctx, s.bucket, objectKey)
+		if typeLimit == MaxImageBytes {
+			return nil, ErrImageCompressionRequired
+		}
 		return nil, ErrPayloadTooLarge
 	}
 
@@ -97,7 +117,8 @@ func (s *Service) Upload(ctx context.Context, reader io.Reader, originalFilename
 		ID:               assetID,
 		StorageKey:       objectKey,
 		Bucket:           s.bucket,
-		OriginalFilename: &originalFilename,
+		OriginalFilename: &filename,
+		DisplayFilename:  &filename,
 		DetectedMimeType: mimeType,
 		SizeBytes:        actualSize,
 		ChecksumSHA256:   checksum,
@@ -129,35 +150,21 @@ func (s *Service) Upload(ctx context.Context, reader io.Reader, originalFilename
 	return asset, nil
 }
 
-func (s *Service) sniffMimeType(data []byte) string {
-	// Simple magic byte checking for allowed types
-	if len(data) >= 3 && data[0] == 0xFF && data[1] == 0xD8 && data[2] == 0xFF {
-		return "image/jpeg"
-	}
-	if len(data) >= 8 && data[0] == 0x89 && data[1] == 0x50 && data[2] == 0x4E && data[3] == 0x47 &&
-		data[4] == 0x0D && data[5] == 0x0A && data[6] == 0x1A && data[7] == 0x0A {
-		return "image/png"
-	}
-	if len(data) >= 12 && string(data[0:4]) == "RIFF" && string(data[8:12]) == "WEBP" {
-		return "image/webp"
-	}
-	if len(data) >= 4 && data[0] == 0x25 && data[1] == 0x50 && data[2] == 0x44 && data[3] == 0x46 {
-		return "application/pdf"
-	}
-	return "application/octet-stream"
-}
-
-func (s *Service) isMimeTypeAllowed(mime string) bool {
-	allowed := map[string]bool{
-		"image/jpeg":      true,
-		"image/png":       true,
-		"image/webp":      true,
-		"application/pdf": true,
-	}
-	return allowed[mime]
-}
-
 func (s *Service) UpdateMetadata(ctx context.Context, id string, update MetadataUpdate, actorID string) (*MediaAsset, error) {
+	if err := ValidateMetadata(update); err != nil {
+		return nil, err
+	}
+	before, err := s.repo.GetAssetByID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	if update.DisplayFilename != nil {
+		value, validateErr := ValidateFilenameForMIME(*update.DisplayFilename, before.DetectedMimeType)
+		if validateErr != nil {
+			return nil, validateErr
+		}
+		update.DisplayFilename = &value
+	}
 	asset, err := s.repo.UpdateMetadata(ctx, id, update, actorID)
 	if err != nil {
 		return nil, err
@@ -172,6 +179,9 @@ func (s *Service) UpdateMetadata(ctx context.Context, id string, update Metadata
 		Result:      "success",
 		OccurredAt:  time.Now(),
 	})
+	if update.DisplayFilename != nil && (before.DisplayFilename == nil || *before.DisplayFilename != *update.DisplayFilename) {
+		_ = s.auditRepo.CreateEvent(ctx, &audit.AuditEvent{ID: uuid.New().String(), ActorUserID: actorID, Action: "MEDIA_RENAMED", TargetType: "media", TargetID: id, Result: "success", OccurredAt: time.Now()})
+	}
 
 	return asset, nil
 }
@@ -203,47 +213,59 @@ func (s *Service) ArchiveAsset(ctx context.Context, id string, actorID string) e
 	return nil
 }
 
-func (s *Service) GetPublicContent(ctx context.Context, id string) (io.ReadCloser, string, int64, error) {
+func (s *Service) GetPublicContent(ctx context.Context, id string) (*Content, error) {
 	asset, err := s.repo.GetAssetByID(ctx, id)
 	if err != nil {
-		return nil, "", 0, ErrAssetNotFound
+		return nil, ErrAssetNotFound
 	}
 	if asset.Status != StatusActive {
-		return nil, "", 0, ErrAssetNotFound
+		return nil, ErrAssetNotFound
 	}
 
 	eligible, err := s.repo.CheckIsPubliclyEligible(ctx, id)
 	if err != nil {
-		return nil, "", 0, err
+		return nil, err
 	}
 	if !eligible {
-		return nil, "", 0, ErrAssetNotFound
+		return nil, ErrAssetNotFound
 	}
 
 	reader, err := s.storage.Get(ctx, asset.Bucket, asset.StorageKey)
 	if err != nil {
-		return nil, "", 0, err
+		return nil, err
 	}
-
-	return reader, asset.DetectedMimeType, asset.SizeBytes, nil
+	return &Content{Reader: reader, MimeType: asset.DetectedMimeType, SizeBytes: asset.SizeBytes, DisplayFilename: displayFilename(asset)}, nil
 }
 
-func (s *Service) GetAdminContent(ctx context.Context, id string) (io.ReadCloser, string, int64, error) {
+func (s *Service) GetAdminContent(ctx context.Context, id string) (*Content, error) {
 	asset, err := s.repo.GetAssetByID(ctx, id)
 	if err != nil {
-		return nil, "", 0, ErrAssetNotFound
+		return nil, ErrAssetNotFound
 	}
 
 	reader, err := s.storage.Get(ctx, asset.Bucket, asset.StorageKey)
 	if err != nil {
-		return nil, "", 0, err
+		return nil, err
 	}
-
-	return reader, asset.DetectedMimeType, asset.SizeBytes, nil
+	return &Content{Reader: reader, MimeType: asset.DetectedMimeType, SizeBytes: asset.SizeBytes, DisplayFilename: displayFilename(asset)}, nil
 }
 
-func (s *Service) ListAdminAssets(ctx context.Context, page, pageSize int) ([]MediaAsset, int, error) {
-	return s.repo.ListAdminAssets(ctx, page, pageSize)
+func displayFilename(asset *MediaAsset) string {
+	if asset.DisplayFilename != nil {
+		return *asset.DisplayFilename
+	}
+	if asset.OriginalFilename != nil {
+		return *asset.OriginalFilename
+	}
+	return asset.ID
+}
+
+func (s *Service) ListAdminAssets(ctx context.Context, filter ListFilter) ([]MediaAsset, int, error) {
+	filter, err := NormalizeListFilter(filter)
+	if err != nil {
+		return nil, 0, err
+	}
+	return s.repo.ListAdminAssets(ctx, filter)
 }
 
 func (s *Service) GetAdminAsset(ctx context.Context, id string) (*MediaAsset, error) {
@@ -251,12 +273,28 @@ func (s *Service) GetAdminAsset(ctx context.Context, id string) (*MediaAsset, er
 }
 
 func (s *Service) AttachUsage(ctx context.Context, mediaID, entityType, entityID, usageRole string, sortOrder int, actorID string) error {
+	if _, err := uuid.Parse(mediaID); err != nil {
+		return ErrInvalidUsage
+	}
+	if _, err := uuid.Parse(entityID); err != nil {
+		return ErrInvalidUsage
+	}
+	if err := ValidateUsage(entityType, entityID, usageRole, sortOrder); err != nil {
+		return err
+	}
 	asset, err := s.repo.GetAssetByID(ctx, mediaID)
 	if err != nil {
 		return ErrAssetNotFound
 	}
 	if asset.Status != StatusActive {
 		return errors.New("cannot attach non-active asset")
+	}
+	exists, err := s.repo.UsageEntityExists(ctx, entityType, entityID)
+	if err != nil {
+		return err
+	}
+	if !exists {
+		return ErrUsageEntityNotFound
 	}
 
 	usage := MediaUsage{
@@ -288,6 +326,15 @@ func (s *Service) AttachUsage(ctx context.Context, mediaID, entityType, entityID
 }
 
 func (s *Service) DetachUsage(ctx context.Context, mediaID, entityType, entityID, usageRole string, actorID string) error {
+	if _, err := uuid.Parse(mediaID); err != nil {
+		return ErrInvalidUsage
+	}
+	if _, err := uuid.Parse(entityID); err != nil {
+		return ErrInvalidUsage
+	}
+	if err := ValidateUsage(entityType, entityID, usageRole, 0); err != nil {
+		return err
+	}
 	if err := s.repo.DetachUsage(ctx, mediaID, entityType, entityID, usageRole); err != nil {
 		return err
 	}

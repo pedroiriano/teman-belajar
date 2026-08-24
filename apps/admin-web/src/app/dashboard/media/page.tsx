@@ -8,13 +8,15 @@ import { getServerAccessToken } from "@/lib/server-auth";
 import MediaUploader from "./MediaUploader";
 import { AdminIcon } from "@/components/admin-icon";
 import { AdminUnauthorized } from "@/components/admin-states";
+import type { MediaAsset } from "@/components/media/types";
 
-async function getAdminMedia(token: string) {
+async function getAdminMedia(token: string, query: string, kind: string, page: number) {
   const API_BASE = process.env.PORTAL_API_INTERNAL_URL;
   if (!API_BASE) throw new Error("Missing PORTAL_API_INTERNAL_URL");
 
   try {
-    const res = await fetch(`${API_BASE}/api/v1/admin/media`, {
+    const params = new URLSearchParams({ q: query, kind, page: String(page), page_size: "20" });
+    const res = await fetch(`${API_BASE}/api/v1/admin/media?${params}`, {
       headers: {
         'Authorization': `Bearer ${token}`
       },
@@ -37,7 +39,7 @@ function formatBytes(bytes: number, decimals = 2) {
   return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`;
 }
 
-export default async function AdminMediaPage() {
+export default async function AdminMediaPage({ searchParams }: { searchParams: Promise<{ q?: string; kind?: string; page?: string }> }) {
   const session: any = await getServerSession(authOptions);
   const accessToken = await getServerAccessToken();
 
@@ -58,8 +60,14 @@ export default async function AdminMediaPage() {
     ["Portal Administrator", "Content Editor"].includes(r)
   );
 
-  const mediaRes = accessToken ? await getAdminMedia(accessToken) : null;
-  const mediaAssets = Array.isArray(mediaRes?.data) ? mediaRes.data : [];
+  const params = await searchParams;
+  const query = (params.q ?? "").slice(0, 100);
+  const kind = ["all", "image", "document"].includes(params.kind ?? "") ? params.kind! : "all";
+  const page = Math.max(1, Number.parseInt(params.page ?? "1", 10) || 1);
+  const mediaRes = accessToken ? await getAdminMedia(accessToken, query, kind, page) : null;
+  const mediaAssets: MediaAsset[] = Array.isArray(mediaRes?.data) ? mediaRes.data : [];
+  const total = Number(mediaRes?.meta?.total ?? 0);
+  const pages = Math.max(1, Math.ceil(total / 20));
 
   return (
     <div className="admin-page">
@@ -72,7 +80,9 @@ export default async function AdminMediaPage() {
 
         {canUpload && <MediaUploader />}
 
-        {mediaAssets.some((asset: any) => asset.detected_mime_type.startsWith("image/")) && <section className="mb-7" aria-labelledby="media-gallery-title"><div className="mb-4 flex items-end justify-between"><div><p className="text-xs font-black uppercase tracking-wider text-slate-400">Pratinjau visual</p><h2 id="media-gallery-title" className="mt-1 text-xl font-black text-slate-900">Galeri aset</h2></div><span className="admin-status bg-slate-100 text-slate-600">{mediaAssets.length} aset</span></div><div className="grid grid-cols-2 gap-4 md:grid-cols-4 xl:grid-cols-6">{mediaAssets.filter((asset: any) => asset.detected_mime_type.startsWith("image/")).slice(0, 6).map((asset: any) => <Link key={asset.id} href={`/dashboard/media/${asset.id}`} className="admin-card group overflow-hidden"><span className="block aspect-square overflow-hidden bg-slate-100"><img src={`/api/bff/media/${asset.id}/content`} alt={asset.alt_text || asset.original_filename} className="h-full w-full object-cover transition duration-300 group-hover:scale-105" /></span><span className="block truncate p-3 text-xs font-bold text-slate-700">{asset.original_filename}</span></Link>)}</div></section>}
+        <form className="admin-card mb-7 grid gap-3 p-5 sm:grid-cols-[1fr_200px_auto]" method="get"><div><label htmlFor="media-search" className="sr-only">Cari media</label><input id="media-search" name="q" defaultValue={query} className="admin-input" placeholder="Cari nama tampilan, nama asli, atau judul…" /></div><div><label htmlFor="media-kind" className="sr-only">Jenis media</label><select id="media-kind" name="kind" defaultValue={kind} className="admin-input"><option value="all">Semua jenis</option><option value="image">Gambar</option><option value="document">Dokumen PDF</option></select></div><button type="submit" className="admin-button">Terapkan filter</button></form>
+
+        {mediaAssets.some((asset) => asset.detected_mime_type.startsWith("image/")) && <section className="mb-7" aria-labelledby="media-gallery-title"><div className="mb-4 flex items-end justify-between"><div><p className="text-xs font-black uppercase tracking-wider text-slate-400">Pratinjau visual</p><h2 id="media-gallery-title" className="mt-1 text-xl font-black text-slate-900">Galeri aset</h2></div><span className="admin-status bg-slate-100 text-slate-600">{total} aset</span></div><div className="grid grid-cols-2 gap-4 md:grid-cols-4 xl:grid-cols-6">{mediaAssets.filter((asset) => asset.detected_mime_type.startsWith("image/")).slice(0, 6).map((asset) => <Link key={asset.id} href={`/dashboard/media/${asset.id}`} className="admin-card group overflow-hidden"><span className="block aspect-square overflow-hidden bg-slate-100"><img src={`/api/bff/media/${asset.id}/content`} alt={asset.alt_text || asset.display_filename || asset.original_filename || "Pratinjau media"} className="h-full w-full object-cover transition duration-300 group-hover:scale-105" /></span><span className="block truncate p-3 text-xs font-bold text-slate-700">{asset.display_filename || asset.original_filename}</span></Link>)}</div></section>}
 
         <div className="admin-table-shell"><div className="admin-table-toolbar"><div className="flex items-center gap-3"><span className="admin-stat-icon"><AdminIcon name="file" className="h-5 w-5" /></span><div><h2 className="font-black text-slate-900">Daftar aset</h2><p className="mt-1 text-xs text-slate-500">Metadata, ukuran, dan status media</p></div></div></div><div className="overflow-x-auto"><table className="admin-table">
             <thead>
@@ -87,14 +97,14 @@ export default async function AdminMediaPage() {
                   </td>
                 </tr>
               ) : (
-                mediaRes.data.map((asset: any) => (
+                mediaAssets.map((asset) => (
                   <tr key={asset.id} className="hover:bg-slate-50 transition-colors">
                     <td className="p-4">
                       {asset.detected_mime_type.startsWith('image/') ? (
                         <div className="w-16 h-16 rounded overflow-hidden bg-slate-100 border border-slate-200">
                           <img 
                             src={`/api/bff/media/${asset.id}/content`} 
-                            alt={asset.alt_text || asset.original_filename}
+                            alt={asset.alt_text || asset.display_filename || asset.original_filename || "Pratinjau media"}
                             className="w-full h-full object-cover"
                             onError={(e) => {
                               // If BFF doesn't proxy the image directly (BFF GET endpoint was added, but content delivery is /api/v1/media/{id}/content)
@@ -110,8 +120,8 @@ export default async function AdminMediaPage() {
                       )}
                     </td>
                     <td className="p-4">
-                      <div className="font-medium text-slate-900 truncate max-w-[200px]" title={asset.original_filename}>
-                        {asset.original_filename || asset.title || 'Tanpa Judul'}
+                      <div className="font-medium text-slate-900 truncate max-w-[200px]" title={asset.display_filename || asset.original_filename || undefined}>
+                        {asset.display_filename || asset.original_filename || asset.title || 'Tanpa Judul'}
                       </div>
                       <div className="text-xs text-slate-500 mt-1 flex flex-col gap-1">
                         <span>{asset.detected_mime_type}</span>
@@ -135,7 +145,7 @@ export default async function AdminMediaPage() {
                         {/* We could add a public view link if active, e.g. /api/v1/media/{id}/content */}
                         {asset.status === 'active' && (
                           <a 
-                            href={`${process.env.NEXT_PUBLIC_PORTAL_API_URL || 'http://localhost:8080'}/api/v1/media/${asset.id}/content`}
+                            href={`/api/bff/media/${asset.id}/content`}
                             target="_blank" 
                             rel="noopener noreferrer"
                             className="text-slate-600 hover:text-slate-900"
@@ -151,6 +161,7 @@ export default async function AdminMediaPage() {
             </tbody>
           </table></div>
         </div>
+        <nav className="mt-5 flex items-center justify-between" aria-label="Paginasi Media Library"><p className="text-sm text-slate-500">Halaman {page} dari {pages} · {total} aset</p><div className="flex gap-2">{page > 1 ? <Link className="admin-button-secondary" href={{ pathname: "/dashboard/media", query: { q: query, kind, page: page - 1 } }}>Sebelumnya</Link> : <span className="admin-button-secondary opacity-50">Sebelumnya</span>}{page < pages ? <Link className="admin-button-secondary" href={{ pathname: "/dashboard/media", query: { q: query, kind, page: page + 1 } }}>Berikutnya</Link> : <span className="admin-button-secondary opacity-50">Berikutnya</span>}</div></nav>
       </div>
     </div>
   );
