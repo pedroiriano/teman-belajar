@@ -78,8 +78,14 @@ func ValidateEnvelope(e *EventEnvelope) error {
 	if strings.TrimSpace(e.EventID) == "" {
 		return fmt.Errorf("event_id is required")
 	}
+	if len(e.EventID) > 128 {
+		return fmt.Errorf("event_id exceeds maximum length of 128")
+	}
 	if strings.TrimSpace(e.EventType) == "" {
 		return fmt.Errorf("event_type is required")
+	}
+	if len(e.EventType) > 128 {
+		return fmt.Errorf("event_type exceeds maximum length of 128")
 	}
 	if !SupportedEventTypes[e.EventType] {
 		return fmt.Errorf("unsupported event_type: %s", e.EventType)
@@ -90,8 +96,14 @@ func ValidateEnvelope(e *EventEnvelope) error {
 	if strings.TrimSpace(e.Source) == "" {
 		return fmt.Errorf("source is required")
 	}
+	if len(e.Source) > 128 {
+		return fmt.Errorf("source exceeds maximum length of 128")
+	}
 	if strings.TrimSpace(e.SubjectID) == "" {
 		return fmt.Errorf("subject_id is required")
+	}
+	if len(e.SubjectID) > 128 {
+		return fmt.Errorf("subject_id exceeds maximum length of 128")
 	}
 	if strings.TrimSpace(e.SchemaVersion) == "" {
 		return fmt.Errorf("schema_version is required")
@@ -99,8 +111,8 @@ func ValidateEnvelope(e *EventEnvelope) error {
 	if !SupportedSchemaVersions[e.SchemaVersion] {
 		return fmt.Errorf("unsupported schema_version: %s", e.SchemaVersion)
 	}
-	if len(e.Payload) == 0 {
-		return fmt.Errorf("payload is required")
+	if len(e.Payload) == 0 || string(e.Payload) == "null" {
+		return fmt.Errorf("payload is required and cannot be null")
 	}
 	// Verify payload is valid JSON object
 	var obj map[string]interface{}

@@ -37,7 +37,10 @@ POST /api/v1/internal/moodle/events — service-to-service endpoint for receivin
 ## Data Classification
 - Event payloads may contain Moodle user IDs (subject_id) — not PII but pseudonymous identifiers
 - No email, name, or credential data in canonical event envelope
-- Payload stored encrypted-at-rest by PostgreSQL TDE if configured
+- Payload stored in plain JSONB (infrastructure disk encryption is required for at-rest security; PostgreSQL TDE is not present).
+
+## System Boundary & Pending Components
+- **Moodle Publisher Not Implemented**: The Moodle plugin component responsible for generating the HMAC signature and dispatching the event is NOT implemented in TASK-011. The threat model currently only covers the Portal API ingestion boundary.
 
 ## Residual Risks
 - Secret rotation requires coordinated API+Moodle restart (no zero-downtime rotation yet)

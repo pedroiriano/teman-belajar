@@ -32,7 +32,11 @@ func NewEventService(repo domainintegration.Repository, auditRepo audit.Reposito
 // IngestEvent validates and idempotently stores an event envelope.
 func (s *EventService) IngestEvent(ctx context.Context, envelope *domainintegration.EventEnvelope) (IngestResult, error) {
 	if err := domainintegration.ValidateEnvelope(envelope); err != nil {
-		observability.RecordEventIngest(envelope.EventType, "rejected")
+		metricType := envelope.EventType
+		if !domainintegration.SupportedEventTypes[metricType] {
+			metricType = "unknown"
+		}
+		observability.RecordEventIngest(metricType, "rejected")
 		return "", err
 	}
 

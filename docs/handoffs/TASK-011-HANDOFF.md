@@ -30,11 +30,20 @@ The Moodle Event Inbox was implemented following the approved ADR-011 design, es
 - **Security Audit**: Middleware generates audit events (`target_type="integration_endpoint"`) on validation failures (e.g., tampered signature, expired request) and structural collisions without leaking payload PII.
 
 ## Definition of Done (DoD)
-- AC-01 (envelope validation): Passed (unit tested)
+- AC-01 (envelope validation): Passed (unit tested, string lengths bounded)
 - AC-02 (duplicate event_id safe): Passed (fingerprint comparison & SQL unique constraints)
 - AC-03 (service-to-service auth): Passed (HMAC-SHA256 ±5m window)
 - AC-04 (invalid auth rejected + audit): Passed (verified via `hmac_auth_test.go`)
 - AC-05 (bounded retry + dead-letter): Passed (`processor.go` implements backoff + DLQ)
 - AC-06 (backlog/failed metrics): Passed (`metrics.go` + metric updates in processor loop)
 
-**TASK-011 IS READY FOR CLOSURE.**
+## Final Post-Merge Corrective Closure
+A comprehensive corrective audit and repair was performed (resolving K-01 through K-12) to rectify post-merge issues without amending history or altering released migrations. Key repairs include:
+- **Testing (K-03, K-04)**: Real database integration tests replaced mocked `t.Skip` placeholders for repository and processor logic.
+- **Security (K-01)**: High-entropy string removed from `hmac_auth_test.go` to unblock DevSecOps gates.
+- **Data Integrity (K-07, K-12)**: Hardened input contracts (max lengths, no trailing JSON) and bounded metric cardinalities for rejected payloads.
+- **Concurrency (K-08)**: Resolved stale-worker ownership races using exact `updated_at` optimistic lock matching instead of adding new columns.
+- **API Contracts (K-05, K-06)**: Upgraded handler to return strictly formatted `application/problem+json` error responses and added missing OpenAPI specification.
+- **Operations (K-10, K-02)**: Injected `TB_MOODLE_EVENT_INGEST_SECRET` to the `api` container and created `portal-cli` for governed dead-letter reconciliation.
+
+**TASK-011 IS FINALLY READY FOR CLOSURE AND HANDOFF TO TASK-012.**

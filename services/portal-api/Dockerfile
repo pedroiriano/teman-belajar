@@ -13,6 +13,8 @@ COPY . .
 RUN CGO_ENABLED=0 GOOS=linux go build -o /app/portal-api ./cmd/api
 # Build the migration runner
 RUN CGO_ENABLED=0 GOOS=linux go build -o /app/portal-migrate ./cmd/migrate
+# Build the portal CLI
+RUN CGO_ENABLED=0 GOOS=linux go build -o /app/portal-cli ./cmd/portal-cli
 
 FROM alpine:3.22
 
@@ -25,6 +27,7 @@ RUN chown -R appuser:appgroup /app
 
 COPY --from=builder /app/portal-api .
 COPY --from=builder /app/portal-migrate .
+COPY --from=builder /app/portal-cli .
 COPY --from=builder /app/migrations ./migrations
 
 USER appuser
