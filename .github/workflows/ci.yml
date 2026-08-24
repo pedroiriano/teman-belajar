@@ -45,6 +45,7 @@ jobs:
     env:
       TEST_DATABASE_URL: postgres://teman_belajar_portal:secret123456_PORTAL_DB_PASSWORD@localhost:15432/teman_belajar?sslmode=disable
       DATABASE_URL: postgres://teman_belajar_portal:secret123456_PORTAL_DB_PASSWORD@localhost:15432/teman_belajar?sslmode=disable
+      MIGRATIONS_DIR: "./migrations"
       TASK011_REQUIRE_INTEGRATION_DB: "true"
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
