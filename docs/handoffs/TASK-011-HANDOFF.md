@@ -37,13 +37,14 @@ The Moodle Event Inbox was implemented following the approved ADR-011 design, es
 - AC-05 (bounded retry + dead-letter): Passed (`processor.go` implements backoff + DLQ)
 - AC-06 (backlog/failed metrics): Passed (`metrics.go` + metric updates in processor loop)
 
-## Final Post-Merge Corrective Closure
-A comprehensive corrective audit and repair was performed (resolving K-01 through K-12) to rectify post-merge issues without amending history or altering released migrations. Key repairs include:
-- **Testing (K-03, K-04)**: Real database integration tests replaced mocked `t.Skip` placeholders for repository and processor logic.
-- **Security (K-01)**: High-entropy string removed from `hmac_auth_test.go` to unblock DevSecOps gates.
+## Final Post-Merge Corrective Closure & Release Gate Recovery
+A comprehensive corrective audit and repair was performed (resolving K-01 through K-12) to rectify post-merge issues without amending history or altering released migrations. Following a premature merge of PR #7 which circumvented failing CI checks, a final release gate recovery branch was created and successfully merged under strict governance (no bypass). Key repairs include:
+- **Testing (K-03, K-04)**: Real database integration tests replaced mocked `t.Skip` placeholders for repository and processor logic. Enforcement of test execution in CI was implemented via `TASK011_REQUIRE_INTEGRATION_DB`. Added concurrency tests for stale worker overwrite prevention and dead letter queues.
+- **Security & SAST**: Fixed Gosec G104 unhandled error in JSON encoder, and ensured Govulncheck and Gitleaks passed without warnings.
 - **Data Integrity (K-07, K-12)**: Hardened input contracts (max lengths, no trailing JSON) and bounded metric cardinalities for rejected payloads.
 - **Concurrency (K-08)**: Resolved stale-worker ownership races using exact `updated_at` optimistic lock matching instead of adding new columns.
-- **API Contracts (K-05, K-06)**: Upgraded handler to return strictly formatted `application/problem+json` error responses and added missing OpenAPI specification.
-- **Operations (K-10, K-02)**: Injected `TB_MOODLE_EVENT_INGEST_SECRET` to the `api` container and created `portal-cli` for governed dead-letter reconciliation.
+- **API Contracts (K-05, K-06)**: Upgraded handler and HMAC middleware to return strictly formatted `application/problem+json` error responses. Fixed OpenAPI schema unresolved reference and matched runtime HMAC header names (`X-TB-Signature`, `X-TB-Timestamp`).
+- **Operations (K-10, K-02)**: Injected `TB_MOODLE_EVENT_INGEST_SECRET` to the `api` container and removed exposed `--db` credentials flag from `portal-cli`.
+- **Documentation**: explicitly documented in the Threat Model and Runbook that Moodle Publisher is NOT IMPLEMENTED in this task.
 
 **TASK-011 IS FINALLY READY FOR CLOSURE AND HANDOFF TO TASK-012.**
