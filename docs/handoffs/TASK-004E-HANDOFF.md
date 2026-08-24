@@ -61,9 +61,25 @@ The local database history ended at 011 although the exact TASK-011 `integration
 
 ## Runtime browser gate
 
-Browser inspection at `http://localhost:3001/dashboard/media` is **NOT a pass for TASK-004E**. The running Admin container still serves the prior image (legacy single file input and “Maksimum 20 MB” copy). No console error was present, but the new Integrated Media Manager was not loaded.
+The human supplied the exact `OVERRIDE IDENTITY BOUNDARY` authorization for the governed local rebuild and Keycloak reconciliation. No recoverable `TB_MOODLE_EVENT_INGEST_SECRET` existed in the ignored local environment or running Moodle container, so a new cryptographically random 48-byte Base64URL value was generated in process and written only to ignored `infrastructure/docker/.env`. The value and its digest were never printed, logged, staged, or committed.
 
-The governed wrapper currently fails Compose interpolation because ignored `infrastructure/docker/.env` has no non-empty `TB_MOODLE_EVENT_INGEST_SECRET`. That secret was not fabricated, copied into the repository, rotated, or printed. The wrapper `up` action also runs Keycloak reconciliation; TASK-004E cannot invoke that Identity mutation without explicit `OVERRIDE IDENTITY BOUNDARY` authorization. Therefore runtime refresh/browser acceptance remains a post-PR local gate after the human restores the existing event-ingest secret through the approved secret channel or provides the required explicit override.
+The official `infrastructure/docker/teman-belajar-docker.ps1 up` workflow rebuilt the repository runtime, applied migrations with `migrate` exiting 0, brought every long-running service to healthy/running state, and passed reconciliation for the Portal, Admin, and Moodle Keycloak clients, the Moodle role-claim mapper, and the Admin management client. The official `verify` workflow then returned HTTP 200 for Portal API, Portal Web, Admin Web, Keycloak, Moodle, MinIO, Meilisearch, and Grafana.
+
+The first new-image browser run exposed a real React Server Component boundary defect: the server-rendered Media page passed an inline `onError` callback to an image element. The scoped follow-up replaces that callback with the client-only `MediaPreviewImage` component and adds contract checks that keep event handling out of the server page. The corrected Admin image was rebuilt from commit `a867395` before the final browser run.
+
+Final browser acceptance is **PASS**:
+
+- a fresh Pedro Keycloak session removed the stale-token `Unauthorized` state;
+- Media Library loaded the Portal API policy and four local assets with gallery, table, metadata, actions, and deterministic empty/pagination states;
+- search and media-type filter submissions used GET query parameters and produced the expected empty and populated results without mutating data;
+- the News editor opened the shared Integrated Media Manager with Library/Unggah Baru tabs, API-derived upload limits, search/type controls, selection controls, and disabled insertion until selection;
+- focus entered the close button, Escape closed the dialog, body scrolling was restored, and focus returned to the originating `Sisipkan media` button;
+- Admin light mode retained its documented warm palette; Admin dark mode used `rgb(56, 189, 248)` bright sky blue with zero detected orange accent nodes;
+- the Slug URL field was readable in both modes: light text/background `rgb(30, 41, 59)` / `rgb(255, 255, 255)`, dark `rgb(241, 245, 249)` / `rgb(50, 56, 70)`;
+- the same Keycloak browser session entered Portal automatically and entered Moodle automatically through its federated login route; Moodle displayed Pedro Administrator with administrator navigation;
+- browser warning/error logs were empty, and post-rebuild Admin logs contained no React Server Component serialization error.
+
+The Portal `my-learning` page still reports that Pedro's formal-learning account is not connected, and Moodle logs the corresponding `local_temanbelajar/usernotmapped` lookup. Direct federated Moodle login succeeds, so this is an existing local identity-mapping data condition, not a TASK-004E media regression and not a reason to expand this scoped fix.
 
 ## Residual risks / future work
 
@@ -75,8 +91,7 @@ The governed wrapper currently fails Compose interpolation because ignored `infr
 
 ## Release state
 
-- Implementation and local non-runtime gates: **PASS**.
-- Pull request: [#11 — feat(media): integrated media asset management](https://github.com/pedroiriano/teman-belajar/pull/11).
-- Fresh CI migrations/checks: **PENDING on PR #11 final head**; GitHub check status is the release authority and is intentionally not copied as a mutable snapshot into this handoff.
-- New-image browser acceptance: **BLOCKED by governed local secret/Identity boundary**, not waived.
-- Merge authorization: not inferred; leave a green PR unmerged unless the user explicitly authorizes merge.
+- Implementation, local gates, official runtime rebuild/verify, and new-image browser acceptance: **PASS**.
+- Feature pull request [#11 — feat(media): integrated media asset management](https://github.com/pedroiriano/teman-belajar/pull/11) was merged to `main` as `4990e095fdc731860507e6c69101d1d62c34b754` through the protected-branch workflow.
+- Scoped runtime correction: [#12 — fix(admin): isolate media preview error handling](https://github.com/pedroiriano/teman-belajar/pull/12). GitHub checks on its final head remain the merge authority; mutable check results are intentionally not copied into this handoff.
+- The user explicitly authorized completion and merge. PR #12 may be merged through the normal protected-branch workflow only after its final-head checks pass.
