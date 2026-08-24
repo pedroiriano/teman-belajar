@@ -2,10 +2,10 @@
 
 ## Release state
 
-**RELEASE CANDIDATE — local implementation and acceptance PASS; protected PR
-and merge are still required.** Capability B (`TASK-011B`) and `TASK-012` must
-not begin until this task is merged and the handoff is updated with canonical
-commit/PR/CI evidence.
+**PASS — CANONICAL RELEASED.** PR #13 was merged through the protected-branch
+workflow on 2026-08-24. Capability B (`TASK-011B`) may begin only from a fresh
+branch based on the recorded canonical `main`; `TASK-012` remains out of scope
+until TASK-011B and every later mandatory pre-production gate are canonical.
 
 ## Delivered scope
 
@@ -97,6 +97,20 @@ race between integration event/dead-letter tests. The task-scoped draft tests
 were already green; the required full suite then passed with `-p 1`, without
 changing or disabling any test.
 
+## Canonical release evidence
+
+- Pull request: `#13` — `feat(authoring): resilient auto-save drafts`.
+- Final PR head: `a298f2fbb0487b0520073864a7111486df6cb6a4`.
+- Protected checks: 11/11 PASS across CI Baseline and DevSecOps Checks; no
+  security check was disabled or bypassed.
+- CI runs: `32736295892` (CI Baseline) and `32736295926` (DevSecOps Checks).
+- Merge authorization: explicit human approval in the active release session.
+- Merge method: GitHub merge through the protected pull-request workflow; no
+  direct `main` write, history rewrite, force push, or administrator bypass.
+- Merge commit and verified remote `main`:
+  `47877479d5bf70c57919b519bd8ad919b46f43ff`.
+- Remote verification: the final PR head is an ancestor of `origin/main`.
+
 ## Browser acceptance
 
 Acceptance used a fresh Pedro Portal Administrator session on the rebuilt
@@ -162,8 +176,7 @@ unauthorized Docker/network mutation.
   remains authoritative when local storage is unavailable.
 - Conflict resolution is explicit source selection; automatic merge and
   collaborative editing remain intentionally out of scope.
-- This handoff is not canonical PASS until the separate TASK-011A PR is green
-  and merged through protected-branch workflow, then updated with the final
-  commit, PR, CI evidence, and merge SHA.
+- TASK-011A is canonical PASS. TASK-011B remains a separate task with its own
+  fresh-main branch, implementation, verification, handoff, PR, and merge gate.
 - `latest_prompt.txt` is user-owned, remains untracked, and must not be staged or
   committed.
