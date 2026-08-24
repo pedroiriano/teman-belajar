@@ -210,15 +210,20 @@ func (r *KnowledgeRepository) ReorderNodes(ctx context.Context, parentID *string
 		return err
 	}
 	actual := make(map[string]struct{})
+	var scanErr error
 	for rows.Next() {
 		var id string
 		if err := rows.Scan(&id); err != nil {
-			rows.Close()
-			return err
+			scanErr = err
+			break
 		}
 		actual[id] = struct{}{}
 	}
-	rows.Close()
+	iterationErr := rows.Err()
+	closeErr := rows.Close()
+	if scanErr != nil || iterationErr != nil || closeErr != nil {
+		return errors.Join(scanErr, iterationErr, closeErr)
+	}
 	if len(actual) != len(orderedIDs) {
 		return knowledge.ErrInvalidNodeOrder
 	}
