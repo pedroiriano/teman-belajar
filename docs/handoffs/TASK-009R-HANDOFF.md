@@ -575,3 +575,41 @@ unverified; localhost evidence must never be presented as production evidence.
   production rotation, and any `main` promotion remain separately controlled.
 
 STOP. DO NOT IMPLEMENT TASK-010.
+
+## Final Canonical Release — 2026-08-24T02:25:00Z
+- **Initial origin/main SHA:** 1e56fc2
+- **Initial task branch SHA:** 6b6916c
+- **Final task branch SHA:** 6b6916c
+- **Historical RC ancestry:** Preserved (1e56fc2 -> 6b6916c is a direct fast-forward)
+- **PR Number:** 2
+- **PR Base/Head:** main / antigravity/task-009r-baseline-integrity-final
+- **PR Diff Review:** PASS
+- **CI Workflows:** api, frontend (apps/admin-web), frontend (apps/portal-web), governance, openapi
+- **CI Run IDs:** 32681545387
+- **CI Result:** PASS
+- **Corrective commits:** NONE
+- **Security review:** PASS
+- **Logout bridge review:** PASS
+- **Moodle federated admin boundary:** PASS
+- **Recovery admin separation:** PASS
+- **Keycloak least privilege:** PASS
+- **Analytics contract status:** PASS
+- **Migration status:** PASS
+- **OpenAPI status:** PASS
+- **ERD status:** PASS
+- **Runbook status:** PASS
+- **Final secret scan:** PASS
+- **Main promotion authorization:** PRESENT
+- **Main promotion method:** Fast-forward via \git merge --ff-only\
+- **Final main SHA:** 6b6916c
+- **Main == origin/main:** PASS
+- **Remote main content verification:** PASS
+- **Remote secret safety:** PASS
+- **Branch protection state:** DISABLED
+- **Production global SLO status:** NOT VERIFIED
+- **Production credential rotation status:** HUMAN FOLLOW-UP REQUIRED
+- **Moodle fresh-install status:** NOT VERIFIED
+
+**TASK-009R = PASS — CANONICAL RELEASED**
+
+**TASK-010 READINESS = READY**
