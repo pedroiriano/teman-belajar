@@ -76,6 +76,7 @@ The governed wrapper currently fails Compose interpolation because ignored `infr
 ## Release state
 
 - Implementation and local non-runtime gates: **PASS**.
-- Fresh CI migrations/checks: **PENDING PR**.
+- Pull request: [#11 — feat(media): integrated media asset management](https://github.com/pedroiriano/teman-belajar/pull/11).
+- Fresh CI migrations/checks: **PENDING on PR #11 final head**; GitHub check status is the release authority and is intentionally not copied as a mutable snapshot into this handoff.
 - New-image browser acceptance: **BLOCKED by governed local secret/Identity boundary**, not waived.
 - Merge authorization: not inferred; leave a green PR unmerged unless the user explicitly authorizes merge.
