@@ -86,7 +86,7 @@ func (h *MediaHandler) CreateMedia(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(map[string]interface{}{"data": asset}) // #nosec G104
+	json.NewEncoder(w).Encode(map[string]interface{}{"data": asset}) // #nosec G104 -- response writer error after commit is non-actionable in HTTP handler
 }
 
 func (h *MediaHandler) GetMediaContent(w http.ResponseWriter, r *http.Request) {
@@ -106,7 +106,7 @@ func (h *MediaHandler) GetMediaContent(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Disposition", "inline; filename=\""+id+"\"")
 	w.WriteHeader(http.StatusOK)
 
-	io.Copy(w, reader) // #nosec G104
+	io.Copy(w, reader) // #nosec G104 -- response writer error after commit is non-actionable in HTTP handler
 }
 
 func (h *MediaHandler) GetAdminMediaContent(w http.ResponseWriter, r *http.Request) {
@@ -125,7 +125,7 @@ func (h *MediaHandler) GetAdminMediaContent(w http.ResponseWriter, r *http.Reque
 	w.Header().Set("Content-Disposition", "inline; filename=\""+id+"\"")
 	w.WriteHeader(http.StatusOK)
 
-	io.Copy(w, reader) // #nosec G104
+	io.Copy(w, reader) // #nosec G104 -- response writer error after commit is non-actionable in HTTP handler
 }
 
 func (h *MediaHandler) ListAdminMedia(w http.ResponseWriter, r *http.Request) {
@@ -147,7 +147,7 @@ func (h *MediaHandler) ListAdminMedia(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]interface{}{ // #nosec G104
+	json.NewEncoder(w).Encode(map[string]interface{}{ // #nosec G104 -- response writer error after commit is non-actionable in HTTP handler
 		"data": assets,
 		"meta": map[string]interface{}{
 			"page":      page,
@@ -170,7 +170,7 @@ func (h *MediaHandler) GetAdminMedia(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]interface{}{"data": asset}) // #nosec G104
+	json.NewEncoder(w).Encode(map[string]interface{}{"data": asset}) // #nosec G104 -- response writer error after commit is non-actionable in HTTP handler
 }
 
 func (h *MediaHandler) UpdateMediaMetadata(w http.ResponseWriter, r *http.Request) {
@@ -194,7 +194,7 @@ func (h *MediaHandler) UpdateMediaMetadata(w http.ResponseWriter, r *http.Reques
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]interface{}{"data": asset}) // #nosec G104
+	json.NewEncoder(w).Encode(map[string]interface{}{"data": asset}) // #nosec G104 -- response writer error after commit is non-actionable in HTTP handler
 }
 
 func (h *MediaHandler) ArchiveMedia(w http.ResponseWriter, r *http.Request) {
@@ -267,7 +267,7 @@ func (h *MediaHandler) DetachMediaUsage(w http.ResponseWriter, r *http.Request) 
 func (h *MediaHandler) respondProblem(w http.ResponseWriter, status int, title, detail string) {
 	w.Header().Set("Content-Type", "application/problem+json")
 	w.WriteHeader(status)
-	json.NewEncoder(w).Encode(map[string]interface{}{ // #nosec G104
+	json.NewEncoder(w).Encode(map[string]interface{}{ // #nosec G104 -- response writer error after commit is non-actionable in HTTP handler
 		"status": status,
 		"title":  title,
 		"detail": detail,

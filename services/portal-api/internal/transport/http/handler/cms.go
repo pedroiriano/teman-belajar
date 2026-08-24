@@ -22,7 +22,7 @@ func NewCMSHandler(svc *cms.Service) *CMSHandler {
 func respondProblem(w http.ResponseWriter, status int, title, detail string) {
 	w.Header().Set("Content-Type", "application/problem+json")
 	w.WriteHeader(status)
-	json.NewEncoder(w).Encode(map[string]any{ // #nosec G104
+	json.NewEncoder(w).Encode(map[string]any{ // #nosec G104 -- response writer error after commit is non-actionable in HTTP handler
 		"type":   "about:blank",
 		"title":  title,
 		"status": status,
@@ -42,7 +42,7 @@ func (h *CMSHandler) ListPublicNews(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(res) // #nosec G104
+	json.NewEncoder(w).Encode(res) // #nosec G104 -- response writer error after commit is non-actionable in HTTP handler
 }
 
 func (h *CMSHandler) GetPublicNews(w http.ResponseWriter, r *http.Request) {
@@ -59,7 +59,7 @@ func (h *CMSHandler) GetPublicNews(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(res) // #nosec G104
+	json.NewEncoder(w).Encode(res) // #nosec G104 -- response writer error after commit is non-actionable in HTTP handler
 }
 
 func (h *CMSHandler) ListActiveAnnouncements(w http.ResponseWriter, r *http.Request) {
@@ -70,7 +70,7 @@ func (h *CMSHandler) ListActiveAnnouncements(w http.ResponseWriter, r *http.Requ
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(res) // #nosec G104
+	json.NewEncoder(w).Encode(res) // #nosec G104 -- response writer error after commit is non-actionable in HTTP handler
 }
 
 // Admin API
@@ -91,7 +91,7 @@ func (h *CMSHandler) ListAdminNews(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(res) // #nosec G104
+	json.NewEncoder(w).Encode(res) // #nosec G104 -- response writer error after commit is non-actionable in HTTP handler
 }
 
 func (h *CMSHandler) ListAdminAnnouncements(w http.ResponseWriter, r *http.Request) {
@@ -111,7 +111,7 @@ func (h *CMSHandler) ListAdminAnnouncements(w http.ResponseWriter, r *http.Reque
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(res) // #nosec G104
+	json.NewEncoder(w).Encode(res) // #nosec G104 -- response writer error after commit is non-actionable in HTTP handler
 }
 
 func (h *CMSHandler) CreateNews(w http.ResponseWriter, r *http.Request) {
@@ -149,7 +149,7 @@ func (h *CMSHandler) CreateNews(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(res) // #nosec G104
+	json.NewEncoder(w).Encode(res) // #nosec G104 -- response writer error after commit is non-actionable in HTTP handler
 }
 
 func (h *CMSHandler) TransitionNews(w http.ResponseWriter, r *http.Request) {
@@ -198,7 +198,7 @@ func (h *CMSHandler) TransitionNews(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(res) // #nosec G104
+	json.NewEncoder(w).Encode(res) // #nosec G104 -- response writer error after commit is non-actionable in HTTP handler
 }
 
 func (h *CMSHandler) CreateAnnouncement(w http.ResponseWriter, r *http.Request) {
@@ -237,7 +237,7 @@ func (h *CMSHandler) CreateAnnouncement(w http.ResponseWriter, r *http.Request) 
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(res) // #nosec G104
+	json.NewEncoder(w).Encode(res) // #nosec G104 -- response writer error after commit is non-actionable in HTTP handler
 }
 
 func (h *CMSHandler) TransitionAnnouncement(w http.ResponseWriter, r *http.Request) {
@@ -285,5 +285,5 @@ func (h *CMSHandler) TransitionAnnouncement(w http.ResponseWriter, r *http.Reque
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(res) // #nosec G104
+	json.NewEncoder(w).Encode(res) // #nosec G104 -- response writer error after commit is non-actionable in HTTP handler
 }

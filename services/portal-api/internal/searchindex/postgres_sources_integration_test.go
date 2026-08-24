@@ -26,7 +26,7 @@ func TestPostgresSourcesPublicationAndRevisionIsolation(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer tx.Rollback() // #nosec G104
+	defer tx.Rollback() // #nosec G104 -- defer rollback error is safe to ignore as transaction is already committed or context is canceled
 
 	ctx := context.Background()
 	statements := []string{

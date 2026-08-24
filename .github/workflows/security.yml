@@ -28,7 +28,7 @@ jobs:
       - name: Run Gosec Security Scanner
         working-directory: services/portal-api
         run: |
-          curl -sfL https://raw.githubusercontent.com/securego/gosec/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v2.21.4
+          curl -sfL https://raw.githubusercontent.com/securego/gosec/v2.21.4/install.sh | sh -s -- -b $(go env GOPATH)/bin v2.21.4
           $(go env GOPATH)/bin/gosec ./...
       - name: Run Govulncheck
         working-directory: services/portal-api
