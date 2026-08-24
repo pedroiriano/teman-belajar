@@ -2,10 +2,11 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), "utf8");
-const [picker, uploader, insertion, news, knowledge, announcement, revision, policyRoute] = await Promise.all([
+const [picker, uploader, insertion, news, knowledge, announcement, revision, policyRoute, mediaPage, previewImage] = await Promise.all([
   read("src/components/media/MediaPicker.tsx"), read("src/components/media/MediaUploadPanel.tsx"), read("src/components/media/insertion.ts"),
   read("src/app/dashboard/news/create/page.tsx"), read("src/app/dashboard/knowledge/create/page.tsx"), read("src/app/dashboard/announcements/create/page.tsx"),
   read("src/app/dashboard/knowledge/[id]/page.tsx"), read("src/app/api/bff/media/policy/route.ts"),
+  read("src/app/dashboard/media/page.tsx"), read("src/components/media/MediaPreviewImage.tsx"),
 ]);
 
 assert.match(picker, /Media Library/); assert.match(picker, /Unggah Baru/); assert.match(picker, /role="dialog"/); assert.match(picker, /aria-modal="true"/);
@@ -14,5 +15,7 @@ assert.match(insertion, /detected_mime_type === "application\/pdf"/); assert.mat
 for (const editor of [news, knowledge, announcement, revision]) { assert.match(editor, /<MediaPicker/); assert.match(editor, /mediaMarkdown/); }
 for (const createEditor of [news, knowledge, announcement]) assert.match(createEditor, /mediaUsagesFromMarkdown/);
 assert.match(policyRoute, /\/api\/v1\/admin\/media\/policy/);
+assert.match(mediaPage, /<MediaPreviewImage/); assert.doesNotMatch(mediaPage, /onError=/);
+assert.match(previewImage, /^"use client";/); assert.match(previewImage, /onError=/); assert.match(previewImage, /Pratinjau tidak tersedia/);
 
 console.log("Integrated Media Manager contract verified.");

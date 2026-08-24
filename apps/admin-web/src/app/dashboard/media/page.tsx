@@ -1,5 +1,3 @@
-/* eslint-disable @next/next/no-img-element -- Media Library previews authenticated BFF assets with runtime MIME types. */
-
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
@@ -8,6 +6,7 @@ import { getServerAccessToken } from "@/lib/server-auth";
 import MediaUploader from "./MediaUploader";
 import { AdminIcon } from "@/components/admin-icon";
 import { AdminUnauthorized } from "@/components/admin-states";
+import { MediaPreviewImage } from "@/components/media/MediaPreviewImage";
 import type { MediaAsset } from "@/components/media/types";
 
 async function getAdminMedia(token: string, query: string, kind: string, page: number) {
@@ -82,7 +81,7 @@ export default async function AdminMediaPage({ searchParams }: { searchParams: P
 
         <form className="admin-card mb-7 grid gap-3 p-5 sm:grid-cols-[1fr_200px_auto]" method="get"><div><label htmlFor="media-search" className="sr-only">Cari media</label><input id="media-search" name="q" defaultValue={query} className="admin-input" placeholder="Cari nama tampilan, nama asli, atau judul…" /></div><div><label htmlFor="media-kind" className="sr-only">Jenis media</label><select id="media-kind" name="kind" defaultValue={kind} className="admin-input"><option value="all">Semua jenis</option><option value="image">Gambar</option><option value="document">Dokumen PDF</option></select></div><button type="submit" className="admin-button">Terapkan filter</button></form>
 
-        {mediaAssets.some((asset) => asset.detected_mime_type.startsWith("image/")) && <section className="mb-7" aria-labelledby="media-gallery-title"><div className="mb-4 flex items-end justify-between"><div><p className="text-xs font-black uppercase tracking-wider text-slate-400">Pratinjau visual</p><h2 id="media-gallery-title" className="mt-1 text-xl font-black text-slate-900">Galeri aset</h2></div><span className="admin-status bg-slate-100 text-slate-600">{total} aset</span></div><div className="grid grid-cols-2 gap-4 md:grid-cols-4 xl:grid-cols-6">{mediaAssets.filter((asset) => asset.detected_mime_type.startsWith("image/")).slice(0, 6).map((asset) => <Link key={asset.id} href={`/dashboard/media/${asset.id}`} className="admin-card group overflow-hidden"><span className="block aspect-square overflow-hidden bg-slate-100"><img src={`/api/bff/media/${asset.id}/content`} alt={asset.alt_text || asset.display_filename || asset.original_filename || "Pratinjau media"} className="h-full w-full object-cover transition duration-300 group-hover:scale-105" /></span><span className="block truncate p-3 text-xs font-bold text-slate-700">{asset.display_filename || asset.original_filename}</span></Link>)}</div></section>}
+        {mediaAssets.some((asset) => asset.detected_mime_type.startsWith("image/")) && <section className="mb-7" aria-labelledby="media-gallery-title"><div className="mb-4 flex items-end justify-between"><div><p className="text-xs font-black uppercase tracking-wider text-slate-400">Pratinjau visual</p><h2 id="media-gallery-title" className="mt-1 text-xl font-black text-slate-900">Galeri aset</h2></div><span className="admin-status bg-slate-100 text-slate-600">{total} aset</span></div><div className="grid grid-cols-2 gap-4 md:grid-cols-4 xl:grid-cols-6">{mediaAssets.filter((asset) => asset.detected_mime_type.startsWith("image/")).slice(0, 6).map((asset) => <Link key={asset.id} href={`/dashboard/media/${asset.id}`} className="admin-card group overflow-hidden"><span className="block aspect-square overflow-hidden bg-slate-100"><MediaPreviewImage src={`/api/bff/media/${asset.id}/content`} alt={asset.alt_text || asset.display_filename || asset.original_filename || "Pratinjau media"} className="h-full w-full object-cover transition duration-300 group-hover:scale-105" /></span><span className="block truncate p-3 text-xs font-bold text-slate-700">{asset.display_filename || asset.original_filename}</span></Link>)}</div></section>}
 
         <div className="admin-table-shell"><div className="admin-table-toolbar"><div className="flex items-center gap-3"><span className="admin-stat-icon"><AdminIcon name="file" className="h-5 w-5" /></span><div><h2 className="font-black text-slate-900">Daftar aset</h2><p className="mt-1 text-xs text-slate-500">Metadata, ukuran, dan status media</p></div></div></div><div className="overflow-x-auto"><table className="admin-table">
             <thead>
@@ -102,15 +101,10 @@ export default async function AdminMediaPage({ searchParams }: { searchParams: P
                     <td className="p-4">
                       {asset.detected_mime_type.startsWith('image/') ? (
                         <div className="w-16 h-16 rounded overflow-hidden bg-slate-100 border border-slate-200">
-                          <img 
+                          <MediaPreviewImage
                             src={`/api/bff/media/${asset.id}/content`} 
                             alt={asset.alt_text || asset.display_filename || asset.original_filename || "Pratinjau media"}
                             className="w-full h-full object-cover"
-                            onError={(e) => {
-                              // If BFF doesn't proxy the image directly (BFF GET endpoint was added, but content delivery is /api/v1/media/{id}/content)
-                              // Wait, the BFF detail endpoint is for metadata. Let's fallback to a placeholder.
-                              (e.target as HTMLImageElement).src = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9IiNlMmU4ZjAiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZm9udC1mYW1pbHk9InNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTRweCIgZmlsbD0iIzY0NzQ4YiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPkJyb2tlbjwvdGV4dD48L3N2Zz4=';
-                            }}
                           />
                         </div>
                       ) : (
