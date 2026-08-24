@@ -39,7 +39,8 @@ pm ci restored.
 
 ## Evidence & Status
 - **Actual CI Run IDs**: CI Baseline (32684283610), DevSecOps Checks (32684283642). Note: Will be re-run after corrective push.
-- **Artifacts**: epository-sbom uploaded.
+- **Artifacts**: 
+epository-sbom uploaded.
 - **Files Changed**: .github/workflows/ci.yml, .github/workflows/security.yml, docs/handoffs/TASK-010-HANDOFF.md.
 - **Corrective Commits**: (See final SHA).
 - **Remote Branch SHA**: To be generated.
