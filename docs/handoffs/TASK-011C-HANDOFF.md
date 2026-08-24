@@ -12,7 +12,9 @@ gate, and does not authorize TASK-012.
   enforcement`.
 - Verified implementation commit before PR metadata update:
   `514ee51cace79cf1ed02c11b0072299113432b92`.
-- Protected checks: `PENDING` until the final pushed head is evaluated.
+- Protected evidence head `dfb57a5a19783fa3c8e49e432ed8e37210ecec2f`:
+  **11/11 SUCCESS**; GitHub reported merge state `CLEAN` before this evidence-only
+  documentation update.
 - Merge authorization: **NOT GRANTED**; a separate explicit human approval is
   required after protected checks pass.
 - TASK-012: **NOT STARTED**.
@@ -148,6 +150,17 @@ findings and zero horizontal overflow:
 | Browser console | PASS; zero entries on final acceptance |
 | `git diff --check` | PASS; line-ending notices only |
 
+Protected GitHub evidence for head `dfb57a5a19783fa3c8e49e432ed8e37210ecec2f`:
+
+- CI Baseline run `32784354840`: API, Admin frontend, Portal frontend, OpenAPI,
+  and governance all `SUCCESS`;
+- DevSecOps Checks run `32784354805`: Go SAST, Admin/Portal SCA, secret scan,
+  Trivy, and SBOM generation all `SUCCESS`;
+- total protected result: 11/11 `SUCCESS`;
+- PR #17 merge state after those results: `CLEAN`;
+- merge remains intentionally unexecuted because human approval has not been
+  granted.
+
 The Windows host build still lacks the optional native SWC binding and advises
 Webpack when Turbopack loads only WASM. This is a known host-tooling limitation,
 not release evidence. The governed Linux Docker build installed the supported
@@ -185,8 +198,9 @@ remove security checks, or reintroduce orange as an emergency workaround.
 
 ## Next gate
 
-Push the final branch, open the dedicated PR, and wait for every protected CI
-and DevSecOps check. Do not merge without the user's separate approval. Even
-after checks pass, the expected state is **PASS_PR_READY / ADMIN UI GATE NOT
-CLOSED / TASK-012 NOT READY** until the protected merge is explicitly approved
-and completed.
+PR #17 is open and its implementation/metadata head passed every protected CI
+and DevSecOps check. This final evidence-only documentation commit must pass the
+same protected workflows. Do not merge without the user's separate approval.
+The expected state remains **PASS_PR_READY / ADMIN UI GATE NOT CLOSED /
+TASK-012 NOT READY** until the protected merge is explicitly approved and
+completed.
