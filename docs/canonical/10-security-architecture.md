@@ -134,6 +134,8 @@ Minimum:
 - integration mapping change;
 - configuration change;
 - security policy change.
+- authoring draft create/recover/conflict/discard/finalize (metadata only; never
+  draft payload).
 
 ## 11. Threat Modeling
 

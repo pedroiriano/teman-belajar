@@ -17,6 +17,8 @@ tags:
     description: Announcements operations
   - name: Knowledge
     description: Knowledge operations
+  - name: Drafts
+    description: Owner-isolated Admin authoring draft operations
   - name: FAQ
     description: FAQ operations
   - name: Learning
@@ -594,6 +596,32 @@ paths:
           $ref: '#/components/responses/ValidationError'
       summary: create News
   /admin/news/{id}:
+    patch:
+      tags: [Admin, Drafts]
+      summary: update editable draft News content
+      security:
+        - oidc: [content:write]
+      operationId: updateDraftNewsContent
+      parameters:
+        - $ref: '#/components/parameters/EntityId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NewsUpdate'
+      responses:
+        '200':
+          description: Draft news content updated with optimistic locking
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/News'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/ConflictError' }
+        '422': { $ref: '#/components/responses/ValidationError' }
     put:
       tags:
         - Admin
@@ -686,6 +714,32 @@ paths:
           $ref: '#/components/responses/ValidationError'
       summary: create Announcement
   /admin/announcements/{id}:
+    patch:
+      tags: [Admin, Drafts]
+      summary: update editable draft Announcement content
+      security:
+        - oidc: [content:write]
+      operationId: updateDraftAnnouncementContent
+      parameters:
+        - $ref: '#/components/parameters/EntityId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AnnouncementUpdate'
+      responses:
+        '200':
+          description: Draft announcement content updated with optimistic locking
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Announcement'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/ConflictError' }
+        '422': { $ref: '#/components/responses/ValidationError' }
     put:
       tags:
         - Admin
@@ -850,9 +904,133 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '403':
           $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/ConflictError'
         '422':
           $ref: '#/components/responses/ValidationError'
       summary: create Knowledge Revision
+  /admin/form-drafts:
+    get:
+      tags: [Admin, Drafts]
+      summary: list the current author's recoverable drafts
+      operationId: listFormDrafts
+      security:
+        - oidc: [content:write]
+      parameters:
+        - name: form_key
+          in: query
+          required: true
+          schema:
+            $ref: '#/components/schemas/FormDraftKey'
+        - name: entity_type
+          in: query
+          schema:
+            type: string
+            enum: [news, announcement, knowledge]
+        - name: entity_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: At most twenty unexpired drafts owned by access-token sub
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data, limit]
+                properties:
+                  data:
+                    type: array
+                    maxItems: 20
+                    items: { $ref: '#/components/schemas/FormDraft' }
+                  limit: { type: integer, const: 20 }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '422': { $ref: '#/components/responses/ValidationError' }
+  /admin/form-drafts/{draftKey}:
+    parameters:
+      - name: draftKey
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    get:
+      tags: [Admin, Drafts]
+      summary: get an unexpired draft owned by access-token sub
+      operationId: getFormDraft
+      security:
+        - oidc: [content:write]
+      responses:
+        '200':
+          description: Owned draft
+          headers:
+            Cache-Control: { schema: { type: string }, description: Always no-store }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/FormDraft' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    put:
+      tags: [Admin, Drafts]
+      summary: create or optimistically update an owned draft
+      operationId: saveFormDraft
+      security:
+        - oidc: [content:write]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/FormDraftWrite' }
+      responses:
+        '200':
+          description: Draft saved; first save returns revision 1
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/FormDraft' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409':
+          description: A newer server revision or edit draft exists
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/FormDraftConflictProblem' }
+        '422': { $ref: '#/components/responses/ValidationError' }
+    delete:
+      tags: [Admin, Drafts]
+      summary: discard or finalize an owned draft
+      operationId: deleteFormDraft
+      security:
+        - oidc: [content:write]
+      parameters:
+        - name: reason
+          in: query
+          required: true
+          schema: { type: string, enum: [discarded, finalized] }
+      responses:
+        '204': { description: Draft deleted and lifecycle event audited }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '422': { $ref: '#/components/responses/ValidationError' }
+  /admin/form-drafts/{draftKey}/recovered:
+    post:
+      tags: [Admin, Drafts]
+      summary: record explicit recovery of an owned server draft
+      operationId: recordFormDraftRecovery
+      security:
+        - oidc: [content:write]
+      parameters:
+        - name: draftKey
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '204': { description: Recovery audit event recorded }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
   /admin/knowledge/{id}/transition:
     post:
       tags:
@@ -1694,6 +1872,13 @@ components:
       schema:
         type: string
         format: uuid
+    EntityId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
   responses:
     ValidationError:
       description: Validation failed
@@ -1715,6 +1900,12 @@ components:
             $ref: '#/components/schemas/Problem'
     Forbidden:
       description: Insufficient permission
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    ConflictError:
+      description: Optimistic version conflict
       content:
         application/problem+json:
           schema:
@@ -1816,6 +2007,10 @@ components:
             - string
             - 'null'
           format: date-time
+        version:
+          type: integer
+          format: int64
+          minimum: 1
     NewsCreate:
       type: object
       required:
@@ -1835,6 +2030,16 @@ components:
           maxLength: 500
         body:
           type: string
+    NewsUpdate:
+      type: object
+      additionalProperties: false
+      required: [title, slug, excerpt, body, expected_version]
+      properties:
+        title: { type: string, minLength: 1, maxLength: 200 }
+        slug: { type: string, minLength: 1, maxLength: 220 }
+        excerpt: { type: string, maxLength: 500 }
+        body: { type: string, minLength: 1 }
+        expected_version: { type: integer, format: int64, minimum: 1 }
     NewsList:
       type: object
       required:
@@ -1905,6 +2110,21 @@ components:
             - string
             - 'null'
           format: date-time
+        version:
+          type: integer
+          format: int64
+          minimum: 1
+    AnnouncementUpdate:
+      type: object
+      additionalProperties: false
+      required: [title, slug, body, expected_version]
+      properties:
+        title: { type: string, minLength: 1, maxLength: 200 }
+        slug: { type: string, minLength: 1, maxLength: 220 }
+        body: { type: string, minLength: 1 }
+        start_at: { type: [string, 'null'], format: date-time }
+        end_at: { type: [string, 'null'], format: date-time }
+        expected_version: { type: integer, format: int64, minimum: 1 }
     Faq:
       type: object
       required:
@@ -2196,9 +2416,71 @@ components:
       type: object
       required:
         - body
+        - expected_revision_no
       properties:
         body:
           type: string
+        expected_revision_no:
+          type: integer
+          minimum: 1
+    FormDraftKey:
+      type: string
+      enum:
+        - news.create
+        - news.edit
+        - announcement.create
+        - announcement.edit
+        - knowledge.create
+        - knowledge.edit
+    FormDraftPayload:
+      type: object
+      maxProperties: 8
+      additionalProperties:
+        oneOf:
+          - type: string
+          - type: 'null'
+          - type: array
+            maxItems: 100
+            uniqueItems: true
+            items: { type: string, format: uuid }
+      description: Exact field allowlist and per-field limits are selected by form_key; credentials, sensitive keys, binary data, and signed/private URLs are forbidden.
+    FormDraftWrite:
+      type: object
+      additionalProperties: false
+      required: [form_key, entity_type, entity_id, schema_version, payload, base_entity_version, expected_revision, client_updated_at]
+      properties:
+        form_key: { $ref: '#/components/schemas/FormDraftKey' }
+        entity_type: { type: string, enum: [news, announcement, knowledge] }
+        entity_id: { type: [string, 'null'], format: uuid }
+        schema_version: { type: integer, const: 1 }
+        payload: { $ref: '#/components/schemas/FormDraftPayload' }
+        base_entity_version: { type: [string, 'null'], maxLength: 128 }
+        expected_revision: { type: integer, format: int64, minimum: 0 }
+        client_updated_at: { type: string, format: date-time }
+    FormDraft:
+      type: object
+      required: [id, draft_key, form_key, entity_type, schema_version, payload, revision, client_updated_at, expires_at, created_at, updated_at]
+      properties:
+        id: { type: string, format: uuid }
+        draft_key: { type: string, format: uuid }
+        form_key: { $ref: '#/components/schemas/FormDraftKey' }
+        entity_type: { type: string, enum: [news, announcement, knowledge] }
+        entity_id: { type: string, format: uuid }
+        schema_version: { type: integer, const: 1 }
+        payload: { $ref: '#/components/schemas/FormDraftPayload' }
+        base_entity_version: { type: string, maxLength: 128 }
+        revision: { type: integer, format: int64, minimum: 1 }
+        client_updated_at: { type: string, format: date-time }
+        expires_at: { type: string, format: date-time }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+    FormDraftConflictProblem:
+      allOf:
+        - $ref: '#/components/schemas/Problem'
+        - type: object
+          properties:
+            code: { type: string, const: DRAFT_REVISION_CONFLICT }
+            current_draft: { $ref: '#/components/schemas/FormDraft' }
     MediaAsset:
       type: object
       required:

@@ -61,6 +61,9 @@ dari Moodle tetap dapat diaudit setelah melewati analytics worker.
 ### portal
 - `portal.user_profiles`
 - `portal.user_preferences`
+- `form_drafts`: owner-isolated, expiring working copies with optimistic
+  revision and explicit form payload registry (physical baseline remains the
+  current flat Portal schema until a separately approved schema migration).
 
 ### cms
 - `cms.pages`
@@ -166,6 +169,10 @@ Sebelum production tentukan:
 - archival;
 - deletion/anonymization;
 - backup retention.
+
+Authoring drafts default to 30-day retention, configurable from 1–365 days.
+Expired drafts are unavailable to reads and removed in bounded lazy batches;
+draft payload must not appear in operational logs or audit event details.
 
 ## 11. ERD
 

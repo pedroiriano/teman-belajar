@@ -180,6 +180,11 @@ Component library:
 
 Admin content editors use one Cuba-aligned Integrated Media Manager with Library/Unggah Baru tabs, search, filter, pagination, consent-based image compression, accessible alt/decorative intent, and MIME-aware Markdown insertion. Parallel per-editor media pickers are forbidden.
 
+Supported Admin authoring forms use one shared recovery contract: server-side
+draft authority, user-partitioned IndexedDB fallback, three-second idle save,
+visible Indonesian save state, explicit conflict recovery, and final cleanup.
+Draft recovery must never silently replace current input.
+
 ## 9. Responsive
 
 Reference classes:

@@ -28,7 +28,7 @@ $RequiredKeys = @(
     "TB_REDIS_PORT", "TB_API_PORT", "TB_KEYCLOAK_PORT", "TB_MOODLE_PORT", "TB_MEILI_PORT",
     "TB_MINIO_API_PORT", "TB_MINIO_CONSOLE_PORT", "TB_GRAFANA_PORT",
     "TB_WEB_URL", "TB_ADMIN_URL", "TB_KEYCLOAK_URL", "TB_MOODLE_URL",
-    "TB_MEILI_ENV", "TB_MEILI_INDEX_NAME", "TB_SEARCH_CAPTURE_RAW_QUERY", "TB_PORTAL_INTERNAL_SECRET", "TB_MOODLE_ALLOW_INSECURE_OAUTH2",
+    "TB_MEILI_ENV", "TB_MEILI_INDEX_NAME", "TB_SEARCH_CAPTURE_RAW_QUERY", "TB_FORM_DRAFT_RETENTION_DAYS", "TB_PORTAL_INTERNAL_SECRET", "TB_MOODLE_ALLOW_INSECURE_OAUTH2",
     "TB_PORTAL_DB_NAME", "TB_PORTAL_DB_USER", "TB_PORTAL_DB_PASSWORD",
     "TB_KEYCLOAK_DB_NAME", "TB_KEYCLOAK_DB_USER", "TB_KEYCLOAK_DB_PASSWORD",
     "TB_MOODLE_DB_NAME", "TB_MOODLE_DB_USER", "TB_MOODLE_DB_PASSWORD",
@@ -123,6 +123,12 @@ if ($Environment["TB_MEILI_INDEX_NAME"] -notmatch "^[a-z][a-z0-9_]*$") {
 
 if ($Environment["TB_SEARCH_CAPTURE_RAW_QUERY"] -ne "false") {
     throw "TB_SEARCH_CAPTURE_RAW_QUERY must remain false; raw search-query capture is prohibited by default."
+}
+
+$DraftRetentionDays = 0
+if (-not [int]::TryParse($Environment["TB_FORM_DRAFT_RETENTION_DAYS"], [ref]$DraftRetentionDays) -or
+    $DraftRetentionDays -lt 1 -or $DraftRetentionDays -gt 365) {
+    throw "TB_FORM_DRAFT_RETENTION_DAYS must be an integer from 1 through 365."
 }
 
 if ($Environment["TB_MOODLE_ALLOW_INSECURE_OAUTH2"] -notin @("true", "false")) {

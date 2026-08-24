@@ -148,6 +148,11 @@ a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visib
   .admin-status { @apply inline-flex items-center rounded-full px-2.5 py-1 text-xs font-bold capitalize; }
   .admin-empty { @apply px-6 py-14 text-center; color: var(--admin-muted); }
   .admin-alert-error { @apply rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm font-semibold text-rose-700; }
+  .draft-status { @apply mb-5 flex flex-col gap-4 rounded-2xl border p-4 sm:flex-row sm:items-center sm:justify-between; color: var(--admin-copy); background: var(--admin-panel); border-color: var(--admin-border); }
+  .draft-status-ok { border-left: 4px solid var(--admin-primary); }
+  .draft-status-warning { border-left: 4px solid #f59e0b; }
+  .draft-status-error { border-left: 4px solid #f43f5e; }
+  .draft-recovery { @apply basis-full rounded-xl border p-4 sm:order-3; color: var(--admin-copy); background: var(--admin-panel-muted); border-color: var(--admin-border); }
   .admin-modal-overlay { @apply fixed inset-0 z-50 flex items-center justify-center bg-slate-950/65 p-4 backdrop-blur-sm; }
   .admin-modal { @apply flex max-h-[86vh] w-full max-w-5xl flex-col overflow-hidden rounded-2xl border shadow-2xl; color: var(--admin-ink); background: var(--admin-panel); border-color: var(--admin-border); }
 }

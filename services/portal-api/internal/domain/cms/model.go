@@ -20,6 +20,8 @@ var (
 	ErrValidationFailed  = errors.New("validation failed")
 	ErrNotFound          = errors.New("content not found")
 	ErrForbidden         = errors.New("forbidden")
+	ErrConflict          = errors.New("content version conflict")
+	ErrContentLocked     = errors.New("content must be draft before editing")
 )
 
 type News struct {
@@ -35,6 +37,7 @@ type News struct {
 	CreatedBy   *string       `json:"created_by"`
 	UpdatedAt   time.Time     `json:"updated_at"`
 	UpdatedBy   *string       `json:"updated_by"`
+	Version     int64         `json:"version"`
 }
 
 type Announcement struct {
@@ -50,6 +53,7 @@ type Announcement struct {
 	CreatedBy   *string       `json:"created_by"`
 	UpdatedAt   time.Time     `json:"updated_at"`
 	UpdatedBy   *string       `json:"updated_by"`
+	Version     int64         `json:"version"`
 }
 
 type Pagination struct {

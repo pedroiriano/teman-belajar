@@ -10,10 +10,11 @@ import (
 )
 
 var (
-	ErrTitleRequired  = errors.New("title is required")
-	ErrSlugRequired   = errors.New("slug is required")
-	ErrBodyRequired   = errors.New("body is required")
-	ErrRevisionLocked = errors.New("article must be draft or published before creating a revision")
+	ErrTitleRequired    = errors.New("title is required")
+	ErrSlugRequired     = errors.New("slug is required")
+	ErrBodyRequired     = errors.New("body is required")
+	ErrRevisionLocked   = errors.New("article must be draft or published before creating a revision")
+	ErrRevisionConflict = errors.New("knowledge revision conflict")
 )
 
 type Service struct {
@@ -80,6 +81,17 @@ func (s *Service) CreateArticleWithRevision(ctx context.Context, title, slug, bo
 }
 
 func (s *Service) CreateRevision(ctx context.Context, articleID, body string, actorID *string) (*Revision, error) {
+	return s.createRevision(ctx, articleID, body, 0, actorID)
+}
+
+func (s *Service) CreateRevisionExpected(ctx context.Context, articleID, body string, expectedRevisionNo int, actorID *string) (*Revision, error) {
+	if expectedRevisionNo < 1 {
+		return nil, ErrRevisionConflict
+	}
+	return s.createRevision(ctx, articleID, body, expectedRevisionNo, actorID)
+}
+
+func (s *Service) createRevision(ctx context.Context, articleID, body string, expectedRevisionNo int, actorID *string) (*Revision, error) {
 	if body == "" {
 		return nil, ErrBodyRequired
 	}
@@ -91,16 +103,15 @@ func (s *Service) CreateRevision(ctx context.Context, articleID, body string, ac
 	if article.Status != StatusDraft && article.Status != StatusPublished {
 		return nil, ErrRevisionLocked
 	}
+	if expectedRevisionNo > 0 && article.CurrentRevisionNo != expectedRevisionNo {
+		return nil, ErrRevisionConflict
+	}
 
 	// Always increment current revision no for a new edit
 	article.CurrentRevisionNo += 1
 	article.Status = StatusDraft
 	article.UpdatedAt = time.Now().UTC()
 	article.UpdatedBy = actorID
-
-	if err := s.repo.UpdateArticle(ctx, article); err != nil {
-		return nil, err
-	}
 
 	revision := &Revision{
 		ID:         uuid.New().String(),
@@ -111,7 +122,7 @@ func (s *Service) CreateRevision(ctx context.Context, articleID, body string, ac
 		CreatedAt:  time.Now().UTC(),
 	}
 
-	if err := s.repo.CreateRevision(ctx, revision); err != nil {
+	if err := s.repo.CreateRevisionAtomically(ctx, article, revision, article.CurrentRevisionNo-1); err != nil {
 		return nil, err
 	}
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createAnnouncementAction } from "@/app/actions/cms";
@@ -9,6 +9,12 @@ import { AdminIcon } from "@/components/admin-icon";
 import MediaPicker from "@/components/media/MediaPicker";
 import { mediaMarkdown, mediaUsagesFromMarkdown } from "@/components/media/insertion";
 import type { MediaSelection } from "@/components/media/types";
+import { DraftStatus } from "@/components/drafts/DraftStatus";
+import type { DraftPayload } from "@/components/drafts/types";
+import { useAutoSaveDraft } from "@/components/drafts/use-auto-save-draft";
+
+type AnnouncementDraft = DraftPayload & { title: string; slug: string; body: string; start_at: string | null; end_at: string | null; media_asset_ids: string[] };
+const emptyDraft: AnnouncementDraft = { title: "", slug: "", body: "", start_at: null, end_at: null, media_asset_ids: [] };
 
 export default function CreateAnnouncementPage() {
   const router = useRouter();
@@ -20,6 +26,15 @@ export default function CreateAnnouncementPage() {
   const [endAt, setEndAt] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const value = useMemo<AnnouncementDraft>(() => ({
+    title, slug, body, start_at: startAt || null, end_at: endAt || null,
+    media_asset_ids: [...new Set(mediaUsagesFromMarkdown(body).map((usage) => usage.media_id))],
+  }), [body, endAt, slug, startAt, title]);
+  const applyDraft = (draft: AnnouncementDraft) => {
+    setTitle(draft.title); setSlug(draft.slug); setBody(draft.body);
+    setStartAt(draft.start_at ?? ""); setEndAt(draft.end_at ?? "");
+  };
+  const autoSave = useAutoSaveDraft({ formKey: "announcement.create", entityType: "announcement", value, emptyValue: emptyDraft, onRecover: applyDraft, onStartNew: applyDraft });
 
   const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
@@ -29,6 +44,7 @@ export default function CreateAnnouncementPage() {
 
   const insertMedia = (selection: MediaSelection) => {
     setBody((prev) => `${prev}\n${mediaMarkdown(selection)}\n`);
+    autoSave.requestImmediateSave();
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -53,6 +69,7 @@ export default function CreateAnnouncementPage() {
         throw new Error(res.error || "Pengumuman belum dapat dibuat");
       }
 
+      await autoSave.finalize();
       router.push("/dashboard/announcements");
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Terjadi kesalahan yang tidak terduga");
@@ -64,6 +81,7 @@ export default function CreateAnnouncementPage() {
   return (
     <div className="admin-page max-w-5xl">
       <div className="admin-page-header"><div><Link href="/dashboard/announcements" className="text-sm font-bold text-sky-700">← Kembali ke Pengumuman</Link><p className="admin-kicker mt-5">Editor pengumuman</p><h1 className="admin-page-title">Buat pengumuman baru</h1><p className="admin-page-copy">Atur periode tayang agar informasi muncul pada waktu yang tepat.</p></div><span className="admin-status bg-slate-100 text-slate-600">Status: Draft</span></div>
+      <DraftStatus state={autoSave.state} message={autoSave.message} lastSavedAt={autoSave.lastSavedAt} recovery={autoSave.recovery} onRecover={autoSave.recoverFrom} onKeepCurrent={autoSave.keepCurrent} onDiscard={autoSave.discard} onStartNew={autoSave.startNew} onRetry={autoSave.saveNow} />
       <form onSubmit={handleSubmit} className="admin-form-card">
         <div className="admin-form-header"><div className="flex items-center gap-3"><span className="admin-stat-icon"><AdminIcon name="announcement" className="h-5 w-5" /></span><div><h2 className="font-black text-slate-900">Informasi pengumuman</h2><p className="mt-1 text-xs text-slate-500">Lengkapi isi dan jadwal publikasi.</p></div></div></div>
         <div className="admin-form-body">

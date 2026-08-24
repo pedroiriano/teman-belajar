@@ -80,6 +80,8 @@ Compose tidak menyediakan fallback untuk published port. Semua nilai host wajib 
 - Mengubah password admin Moodle pada `.env` hanya memengaruhi instalasi baru. Rotasi instalasi yang sudah ada harus memakai CLI resmi `admin/cli/reset_password.php` dan dicatat di handoff tanpa menulis nilainya.
 - Jangan menulis secret ke README, handoff, issue, prompt, screenshot, atau log.
 - `TB_SEARCH_CAPTURE_RAW_QUERY` wajib `false`; query pencarian mentah tidak boleh dicatat secara default.
+- `TB_FORM_DRAFT_RETENTION_DAYS` wajib bilangan bulat `1`–`365`; nilai lokal
+  kanonis `30` hari dan hanya diteruskan ke service `api`.
 - `TB_MEILI_ENV` wajib `development` untuk Compose lokal dan master key tidak pernah dikirim ke browser.
 - Perbedaan local/test/production diatur lebih rinci dalam `ENVIRONMENT-SECURITY-MATRIX.md`.
 
