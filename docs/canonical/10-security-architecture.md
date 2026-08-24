@@ -136,6 +136,17 @@ Minimum:
 - security policy change.
 - authoring draft create/recover/conflict/discard/finalize (metadata only; never
   draft payload).
+- knowledge hierarchy create/update/move/reorder/archive and article placement;
+  log actor, action, target, result, and trace context, never article body or
+  draft payload.
+
+Knowledge hierarchy authorization is enforced in the Portal API. Hiding Cuba
+Admin controls is not authorization. Public responses exclude archived branches
+and use database-derived ancestry so a forged client breadcrumb, parent, actor,
+or hierarchy path cannot widen visibility. Mutation inputs are bounded;
+database constraints independently prevent cycles, excessive depth, sibling
+collisions, and hard deletion of referenced nodes. Optimistic versions prevent
+silent stale metadata, move, and archive writes.
 
 ## 11. Threat Modeling
 

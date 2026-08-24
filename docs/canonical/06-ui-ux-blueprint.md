@@ -97,6 +97,8 @@ CTA learning mengarahkan melalui SSO ke Moodle activity/course context.
 
 ## 5. Knowledge Detail
 
+- three-pane desktop explorer: hierarchy, article, and table of contents;
+- mobile hierarchy and table-of-contents drawers;
 - breadcrumb;
 - title;
 - summary;
@@ -109,6 +111,14 @@ CTA learning mengarahkan melalui SSO ke Moodle activity/course context.
 - attachment;
 - related content;
 - bookmark/rating/share.
+
+The breadcrumb is derived from the article's authoritative hierarchy ancestry,
+not from a browser-supplied label. Public hierarchy navigation exposes active
+nodes only, keeps sibling order deterministic, identifies the selected node,
+and has explicit empty/error states. A node filter scopes the Knowledge list
+without replacing the existing category filter. Heading anchors for level two
+and three Markdown headings provide a stable, keyboard-reachable table of
+contents.
 
 ## 6. My Learning Dashboard
 
@@ -135,6 +145,7 @@ Navigation:
 - Media
 - FAQ
 - Taxonomy
+- Knowledge Hierarchy
 - Navigation/Banner
 - Users/Profile
 - Integration Health
@@ -142,6 +153,13 @@ Navigation:
 - Configuration
 
 Dangerous action memakai explicit confirmation dan authorization.
+
+Knowledge Hierarchy uses the Cuba shell and semantic Admin tokens. Portal
+Administrators and Content Editors can create, edit, move, reorder, archive,
+and assign one primary node to an article. Reviewers receive a read-only tree;
+the API remains authoritative for denial. Hierarchy create/edit forms use the
+same server-authoritative auto-save and explicit recovery contract as other
+eligible authoring forms. Archive is non-destructive and requires confirmation.
 
 ## 8. Design System
 

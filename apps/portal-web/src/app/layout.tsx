@@ -9,6 +9,7 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"], display: "swap" });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.PORTAL_PUBLIC_BASE_URL || "http://localhost:3000"),
   title: { default: "Teman Belajar", template: "%s | Teman Belajar" },
   description: "Enterprise Digital Learning Experience Platform untuk belajar, berbagi pengetahuan, dan bertumbuh bersama.",
 };

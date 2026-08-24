@@ -178,6 +178,22 @@ erDiagram
     jsonb payload
     boolean published
   }
+  KNOWLEDGE_NODE {
+    uuid id PK
+    uuid parent_id FK
+    string node_type
+    string slug
+    string title
+    int sort_order
+    string status
+    int version
+  }
+  KNOWLEDGE_ARTICLE_NODE {
+    uuid article_id PK,FK
+    uuid node_id FK
+    timestamptz created_at
+    timestamptz updated_at
+  }
   FORM_DRAFT {
     uuid id PK
     uuid actor_subject
@@ -198,6 +214,9 @@ erDiagram
   CATEGORY ||--o{ NEWS : categorizes
   CATEGORY ||--o{ KNOWLEDGE_ARTICLE : categorizes
   KNOWLEDGE_ARTICLE ||--o{ KNOWLEDGE_REVISION : has
+  KNOWLEDGE_NODE ||--o{ KNOWLEDGE_NODE : contains
+  KNOWLEDGE_NODE ||--o{ KNOWLEDGE_ARTICLE_NODE : classifies
+  KNOWLEDGE_ARTICLE ||--o| KNOWLEDGE_ARTICLE_NODE : has_primary_placement
   MEDIA_ASSET ||--o{ MEDIA_USAGES : used_in
   USER_PROFILE ||--o| MOODLE_USER_MAPPING : maps_to
   USER_PROFILE ||--o{ AUDIT_EVENT : acts

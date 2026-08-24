@@ -3,16 +3,17 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { transitionKnowledgeAction, getAdminKnowledgeDetailAction, createKnowledgeRevisionAction } from "@/app/actions/knowledge";
+import { transitionKnowledgeAction, getAdminKnowledgeDetailAction, createKnowledgeRevisionAction, assignKnowledgeArticleNodeAction } from "@/app/actions/knowledge";
 import MediaPicker from "@/components/media/MediaPicker";
 import { mediaMarkdown, mediaUsagesFromMarkdown } from "@/components/media/insertion";
 import type { MediaSelection } from "@/components/media/types";
 import { DraftStatus } from "@/components/drafts/DraftStatus";
 import type { DraftPayload } from "@/components/drafts/types";
 import { useAutoSaveDraft } from "@/components/drafts/use-auto-save-draft";
+import { KnowledgeNodeSelect } from "@/components/knowledge/KnowledgeNodeSelect";
 
-type KnowledgeEditDraft = DraftPayload & { body: string; media_asset_ids: string[] };
-const blankDraft: KnowledgeEditDraft = { body: "", media_asset_ids: [] };
+type KnowledgeEditDraft = DraftPayload & { body: string; primary_node_id: string | null; media_asset_ids: string[] };
+const blankDraft: KnowledgeEditDraft = { body: "", primary_node_id: null, media_asset_ids: [] };
 
 export default function AdminKnowledgeDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -23,6 +24,7 @@ export default function AdminKnowledgeDetailPage() {
   const [actionLoading, setActionLoading] = useState(false);
   const [error, setError] = useState("");
   const [body, setBody] = useState("");
+  const [primaryNodeId, setPrimaryNodeId] = useState("");
 
   useEffect(() => {
     const fetchArticle = async () => {
@@ -35,6 +37,7 @@ export default function AdminKnowledgeDetailPage() {
         
 		setArticle(res.data);
 		setBody(res.data?.body || "");
+		setPrimaryNodeId(res.data?.hierarchy?.node_id || "");
 		setRoles(res.roles || []);
       } catch (e) {
         setError("Artikel pengetahuan belum dapat dimuat");
@@ -49,9 +52,9 @@ export default function AdminKnowledgeDetailPage() {
   const isEditor = roles.includes("Content Editor") || roles.includes("Portal Administrator");
   const isReviewer = roles.includes("Reviewer") || roles.includes("Portal Administrator");
   const canCreateRevision = Boolean(article && isEditor && ["draft", "published"].includes(article.status));
-  const value = useMemo<KnowledgeEditDraft>(() => ({ body, media_asset_ids: [...new Set(mediaUsagesFromMarkdown(body).map((usage) => usage.media_id))] }), [body]);
-  const canonical = useMemo<KnowledgeEditDraft>(() => article ? { body: article.body || "", media_asset_ids: [...new Set(mediaUsagesFromMarkdown(article.body || "").map((usage) => usage.media_id))] } : blankDraft, [article]);
-  const applyDraft = (draft: KnowledgeEditDraft) => setBody(draft.body);
+  const value = useMemo<KnowledgeEditDraft>(() => ({ body, primary_node_id: primaryNodeId || null, media_asset_ids: [...new Set(mediaUsagesFromMarkdown(body).map((usage) => usage.media_id))] }), [body, primaryNodeId]);
+  const canonical = useMemo<KnowledgeEditDraft>(() => article ? { body: article.body || "", primary_node_id: article.hierarchy?.node_id || null, media_asset_ids: [...new Set(mediaUsagesFromMarkdown(article.body || "").map((usage) => usage.media_id))] } : blankDraft, [article]);
+  const applyDraft = (draft: KnowledgeEditDraft) => { setBody(draft.body); setPrimaryNodeId(draft.primary_node_id ?? ""); };
   const autoSave = useAutoSaveDraft({ formKey: "knowledge.edit", entityType: "knowledge", entityId: id, baseEntityVersion: article ? String(article.current_revision_no) : undefined, value, emptyValue: canonical, enabled: canCreateRevision, onRecover: applyDraft, onStartNew: applyDraft });
   const insertMedia = (selection: MediaSelection) => { setBody((current) => `${current}\n${mediaMarkdown(selection)}\n`); autoSave.requestImmediateSave(); };
 
@@ -70,7 +73,15 @@ export default function AdminKnowledgeDetailPage() {
   const handleSaveRevision = async () => {
     setActionLoading(true);
     setError("");
-    const res = await createKnowledgeRevisionAction(id, { body, expected_revision_no: article.current_revision_no, media_usages: mediaUsagesFromMarkdown(body) });
+    if (!primaryNodeId) {
+      setError("Pilih struktur utama sebelum menyimpan artikel.");
+      setActionLoading(false);
+      return;
+    }
+    const hierarchyDirty = primaryNodeId !== (article.hierarchy?.node_id || "");
+    const res = article.body === body && hierarchyDirty
+      ? await assignKnowledgeArticleNodeAction(id, primaryNodeId)
+      : await createKnowledgeRevisionAction(id, { body, expected_revision_no: article.current_revision_no, primary_node_id: primaryNodeId || undefined, media_usages: mediaUsagesFromMarkdown(body) });
     if (!res.success) {
       setError(res.error || "Revisi baru belum dapat disimpan");
       setActionLoading(false);
@@ -153,6 +164,7 @@ export default function AdminKnowledgeDetailPage() {
               </div>
             ) : (
               <div className="space-y-4">
+                <KnowledgeNodeSelect value={primaryNodeId} onChange={setPrimaryNodeId} required disabled={!canCreateRevision} />
                 <div className="flex justify-end"><MediaPicker onSelect={insertMedia} buttonLabel="Sisipkan media" /></div>
                 <textarea
                   value={body}
@@ -162,7 +174,7 @@ export default function AdminKnowledgeDetailPage() {
                   aria-label="Isi revisi artikel"
                 />
                 
-                {article.body !== body && (
+                {(article.body !== body || primaryNodeId !== (article.hierarchy?.node_id || "")) && (
                   <div className="flex justify-end">
                     <button
                       onClick={handleSaveRevision}

@@ -32,7 +32,7 @@ func (m *MeilisearchIndex) Configure(ctx context.Context) error {
 		}
 	}
 
-	searchable := []string{"title", "summary", "body_text", "category_name", "tags"}
+	searchable := []string{"title", "summary", "body_text", "category_name", "hierarchy_path", "tags"}
 	filterable := []interface{}{"source_type", "category_id", "tags", "generation"}
 	sortable := []string{"published_at", "updated_at"}
 	settings := []struct {

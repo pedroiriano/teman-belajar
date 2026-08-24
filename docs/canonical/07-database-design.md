@@ -80,6 +80,21 @@ dari Moodle tetap dapat diaudit setelah melewati analytics worker.
 - `knowledge.revisions`
 - `knowledge.article_reviewers`
 - `knowledge.related_articles`
+- physical `knowledge_nodes`: adjacency-list hierarchy with an active/archived
+  lifecycle, optimistic `version`, deterministic sibling order, and maximum
+  depth eight;
+- physical `knowledge_article_nodes`: exactly one primary hierarchy association
+  per Knowledge article.
+
+The current physical schema remains flat for backward compatibility. Migration
+015 adds `knowledge_nodes` and `knowledge_article_nodes`; the logical
+`knowledge.*` names above describe ownership, not PostgreSQL schemas. Allowed
+node types are `collection`, `aspect`, `indicator`, `sub_indicator`, `topic`,
+and `section`. Sibling slug and sibling order are unique, including at the root.
+Cycles, self-parenting, missing parents, depth greater than eight, hard deletion
+of referenced nodes, and assignment to archived nodes are rejected. Archive is
+forward-only through the application service; an archived node or archived
+ancestor makes its branch unavailable to public reads and search indexing.
 
 ### media
 - `media.assets`
@@ -154,6 +169,9 @@ Index berdasarkan query nyata:
 - bookmarks, ratings, and recent views unique on `user_subject + target_type + target_id`;
 - recent views ordered by `user_subject + last_viewed_at`;
 - rating aggregate by `target_type + target_id`.
+- hierarchy children by `parent_id + sort_order + id`;
+- hierarchy publication by `status`;
+- article placement by unique `article_id` and lookup by `node_id`.
 
 ## 9. Audit
 

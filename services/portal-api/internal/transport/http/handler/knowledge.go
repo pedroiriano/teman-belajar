@@ -12,38 +12,41 @@ import (
 )
 
 type KnowledgeHandler struct {
-	svc *knowledge.Service
+	svc       *knowledge.Service
+	hierarchy *knowledge.HierarchyService
 }
 
-func NewKnowledgeHandler(svc *knowledge.Service) *KnowledgeHandler {
-	return &KnowledgeHandler{svc: svc}
+func NewKnowledgeHandler(svc *knowledge.Service, hierarchy *knowledge.HierarchyService) *KnowledgeHandler {
+	return &KnowledgeHandler{svc: svc, hierarchy: hierarchy}
 }
 
 // Request & Response Types
 
 type ArticlePublicResponse struct {
-	ID             string     `json:"id"`
-	Slug           string     `json:"slug"`
-	Title          string     `json:"title"`
-	Summary        *string    `json:"summary,omitempty"`
-	Body           string     `json:"body,omitempty"`
-	PublishedAt    *time.Time `json:"published_at,omitempty"`
-	LastReviewedAt *time.Time `json:"last_reviewed_at,omitempty"`
+	ID             string                      `json:"id"`
+	Slug           string                      `json:"slug"`
+	Title          string                      `json:"title"`
+	Summary        *string                     `json:"summary,omitempty"`
+	Body           string                      `json:"body,omitempty"`
+	PublishedAt    *time.Time                  `json:"published_at,omitempty"`
+	LastReviewedAt *time.Time                  `json:"last_reviewed_at,omitempty"`
+	Hierarchy      *knowledge.ArticleHierarchy `json:"hierarchy,omitempty"`
 }
 
 type ArticleAdminResponse struct {
-	ID                  string     `json:"id"`
-	Slug                string     `json:"slug"`
-	Title               string     `json:"title"`
-	Summary             *string    `json:"summary,omitempty"`
-	Status              string     `json:"status"`
-	CurrentRevisionNo   int        `json:"current_revision_no"`
-	PublishedRevisionNo *int       `json:"published_revision_no,omitempty"`
-	CreatedAt           time.Time  `json:"created_at"`
-	UpdatedAt           time.Time  `json:"updated_at"`
-	LastReviewedAt      *time.Time `json:"last_reviewed_at,omitempty"`
-	Body                string     `json:"body,omitempty"`
-	CurrentRevisionID   string     `json:"current_revision_id,omitempty"`
+	ID                  string                      `json:"id"`
+	Slug                string                      `json:"slug"`
+	Title               string                      `json:"title"`
+	Summary             *string                     `json:"summary,omitempty"`
+	Status              string                      `json:"status"`
+	CurrentRevisionNo   int                         `json:"current_revision_no"`
+	PublishedRevisionNo *int                        `json:"published_revision_no,omitempty"`
+	CreatedAt           time.Time                   `json:"created_at"`
+	UpdatedAt           time.Time                   `json:"updated_at"`
+	LastReviewedAt      *time.Time                  `json:"last_reviewed_at,omitempty"`
+	Body                string                      `json:"body,omitempty"`
+	CurrentRevisionID   string                      `json:"current_revision_id,omitempty"`
+	Hierarchy           *knowledge.ArticleHierarchy `json:"hierarchy,omitempty"`
 }
 
 type CreateArticleRequest struct {
@@ -93,12 +96,20 @@ func adminArticleResponse(article knowledge.Article) ArticleAdminResponse {
 func (h *KnowledgeHandler) ListPublicArticles(w http.ResponseWriter, r *http.Request) {
 	page, pageSize := parseKnowledgePagination(r)
 	var categoryID *string
+	var nodeID *string
 	if category := r.URL.Query().Get("category"); category != "" {
 		categoryID = &category
 	}
+	if node := r.URL.Query().Get("node"); node != "" {
+		nodeID = &node
+	}
 
-	result, err := h.svc.ListPublicArticles(r.Context(), page, pageSize, categoryID)
+	result, err := h.svc.ListPublicArticles(r.Context(), page, pageSize, categoryID, nodeID)
 	if err != nil {
+		if errors.Is(err, knowledge.ErrInvalidNode) {
+			respondProblem(w, http.StatusUnprocessableEntity, "Validation Error", "node must be a valid UUID")
+			return
+		}
 		respondProblem(w, http.StatusInternalServerError, "Internal Server Error", "Unable to load knowledge articles")
 		return
 	}
@@ -140,6 +151,9 @@ func (h *KnowledgeHandler) GetPublicArticle(w http.ResponseWriter, r *http.Reque
 			LastReviewedAt: article.LastReviewedAt,
 		},
 		Related: make([]ArticlePublicResponse, len(related)),
+	}
+	if h.hierarchy != nil {
+		res.Hierarchy, _ = h.hierarchy.ArticleHierarchy(r.Context(), article.ID, true)
 	}
 
 	for i, rel := range related {
@@ -187,6 +201,9 @@ func (h *KnowledgeHandler) GetAdminArticle(w http.ResponseWriter, r *http.Reques
 	response := adminArticleResponse(*article)
 	response.Body = revision.Body
 	response.CurrentRevisionID = revision.ID
+	if h.hierarchy != nil {
+		response.Hierarchy, _ = h.hierarchy.ArticleHierarchy(r.Context(), article.ID, false)
+	}
 	respondJSON(w, http.StatusOK, response)
 }
 

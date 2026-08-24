@@ -27,7 +27,7 @@ func (m *MeilisearchClient) Search(ctx context.Context, query domainsearch.Query
 		Limit:  int64(query.PageSize),
 		Offset: int64((query.Page - 1) * query.PageSize),
 		AttributesToRetrieve: []string{
-			"document_id", "source_type", "title", "summary", "url", "category_name", "tags", "published_at",
+			"document_id", "source_type", "title", "summary", "url", "category_name", "hierarchy_path", "tags", "published_at",
 		},
 	}
 
@@ -64,7 +64,7 @@ func (m *MeilisearchClient) Search(ctx context.Context, query domainsearch.Query
 		hits = append(hits, domainsearch.Hit{
 			ID: document.DocumentID, ContentType: document.SourceType, Title: document.Title,
 			Snippet: document.Summary, URL: document.URL, Category: document.CategoryName,
-			Tags: document.Tags, PublishedAt: document.PublishedAt,
+			HierarchyPath: document.HierarchyPath, Tags: document.Tags, PublishedAt: document.PublishedAt,
 		})
 	}
 

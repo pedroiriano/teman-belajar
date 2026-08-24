@@ -151,8 +151,51 @@ func (r *KnowledgeRepository) ListRevisions(ctx context.Context, articleID strin
 	return revs, nil
 }
 
-func (r *KnowledgeRepository) ListPublicArticles(ctx context.Context, page, pageSize int, categoryID *string) ([]knowledge.Article, int, error) {
+func (r *KnowledgeRepository) ListPublicArticles(ctx context.Context, page, pageSize int, categoryID, nodeID *string) ([]knowledge.Article, int, error) {
 	offset := (page - 1) * pageSize
+	if nodeID != nil {
+		const countByNode = `
+			SELECT COUNT(*) FROM knowledge_articles a
+			JOIN knowledge_article_nodes an ON an.article_id=a.id
+			WHERE a.published_revision_no IS NOT NULL AND an.node_id=$1
+			  AND ($2::uuid IS NULL OR a.category_id=$2::uuid)
+			  AND NOT EXISTS (
+				WITH RECURSIVE ancestors AS (
+					SELECT id,parent_id,status FROM knowledge_nodes WHERE id=an.node_id
+					UNION ALL SELECT n.id,n.parent_id,n.status FROM knowledge_nodes n JOIN ancestors x ON n.id=x.parent_id
+				) SELECT 1 FROM ancestors WHERE status<>'active'
+			  )`
+		const listByNode = `
+			SELECT a.id, a.slug, a.title, a.summary, a.status, a.category_id,
+			       a.published_revision_no, a.current_revision_no, a.created_at,
+			       a.created_by, a.updated_at, a.updated_by, a.last_reviewed_at
+			FROM knowledge_articles a
+			JOIN knowledge_article_nodes an ON an.article_id=a.id
+			WHERE a.published_revision_no IS NOT NULL AND an.node_id=$1
+			  AND ($2::uuid IS NULL OR a.category_id=$2::uuid)
+			  AND NOT EXISTS (
+				WITH RECURSIVE ancestors AS (
+					SELECT id,parent_id,status FROM knowledge_nodes WHERE id=an.node_id
+					UNION ALL SELECT n.id,n.parent_id,n.status FROM knowledge_nodes n JOIN ancestors x ON n.id=x.parent_id
+				) SELECT 1 FROM ancestors WHERE status<>'active'
+			  )
+			ORDER BY a.created_at DESC LIMIT $3 OFFSET $4`
+		var category any
+		if categoryID != nil {
+			category = *categoryID
+		}
+		var total int
+		if err := r.db.QueryRowContext(ctx, countByNode, *nodeID, category).Scan(&total); err != nil {
+			return nil, 0, err
+		}
+		rows, err := r.db.QueryContext(ctx, listByNode, *nodeID, category, pageSize, offset)
+		if err != nil {
+			return nil, 0, err
+		}
+		defer rows.Close()
+		articles, err := scanKnowledgeArticles(rows)
+		return articles, total, err
+	}
 
 	// Base query
 	query := `
@@ -208,15 +251,23 @@ func (r *KnowledgeRepository) ListPublicArticles(ctx context.Context, page, page
 	}
 	defer rows.Close()
 
-	var articles []knowledge.Article
+	articles, err := scanKnowledgeArticles(rows)
+	return articles, total, err
+}
+
+func scanKnowledgeArticles(rows *sql.Rows) ([]knowledge.Article, error) {
+	articles := make([]knowledge.Article, 0)
 	for rows.Next() {
-		var a knowledge.Article
-		if err := rows.Scan(&a.ID, &a.Slug, &a.Title, &a.Summary, &a.Status, &a.CategoryID, &a.PublishedRevisionNo, &a.CurrentRevisionNo, &a.CreatedAt, &a.CreatedBy, &a.UpdatedAt, &a.UpdatedBy, &a.LastReviewedAt); err != nil {
-			return nil, 0, err
+		var article knowledge.Article
+		if err := rows.Scan(&article.ID, &article.Slug, &article.Title, &article.Summary,
+			&article.Status, &article.CategoryID, &article.PublishedRevisionNo,
+			&article.CurrentRevisionNo, &article.CreatedAt, &article.CreatedBy,
+			&article.UpdatedAt, &article.UpdatedBy, &article.LastReviewedAt); err != nil {
+			return nil, err
 		}
-		articles = append(articles, a)
+		articles = append(articles, article)
 	}
-	return articles, total, nil
+	return articles, rows.Err()
 }
 
 func (r *KnowledgeRepository) ListAdminArticles(ctx context.Context, page, pageSize int) ([]knowledge.Article, int, error) {

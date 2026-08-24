@@ -15,7 +15,7 @@ type Repository interface {
 	GetRevision(ctx context.Context, articleID string, revisionNo int) (*Revision, error)
 	ListRevisions(ctx context.Context, articleID string) ([]Revision, error)
 
-	ListPublicArticles(ctx context.Context, page, pageSize int, categoryID *string) ([]Article, int, error)
+	ListPublicArticles(ctx context.Context, page, pageSize int, categoryID, nodeID *string) ([]Article, int, error)
 	ListAdminArticles(ctx context.Context, page, pageSize int) ([]Article, int, error)
 
 	AddRelatedArticle(ctx context.Context, articleID1, articleID2 string) error
