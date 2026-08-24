@@ -12,9 +12,10 @@ import type { MediaSelection } from "@/components/media/types";
 import { DraftStatus } from "@/components/drafts/DraftStatus";
 import type { DraftPayload } from "@/components/drafts/types";
 import { useAutoSaveDraft } from "@/components/drafts/use-auto-save-draft";
+import { KnowledgeNodeSelect } from "@/components/knowledge/KnowledgeNodeSelect";
 
-type KnowledgeDraft = DraftPayload & { title: string; slug: string; summary: string; body: string; media_asset_ids: string[] };
-const emptyDraft: KnowledgeDraft = { title: "", slug: "", summary: "", body: "", media_asset_ids: [] };
+type KnowledgeDraft = DraftPayload & { title: string; slug: string; summary: string; body: string; primary_node_id: string | null; media_asset_ids: string[] };
+const emptyDraft: KnowledgeDraft = { title: "", slug: "", summary: "", body: "", primary_node_id: null, media_asset_ids: [] };
 
 export default function CreateKnowledgePage() {
   const router = useRouter();
@@ -23,13 +24,14 @@ export default function CreateKnowledgePage() {
   const [slug, setSlug] = useState("");
   const [summary, setSummary] = useState("");
   const [body, setBody] = useState("");
+  const [primaryNodeId, setPrimaryNodeId] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const value = useMemo<KnowledgeDraft>(() => ({
-    title, slug, summary, body,
+    title, slug, summary, body, primary_node_id: primaryNodeId || null,
     media_asset_ids: [...new Set(mediaUsagesFromMarkdown(body).map((usage) => usage.media_id))],
-  }), [body, slug, summary, title]);
-  const applyDraft = (draft: KnowledgeDraft) => { setTitle(draft.title); setSlug(draft.slug); setSummary(draft.summary); setBody(draft.body); };
+  }), [body, primaryNodeId, slug, summary, title]);
+  const applyDraft = (draft: KnowledgeDraft) => { setTitle(draft.title); setSlug(draft.slug); setSummary(draft.summary); setBody(draft.body); setPrimaryNodeId(draft.primary_node_id ?? ""); };
   const autoSave = useAutoSaveDraft({ formKey: "knowledge.create", entityType: "knowledge", value, emptyValue: emptyDraft, onRecover: applyDraft, onStartNew: applyDraft });
 
   // Auto-generate slug from title
@@ -50,7 +52,7 @@ export default function CreateKnowledgePage() {
     setError("");
 
     try {
-      const res = await createKnowledgeAction({ title, slug, summary, body, media_usages: mediaUsagesFromMarkdown(body) });
+      const res = await createKnowledgeAction({ title, slug, summary, body, primary_node_id: primaryNodeId || undefined, media_usages: mediaUsagesFromMarkdown(body) });
 
       if (!res.success) {
         throw new Error(res.error || "Artikel pengetahuan belum dapat dibuat");
@@ -121,6 +123,8 @@ export default function CreateKnowledgePage() {
               placeholder="Jelaskan manfaat artikel secara singkat."
             />
           </div>
+
+          <KnowledgeNodeSelect value={primaryNodeId} onChange={setPrimaryNodeId} required />
 
             <div className="space-y-2">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">

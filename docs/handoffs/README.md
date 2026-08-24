@@ -37,3 +37,10 @@ untuk Knowledge, menggunakan OIDC `sub`, dan melarang Gemini/Codex/Antigravity
 membuat struktur, service, konfigurasi, atau aturan keamanan alternatif.
 
 Untuk cross-Portal SSO/SLO dan Portal navigation, `TASK-008A-HANDOFF.md` adalah authoritative completion record. TASK-008A is complete only for the environment actually verified; production cross-site/global SLO remains subject to its documented production readiness limitations.
+
+For hierarchical Knowledge structure, article placement, public three-pane
+exploration, hierarchy-aware search, and hierarchy operations, read
+`TASK-011B-HANDOFF.md` together with
+`docs/runbooks/KNOWLEDGE-HIERARCHY-OPERATIONS.md`. Do not weaken its maximum
+depth, archive-only lifecycle, optimistic conflict, server-side authorization,
+or active-ancestry publication rules.

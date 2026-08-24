@@ -18,6 +18,7 @@ type fieldKind int
 const (
 	fieldString fieldKind = iota
 	fieldNullableString
+	fieldNullableUUID
 	fieldUUIDList
 )
 
@@ -70,13 +71,31 @@ var formDefinitions = map[string]formDefinition{
 		fields: map[string]fieldRule{
 			"title": {kind: fieldString, max: 255}, "slug": {kind: fieldString, max: 255},
 			"summary": {kind: fieldString, max: 2000}, "body": {kind: fieldString, max: 200000},
+			"primary_node_id": {kind: fieldNullableUUID, max: 36},
 			"media_asset_ids": {kind: fieldUUIDList, max: 100},
 		},
 	},
 	"knowledge.edit": {
 		entityType: "knowledge", edit: true,
 		fields: map[string]fieldRule{
-			"body": {kind: fieldString, max: 200000}, "media_asset_ids": {kind: fieldUUIDList, max: 100},
+			"body": {kind: fieldString, max: 200000}, "primary_node_id": {kind: fieldNullableUUID, max: 36},
+			"media_asset_ids": {kind: fieldUUIDList, max: 100},
+		},
+	},
+	"knowledge-hierarchy.create": {
+		entityType: "knowledge_node",
+		fields: map[string]fieldRule{
+			"parent_id": {kind: fieldNullableUUID, max: 36}, "type": {kind: fieldString, max: 32},
+			"slug": {kind: fieldString, max: 120}, "title": {kind: fieldString, max: 200},
+			"description": {kind: fieldString, max: 1000}, "sort_order": {kind: fieldString, max: 5},
+		},
+	},
+	"knowledge-hierarchy.edit": {
+		entityType: "knowledge_node", edit: true,
+		fields: map[string]fieldRule{
+			"parent_id": {kind: fieldNullableUUID, max: 36}, "type": {kind: fieldString, max: 32},
+			"slug": {kind: fieldString, max: 120}, "title": {kind: fieldString, max: 200},
+			"description": {kind: fieldString, max: 1000}, "sort_order": {kind: fieldString, max: 5},
 		},
 	},
 }
@@ -143,6 +162,17 @@ func validateField(key string, raw json.RawMessage, rule fieldRule) error {
 		}
 		if containsPrivateCredentialURL(value) {
 			return fmt.Errorf("%w: private or credential-bearing URLs are forbidden", ErrValidation)
+		}
+	case fieldNullableUUID:
+		if bytes.Equal(bytes.TrimSpace(raw), []byte("null")) {
+			return nil
+		}
+		var value string
+		if err := json.Unmarshal(raw, &value); err != nil {
+			return fmt.Errorf("%w: field %q must be a UUID or null", ErrValidation, key)
+		}
+		if _, err := uuid.Parse(value); err != nil {
+			return fmt.Errorf("%w: field %q must be a UUID or null", ErrValidation, key)
 		}
 	case fieldUUIDList:
 		var values []string

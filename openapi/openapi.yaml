@@ -145,6 +145,12 @@ paths:
           in: query
           schema:
             type: string
+        - name: node
+          in: query
+          description: Filter published articles by their active primary hierarchy node.
+          schema:
+            type: string
+            format: uuid
       responses:
         '200':
           description: Published knowledge articles
@@ -160,6 +166,23 @@ paths:
                 $ref: '#/components/schemas/Problem'
       security: []
       summary: list Knowledge
+  /knowledge/tree:
+    get:
+      tags: [Knowledge]
+      operationId: getPublicKnowledgeTree
+      summary: get active public Knowledge hierarchy
+      security: []
+      responses:
+        '200':
+          description: Deterministically ordered active Knowledge tree
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/KnowledgeTreeResponse'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailableError'
+        '422':
+          $ref: '#/components/responses/ValidationError'
   /knowledge/{slug}:
     get:
       tags:
@@ -832,6 +855,139 @@ paths:
         '422':
           $ref: '#/components/responses/ValidationError'
       summary: create Knowledge Article
+  /admin/knowledge-hierarchy/nodes:
+    get:
+      tags: [Admin, Knowledge]
+      operationId: listAdminKnowledgeNodes
+      summary: list the governed Knowledge hierarchy
+      security:
+        - oidc: [content:read]
+      parameters:
+        - name: include_archived
+          in: query
+          schema: { type: boolean, default: false }
+      responses:
+        '200':
+          description: Knowledge hierarchy
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/KnowledgeTreeResponse' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+    post:
+      tags: [Admin, Knowledge]
+      operationId: createKnowledgeNode
+      summary: create a Knowledge hierarchy node
+      security:
+        - oidc: [content:write]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/KnowledgeNodeCreate' }
+      responses:
+        '201':
+          description: Node created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/KnowledgeNode' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409': { $ref: '#/components/responses/ConflictError' }
+        '422': { $ref: '#/components/responses/ValidationError' }
+  /admin/knowledge-hierarchy/nodes/{id}:
+    patch:
+      tags: [Admin, Knowledge]
+      operationId: updateKnowledgeNode
+      summary: update Knowledge node metadata with optimistic versioning
+      security:
+        - oidc: [content:write]
+      parameters:
+        - $ref: '#/components/parameters/KnowledgeNodeId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/KnowledgeNodeUpdate' }
+      responses:
+        '200':
+          description: Node updated
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/KnowledgeNode' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/ConflictError' }
+        '422': { $ref: '#/components/responses/ValidationError' }
+  /admin/knowledge-hierarchy/nodes/{id}/move:
+    post:
+      tags: [Admin, Knowledge]
+      operationId: moveKnowledgeNode
+      summary: transactionally move a node and its subtree
+      security:
+        - oidc: [content:write]
+      parameters:
+        - $ref: '#/components/parameters/KnowledgeNodeId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/KnowledgeNodeMove' }
+      responses:
+        '200':
+          description: Node moved
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/KnowledgeNode' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/ConflictError' }
+        '422': { $ref: '#/components/responses/ValidationError' }
+  /admin/knowledge-hierarchy/nodes/{id}/archive:
+    post:
+      tags: [Admin, Knowledge]
+      operationId: archiveKnowledgeNode
+      summary: archive a Knowledge node
+      security:
+        - oidc: [content:write]
+      parameters:
+        - $ref: '#/components/parameters/KnowledgeNodeId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [version]
+              properties:
+                version: { type: integer, minimum: 1 }
+      responses:
+        '204': { description: Node archived }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/ConflictError' }
+  /admin/knowledge-hierarchy/nodes/reorder:
+    post:
+      tags: [Admin, Knowledge]
+      operationId: reorderKnowledgeNodes
+      summary: transactionally replace the complete sibling order
+      security:
+        - oidc: [content:write]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/KnowledgeNodeReorder' }
+      responses:
+        '204': { description: Siblings reordered }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409': { $ref: '#/components/responses/ConflictError' }
+        '422': { $ref: '#/components/responses/ValidationError' }
   /admin/knowledge/{id}:
     get:
       tags:
@@ -862,6 +1018,39 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
       summary: get Admin Knowledge Article
+  /admin/knowledge/{id}/primary-node:
+    put:
+      tags: [Admin, Knowledge]
+      operationId: assignKnowledgeArticlePrimaryNode
+      summary: assign the active primary hierarchy node for an article
+      security:
+        - oidc: [content:write]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [node_id]
+              properties:
+                node_id: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Primary hierarchy assigned
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/KnowledgeArticleHierarchy' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/ConflictError' }
+        '422': { $ref: '#/components/responses/ValidationError' }
   /admin/knowledge/{id}/revisions:
     post:
       tags:
@@ -1820,6 +2009,9 @@ paths:
                           type: string
                         category:
                           type: string
+                        hierarchy_path:
+                          type: array
+                          items: { type: string }
                         tags:
                           type: array
                           items:
@@ -1873,6 +2065,13 @@ components:
         type: string
         format: uuid
     EntityId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    KnowledgeNodeId:
       name: id
       in: path
       required: true
@@ -2325,6 +2524,101 @@ components:
             reason:
               type: string
               enum: [same_category, recent_interest, popular_rating, fallback_recent]
+    KnowledgeNodeType:
+      type: string
+      enum: [collection, aspect, indicator, sub_indicator, topic, section]
+    KnowledgeBreadcrumb:
+      type: object
+      additionalProperties: false
+      required: [id, slug, title, type]
+      properties:
+        id: { type: string, format: uuid }
+        slug: { type: string, maxLength: 120 }
+        title: { type: string, maxLength: 200 }
+        type: { $ref: '#/components/schemas/KnowledgeNodeType' }
+    KnowledgeArticleHierarchy:
+      type: object
+      additionalProperties: false
+      required: [node_id, breadcrumbs]
+      properties:
+        node_id: { type: string, format: uuid }
+        breadcrumbs:
+          type: array
+          maxItems: 8
+          items: { $ref: '#/components/schemas/KnowledgeBreadcrumb' }
+    KnowledgeNode:
+      type: object
+      additionalProperties: false
+      required: [id, type, slug, title, sort_order, status, version, depth, article_count, children, created_at, updated_at]
+      properties:
+        id: { type: string, format: uuid }
+        parent_id: { type: [string, 'null'], format: uuid }
+        type: { $ref: '#/components/schemas/KnowledgeNodeType' }
+        slug: { type: string, pattern: '^[a-z0-9]+(?:-[a-z0-9]+)*$', maxLength: 120 }
+        title: { type: string, minLength: 1, maxLength: 200 }
+        description: { type: [string, 'null'], maxLength: 1000 }
+        sort_order: { type: integer, minimum: 1, maximum: 10000 }
+        status: { type: string, enum: [active, archived] }
+        version: { type: integer, minimum: 1 }
+        depth: { type: integer, minimum: 1, maximum: 8 }
+        article_count: { type: integer, minimum: 0 }
+        children:
+          type: array
+          items: { $ref: '#/components/schemas/KnowledgeNode' }
+        created_at: { type: string, format: date-time }
+        created_by: { type: [string, 'null'], format: uuid }
+        updated_at: { type: string, format: date-time }
+        updated_by: { type: [string, 'null'], format: uuid }
+    KnowledgeTreeResponse:
+      type: object
+      additionalProperties: false
+      required: [data, max_depth]
+      properties:
+        data:
+          type: array
+          items: { $ref: '#/components/schemas/KnowledgeNode' }
+        max_depth: { type: integer, const: 8 }
+    KnowledgeNodeCreate:
+      type: object
+      additionalProperties: false
+      required: [parent_id, type, slug, title, description, sort_order]
+      properties:
+        parent_id: { type: [string, 'null'], format: uuid }
+        type: { $ref: '#/components/schemas/KnowledgeNodeType' }
+        slug: { type: string, pattern: '^[a-z0-9]+(?:-[a-z0-9]+)*$', maxLength: 120 }
+        title: { type: string, minLength: 1, maxLength: 200 }
+        description: { type: [string, 'null'], maxLength: 1000 }
+        sort_order: { type: integer, minimum: 1, maximum: 10000 }
+    KnowledgeNodeUpdate:
+      type: object
+      additionalProperties: false
+      required: [type, slug, title, description, version]
+      properties:
+        type: { $ref: '#/components/schemas/KnowledgeNodeType' }
+        slug: { type: string, pattern: '^[a-z0-9]+(?:-[a-z0-9]+)*$', maxLength: 120 }
+        title: { type: string, minLength: 1, maxLength: 200 }
+        description: { type: [string, 'null'], maxLength: 1000 }
+        version: { type: integer, minimum: 1 }
+    KnowledgeNodeMove:
+      type: object
+      additionalProperties: false
+      required: [parent_id, sort_order, version]
+      properties:
+        parent_id: { type: [string, 'null'], format: uuid }
+        sort_order: { type: integer, minimum: 1, maximum: 10000 }
+        version: { type: integer, minimum: 1 }
+    KnowledgeNodeReorder:
+      type: object
+      additionalProperties: false
+      required: [parent_id, ordered_ids]
+      properties:
+        parent_id: { type: [string, 'null'], format: uuid }
+        ordered_ids:
+          type: array
+          minItems: 1
+          maxItems: 1000
+          uniqueItems: true
+          items: { type: string, format: uuid }
     KnowledgeArticle:
       type: object
       required:
@@ -2382,6 +2676,8 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/KnowledgeArticle'
+        hierarchy:
+          $ref: '#/components/schemas/KnowledgeArticleHierarchy'
     KnowledgeList:
       type: object
       required:
@@ -2432,6 +2728,8 @@ components:
         - announcement.edit
         - knowledge.create
         - knowledge.edit
+        - knowledge-hierarchy.create
+        - knowledge-hierarchy.edit
     FormDraftPayload:
       type: object
       maxProperties: 8
@@ -2450,7 +2748,7 @@ components:
       required: [form_key, entity_type, entity_id, schema_version, payload, base_entity_version, expected_revision, client_updated_at]
       properties:
         form_key: { $ref: '#/components/schemas/FormDraftKey' }
-        entity_type: { type: string, enum: [news, announcement, knowledge] }
+        entity_type: { type: string, enum: [news, announcement, knowledge, knowledge_node] }
         entity_id: { type: [string, 'null'], format: uuid }
         schema_version: { type: integer, const: 1 }
         payload: { $ref: '#/components/schemas/FormDraftPayload' }
@@ -2464,7 +2762,7 @@ components:
         id: { type: string, format: uuid }
         draft_key: { type: string, format: uuid }
         form_key: { $ref: '#/components/schemas/FormDraftKey' }
-        entity_type: { type: string, enum: [news, announcement, knowledge] }
+        entity_type: { type: string, enum: [news, announcement, knowledge, knowledge_node] }
         entity_id: { type: string, format: uuid }
         schema_version: { type: integer, const: 1 }
         payload: { $ref: '#/components/schemas/FormDraftPayload' }

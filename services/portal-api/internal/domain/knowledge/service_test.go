@@ -135,7 +135,7 @@ func (m *mockKnowledgeRepo) ListRevisions(ctx context.Context, articleID string)
 	return revs, nil
 }
 
-func (m *mockKnowledgeRepo) ListPublicArticles(ctx context.Context, page, pageSize int, categoryID *string) ([]knowledge.Article, int, error) {
+func (m *mockKnowledgeRepo) ListPublicArticles(ctx context.Context, page, pageSize int, categoryID, nodeID *string) ([]knowledge.Article, int, error) {
 	return nil, 0, nil
 }
 

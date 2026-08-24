@@ -13,6 +13,7 @@ const navigationGroups: Array<{ label: string; items: NavigationItem[] }> = [
   { label: "Workspace", items: [{ href: "/dashboard", label: "Ringkasan", icon: "dashboard" }, { href: "/dashboard/statistics", label: "Statistik", icon: "dashboard" }] },
   { label: "Konten", items: [
     { href: "/dashboard/knowledge", label: "Pusat Pengetahuan", icon: "knowledge" },
+    { href: "/dashboard/knowledge-hierarchy", label: "Struktur Pengetahuan", icon: "folder" },
     { href: "/dashboard/news", label: "Berita", icon: "news" },
     { href: "/dashboard/announcements", label: "Pengumuman", icon: "announcement" },
     { href: "/dashboard/media", label: "Media Library", icon: "media" },
@@ -30,6 +31,7 @@ const titleBySegment: Record<string, string> = {
   dashboard: "Dashboard",
   statistics: "Statistik",
   knowledge: "Pusat Pengetahuan",
+  "knowledge-hierarchy": "Struktur Pengetahuan",
   news: "Berita",
   announcements: "Pengumuman",
   media: "Media Library",

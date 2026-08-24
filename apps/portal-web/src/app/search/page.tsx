@@ -19,6 +19,7 @@ type SearchDocument = {
   snippet: string;
   url: string;
   category?: string;
+  hierarchy_path?: string[];
   tags: string[];
   published_at?: string;
 };
@@ -134,7 +135,7 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
                 <TypeBadge type={document.content_type} />
                 <h3 className="mt-5 text-lg font-extrabold leading-7 text-slate-900"><Link href={document.url} className="transition hover:text-teal-700">{document.title}</Link></h3>
                 <p className="mt-3 line-clamp-3 text-sm leading-6 text-slate-600">{document.snippet || "Buka konten untuk melihat informasi selengkapnya."}</p>
-                {document.category ? <p className="mt-4 text-xs font-semibold text-slate-500">{document.category}</p> : null}
+                {document.hierarchy_path?.length ? <p className="mt-4 text-xs font-semibold leading-5 text-slate-500">{document.hierarchy_path.join(" / ")}</p> : document.category ? <p className="mt-4 text-xs font-semibold text-slate-500">{document.category}</p> : null}
                 <Link href={document.url} className="mt-auto border-t border-slate-100 pt-5 text-sm font-extrabold text-teal-700">Buka konten <span aria-hidden="true">→</span></Link>
               </article>
             ))}

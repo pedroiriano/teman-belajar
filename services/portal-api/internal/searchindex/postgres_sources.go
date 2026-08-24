@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/lib/pq"
+
 	domainsearch "teman-belajar-api/internal/domain/search"
 )
 
@@ -62,12 +64,25 @@ func (s *NewsSource) Fetch(ctx context.Context) ([]domainsearch.IndexDocument, e
 func (s *KnowledgeSource) Fetch(ctx context.Context) ([]domainsearch.IndexDocument, error) {
 	const query = `
 		SELECT a.id::text, a.title, COALESCE(a.summary, ''), r.body, a.slug,
-		       COALESCE(a.category_id::text, ''), COALESCE(c.name, ''), r.created_at, a.updated_at
+		       COALESCE(a.category_id::text, ''), COALESCE(c.name, ''),
+		       COALESCE(h.path, ARRAY[]::text[]), r.created_at, a.updated_at
 		FROM knowledge_articles a
 		JOIN knowledge_revisions r
 		  ON r.article_id = a.id AND r.revision_no = a.published_revision_no
 		LEFT JOIN categories c ON c.id = a.category_id
-		WHERE a.published_revision_no IS NOT NULL
+		LEFT JOIN LATERAL (
+			WITH RECURSIVE ancestors AS (
+				SELECT n.id,n.parent_id,n.title,n.status,1 depth
+				FROM knowledge_article_nodes an JOIN knowledge_nodes n ON n.id=an.node_id
+				WHERE an.article_id=a.id
+				UNION ALL
+				SELECT n.id,n.parent_id,n.title,n.status,x.depth+1
+				FROM knowledge_nodes n JOIN ancestors x ON n.id=x.parent_id WHERE x.depth<8
+			)
+			SELECT ARRAY_AGG(title ORDER BY depth DESC) path,
+			       BOOL_AND(status='active') all_active FROM ancestors
+		) h ON true
+		WHERE a.published_revision_no IS NOT NULL AND COALESCE(h.all_active, true)
 		ORDER BY a.id`
 	rows, err := s.db.QueryContext(ctx, query)
 	if err != nil {
@@ -78,15 +93,16 @@ func (s *KnowledgeSource) Fetch(ctx context.Context) ([]domainsearch.IndexDocume
 	documents := make([]domainsearch.IndexDocument, 0)
 	for rows.Next() {
 		var id, title, summary, body, slug, categoryID, categoryName string
+		var hierarchyPath pq.StringArray
 		var publishedAt time.Time
 		var updatedAt time.Time
-		if err := rows.Scan(&id, &title, &summary, &body, &slug, &categoryID, &categoryName, &publishedAt, &updatedAt); err != nil {
+		if err := rows.Scan(&id, &title, &summary, &body, &slug, &categoryID, &categoryName, &hierarchyPath, &publishedAt, &updatedAt); err != nil {
 			return nil, fmt.Errorf("scan published knowledge revision: %w", err)
 		}
 		documents = append(documents, domainsearch.IndexDocument{
 			DocumentID: "knowledge_" + id, SourceType: s.Type(), SourceID: id,
 			Title: plainText(title), Summary: plainText(summary), BodyText: plainText(body),
-			CategoryID: categoryID, CategoryName: categoryName, Tags: []string{}, URL: "/knowledge/" + slug,
+			CategoryID: categoryID, CategoryName: categoryName, HierarchyPath: []string(hierarchyPath), Tags: []string{}, URL: "/knowledge/" + slug,
 			PublishedAt: &publishedAt, UpdatedAt: updatedAt,
 		})
 	}

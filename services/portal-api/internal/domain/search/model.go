@@ -37,14 +37,15 @@ type Query struct {
 // Hit is the Teman Belajar-owned public search DTO. It deliberately excludes
 // source IDs, index generations, engine ranking data, and personal data.
 type Hit struct {
-	ID          string     `json:"id"`
-	ContentType string     `json:"content_type"`
-	Title       string     `json:"title"`
-	Snippet     string     `json:"snippet"`
-	URL         string     `json:"url"`
-	Category    string     `json:"category,omitempty"`
-	Tags        []string   `json:"tags"`
-	PublishedAt *time.Time `json:"published_at,omitempty"`
+	ID            string     `json:"id"`
+	ContentType   string     `json:"content_type"`
+	Title         string     `json:"title"`
+	Snippet       string     `json:"snippet"`
+	URL           string     `json:"url"`
+	Category      string     `json:"category,omitempty"`
+	HierarchyPath []string   `json:"hierarchy_path,omitempty"`
+	Tags          []string   `json:"tags"`
+	PublishedAt   *time.Time `json:"published_at,omitempty"`
 }
 
 type Result struct {

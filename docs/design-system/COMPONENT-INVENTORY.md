@@ -53,6 +53,7 @@ Status implementasi berikut wajib dipertahankan. `Implemented` berarti pola vend
 | Empty/error/loading/unauthorized | Implemented where data-driven | Implemented | reusable state patterns |
 | Light/dark theme | Implemented | Implemented | shared persistence key, separate tokens |
 | Engagement controls | Bookmark/rating on Knowledge; saved/recent/recommendation learner sections | Not applicable | Techwind-derived, TASK-008 |
+| Knowledge hierarchy | Three-pane explorer, mobile drawer, breadcrumb, TOC | Cuba tree manager, node forms, explicit archive confirmation | TASK-011B; semantic application components |
 
 TASK-008 carry-forward: the Cuba Admin shell now includes desktop sidebar
 close/reopen with layout expansion; the mobile drawer retains overlay, X,
@@ -67,34 +68,21 @@ Escape, focus containment/restore, and body-scroll locking.
 5. Every interactive component requires keyboard behavior, an accessible name, and loading/error/empty states where applicable.
 6. Portal and Admin theme tokens must remain isolated even though their stored light/dark preference uses the same contract.
 
-Inventory updated based on actual Techwind and Cuba sources in `vendor/ui-templates`.
+Inventory is maintained against implemented product patterns. At TASK-011B
+verification time, each governed `ORIGINAL/` directory contains only its vendor
+drop placeholder README; exact licensed source-page comparison is therefore not
+available in this repository checkout. This limitation must not be rewritten as
+an exact vendor-source audit.
 
 ## Vendor Intake Report
 
-### Techwind (Public/Learner Portal)
-- Location: `vendor/ui-templates/techwind/ORIGINAL/`
-- Tech Stack: HTML, CSS, JS libraries. Uses Tailwind CSS (pre-compiled).
-- Core Dependencies: 
-  - `animate.css`, `wow.js` (Animations)
-  - `swiper`, `tiny-slider` (Carousels)
-  - `tobii` (Lightbox)
-  - `jarallax` (Parallax)
-  - `gumshoejs` (Scrollspying)
-  - `choices.js` (Select boxes)
-  - `js-datepicker` (Date picking)
-  - `particles.js` (Background particles)
-  - `shufflejs` (Filtering)
-  - `remixicon` (Icons)
-- Findings: Vendor files exist as plain HTML templates. The HTML contains Tailwind classes but the source build pipeline (like tailwind.config.js) is not present. This template serves as a strict visual reference.
+### Current vendor-reference availability
 
-### Cuba (Admin/Backoffice)
-- Location: `vendor/ui-templates/cuba/ORIGINAL/`
-- Tech Stack: Tailwind CSS, Vite, Pug.
-- Core Dependencies (`package.json`):
-  - `tailwindcss`
-  - `vite`
-  - `vite-plugin-pug`
-  - `postcss`
-- Findings: Unlike its older versions which used Gulp and Bootstrap, this version uses Tailwind CSS directly, compiled via Vite. The HTML is generated from Pug templates.
-
-These libraries must be adapted safely into Next.js React components using Tailwind CSS. We will extract only the necessary visual patterns from the `ORIGINAL` directory for use in `apps/portal-web` and `apps/admin-web`, discarding the original vendor runtimes (Vite/Pug).
+- Techwind location: `vendor/ui-templates/techwind/ORIGINAL/`; current content:
+  `README_DROP_TECHWIND_HERE.md` only.
+- Cuba location: `vendor/ui-templates/cuba/ORIGINAL/`; current content:
+  `README_DROP_CUBA_HERE.md` only.
+- Product code must continue using the established Techwind-derived Portal and
+  Cuba-derived Admin semantic patterns. Once licensed originals are supplied,
+  they remain read-only and only task-relevant patterns may be adapted. Do not
+  invent package/dependency claims from a missing vendor drop.

@@ -71,6 +71,7 @@ func main() {
 
 	knowledgeRepo := postgres.NewKnowledgeRepository(db)
 	knowledgeSvc := knowledge.NewService(knowledgeRepo, auditRepo)
+	hierarchySvc := knowledge.NewHierarchyService(knowledgeRepo, auditRepo)
 	draftRetentionDays := 30
 	if configured := strings.TrimSpace(os.Getenv("FORM_DRAFT_RETENTION_DAYS")); configured != "" {
 		parsed, parseErr := strconv.Atoi(configured)
@@ -114,7 +115,8 @@ func main() {
 
 	// Handlers
 	cmsHandler := handler.NewCMSHandler(cmsSvc)
-	knowledgeHandler := handler.NewKnowledgeHandler(knowledgeSvc)
+	knowledgeHandler := handler.NewKnowledgeHandler(knowledgeSvc, hierarchySvc)
+	hierarchyHandler := handler.NewKnowledgeHierarchyHandler(hierarchySvc)
 	draftHandler := handler.NewDraftHandler(draftSvc)
 	learningHandler := handler.NewLearningHandler(learningSvc)
 
@@ -269,6 +271,7 @@ func main() {
 	mux.Handle("PATCH /api/v1/admin/announcements/{id}", adminAuthMiddleware(http.HandlerFunc(cmsHandler.UpdateAnnouncement)))
 
 	mux.HandleFunc("GET /api/v1/knowledge", knowledgeHandler.ListPublicArticles)
+	mux.HandleFunc("GET /api/v1/knowledge/tree", hierarchyHandler.PublicTree)
 	mux.HandleFunc("GET /api/v1/knowledge/{slug}", knowledgeHandler.GetPublicArticle)
 
 	if mediaHandler != nil {
@@ -289,7 +292,14 @@ func main() {
 
 	mux.Handle("GET /api/v1/admin/knowledge", adminAuthMiddleware(http.HandlerFunc(knowledgeHandler.ListAdminArticles)))
 	mux.Handle("POST /api/v1/admin/knowledge", adminAuthMiddleware(http.HandlerFunc(knowledgeHandler.CreateArticle)))
+	mux.Handle("GET /api/v1/admin/knowledge-hierarchy/nodes", adminAuthMiddleware(http.HandlerFunc(hierarchyHandler.AdminTree)))
+	mux.Handle("POST /api/v1/admin/knowledge-hierarchy/nodes", adminAuthMiddleware(http.HandlerFunc(hierarchyHandler.CreateNode)))
+	mux.Handle("PATCH /api/v1/admin/knowledge-hierarchy/nodes/{id}", adminAuthMiddleware(http.HandlerFunc(hierarchyHandler.UpdateNode)))
+	mux.Handle("POST /api/v1/admin/knowledge-hierarchy/nodes/{id}/move", adminAuthMiddleware(http.HandlerFunc(hierarchyHandler.MoveNode)))
+	mux.Handle("POST /api/v1/admin/knowledge-hierarchy/nodes/{id}/archive", adminAuthMiddleware(http.HandlerFunc(hierarchyHandler.ArchiveNode)))
+	mux.Handle("POST /api/v1/admin/knowledge-hierarchy/nodes/reorder", adminAuthMiddleware(http.HandlerFunc(hierarchyHandler.ReorderNodes)))
 	mux.Handle("GET /api/v1/admin/knowledge/{id}", adminAuthMiddleware(http.HandlerFunc(knowledgeHandler.GetAdminArticle)))
+	mux.Handle("PUT /api/v1/admin/knowledge/{id}/primary-node", adminAuthMiddleware(http.HandlerFunc(hierarchyHandler.AssignArticle)))
 	mux.Handle("POST /api/v1/admin/knowledge/{id}/revisions", adminAuthMiddleware(http.HandlerFunc(knowledgeHandler.CreateRevision)))
 	mux.Handle("POST /api/v1/admin/knowledge/{id}/transition", adminAuthMiddleware(http.HandlerFunc(knowledgeHandler.TransitionStatus)))
 

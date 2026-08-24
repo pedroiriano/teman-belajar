@@ -74,6 +74,7 @@ Public:
 - `/news`
 - `/announcements`
 - `/knowledge`
+- `GET /knowledge/tree`
 - `/faqs`
 - `/galleries`
 - `/videos`
@@ -99,6 +100,7 @@ Engagement identity always comes from validated access-token `sub`; the API acce
 Admin:
 - `/admin/news`
 - `/admin/knowledge`
+- `/admin/knowledge-hierarchy/nodes`
 - `/admin/media`
 - `/admin/form-drafts`
 - `/admin/configuration`
@@ -107,6 +109,20 @@ Admin form drafts are owned exclusively by validated access-token `sub`, require
 Content Editor or Portal Administrator, use optimistic `expected_revision`, and
 return 409 rather than overwriting a newer working copy. Browser clients access
 them through the Admin BFF only.
+
+The public Knowledge tree contains active nodes only, deterministic children,
+depth, and published article counts. `GET /knowledge` accepts an optional
+`node` UUID filter and Knowledge detail responses include authoritative
+hierarchy breadcrumbs when assigned. Search hits may include
+`hierarchy_path`; this is derived by the indexer and is never an authorization
+signal.
+
+Hierarchy mutation endpoints require Portal Administrator or Content Editor;
+Reviewer is read-only. Create/update/move/reorder/archive use validated UUIDs,
+bounded fields, and optimistic versions where applicable. Conflicts return the
+canonical 409 problem response. Article placement is updated through
+`PUT /admin/knowledge/{id}/primary-node`. The exact wire schemas, status codes,
+and request bounds are authoritative in `openapi/openapi.yaml`.
 
 Internal:
 - `/internal/v1/moodle/events`

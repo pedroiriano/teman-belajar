@@ -50,12 +50,12 @@ export default async function AdminKnowledgePage() {
           <div>
             <p className="admin-kicker">Manajemen konten</p><h1 className="admin-page-title">Pusat Pengetahuan</h1><p className="admin-page-copy">Kelola artikel, revisi, dan workflow review.</p>
           </div>
-          <Link 
-            href="/dashboard/knowledge/create" 
-            className="admin-button"
-          >
-            <span aria-hidden="true">+</span> Buat artikel
-          </Link>
+          <div className="flex flex-wrap gap-3"><Link href="/dashboard/knowledge-hierarchy" className="admin-button-secondary">Kelola struktur</Link><Link
+              href="/dashboard/knowledge/create"
+              className="admin-button"
+            >
+              <span aria-hidden="true">+</span> Buat artikel
+            </Link></div>
         </div>
 
         <div className="admin-table-shell"><div className="admin-table-toolbar"><div><h2 className="font-black text-slate-900">Daftar artikel</h2><p className="mt-1 text-xs text-slate-500">Versi dan status publikasi</p></div><span className="admin-status bg-slate-100 text-slate-600">{knowledgeRes?.data?.length || 0} item</span></div><div className="overflow-x-auto"><table className="admin-table">

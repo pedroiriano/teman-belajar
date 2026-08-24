@@ -205,9 +205,14 @@ func articleList(items []Article, total, page, pageSize int) *ArticleList {
 	return &ArticleList{Data: items, Pagination: Pagination{Page: page, PageSize: pageSize, Total: total, TotalPages: totalPages}}
 }
 
-func (s *Service) ListPublicArticles(ctx context.Context, page, pageSize int, categoryID *string) (*ArticleList, error) {
+func (s *Service) ListPublicArticles(ctx context.Context, page, pageSize int, categoryID, nodeID *string) (*ArticleList, error) {
 	page, pageSize = normalizePagination(page, pageSize)
-	items, total, err := s.repo.ListPublicArticles(ctx, page, pageSize, categoryID)
+	if nodeID != nil {
+		if _, err := uuid.Parse(*nodeID); err != nil {
+			return nil, ErrInvalidNode
+		}
+	}
+	items, total, err := s.repo.ListPublicArticles(ctx, page, pageSize, categoryID, nodeID)
 	if err != nil {
 		return nil, err
 	}

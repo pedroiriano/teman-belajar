@@ -90,6 +90,11 @@ a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visib
   .portal-filter { color: var(--portal-copy); border-color: var(--portal-border); background: var(--portal-panel); }
   .portal-filter:hover { color: var(--portal-primary); border-color: var(--portal-primary); }
   .portal-filter-active { color: #fff; border-color: var(--portal-primary-hover); background: var(--portal-primary-hover); }
+  .portal-tree-link { @apply flex min-h-10 items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold transition; color: var(--portal-copy); }
+  .portal-tree-link:hover, .portal-tree-link.is-active { color: var(--portal-primary-hover); background: var(--portal-primary-soft); }
+  .portal-tree-link:focus-visible { outline: 3px solid color-mix(in srgb, var(--portal-primary) 38%, transparent); }
+  .portal-tree-count { @apply min-w-6 rounded-full px-1.5 py-0.5 text-center text-[10px] font-black; color: var(--portal-primary-hover); background: var(--portal-primary-soft); }
+  .portal-hierarchy-drawer > summary::-webkit-details-marker { display: none; }
   .portal-section { @apply relative py-16 sm:py-20 lg:py-24; }
   .portal-section-muted { background: var(--portal-panel-muted); }
   .portal-section-heading { @apply mx-auto max-w-3xl text-center; }
