@@ -3,6 +3,9 @@
 ## Architecture
 The Moodle Event Inbox is an internal service-to-service endpoint hosted within the `portal-api` process. Moodle plugins send signed HTTP requests containing learning events. Events are stored idempotently in `integration.event_inbox` and processed asynchronously by a background goroutine within the same API process.
 
+> [!WARNING]
+> **Moodle Publisher Not Implemented**: The Moodle plugin component responsible for generating the HMAC signature and dispatching the event is NOT implemented in TASK-011. This runbook only covers the Portal API ingestion boundary.
+
 ## Endpoint
 `POST /api/v1/internal/moodle/events`
 

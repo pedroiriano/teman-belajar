@@ -1394,12 +1394,12 @@ paths:
       security: []
       parameters:
         - in: header
-          name: X-Signature-256
+          name: X-TB-Signature
           required: true
           schema:
             type: string
         - in: header
-          name: X-Timestamp
+          name: X-TB-Timestamp
           required: true
           schema:
             type: integer
@@ -1447,7 +1447,7 @@ paths:
           content:
             application/problem+json:
               schema:
-                $ref: '#/components/schemas/ProblemDetails'
+                $ref: '#/components/schemas/Problem'
         '415':
           description: Unsupported Media Type
         '422':

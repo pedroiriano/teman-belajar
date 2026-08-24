@@ -40,7 +40,7 @@ func HMACAuthMiddleware(secret string, auditRepo audit.Repository) func(http.Han
 
 			if sig == "" || tsStr == "" {
 				recordAuthFailure(r.Context(), auditRepo, "missing_auth_headers")
-				http.Error(w, `{"type":"about:blank","title":"Unauthorized","status":401,"detail":"Missing authentication headers"}`, http.StatusUnauthorized)
+				writeProblemDetails(w, http.StatusUnauthorized, "Unauthorized", "Missing authentication headers")
 				return
 			}
 
@@ -48,7 +48,7 @@ func HMACAuthMiddleware(secret string, auditRepo audit.Repository) func(http.Han
 			tsEpoch, err := strconv.ParseInt(tsStr, 10, 64)
 			if err != nil {
 				recordAuthFailure(r.Context(), auditRepo, "invalid_timestamp")
-				http.Error(w, `{"type":"about:blank","title":"Unauthorized","status":401,"detail":"Invalid timestamp"}`, http.StatusUnauthorized)
+				writeProblemDetails(w, http.StatusUnauthorized, "Unauthorized", "Invalid timestamp")
 				return
 			}
 
@@ -56,7 +56,7 @@ func HMACAuthMiddleware(secret string, auditRepo audit.Repository) func(http.Han
 			now := time.Now()
 			if math.Abs(now.Sub(requestTime).Seconds()) > hmacTimestampWindow.Seconds() {
 				recordAuthFailure(r.Context(), auditRepo, "expired_timestamp")
-				http.Error(w, `{"type":"about:blank","title":"Unauthorized","status":401,"detail":"Request timestamp expired"}`, http.StatusUnauthorized)
+				writeProblemDetails(w, http.StatusUnauthorized, "Unauthorized", "Request timestamp expired")
 				return
 			}
 
@@ -65,11 +65,11 @@ func HMACAuthMiddleware(secret string, auditRepo audit.Repository) func(http.Han
 			body, err := io.ReadAll(r.Body)
 			if err != nil {
 				if err.Error() == "http: request body too large" {
-					http.Error(w, `{"type":"about:blank","title":"Payload Too Large","status":413,"detail":"Request body exceeds maximum size"}`, http.StatusRequestEntityTooLarge)
+					writeProblemDetails(w, http.StatusRequestEntityTooLarge, "Payload Too Large", "Request body exceeds maximum size")
 					return
 				}
 				recordAuthFailure(r.Context(), auditRepo, "body_read_error")
-				http.Error(w, `{"type":"about:blank","title":"Unauthorized","status":401,"detail":"Failed to read request body"}`, http.StatusUnauthorized)
+				writeProblemDetails(w, http.StatusUnauthorized, "Unauthorized", "Failed to read request body")
 				return
 			}
 
@@ -83,7 +83,7 @@ func HMACAuthMiddleware(secret string, auditRepo audit.Repository) func(http.Han
 			// Constant-time comparison
 			if subtle.ConstantTimeCompare([]byte(sig), []byte(expectedSig)) != 1 {
 				recordAuthFailure(r.Context(), auditRepo, "invalid_signature")
-				http.Error(w, `{"type":"about:blank","title":"Unauthorized","status":401,"detail":"Invalid signature"}`, http.StatusUnauthorized)
+				writeProblemDetails(w, http.StatusUnauthorized, "Unauthorized", "Invalid signature")
 				return
 			}
 
@@ -91,6 +91,14 @@ func HMACAuthMiddleware(secret string, auditRepo audit.Repository) func(http.Han
 			r.Body = io.NopCloser(bytes.NewReader(body))
 			next.ServeHTTP(w, r)
 		})
+	}
+}
+
+func writeProblemDetails(w http.ResponseWriter, status int, title, detail string) {
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(status)
+	if _, err := w.Write([]byte(fmt.Sprintf(`{"type":"about:blank","title":%q,"status":%d,"detail":%q}`, title, status, detail))); err != nil {
+		log.Printf("Failed to write problem details: %v", err)
 	}
 }
 
