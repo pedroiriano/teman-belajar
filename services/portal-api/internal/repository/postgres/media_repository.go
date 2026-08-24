@@ -68,17 +68,21 @@ func (r *MediaRepository) ArchiveAsset(ctx context.Context, id string, archivedB
 
 func (r *MediaRepository) ListAdminAssets(ctx context.Context, filter media.ListFilter) ([]media.MediaAsset, int, error) {
 	offset := (filter.Page - 1) * filter.PageSize
-	where := `WHERE ($1 = '' OR strpos(lower(COALESCE(display_filename, '')), lower($1)) > 0 OR strpos(lower(COALESCE(original_filename, '')), lower($1)) > 0 OR strpos(lower(COALESCE(title, '')), lower($1)) > 0)
+	const countQuery = `SELECT count(*) FROM media_assets
+		WHERE ($1 = '' OR strpos(lower(COALESCE(display_filename, '')), lower($1)) > 0 OR strpos(lower(COALESCE(original_filename, '')), lower($1)) > 0 OR strpos(lower(COALESCE(title, '')), lower($1)) > 0)
 		AND ($2 = 'all' OR ($2 = 'image' AND detected_mime_type LIKE 'image/%') OR ($2 = 'document' AND detected_mime_type = 'application/pdf'))`
 
 	var total int
-	err := r.db.QueryRowContext(ctx, `SELECT count(*) FROM media_assets `+where, filter.Query, filter.Kind).Scan(&total)
+	err := r.db.QueryRowContext(ctx, countQuery, filter.Query, filter.Kind).Scan(&total)
 	if err != nil {
 		return nil, 0, err
 	}
 
-	query := `SELECT id, storage_key, bucket, original_filename, display_filename, detected_mime_type, size_bytes, checksum_sha256, title, alt_text, caption, status, created_at, created_by, updated_at, updated_by, archived_at
-			  FROM media_assets ` + where + ` ORDER BY created_at DESC, id DESC LIMIT $3 OFFSET $4`
+	const query = `SELECT id, storage_key, bucket, original_filename, display_filename, detected_mime_type, size_bytes, checksum_sha256, title, alt_text, caption, status, created_at, created_by, updated_at, updated_by, archived_at
+		FROM media_assets
+		WHERE ($1 = '' OR strpos(lower(COALESCE(display_filename, '')), lower($1)) > 0 OR strpos(lower(COALESCE(original_filename, '')), lower($1)) > 0 OR strpos(lower(COALESCE(title, '')), lower($1)) > 0)
+		AND ($2 = 'all' OR ($2 = 'image' AND detected_mime_type LIKE 'image/%') OR ($2 = 'document' AND detected_mime_type = 'application/pdf'))
+		ORDER BY created_at DESC, id DESC LIMIT $3 OFFSET $4`
 
 	rows, err := r.db.QueryContext(ctx, query, filter.Query, filter.Kind, filter.PageSize, offset)
 	if err != nil {
