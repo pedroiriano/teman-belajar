@@ -37,7 +37,7 @@ The Moodle Event Inbox was implemented following the approved ADR-011 design, es
 - AC-05 (bounded retry + dead-letter): Passed (`processor.go` implements backoff + DLQ)
 - AC-06 (backlog/failed metrics): Passed (`metrics.go` + metric updates in processor loop)
 
-## Final Post-Merge Corrective Closure & Release Gate Recovery
+## FINAL RELEASE-GATE RECOVERY & CANONICAL CLOSURE — 2026-08-24T07:58:30Z
 A comprehensive corrective audit and repair was performed (resolving K-01 through K-12) to rectify post-merge issues without amending history or altering released migrations. Following a premature merge of PR #7 which circumvented failing CI checks, a final release gate recovery branch was created and successfully merged under strict governance (no bypass). Key repairs include:
 - **Testing (K-03, K-04)**: Real database integration tests replaced mocked `t.Skip` placeholders for repository and processor logic. Enforcement of test execution in CI was implemented via `TASK011_REQUIRE_INTEGRATION_DB`. Added concurrency tests for stale worker overwrite prevention and dead letter queues.
 - **Security & SAST**: Fixed Gosec G104 unhandled error in JSON encoder, and ensured Govulncheck and Gitleaks passed without warnings.
