@@ -2,6 +2,9 @@ package handler
 
 import (
 	"encoding/json"
+	"io"
+	"log"
+	"mime"
 	"net/http"
 
 	integrationapp "teman-belajar-api/internal/application/integration"
@@ -21,12 +24,15 @@ func NewIntegrationHandler(eventService *integrationapp.EventService) *Integrati
 func writeProblemDetails(w http.ResponseWriter, status int, title, detail string) {
 	w.Header().Set("Content-Type", "application/problem+json")
 	w.WriteHeader(status)
-	json.NewEncoder(w).Encode(map[string]interface{}{
+	err := json.NewEncoder(w).Encode(map[string]interface{}{
 		"type":   "about:blank",
 		"title":  title,
 		"status": status,
 		"detail": detail,
 	})
+	if err != nil {
+		log.Printf("failed to write problem details response: %v", err)
+	}
 }
 
 // HandleMoodleEventIngest handles POST /api/v1/internal/moodle/events.
@@ -38,7 +44,8 @@ func (h *IntegrationHandler) HandleMoodleEventIngest(w http.ResponseWriter, r *h
 	}
 
 	ct := r.Header.Get("Content-Type")
-	if ct != "application/json" {
+	mediaType, _, err := mime.ParseMediaType(ct)
+	if err != nil || mediaType != "application/json" {
 		writeProblemDetails(w, http.StatusUnsupportedMediaType, "Unsupported Media Type", "Content-Type must be application/json")
 		return
 	}
@@ -51,8 +58,9 @@ func (h *IntegrationHandler) HandleMoodleEventIngest(w http.ResponseWriter, r *h
 		return
 	}
 
-	// Check for trailing JSON payload
-	if decoder.More() {
+	// Check for trailing JSON payload via second decode
+	var second map[string]interface{}
+	if err := decoder.Decode(&second); err != io.EOF {
 		writeProblemDetails(w, http.StatusUnprocessableEntity, "Unprocessable Entity", "Trailing JSON document detected")
 		return
 	}
@@ -67,17 +75,21 @@ func (h *IntegrationHandler) HandleMoodleEventIngest(w http.ResponseWriter, r *h
 	case integrationapp.IngestAccepted:
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusAccepted)
-		json.NewEncoder(w).Encode(map[string]interface{}{ // #nosec G104 -- response writer error after commit is non-actionable in HTTP handler
+		if err := json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":   "accepted",
 			"event_id": envelope.EventID,
-		})
+		}); err != nil {
+			log.Printf("failed to write accepted response: %v", err)
+		}
 	case integrationapp.IngestDuplicate:
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusAccepted)
-		json.NewEncoder(w).Encode(map[string]interface{}{ // #nosec G104 -- response writer error after commit is non-actionable in HTTP handler
+		if err := json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":   "duplicate",
 			"event_id": envelope.EventID,
-		})
+		}); err != nil {
+			log.Printf("failed to write duplicate response: %v", err)
+		}
 	case integrationapp.IngestCollision:
 		writeProblemDetails(w, http.StatusConflict, "Conflict", "event_id collision: same ID with different content")
 	}

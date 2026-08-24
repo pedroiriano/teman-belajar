@@ -133,6 +133,7 @@ func (p *EventProcessor) processEvent(ctx context.Context, event *domainintegrat
 func (p *EventProcessor) handleFailure(ctx context.Context, event *domainintegration.InboxEvent, errCategory string) {
 	if err := p.repo.MarkFailed(ctx, event, errCategory, p.config.MaxAttempts, p.config.BackoffBase); err != nil {
 		log.Printf("Failed to mark event %s as failed: %v", event.EventID, err)
+		return // Do not record metric as transition did not succeed
 	}
 
 	newAttempts := event.Attempts + 1

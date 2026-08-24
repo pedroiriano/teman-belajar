@@ -13,16 +13,16 @@ import (
 )
 
 func main() {
-	dsn := flag.String("db", os.Getenv("DATABASE_URL"), "Database connection string")
 	action := flag.String("action", "", "Action to perform: requeue-dlq")
 	eventID := flag.String("event-id", "", "Event ID to requeue")
 	flag.Parse()
 
-	if *dsn == "" {
-		log.Fatal("DATABASE_URL must be provided")
+	dsn := os.Getenv("DATABASE_URL")
+	if dsn == "" {
+		log.Fatal("DATABASE_URL environment variable must be provided")
 	}
 
-	db, err := sql.Open("postgres", *dsn)
+	db, err := sql.Open("postgres", dsn)
 	if err != nil {
 		log.Fatalf("Failed to connect to database: %v", err)
 	}

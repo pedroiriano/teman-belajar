@@ -19,12 +19,20 @@ func getTestDB(t *testing.T) *sql.DB {
 		dsn = "postgres://teman_belajar_portal:secret123456_PORTAL_DB_PASSWORD@localhost:15432/teman_belajar?sslmode=disable"
 	}
 	db, err := sql.Open("postgres", dsn)
+	
+	reqEnv := os.Getenv("TASK011_REQUIRE_INTEGRATION_DB") == "true"
 	if err != nil {
+		if reqEnv {
+			t.Fatalf("Cannot open database connection: %v", err)
+		}
 		t.Skip("Cannot open database connection")
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
 	if err := db.PingContext(ctx); err != nil {
+		if reqEnv {
+			t.Fatalf("Database not reachable but TASK011_REQUIRE_INTEGRATION_DB is true: %v", err)
+		}
 		t.Skipf("Database not reachable: %v", err)
 	}
 	return db

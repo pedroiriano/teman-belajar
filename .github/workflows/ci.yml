@@ -28,6 +28,24 @@ jobs:
   api:
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_USER: teman_belajar_portal
+          POSTGRES_PASSWORD: secret123456_PORTAL_DB_PASSWORD
+          POSTGRES_DB: teman_belajar
+        ports:
+          - 15432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      TEST_DATABASE_URL: postgres://teman_belajar_portal:secret123456_PORTAL_DB_PASSWORD@localhost:15432/teman_belajar?sslmode=disable
+      DATABASE_URL: postgres://teman_belajar_portal:secret123456_PORTAL_DB_PASSWORD@localhost:15432/teman_belajar?sslmode=disable
+      TASK011_REQUIRE_INTEGRATION_DB: "true"
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -40,9 +58,12 @@ jobs:
       - name: Build
         working-directory: services/portal-api
         run: go build ./...
+      - name: Run Migrations
+        working-directory: services/portal-api
+        run: go run ./cmd/migrate
       - name: Test
         working-directory: services/portal-api
-        run: go test ./...
+        run: go test -v ./...
       - name: Vet
         working-directory: services/portal-api
         run: go vet ./...
