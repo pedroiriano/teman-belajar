@@ -1,16 +1,16 @@
 # TASK-010 DevSecOps Security
 
-## FINAL GOVERNANCE & SECURITY CLOSURE — 2026-08-24T10:43:00Z
+## CURRENT GOVERNANCE & SECURITY CLOSURE STATE — 2026-08-24T11:11:00+07:00
 
 - **Base Main SHA**: 987d2875360928aac6a2e75fecd3c6f7829f00ad
 - **Initial TASK-010 SHA**: d9cf3e9acbda19891dc761a1eedc3cb1d270177f
 - **PR #3 Final Head SHA**: d0cafb6e21da10c34ba24bb8c784c319a089a476
 - **PR #3 Merge SHA**: 326603c045fa9a908385807c1ddf7b9425eb0665
 - **Post-Merge Docs Commits**: 4acc4e7f346cc49ea97fd7304ced4c441ac88d46, 6a7cc5fbd7f1c36c5d055fb6ef626a3f59889b30
-- **Current Main**: 6a7cc5fbd7f1c36c5d055fb6ef626a3f59889b30
-- **Actual Total Files Changed**: 19 files (PR #3) + 15 files (Closure PR)
+- **Current Main SHA**: 6a7cc5fbd7f1c36c5d055fb6ef626a3f59889b30
+- **Actual Total Files Changed**: 19 files (PR #3) + 16 files (Closure PR #4)
 - **Application Source Changes**: YES (Static analysis cleanup and explicit error handling via suppression rationales).
-- **Gosec Final Install Method**: Immutable (https://raw.githubusercontent.com/securego/gosec/v2.21.4/install.sh)
+- **Gosec Final Install Method**: Immutable (Official release artifact checksum verification: 9229dbfdc092b176e628b9ea6e4210757373b819f47365cedd9f9e12d3b2c173)
 - **Gosec Version**: v2.21.4
 - **Gosec Files/Lines**: 52 files / 7887 lines
 - **Nosec Count**: 45
@@ -27,10 +27,10 @@
 - **Moodle Runtime User**: root
 - **DS-0002 Decision**: PROPOSED_EXCEPTION (Requires human approval as root is mandatory for canonical Moodle apache2-foreground on port 80).
 - **Security Exceptions**: PROPOSED
-- **SBOM Artifact**: SBOM-backend
+- **SBOM Artifact Name**: repository-sbom
 - **SBOM Digest**: (Verified in CI artifact)
-- **CI Baseline Run**: 32687392608
-- **DevSecOps Checks Run**: 32687392595
+- **CI Baseline Run**: 32688952631
+- **DevSecOps Checks Run**: 32688952555
 - **Branch Protection**: DISABLED (Not Enforced)
 - **Required Checks**: NONE (Not Enforced)
 - **Merge-Blocking Enforcement**: FAIL
@@ -38,5 +38,5 @@
 - **TASK-003F Regression**: PASS
 - **TASK-009R Regression**: PASS
 - **Production Follow-ups**: HUMAN FOLLOW-UP REQUIRED (Credential Rotation)
-- **Final TASK-010 Status**: NOT CLOSED — SECURITY EXCEPTION APPROVAL REQUIRED
+- **Final TASK-010 Status**: NOT CLOSED — HUMAN DECISIONS REQUIRED
 - **TASK-011 Readiness**: NOT READY
