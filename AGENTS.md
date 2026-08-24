@@ -42,7 +42,7 @@ Build and maintain a secure, modular **Learning Experience Platform + Moodle LMS
 
 ## 2A. Core Identity & Account Management Boundary — FINALIZED (DO NOT MODIFY)
 1. **Keycloak Integration, SSO (OpenID Connect), and Account Management logic are considered FINAL.**
-2. **DO NOT MODIFY**, refactor, or rewrite any logic, services, or flows related to User Management, Role Mapping (RBAC), or Keycloak federated authentication across dmin-web, portal-web, portal-api, or Keycloak configuration scripts.
+2. **DO NOT MODIFY**, refactor, or rewrite any logic, services, or flows related to User Management, Role Mapping (RBAC), or Keycloak federated authentication across admin-web, portal-web, portal-api, or Keycloak configuration scripts.
 3. Any future modifications to these Identity systems require explicit, overriding human authorization stating 'OVERRIDE IDENTITY BOUNDARY'.
 
 ## 3. Repository Rules
