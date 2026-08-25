@@ -6,6 +6,7 @@
 | Architecture | Accepted ADR + `docs/canonical/01` dan `04` |
 | Requirements | `docs/canonical/02` + `03` |
 | Feature ownership | `docs/canonical/05` |
+| Post-foundation delivery order/status | `docs/roadmap/POST-TASK-012-EXPANSION-ROADMAP.md` + `tasks/TASK-XXX-*` |
 | UI/UX | `docs/canonical/06` |
 | UI foundation/theme integration | `docs/design-system/*` |
 | Portal data model | `docs/canonical/07` + migrations |

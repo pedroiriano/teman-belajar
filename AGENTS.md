@@ -229,6 +229,19 @@ Before declaring done:
 - Run `scripts/verify-agent-governance.ps1` when agent governance, repository
   structure, security rules, Docker rules, or AI instructions change.
 
+## 12B. Post-TASK-012 Expansion Roadmap
+
+- TASK-013 through TASK-024 are governed by
+  `docs/roadmap/POST-TASK-012-EXPANSION-ROADMAP.md` and their individual files
+  under `tasks/`.
+- Task numbers are stable identifiers, not automatic execution order. Resolve
+  dependencies from the roadmap before coding and work on one bounded task per
+  branch/PR.
+- A `PLANNED` task or `Segera` label is not permission to expose a route, API,
+  menu, migration, runtime, or incomplete placeholder as active.
+- TASK-024 is a delta release gate for TASK-013–023 and does not replace or
+  relax TASK-012 `PRODUCTION HOLD` or its outstanding human decisions.
+
 ## 13. Forbidden Without Human Approval
 
 - architecture rewrite;

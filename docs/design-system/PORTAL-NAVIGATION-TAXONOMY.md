@@ -17,10 +17,10 @@ pertama dibatasi menjadi `Beranda`, `Pembelajaran`, `Pengetahuan`, dan
 | — | Beranda | `/` | Aktif |
 | Pembelajaran | Pembelajaran Saya | `/my-learning` | Aktif, perlu login |
 | Pembelajaran | Cari Kelas | `/search?content_type=course` | Aktif |
-| Pembelajaran | Pelatihan Penuh | Belum ada kontrak format | `Segera` |
-| Pembelajaran | Pembelajaran Singkat | Belum ada kontrak format | `Segera` |
-| Pembelajaran | Webinar | Belum ada event/session domain | `Segera` |
-| Pembelajaran | Jalur Belajar | Belum ada learning-path domain | `Segera` |
+| Pembelajaran | Pelatihan Penuh | TASK-013 | `Segera` / PLANNED |
+| Pembelajaran | Pembelajaran Singkat | TASK-014 | `Segera` / PLANNED |
+| Pembelajaran | Webinar | TASK-015 (setelah TASK-021) | `Segera` / PLANNED |
+| Pembelajaran | Jalur Belajar | TASK-016 (setelah TASK-013–015) | `Segera` / PLANNED |
 | Pengetahuan | Pusat Pengetahuan | `/knowledge` | Aktif |
 | Pengetahuan | Cari Pengetahuan | `/search?content_type=knowledge` | Aktif |
 | Informasi | Berita | `/news` | Aktif |
@@ -30,19 +30,21 @@ pertama dibatasi menjadi `Beranda`, `Pembelajaran`, `Pengetahuan`, dan
 
 Item `Segera` harus non-interaktif dan berlabel jelas. Agent dilarang menunjuk
 beberapa format pembelajaran ke route generik yang sama hanya agar tampak aktif.
+Status dan urutan dependency mengikuti
+`docs/roadmap/POST-TASK-012-EXPANSION-ROADMAP.md`, bukan nomor task semata.
 
 ## 3. Rekomendasi Tahap Berikutnya
 
-1. Tambahkan atribut format kanonis pada course catalogue sebelum mengaktifkan
-   Pelatihan Penuh dan Pembelajaran Singkat.
-2. Bentuk domain Webinar dengan jadwal, zona waktu, kapasitas, pendaftaran,
-   rekaman, dan state pembatalan sebelum membuat route.
-3. Bentuk domain Jalur Belajar dengan urutan materi, prerequisite, progres, dan
-   completion rule sebelum membuat menu aktif.
-4. Pindahkan `Media` dari anchor landing menjadi route hanya jika ada galeri
-   publik dengan visibility contract tersendiri.
-5. Kelola taxonomy melalui Admin setelah kontrak navigation/taxonomy tersedia;
-   sampai saat itu struktur shell tetap source-controlled dan reviewable.
+1. Jalankan TASK-013 untuk Pelatihan Penuh dan TASK-014 untuk Pembelajaran
+   Singkat; format, ownership, route, dan state harus berbeda serta nyata.
+2. Jalankan TASK-021 sebelum TASK-015 agar reminder Webinar memakai kontrak
+   Notification Center, lalu selesaikan provider/time-zone/capacity policy.
+3. Jalankan TASK-016 setelah TASK-013–015 agar composition dan progress path
+   memiliki source item yang stabil.
+4. Pindahkan `Media` dari anchor landing menjadi route melalui TASK-022, hanya
+   untuk galeri publik terkurasi dengan visibility contract tersendiri.
+5. FAQ landing berkembang menjadi Help Center melalui TASK-017; navigation dan
+   homepage menjadi dinamis melalui TASK-020 tanpa memasukkan secret ke UI.
 
 ## 4. Aturan Interaksi
 

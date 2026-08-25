@@ -153,13 +153,27 @@ a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visib
   .admin-disclosure > summary { @apply cursor-pointer font-bold; color: var(--admin-ink); }
   .admin-discovery-chip { @apply rounded-full px-3 py-1.5; color: var(--admin-copy); background: var(--admin-panel-strong); }
   .admin-discovery-chip[data-accent="true"] { color: var(--admin-accent-text); background: var(--admin-accent-soft); }
+  .admin-taxonomy-tabs { @apply flex gap-2 overflow-x-auto border-b px-5 pt-3 sm:px-7; border-color: var(--admin-border); background: var(--admin-panel-muted); }
+  .admin-taxonomy-tab { @apply inline-flex min-h-12 shrink-0 items-center gap-2 rounded-t-xl border border-b-0 px-5 py-3 text-sm font-black transition; color: var(--admin-copy); background: transparent; border-color: transparent; }
+  .admin-taxonomy-tab:hover { color: var(--admin-accent-text); background: var(--admin-accent-soft); }
+  .admin-taxonomy-tab[aria-selected="true"] { color: var(--admin-accent-text); background: var(--admin-panel); border-color: var(--admin-border); box-shadow: inset 0 3px 0 var(--admin-primary); }
+  .admin-taxonomy-tab-count { @apply grid min-w-6 place-items-center rounded-full px-1.5 py-0.5 text-[10px]; color: var(--admin-copy); background: var(--admin-panel-strong); }
+  .admin-taxonomy-tab[aria-selected="true"] .admin-taxonomy-tab-count { color: var(--admin-accent-text); background: var(--admin-accent-soft); }
+  .admin-taxonomy-composer { @apply grid gap-5 rounded-2xl border p-5 sm:p-6; color: var(--admin-copy); background: var(--admin-panel-muted); border-color: var(--admin-border); }
+  .admin-taxonomy-toolbar { @apply flex flex-col gap-3 border-t pt-6 sm:flex-row sm:items-center; border-color: var(--admin-border); }
+  .admin-taxonomy-row { @apply flex flex-col gap-4 rounded-2xl border p-4 transition sm:flex-row sm:items-center sm:p-5; color: var(--admin-copy); background: var(--admin-panel); border-color: var(--admin-border); }
+  .admin-taxonomy-row:hover { border-color: var(--admin-accent-border); box-shadow: 0 8px 24px var(--admin-accent-soft); }
+  .admin-taxonomy-slug { @apply max-w-full truncate rounded-lg px-2 py-1 font-mono; color: var(--admin-accent-text); background: var(--admin-accent-soft); }
   .admin-tag-option { @apply cursor-pointer rounded-full border px-3 py-2 text-xs font-bold transition; color: var(--admin-copy); background: var(--admin-panel); border-color: var(--admin-border); }
   .admin-tag-option:hover,
   .admin-tag-option[data-selected="true"] { color: var(--admin-accent-text); background: var(--admin-accent-soft); border-color: var(--admin-accent-border); }
   .admin-discovery-preview { @apply rounded-2xl border p-5; color: var(--admin-copy); background: var(--admin-panel); border-color: var(--admin-border); }
   .admin-status { @apply inline-flex items-center rounded-full px-2.5 py-1 text-xs font-bold capitalize; }
+  .admin-status-success { color: #047857; background: rgba(16, 185, 129, .14); }
+  .admin-status-neutral { color: var(--admin-copy); background: var(--admin-panel-strong); }
   .admin-empty { @apply px-6 py-14 text-center; color: var(--admin-muted); }
   .admin-alert-error { @apply rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm font-semibold text-rose-700; }
+  .admin-alert-success { @apply rounded-xl border p-4 text-sm font-semibold; color: #047857; background: rgba(16, 185, 129, .12); border-color: rgba(16, 185, 129, .34); }
   .draft-status { @apply mb-5 flex flex-col gap-4 rounded-2xl border p-4 sm:flex-row sm:items-center sm:justify-between; color: var(--admin-copy); background: var(--admin-panel); border-color: var(--admin-border); }
   .draft-status-ok { border-left: 4px solid var(--admin-primary); }
   .draft-status-warning { border-left: 4px solid var(--admin-warning); }
@@ -231,6 +245,8 @@ a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visib
 :root[data-theme="dark"] .text-red-700 { color: #fda4af !important; }
 :root[data-theme="dark"] .border-emerald-200 { border-color: rgba(52, 211, 153, .38) !important; }
 :root[data-theme="dark"] .border-rose-200 { border-color: rgba(251, 113, 133, .4) !important; }
+:root[data-theme="dark"] .admin-status-success,
+:root[data-theme="dark"] .admin-alert-success { color: #6ee7b7; }
 :root[data-theme="dark"] input,
 :root[data-theme="dark"] textarea,
 :root[data-theme="dark"] select { color: var(--admin-ink); background-color: var(--admin-field); border-color: var(--admin-border); }

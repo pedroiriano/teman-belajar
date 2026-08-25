@@ -193,3 +193,25 @@ Untuk task UI:
 8. Verify mobile + keyboard + accessibility.
 9. Remove unused dependencies/assets.
 10. Catat mapping vendor → product pada PR.
+
+## 14. Post-Foundation Roadmap Workflow
+
+For TASK-013–024:
+
+1. Select exactly one `PLANNED` task from `tasks/README.md`.
+2. Read the expansion roadmap and verify every dependency by merged evidence,
+   not by placeholder UI or task number.
+3. Confirm data owner, human decisions, migrations/contracts, and stop
+   conditions before implementation.
+4. Create a fresh task branch from verified `origin/main`; do not reuse a dirty
+   feature branch or combine roadmap tasks.
+5. Implement only the bounded outcome and keep `Segera` inactive until the
+   feature is complete.
+6. Verify the task-specific tests plus regression of its dependencies.
+7. Update task/roadmap/navigation status only with observed evidence.
+8. Push, open a reviewable PR, wait protected checks, and do not merge without
+   explicit human approval.
+
+TASK-024 consumes the selected expansion release manifest and verifies its
+delta. It must not rewrite migration history, relax security, repeat unrelated
+TASK-012 work, or claim production approval.

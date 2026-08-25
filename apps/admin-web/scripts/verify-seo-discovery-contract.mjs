@@ -4,6 +4,7 @@ import { resolve } from "node:path";
 const read = (path) => readFileSync(resolve(process.cwd(), path), "utf8");
 const component = read("src/components/seo/SeoDiscoverySection.tsx");
 const actions = read("src/app/actions/discoverability.ts");
+const taxonomyPage = read("src/app/dashboard/taxonomy/page.tsx");
 const consumers = [
   "src/app/dashboard/news/create/page.tsx", "src/app/dashboard/news/[id]/page.tsx",
   "src/app/dashboard/announcements/create/page.tsx", "src/app/dashboard/announcements/[id]/page.tsx",
@@ -18,6 +19,9 @@ for (const expected of ["Kategori dan tampilan publik", "Tampilan di hasil penca
 }
 for (const expected of ["/api/v1/admin/taxonomy/", "/api/v1/admin/discoverability/", "indexable: value.indexable === \"true\""]) {
   if (!actions.includes(expected)) throw new Error(`SEO action contract missing ${expected}`);
+}
+for (const expected of ["Pilih jenis taxonomy", "Slug otomatis", "Cari nama, slug, atau deskripsi", "admin-taxonomy-tab", "showComposer", "filteredTerms", "aria-live", "ArrowRight", "tabIndex"]) {
+  if (!taxonomyPage.includes(expected)) throw new Error(`taxonomy workspace UX missing ${expected}`);
 }
 consumers.forEach((source, index) => {
   if (!source.includes("SeoDiscoverySection")) throw new Error(`consumer ${index + 1} does not reuse SeoDiscoverySection`);

@@ -8,7 +8,9 @@ $requiredFiles = @(
     "REPOSITORY-STRUCTURE.md",
     "docs/governance/AI-AGENT-ALIGNMENT.md",
     "docs/governance/SOURCE-OF-TRUTH.md",
-    "docs/canonical/12-agentic-development-playbook.md"
+    "docs/canonical/12-agentic-development-playbook.md",
+    "docs/roadmap/POST-TASK-012-EXPANSION-ROADMAP.md",
+    "tasks/README.md"
 )
 
 $failures = [System.Collections.Generic.List[string]]::new()
@@ -27,6 +29,19 @@ if ($failures.Count -eq 0) {
     $agents = Get-Content -LiteralPath (Join-Path $repositoryRoot "AGENTS.md") -Raw
     foreach ($marker in @('Teman Belajar', 'Do not query Moodle database directly', 'Secrets must never be committed', 'Next.js `16.3.0`', 'Docker Local Environment', 'UI Template Governance')) {
         if (-not $agents.Contains($marker)) { $failures.Add("AGENTS.md invariant is missing: $marker") }
+    }
+
+    $roadmap = Get-Content -LiteralPath (Join-Path $repositoryRoot "docs/roadmap/POST-TASK-012-EXPANSION-ROADMAP.md") -Raw
+    $taskRegistry = Get-Content -LiteralPath (Join-Path $repositoryRoot "tasks/README.md") -Raw
+    foreach ($number in 13..24) {
+        $taskId = "TASK-{0:D3}" -f $number
+        if (-not $roadmap.Contains($taskId)) { $failures.Add("Expansion roadmap is missing: $taskId") }
+        if (-not $taskRegistry.Contains($taskId)) { $failures.Add("Task registry is missing: $taskId") }
+        $taskFile = Get-ChildItem -LiteralPath (Join-Path $repositoryRoot "tasks") -Filter "$taskId-*.md" -File
+        if ($taskFile.Count -ne 1) { $failures.Add("Expected exactly one task specification for $taskId; found $($taskFile.Count)") }
+    }
+    foreach ($marker in @('PRODUCTION HOLD', 'Moodle tetap authoritative', 'TASK-024')) {
+        if (-not $roadmap.Contains($marker)) { $failures.Add("Expansion roadmap invariant is missing: $marker") }
     }
 
     $nested = Get-ChildItem -LiteralPath $repositoryRoot -Filter "GEMINI.md" -File -Recurse |

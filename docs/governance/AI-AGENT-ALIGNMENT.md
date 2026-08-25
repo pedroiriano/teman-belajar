@@ -168,3 +168,25 @@ OUTPUT: factual status, files, commands/results, gaps, rollback/next safe step
 
 Reject vague instructions such as “clean everything” until scope and stop
 conditions are bounded by repository authority.
+
+## 12. Expansion Roadmap Discipline
+
+For TASK-013–024, Codex, Antigravity/Gemini, humans, and future agents must:
+
+1. read `docs/roadmap/POST-TASK-012-EXPANSION-ROADMAP.md`, the individual task,
+   and all sources required by `AGENTS.md` before editing;
+2. treat task numbers as stable identifiers, resolve actual dependency gates,
+   and never start a dependent task from an incomplete placeholder;
+3. use one bounded task per branch/PR and never batch the entire roadmap;
+4. preserve Moodle/Portal/Keycloak data ownership and finalized identity
+   boundaries; UI presence never changes backend authority;
+5. keep `PLANNED` and `Segera` features inactive until implementation, authz,
+   states, tests, docs, browser acceptance, and merge are complete;
+6. stop for the human decisions listed by the roadmap/task instead of selecting
+   providers, retention, sensitive data, secrets, roles, or production actions;
+7. use TASK-024 only for expansion delta evidence and retain every unresolved
+   TASK-012 `PRODUCTION HOLD` decision.
+
+Agents must update the task registry and roadmap status factually in the same PR
+that changes delivery state. A green check does not authorize merge, production
+deployment, secret rotation, or a protected-branch bypass.
