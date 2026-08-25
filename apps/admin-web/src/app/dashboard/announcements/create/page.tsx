@@ -148,9 +148,9 @@ export default function CreateAnnouncementPage() {
             </div>
 
           </div>
+        <SeoDiscoverySection compact embedded value={seo} onChange={setSEO} contentTitle={title} contentSummary={body.slice(0, 300)} contentBody={body} routePrefix="/announcements/" />
         <div className="admin-form-footer"><Link href="/dashboard/announcements" className="admin-button-secondary">Batal</Link><button type="submit" disabled={loading} className="admin-button">{loading ? "Menyimpan…" : "Simpan draft"}</button></div>
       </form>
-      <SeoDiscoverySection value={seo} onChange={setSEO} contentTitle={title} contentSummary={body.slice(0, 300)} contentBody={body} routePrefix="/announcements/" />
     </div>
   );
 }
