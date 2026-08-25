@@ -3,6 +3,8 @@ package cms
 import (
 	"errors"
 	"time"
+
+	"teman-belajar-api/internal/domain/discoverability"
 )
 
 type ContentStatus string
@@ -25,35 +27,37 @@ var (
 )
 
 type News struct {
-	ID          string        `json:"id"`
-	Slug        string        `json:"slug"`
-	Title       string        `json:"title"`
-	Excerpt     string        `json:"excerpt"`
-	Body        string        `json:"body"`
-	Status      ContentStatus `json:"status"`
-	CategoryID  *string       `json:"category_id"`
-	PublishedAt *time.Time    `json:"published_at"`
-	CreatedAt   time.Time     `json:"created_at"`
-	CreatedBy   *string       `json:"created_by"`
-	UpdatedAt   time.Time     `json:"updated_at"`
-	UpdatedBy   *string       `json:"updated_by"`
-	Version     int64         `json:"version"`
+	ID          string                    `json:"id"`
+	Slug        string                    `json:"slug"`
+	Title       string                    `json:"title"`
+	Excerpt     string                    `json:"excerpt"`
+	Body        string                    `json:"body"`
+	Status      ContentStatus             `json:"status"`
+	CategoryID  *string                   `json:"category_id"`
+	PublishedAt *time.Time                `json:"published_at"`
+	CreatedAt   time.Time                 `json:"created_at"`
+	CreatedBy   *string                   `json:"created_by"`
+	UpdatedAt   time.Time                 `json:"updated_at"`
+	UpdatedBy   *string                   `json:"updated_by"`
+	Version     int64                     `json:"version"`
+	SEO         *discoverability.Metadata `json:"seo,omitempty"`
 }
 
 type Announcement struct {
-	ID          string        `json:"id"`
-	Slug        string        `json:"slug"`
-	Title       string        `json:"title"`
-	Body        string        `json:"body"`
-	Status      ContentStatus `json:"status"`
-	StartAt     *time.Time    `json:"start_at"`
-	EndAt       *time.Time    `json:"end_at"`
-	PublishedAt *time.Time    `json:"published_at"`
-	CreatedAt   time.Time     `json:"created_at"`
-	CreatedBy   *string       `json:"created_by"`
-	UpdatedAt   time.Time     `json:"updated_at"`
-	UpdatedBy   *string       `json:"updated_by"`
-	Version     int64         `json:"version"`
+	ID          string                    `json:"id"`
+	Slug        string                    `json:"slug"`
+	Title       string                    `json:"title"`
+	Body        string                    `json:"body"`
+	Status      ContentStatus             `json:"status"`
+	StartAt     *time.Time                `json:"start_at"`
+	EndAt       *time.Time                `json:"end_at"`
+	PublishedAt *time.Time                `json:"published_at"`
+	CreatedAt   time.Time                 `json:"created_at"`
+	CreatedBy   *string                   `json:"created_by"`
+	UpdatedAt   time.Time                 `json:"updated_at"`
+	UpdatedBy   *string                   `json:"updated_by"`
+	Version     int64                     `json:"version"`
+	SEO         *discoverability.Metadata `json:"seo,omitempty"`
 }
 
 type Pagination struct {

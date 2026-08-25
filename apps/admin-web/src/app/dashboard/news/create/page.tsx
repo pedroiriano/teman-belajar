@@ -12,29 +12,31 @@ import { useAutoSaveDraft } from "@/components/drafts/use-auto-save-draft";
 import { mediaMarkdown, mediaUsagesFromMarkdown } from "@/components/media/insertion";
 import MediaPicker from "@/components/media/MediaPicker";
 import type { MediaSelection } from "@/components/media/types";
+import { SeoDiscoverySection } from "@/components/seo/SeoDiscoverySection";
+import { emptySEOValue, pickSEOValue, type SEOFormValue } from "@/components/seo/types";
 
-type NewsDraft = DraftPayload & { title: string; slug: string; excerpt: string; body: string; media_asset_ids: string[] };
-const emptyDraft: NewsDraft = { title: "", slug: "", excerpt: "", body: "", media_asset_ids: [] };
+type NewsDraft = DraftPayload & SEOFormValue & { title: string; excerpt: string; body: string; media_asset_ids: string[] };
+const emptyDraft: NewsDraft = { ...emptySEOValue(), title: "", excerpt: "", body: "", media_asset_ids: [] };
 const mediaIDs = (body: string) => [...new Set(mediaUsagesFromMarkdown(body).map((usage) => usage.media_id))];
 
 export default function CreateNewsPage() {
   const router = useRouter();
   const [title, setTitle] = useState("");
-  const [slug, setSlug] = useState("");
+  const [seo, setSEO] = useState<SEOFormValue>(emptySEOValue());
   const [excerpt, setExcerpt] = useState("");
   const [body, setBody] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const value = useMemo<NewsDraft>(() => ({ title, slug, excerpt, body, media_asset_ids: mediaIDs(body) }), [body, excerpt, slug, title]);
-  const applyDraft = (draft: NewsDraft) => { setTitle(draft.title); setSlug(draft.slug); setExcerpt(draft.excerpt); setBody(draft.body); };
+  const value = useMemo<NewsDraft>(() => ({ ...seo, title, excerpt, body, media_asset_ids: mediaIDs(body) }), [body, excerpt, seo, title]);
+  const applyDraft = (draft: NewsDraft) => { setTitle(draft.title); setSEO(pickSEOValue(draft)); setExcerpt(draft.excerpt); setBody(draft.body); };
   const autoSave = useAutoSaveDraft({ formKey: "news.create", entityType: "news", value, emptyValue: emptyDraft, onRecover: applyDraft, onStartNew: applyDraft });
 
-  const handleTitleChange = (next: string) => { setTitle(next); setSlug(next.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)+/g, "")); };
+  const handleTitleChange = (next: string) => { setTitle(next); setSEO((current) => ({ ...current, slug: next.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)+/g, "") })); };
   const insertMedia = (selection: MediaSelection) => { setBody((current) => `${current}\n${mediaMarkdown(selection)}\n`); autoSave.requestImmediateSave(); };
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault(); setLoading(true); setError("");
     try {
-      const result = await createNewsAction({ title, slug, excerpt, body, media_usages: mediaUsagesFromMarkdown(body) });
+      const result = await createNewsAction({ title, slug: seo.slug, excerpt, body, seo, media_usages: mediaUsagesFromMarkdown(body) });
       if (!result.success) throw new Error(result.error || "Berita belum dapat disimpan");
       await autoSave.finalize();
       router.push("/dashboard/news");
@@ -46,8 +48,9 @@ export default function CreateNewsPage() {
     <DraftStatus state={autoSave.state} message={autoSave.message} lastSavedAt={autoSave.lastSavedAt} recovery={autoSave.recovery} onRecover={autoSave.recoverFrom} onKeepCurrent={autoSave.keepCurrent} onDiscard={autoSave.discard} onStartNew={autoSave.startNew} onRetry={autoSave.saveNow} />
     <form onSubmit={handleSubmit} className="admin-form-card">
       <div className="admin-form-header"><div className="flex items-center gap-3"><span className="admin-stat-icon"><AdminIcon name="news" className="h-5 w-5" /></span><div><h2 className="font-black text-slate-900">Informasi berita</h2><p className="mt-1 text-xs text-slate-500">Lengkapi judul, ringkasan, dan isi publikasi.</p></div></div></div>
-      <div className="admin-form-body">{error && <div className="admin-alert-error" role="alert">{error}</div>}<div className="grid gap-6 md:grid-cols-2"><div><label htmlFor="news-title" className="admin-label">Judul <span className="text-rose-600">*</span></label><input id="news-title" required value={title} onChange={(event) => handleTitleChange(event.target.value)} className="admin-input" placeholder="Contoh: Program Pembelajaran Kuartal Ketiga" /></div><div><label htmlFor="news-slug" className="admin-label">Slug URL <span className="text-rose-600">*</span></label><input id="news-slug" required value={slug} onChange={(event) => setSlug(event.target.value)} className="admin-input" aria-describedby="news-slug-help" /><p id="news-slug-help" className="mt-2 text-xs text-slate-500">Gunakan huruf kecil, angka, dan tanda hubung.</p></div></div><div><label htmlFor="news-excerpt" className="admin-label">Ringkasan</label><textarea id="news-excerpt" rows={3} value={excerpt} onChange={(event) => setExcerpt(event.target.value)} className="admin-input" placeholder="Ringkasan singkat yang tampil pada kartu berita." /></div><div><div className="mb-2 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"><label htmlFor="news-body" className="admin-label !mb-0">Isi berita <span className="text-rose-600">*</span></label><MediaPicker onSelect={insertMedia} buttonLabel="Sisipkan media" /></div><textarea id="news-body" required rows={14} value={body} onChange={(event) => setBody(event.target.value)} className="admin-input font-mono" placeholder="Tulis isi berita dalam Markdown yang terstruktur…" /></div></div>
+      <div className="admin-form-body">{error && <div className="admin-alert-error" role="alert">{error}</div>}<div><label htmlFor="news-title" className="admin-label">Judul <span className="text-rose-600">*</span></label><input id="news-title" required value={title} onChange={(event) => handleTitleChange(event.target.value)} className="admin-input" placeholder="Contoh: Program Pembelajaran Kuartal Ketiga" /></div><div><label htmlFor="news-excerpt" className="admin-label">Ringkasan</label><textarea id="news-excerpt" rows={3} value={excerpt} onChange={(event) => setExcerpt(event.target.value)} className="admin-input" placeholder="Ringkasan singkat yang tampil pada kartu berita." /></div><div><div className="mb-2 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"><label htmlFor="news-body" className="admin-label !mb-0">Isi berita <span className="text-rose-600">*</span></label><MediaPicker onSelect={insertMedia} buttonLabel="Sisipkan media" /></div><textarea id="news-body" required rows={14} value={body} onChange={(event) => setBody(event.target.value)} className="admin-input font-mono" placeholder="Tulis isi berita dalam Markdown yang terstruktur…" /></div></div>
       <div className="admin-form-footer"><Link href="/dashboard/news" className="admin-button-secondary">Batal</Link><button type="submit" disabled={loading} className="admin-button">{loading ? "Menyimpan…" : "Simpan draft kanonis"}</button></div>
     </form>
+    <SeoDiscoverySection value={seo} onChange={setSEO} contentTitle={title} contentSummary={excerpt} contentBody={body} routePrefix="/news/" />
   </div>;
 }

@@ -148,6 +148,20 @@ database constraints independently prevent cycles, excessive depth, sibling
 collisions, and hard deletion of referenced nodes. Optimistic versions prevent
 silent stale metadata, move, and archive writes.
 
+## SEO and Discoverability Security Boundary
+
+- Canonical overrides are bounded internal paths for the matching content type;
+  external URLs, queries, fragments, traversal, and reserved slugs are denied.
+- Redirect locations are application-generated from validated slugs. Published
+  changes reject collision, self-loop, cycle, and chain amplification.
+- Structured data is application-owned and safely serialized; editors cannot
+  submit raw JSON-LD.
+- Public metadata, sitemap, landing, search, and social-media delivery require
+  authoritative publication/indexability and active hierarchy state. Robots is
+  never used as access control.
+- Taxonomy/profile mutation is authorized server-side. Social metadata stores
+  only an eligible active image Media Asset UUID.
+
 ## 11. Threat Modeling
 
 Setiap feature high-risk wajib mengulas:

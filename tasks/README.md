@@ -17,6 +17,8 @@ Task awal:
 - TASK-011 Moodle Event Inbox
 - TASK-011A Auto-Save Draft & Crash Recovery
 - TASK-011B Hierarchical Knowledge Explorer
+- TASK-011C Admin Web Cuba UI Harmonization & No-Orange Enforcement
+- TASK-011D SEO, Taxonomy & Public Discoverability Platform
 - TASK-012 Production Readiness
 
 ## Rule

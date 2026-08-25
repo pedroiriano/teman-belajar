@@ -14,7 +14,7 @@ assert.match(index, /grid-cols-\[16rem_minmax\(0,1fr\)_14rem\]/);
 assert.match(index, /\/api\/v1\/knowledge\/tree/);
 assert.match(index, /nodeId/);
 assert.match(detail, /generateMetadata/);
-assert.match(detail, /alternates: \{ canonical:/);
+assert.match(detail, /metadataFromSEO/);
 assert.match(detail, /Daftar isi/);
 assert.match(detail, /<KnowledgeTree/);
 assert.match(tree, /role=\{nested \? "group" : "tree"\}/);

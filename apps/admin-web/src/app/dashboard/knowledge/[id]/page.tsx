@@ -11,9 +11,12 @@ import { DraftStatus } from "@/components/drafts/DraftStatus";
 import type { DraftPayload } from "@/components/drafts/types";
 import { useAutoSaveDraft } from "@/components/drafts/use-auto-save-draft";
 import { KnowledgeNodeSelect } from "@/components/knowledge/KnowledgeNodeSelect";
+import { getDiscoverabilityProfileAction, saveDiscoverabilityProfileAction } from "@/app/actions/discoverability";
+import { SeoDiscoverySection } from "@/components/seo/SeoDiscoverySection";
+import { emptySEOValue, pickSEOValue, profileToSEOValue, type DiscoverabilityProfile, type SEOFormValue } from "@/components/seo/types";
 
-type KnowledgeEditDraft = DraftPayload & { body: string; primary_node_id: string | null; media_asset_ids: string[] };
-const blankDraft: KnowledgeEditDraft = { body: "", primary_node_id: null, media_asset_ids: [] };
+type KnowledgeEditDraft = DraftPayload & SEOFormValue & { body: string; primary_node_id: string | null; media_asset_ids: string[] };
+const blankDraft: KnowledgeEditDraft = { ...emptySEOValue(), body: "", primary_node_id: null, media_asset_ids: [] };
 
 export default function AdminKnowledgeDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -25,6 +28,7 @@ export default function AdminKnowledgeDetailPage() {
   const [error, setError] = useState("");
   const [body, setBody] = useState("");
   const [primaryNodeId, setPrimaryNodeId] = useState("");
+  const [seo, setSEO] = useState<SEOFormValue>(emptySEOValue());
 
   useEffect(() => {
     const fetchArticle = async () => {
@@ -35,9 +39,13 @@ export default function AdminKnowledgeDetailPage() {
           return;
         }
         
-		setArticle(res.data);
+		const profileResult = await getDiscoverabilityProfileAction("knowledge", id);
+		if (!profileResult.success) { setError(profileResult.error || "SEO & Discovery belum dapat dimuat"); return; }
+		const seoValue = profileToSEOValue(profileResult.data as DiscoverabilityProfile);
+		setArticle({ ...res.data, seo_profile: seoValue });
 		setBody(res.data?.body || "");
 		setPrimaryNodeId(res.data?.hierarchy?.node_id || "");
+		setSEO(seoValue);
 		setRoles(res.roles || []);
       } catch (e) {
         setError("Artikel pengetahuan belum dapat dimuat");
@@ -52,9 +60,9 @@ export default function AdminKnowledgeDetailPage() {
   const isEditor = roles.includes("Content Editor") || roles.includes("Portal Administrator");
   const isReviewer = roles.includes("Reviewer") || roles.includes("Portal Administrator");
   const canCreateRevision = Boolean(article && isEditor && ["draft", "published"].includes(article.status));
-  const value = useMemo<KnowledgeEditDraft>(() => ({ body, primary_node_id: primaryNodeId || null, media_asset_ids: [...new Set(mediaUsagesFromMarkdown(body).map((usage) => usage.media_id))] }), [body, primaryNodeId]);
-  const canonical = useMemo<KnowledgeEditDraft>(() => article ? { body: article.body || "", primary_node_id: article.hierarchy?.node_id || null, media_asset_ids: [...new Set(mediaUsagesFromMarkdown(article.body || "").map((usage) => usage.media_id))] } : blankDraft, [article]);
-  const applyDraft = (draft: KnowledgeEditDraft) => { setBody(draft.body); setPrimaryNodeId(draft.primary_node_id ?? ""); };
+  const value = useMemo<KnowledgeEditDraft>(() => ({ ...seo, body, primary_node_id: primaryNodeId || null, media_asset_ids: [...new Set(mediaUsagesFromMarkdown(body).map((usage) => usage.media_id))] }), [body, primaryNodeId, seo]);
+  const canonical = useMemo<KnowledgeEditDraft>(() => article ? { ...(article.seo_profile || emptySEOValue(article.slug)), body: article.body || "", primary_node_id: article.hierarchy?.node_id || null, media_asset_ids: [...new Set(mediaUsagesFromMarkdown(article.body || "").map((usage) => usage.media_id))] } : blankDraft, [article]);
+  const applyDraft = (draft: KnowledgeEditDraft) => { setSEO(pickSEOValue(draft)); setBody(draft.body); setPrimaryNodeId(draft.primary_node_id ?? ""); };
   const autoSave = useAutoSaveDraft({ formKey: "knowledge.edit", entityType: "knowledge", entityId: id, baseEntityVersion: article ? String(article.current_revision_no) : undefined, value, emptyValue: canonical, enabled: canCreateRevision, onRecover: applyDraft, onStartNew: applyDraft });
   const insertMedia = (selection: MediaSelection) => { setBody((current) => `${current}\n${mediaMarkdown(selection)}\n`); autoSave.requestImmediateSave(); };
 
@@ -81,14 +89,22 @@ export default function AdminKnowledgeDetailPage() {
     const hierarchyDirty = primaryNodeId !== (article.hierarchy?.node_id || "");
     const res = article.body === body && hierarchyDirty
       ? await assignKnowledgeArticleNodeAction(id, primaryNodeId)
-      : await createKnowledgeRevisionAction(id, { body, expected_revision_no: article.current_revision_no, primary_node_id: primaryNodeId || undefined, media_usages: mediaUsagesFromMarkdown(body) });
+      : await createKnowledgeRevisionAction(id, { body, expected_revision_no: article.current_revision_no, seo, primary_node_id: primaryNodeId || undefined, media_usages: mediaUsagesFromMarkdown(body) });
     if (!res.success) {
       setError(res.error || "Revisi baru belum dapat disimpan");
       setActionLoading(false);
     } else {
+      const seoResult = await saveDiscoverabilityProfileAction("knowledge", id, seo);
+      if (!seoResult.success) { setError(seoResult.error || "SEO & Discovery belum dapat disimpan"); setActionLoading(false); return; }
       await autoSave.finalize();
       router.push("/dashboard/knowledge");
     }
+  };
+
+  const handleSaveSEO = async () => {
+    setActionLoading(true); setError(""); const result = await saveDiscoverabilityProfileAction("knowledge", id, seo);
+    if (!result.success) { setError(result.error || "SEO & Discovery belum dapat disimpan"); setActionLoading(false); return; }
+    await autoSave.finalize(); router.refresh(); setActionLoading(false);
   };
 
   if (loading) return <div className="admin-card animate-pulse p-8"><div className="h-7 w-72 rounded bg-slate-100" /><div className="mt-6 h-72 rounded-xl bg-slate-100" /></div>;
@@ -190,6 +206,8 @@ export default function AdminKnowledgeDetailPage() {
             </div>
           </div>
       </section>
+      <SeoDiscoverySection value={seo} onChange={setSEO} contentTitle={article.title} contentSummary={article.summary || ""} contentBody={body || article.body || ""} routePrefix="/knowledge/" disabled={!canCreateRevision} />
+      {canCreateRevision && <div className="flex justify-end"><button type="button" className="admin-button" disabled={actionLoading} onClick={handleSaveSEO}>Simpan SEO &amp; Discovery</button></div>}
     </div>
   );
 }

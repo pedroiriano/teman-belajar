@@ -2,7 +2,7 @@ import Link from "next/link";
 import { ErrorState, PageHero } from "@/components/public-content";
 import { PortalIcon } from "@/components/portal-icon";
 
-export const metadata = { title: "Pencarian Teman Belajar" };
+export const metadata = { title: "Pencarian Teman Belajar", robots: { index: false, follow: true } };
 
 const contentTypes = [
   { value: "", label: "Semua" },

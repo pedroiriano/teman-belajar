@@ -13,32 +13,34 @@ import { DraftStatus } from "@/components/drafts/DraftStatus";
 import type { DraftPayload } from "@/components/drafts/types";
 import { useAutoSaveDraft } from "@/components/drafts/use-auto-save-draft";
 import { KnowledgeNodeSelect } from "@/components/knowledge/KnowledgeNodeSelect";
+import { SeoDiscoverySection } from "@/components/seo/SeoDiscoverySection";
+import { emptySEOValue, pickSEOValue, type SEOFormValue } from "@/components/seo/types";
 
-type KnowledgeDraft = DraftPayload & { title: string; slug: string; summary: string; body: string; primary_node_id: string | null; media_asset_ids: string[] };
-const emptyDraft: KnowledgeDraft = { title: "", slug: "", summary: "", body: "", primary_node_id: null, media_asset_ids: [] };
+type KnowledgeDraft = DraftPayload & SEOFormValue & { title: string; summary: string; body: string; primary_node_id: string | null; media_asset_ids: string[] };
+const emptyDraft: KnowledgeDraft = { ...emptySEOValue(), title: "", summary: "", body: "", primary_node_id: null, media_asset_ids: [] };
 
 export default function CreateKnowledgePage() {
   const router = useRouter();
   
   const [title, setTitle] = useState("");
-  const [slug, setSlug] = useState("");
+  const [seo, setSEO] = useState<SEOFormValue>(emptySEOValue());
   const [summary, setSummary] = useState("");
   const [body, setBody] = useState("");
   const [primaryNodeId, setPrimaryNodeId] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const value = useMemo<KnowledgeDraft>(() => ({
-    title, slug, summary, body, primary_node_id: primaryNodeId || null,
+    ...seo, title, summary, body, primary_node_id: primaryNodeId || null,
     media_asset_ids: [...new Set(mediaUsagesFromMarkdown(body).map((usage) => usage.media_id))],
-  }), [body, primaryNodeId, slug, summary, title]);
-  const applyDraft = (draft: KnowledgeDraft) => { setTitle(draft.title); setSlug(draft.slug); setSummary(draft.summary); setBody(draft.body); setPrimaryNodeId(draft.primary_node_id ?? ""); };
+  }), [body, primaryNodeId, seo, summary, title]);
+  const applyDraft = (draft: KnowledgeDraft) => { setTitle(draft.title); setSEO(pickSEOValue(draft)); setSummary(draft.summary); setBody(draft.body); setPrimaryNodeId(draft.primary_node_id ?? ""); };
   const autoSave = useAutoSaveDraft({ formKey: "knowledge.create", entityType: "knowledge", value, emptyValue: emptyDraft, onRecover: applyDraft, onStartNew: applyDraft });
 
   // Auto-generate slug from title
   const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
     setTitle(val);
-    setSlug(val.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, ''));
+    setSEO((current) => ({ ...current, slug: val.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '') }));
   };
 
   const insertMedia = (selection: MediaSelection) => {
@@ -52,7 +54,7 @@ export default function CreateKnowledgePage() {
     setError("");
 
     try {
-      const res = await createKnowledgeAction({ title, slug, summary, body, primary_node_id: primaryNodeId || undefined, media_usages: mediaUsagesFromMarkdown(body) });
+      const res = await createKnowledgeAction({ title, slug: seo.slug, summary, body, seo, primary_node_id: primaryNodeId || undefined, media_usages: mediaUsagesFromMarkdown(body) });
 
       if (!res.success) {
         throw new Error(res.error || "Artikel pengetahuan belum dapat dibuat");
@@ -83,7 +85,7 @@ export default function CreateKnowledgePage() {
               </div>
             )}
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
               <div className="space-y-2">
                 <label htmlFor="knowledge-title" className="admin-label">Judul <span className="text-rose-600">*</span></label>
                 <input 
@@ -94,18 +96,6 @@ export default function CreateKnowledgePage() {
                   onChange={handleTitleChange}
                   className="admin-input"
                   placeholder="Contoh: Panduan kerja kolaboratif"
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <label htmlFor="knowledge-slug" className="admin-label">Slug URL <span className="text-rose-600">*</span></label>
-                <input 
-                  id="knowledge-slug"
-                  type="text" 
-                  required
-                  value={slug}
-                  onChange={(e) => setSlug(e.target.value)}
-                  className="admin-input"
                 />
               </div>
             </div>
@@ -144,6 +134,7 @@ export default function CreateKnowledgePage() {
           </div>
         <div className="admin-form-footer"><Link href="/dashboard/knowledge" className="admin-button-secondary">Batal</Link><button type="submit" disabled={loading} className="admin-button">{loading ? "Menyimpan…" : "Simpan draft"}</button></div>
       </form>
+      <SeoDiscoverySection value={seo} onChange={setSEO} contentTitle={title} contentSummary={summary} contentBody={body} routePrefix="/knowledge/" />
     </div>
   );
 }

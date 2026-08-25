@@ -1,14 +1,16 @@
 import { getServerSession } from "next-auth/next";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 
 import { KnowledgeEngagement } from "@/components/engagement/knowledge-engagement";
 import { MarkdownRenderer, extractMarkdownHeadings } from "@/components/markdown-renderer";
 import { KnowledgeTree, type PublicKnowledgeTreeResponse } from "@/components/knowledge/knowledge-tree";
 import { PortalIcon } from "@/components/portal-icon";
+import { StructuredData } from "@/components/structured-data";
 import { authOptions } from "@/lib/auth";
 import type { RatingSummary } from "@/lib/engagement/types";
+import { absolutePublicUrl, metadataFromSEO, type PublicSEO } from "@/lib/discovery/types";
 
 type KnowledgeArticle = {
   id: string;
@@ -20,6 +22,7 @@ type KnowledgeArticle = {
   last_reviewed_at?: string;
   related?: Array<{ id: string; slug: string; title: string; summary?: string }>;
   hierarchy?: { node_id: string; breadcrumbs: Array<{ id: string; slug: string; title: string; type: string }> };
+  seo?: PublicSEO;
 };
 
 async function getKnowledgeBySlug(slug: string): Promise<KnowledgeArticle | null> {
@@ -27,8 +30,9 @@ async function getKnowledgeBySlug(slug: string): Promise<KnowledgeArticle | null
   if (!API_BASE) throw new Error("Missing PORTAL_API_INTERNAL_URL");
 
   const res = await fetch(`${API_BASE}/api/v1/knowledge/${encodeURIComponent(slug)}`, {
-    next: { revalidate: 60 }
+    next: { revalidate: 60 }, redirect: "manual"
   });
+  if (res.status === 301 || res.status === 308) { const location = res.headers.get("location"); if (location?.startsWith("/knowledge/")) permanentRedirect(location); }
   if (!res.ok) {
     if (res.status === 404) {
       return null;
@@ -61,12 +65,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const { slug } = await params;
   const article = await getKnowledgeBySlug(slug);
   if (!article) return { title: "Artikel tidak ditemukan" };
-  return {
-    title: article.title,
-    description: article.summary || "Artikel Pusat Pengetahuan Teman Belajar",
-    alternates: { canonical: `/knowledge/${article.slug}` },
-    openGraph: { type: "article", title: article.title, description: article.summary || undefined, url: `/knowledge/${article.slug}` },
-  };
+  return metadataFromSEO(article.seo, { title: article.title, description: article.summary || "Artikel Pusat Pengetahuan Teman Belajar", canonical: `/knowledge/${article.slug}` });
 }
 
 function formatDate(value?: string) {
@@ -85,14 +84,17 @@ export default async function KnowledgeDetailPage({ params }: { params: Promise<
   const [session, ratingSummary, treeResponse] = await Promise.all([getServerSession(authOptions), getRatingSummary(article.id), getKnowledgeTree()]);
   const tree = treeResponse?.data ?? [];
   const headings = extractMarkdownHeadings(article.body);
+  const canonical = absolutePublicUrl(article.seo?.canonical_path || `/knowledge/${article.slug}`);
 
   return (
     <article className="pb-20">
+      <StructuredData value={{ "@context": "https://schema.org", "@type": "Article", headline: article.title, description: article.seo?.description || article.summary || undefined, datePublished: article.published_at, dateModified: article.seo?.updated_at || article.last_reviewed_at || article.published_at, mainEntityOfPage: canonical, image: article.seo?.open_graph_image_url ? absolutePublicUrl(article.seo.open_graph_image_url) : undefined, publisher: { "@type": "Organization", name: "Teman Belajar", url: absolutePublicUrl("/") } }} />
+      <StructuredData value={{ "@context": "https://schema.org", "@type": "BreadcrumbList", itemListElement: [{ "@type": "ListItem", position: 1, name: "Pusat Pengetahuan", item: absolutePublicUrl("/knowledge") }, ...(article.hierarchy?.breadcrumbs || []).map((crumb, index) => ({ "@type": "ListItem", position: index + 2, name: crumb.title, item: absolutePublicUrl(`/knowledge/topics/${encodeURIComponent(crumb.id)}`) })), { "@type": "ListItem", position: (article.hierarchy?.breadcrumbs.length || 0) + 2, name: article.title, item: canonical }] }} />
       <header className="relative overflow-hidden bg-[#102a43] text-white">
         <div className="portal-hero-orb portal-hero-orb-one" aria-hidden="true" />
         <div className="portal-hero-orb portal-hero-orb-two" aria-hidden="true" />
         <div className="portal-container relative py-16 text-center sm:py-24">
-          <nav aria-label="Breadcrumb" className="mb-6 flex flex-wrap justify-center gap-2 text-sm text-teal-100"><Link href="/knowledge" className="font-bold hover:text-white">Pusat Pengetahuan</Link>{article.hierarchy?.breadcrumbs.map((crumb) => <span key={crumb.id} className="contents"><span aria-hidden="true">/</span><Link href={`/knowledge?node=${encodeURIComponent(crumb.id)}`} className="hover:text-white">{crumb.title}</Link></span>)}<span aria-hidden="true">/</span><span aria-current="page">Artikel</span></nav>
+          <nav aria-label="Breadcrumb" className="mb-6 flex flex-wrap justify-center gap-2 text-sm text-teal-100"><Link href="/knowledge" className="font-bold hover:text-white">Pusat Pengetahuan</Link>{article.hierarchy?.breadcrumbs.map((crumb) => <span key={crumb.id} className="contents"><span aria-hidden="true">/</span><Link href={`/knowledge/topics/${encodeURIComponent(crumb.id)}`} className="hover:text-white">{crumb.title}</Link></span>)}<span aria-hidden="true">/</span><span aria-current="page">Artikel</span></nav>
           <p className="mx-auto w-fit rounded-full bg-white/10 px-4 py-1.5 text-xs font-black uppercase tracking-[.18em] text-teal-200">Wawasan terverifikasi</p>
           <h1 className="mx-auto mt-6 max-w-4xl text-4xl font-black leading-tight tracking-tight sm:text-5xl">{article.title}</h1>
           {article.summary && <p className="mx-auto mt-6 max-w-2xl text-base leading-8 text-slate-300 sm:text-lg">{article.summary}</p>}
@@ -110,6 +112,7 @@ export default async function KnowledgeDetailPage({ params }: { params: Promise<
             <div className="portal-card p-6 sm:p-10 lg:p-12">
               <Link href="/knowledge" className="inline-flex items-center gap-2 text-sm font-bold text-teal-700"><span aria-hidden="true">←</span>Kembali ke Pusat Pengetahuan</Link>
               <div className="mt-8 border-t border-slate-200 pt-8"><MarkdownRenderer content={article.body} /></div>
+              {(article.seo?.category || article.seo?.tags?.length) && <footer className="mt-10 border-t border-slate-200 pt-6"><div className="flex flex-wrap gap-2">{article.seo.category && <Link href={`/categories/${article.seo.category.slug}`} className="portal-badge">{article.seo.category.name}</Link>}{article.seo.tags.map((tag) => <Link key={tag.id} href={`/tags/${tag.slug}`} className="portal-filter">#{tag.name}</Link>)}</div></footer>}
             </div>
             {article.related && article.related.length > 0 && <section className="mt-12" aria-labelledby="related-knowledge"><p className="portal-eyebrow">Baca selanjutnya</p><h2 id="related-knowledge" className="mt-2 text-2xl font-black text-slate-900">Konten terkait</h2><div className="mt-6 grid gap-5 sm:grid-cols-2">{article.related.map((item) => <article key={item.id} className="portal-card p-5"><h3 className="font-black text-slate-900"><Link href={`/knowledge/${item.slug}`} className="hover:text-teal-700">{item.title}</Link></h3>{item.summary && <p className="mt-2 line-clamp-2 text-sm leading-6 text-slate-600">{item.summary}</p>}</article>)}</div></section>}
           </main>

@@ -2025,6 +2025,171 @@ paths:
           $ref: '#/components/responses/ValidationError'
         '503':
           $ref: '#/components/responses/ServiceUnavailableError'
+  /announcements/{slug}:
+    get:
+      tags: [Announcements]
+      operationId: getPublicAnnouncementBySlug
+      summary: Get one active public announcement by canonical slug
+      security: []
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema: { type: string, pattern: '^[a-z0-9]+(?:-[a-z0-9]+)*$' }
+      responses:
+        '200':
+          description: Active announcement with resolved SEO metadata
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Announcement'
+                  - type: object
+                    properties:
+                      seo: { $ref: '#/components/schemas/PublicSEO' }
+        '308': { description: Permanent internal redirect from historical slug }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /discovery/sitemap:
+    get:
+      tags: [Discovery]
+      operationId: listPublicSitemapEntries
+      summary: List canonical public and indexable sitemap entries
+      security: []
+      responses:
+        '200':
+          description: Sitemap source without article bodies or historical redirect URLs
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/SitemapEntry' }
+        '503': { $ref: '#/components/responses/ServiceUnavailableError' }
+  /discovery/{kind}/{slug}:
+    get:
+      tags: [Discovery]
+      operationId: getPublicTaxonomyLanding
+      summary: Get a category or tag landing with explicit indexability policy
+      security: []
+      parameters:
+        - name: kind
+          in: path
+          required: true
+          schema: { type: string, enum: [categories, tags] }
+        - name: slug
+          in: path
+          required: true
+          schema: { type: string, pattern: '^[a-z0-9]+(?:-[a-z0-9]+)*$' }
+      responses:
+        '200':
+          description: Public taxonomy landing
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TaxonomyLanding' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /admin/taxonomy/{kind}:
+    get:
+      tags: [Admin, Discovery]
+      operationId: listAdminTaxonomyTerms
+      summary: List controlled Category or Tag vocabulary
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: kind
+          in: path
+          required: true
+          schema: { type: string, enum: [categories, tags] }
+        - name: include_archived
+          in: query
+          schema: { type: boolean, default: false }
+      responses:
+        '200':
+          description: Controlled vocabulary
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: { type: array, items: { $ref: '#/components/schemas/TaxonomyTerm' } }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+    post:
+      tags: [Admin, Discovery]
+      operationId: createAdminTaxonomyTerm
+      summary: Create a normalized taxonomy term
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: kind
+          in: path
+          required: true
+          schema: { type: string, enum: [categories, tags] }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [name, slug]
+              properties:
+                name: { type: string, maxLength: 120 }
+                slug: { type: string, maxLength: 120, pattern: '^[a-z0-9]+(?:-[a-z0-9]+)*$' }
+                description: { type: string, maxLength: 1000 }
+                domain: { type: string, enum: [public, news, announcement, knowledge], default: public }
+      responses:
+        '201': { description: Created normalized term, content: { application/json: { schema: { $ref: '#/components/schemas/TaxonomyTerm' } } } }
+        '409': { $ref: '#/components/responses/ConflictError' }
+        '422': { $ref: '#/components/responses/ValidationError' }
+  /admin/taxonomy/{kind}/{id}/archive:
+    post:
+      tags: [Admin, Discovery]
+      operationId: archiveAdminTaxonomyTerm
+      summary: Archive a term while preserving historical relations
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: kind
+          in: path
+          required: true
+          schema: { type: string, enum: [categories, tags] }
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '204': { description: Archived }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /admin/discoverability/{contentType}/{contentId}:
+    get:
+      tags: [Admin, Discovery]
+      operationId: getAdminDiscoverabilityProfile
+      summary: Get canonical SEO and taxonomy authoring profile
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: '#/components/parameters/DiscoveryContentType'
+        - $ref: '#/components/parameters/DiscoveryContentId'
+      responses:
+        '200': { description: Discoverability profile, content: { application/json: { schema: { $ref: '#/components/schemas/SEOProfile' } } } }
+        '404': { $ref: '#/components/responses/NotFound' }
+    put:
+      tags: [Admin, Discovery]
+      operationId: replaceAdminDiscoverabilityProfile
+      summary: Replace canonical SEO/taxonomy profile and safely govern slug history
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: '#/components/parameters/DiscoveryContentType'
+        - $ref: '#/components/parameters/DiscoveryContentId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/SEOProfileInput' }
+      responses:
+        '200': { description: Saved profile, content: { application/json: { schema: { $ref: '#/components/schemas/SEOProfile' } } } }
+        '409': { $ref: '#/components/responses/ConflictError' }
+        '422': { $ref: '#/components/responses/ValidationError' }
 components:
   securitySchemes:
     oidc:
@@ -2035,6 +2200,16 @@ components:
       scheme: bearer
       bearerFormat: JWT
   parameters:
+    DiscoveryContentType:
+      name: contentType
+      in: path
+      required: true
+      schema: { type: string, enum: [news, announcement, knowledge] }
+    DiscoveryContentId:
+      name: contentId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
     Page:
       name: page
       in: query
@@ -2122,6 +2297,103 @@ components:
           schema:
             $ref: '#/components/schemas/Problem'
   schemas:
+    TaxonomyTerm:
+      type: object
+      additionalProperties: false
+      required: [id, kind, slug, name, status, usage_count, created_at, updated_at]
+      properties:
+        id: { type: string, format: uuid }
+        kind: { type: string, enum: [category, tag] }
+        domain: { type: string, enum: [public, news, announcement, knowledge] }
+        slug: { type: string, maxLength: 120, pattern: '^[a-z0-9]+(?:-[a-z0-9]+)*$' }
+        name: { type: string, maxLength: 120 }
+        description: { type: string, maxLength: 1000 }
+        status: { type: string, enum: [active, archived] }
+        usage_count: { type: integer, minimum: 0 }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+    SEOProfileInput:
+      type: object
+      additionalProperties: false
+      required: [slug, category_id, tag_ids, seo_title, meta_description, social_title, social_description, social_media_id, indexable, canonical_path]
+      properties:
+        slug: { type: string, maxLength: 120, pattern: '^[a-z0-9]+(?:-[a-z0-9]+)*$' }
+        category_id: { type: [string, 'null'], format: uuid }
+        tag_ids: { type: array, maxItems: 20, uniqueItems: true, items: { type: string, format: uuid } }
+        seo_title: { type: string, maxLength: 200 }
+        meta_description: { type: string, maxLength: 500 }
+        social_title: { type: string, maxLength: 200 }
+        social_description: { type: string, maxLength: 500 }
+        social_media_id: { type: [string, 'null'], format: uuid, description: Active image Media Asset ID only }
+        indexable: { type: boolean }
+        canonical_path: { type: [string, 'null'], maxLength: 500, pattern: '^/[a-z0-9/_-]+$' }
+    SEOProfile:
+      allOf:
+        - $ref: '#/components/schemas/SEOProfileInput'
+        - type: object
+          required: [content_type, content_id, tags, updated_at]
+          properties:
+            content_type: { type: string, enum: [news, announcement, knowledge] }
+            content_id: { type: string, format: uuid }
+            category: { $ref: '#/components/schemas/TaxonomyTerm' }
+            tags: { type: array, items: { $ref: '#/components/schemas/TaxonomyTerm' } }
+            social_image_alt: { type: string, maxLength: 255, readOnly: true }
+            updated_at: { type: string, format: date-time }
+    PublicSEO:
+      type: object
+      additionalProperties: false
+      required: [content_type, content_id, slug, title, description, canonical_path, indexable, open_graph_title, open_graph_description, tags, updated_at, health]
+      properties:
+        content_type: { type: string, enum: [news, announcement, knowledge] }
+        content_id: { type: string, format: uuid }
+        slug: { type: string }
+        title: { type: string }
+        description: { type: string }
+        canonical_path: { type: string }
+        indexable: { type: boolean }
+        open_graph_title: { type: string }
+        open_graph_description: { type: string }
+        open_graph_image_url: { type: string }
+        open_graph_image_alt: { type: string, maxLength: 255 }
+        category: { $ref: '#/components/schemas/TaxonomyTerm' }
+        tags: { type: array, items: { $ref: '#/components/schemas/TaxonomyTerm' } }
+        published_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+        health:
+          type: array
+          items:
+            type: object
+            required: [code, status, message]
+            properties:
+              code: { type: string }
+              status: { type: string, enum: [BLOCKER, WARNING, PASS] }
+              message: { type: string }
+    SitemapEntry:
+      type: object
+      additionalProperties: false
+      required: [url, last_modified]
+      properties:
+        url: { type: string, pattern: '^/' }
+        last_modified: { type: string, format: date-time }
+    TaxonomyLanding:
+      type: object
+      additionalProperties: false
+      required: [term, indexable, items]
+      properties:
+        term: { $ref: '#/components/schemas/TaxonomyTerm' }
+        indexable: { type: boolean }
+        items:
+          type: array
+          items:
+            type: object
+            required: [content_type, slug, title, summary, url, updated_at]
+            properties:
+              content_type: { type: string, enum: [news, announcement, knowledge] }
+              slug: { type: string }
+              title: { type: string }
+              summary: { type: string }
+              url: { type: string }
+              updated_at: { type: string, format: date-time }
     Health:
       type: object
       required:
@@ -2210,6 +2482,8 @@ components:
           type: integer
           format: int64
           minimum: 1
+        seo:
+          $ref: '#/components/schemas/PublicSEO'
     NewsCreate:
       type: object
       required:
@@ -2299,6 +2573,8 @@ components:
             - approved
             - published
             - archived
+        seo:
+          $ref: '#/components/schemas/PublicSEO'
         start_at:
           type:
             - string
@@ -2678,6 +2954,8 @@ components:
             $ref: '#/components/schemas/KnowledgeArticle'
         hierarchy:
           $ref: '#/components/schemas/KnowledgeArticleHierarchy'
+        seo:
+          $ref: '#/components/schemas/PublicSEO'
     KnowledgeList:
       type: object
       required:

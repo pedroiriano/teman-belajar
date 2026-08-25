@@ -7,15 +7,17 @@ import (
 	"time"
 
 	"teman-belajar-api/internal/domain/cms"
+	"teman-belajar-api/internal/domain/discoverability"
 	"teman-belajar-api/internal/transport/http/middleware"
 )
 
 type CMSHandler struct {
-	svc *cms.Service
+	svc       *cms.Service
+	discovery *discoverability.Service
 }
 
-func NewCMSHandler(svc *cms.Service) *CMSHandler {
-	return &CMSHandler{svc: svc}
+func NewCMSHandler(svc *cms.Service, discovery *discoverability.Service) *CMSHandler {
+	return &CMSHandler{svc: svc, discovery: discovery}
 }
 
 // Problem response helpers
@@ -51,11 +53,21 @@ func (h *CMSHandler) GetPublicNews(w http.ResponseWriter, r *http.Request) {
 	res, err := h.svc.GetPublicNewsBySlug(r.Context(), slug)
 	if err != nil {
 		if err == cms.ErrNotFound {
+			if h.discovery != nil {
+				if redirect, redirectErr := h.discovery.ResolveRedirect(r.Context(), discoverability.ContentNews, slug); redirectErr == nil {
+					if respondInternalPermanentRedirect(w, redirect, "/news/") {
+						return
+					}
+				}
+			}
 			respondProblem(w, http.StatusNotFound, "Not Found", "News not found or not published")
 			return
 		}
 		respondProblem(w, http.StatusInternalServerError, "Internal Server Error", err.Error())
 		return
+	}
+	if h.discovery != nil {
+		res.SEO, _ = h.discovery.Metadata(r.Context(), discoverability.ContentNews, res.ID)
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -68,9 +80,38 @@ func (h *CMSHandler) ListActiveAnnouncements(w http.ResponseWriter, r *http.Requ
 		respondProblem(w, http.StatusInternalServerError, "Internal Server Error", err.Error())
 		return
 	}
+	if h.discovery != nil {
+		for i := range res.Data {
+			res.Data[i].SEO, _ = h.discovery.Metadata(r.Context(), discoverability.ContentAnnouncement, res.Data[i].ID)
+		}
+	}
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(res) // #nosec G104 -- response writer error after commit is non-actionable in HTTP handler
+}
+
+func (h *CMSHandler) GetPublicAnnouncement(w http.ResponseWriter, r *http.Request) {
+	slug := r.PathValue("slug")
+	res, err := h.svc.GetPublicAnnouncementBySlug(r.Context(), slug)
+	if err != nil {
+		if err == cms.ErrNotFound {
+			if h.discovery != nil {
+				if redirect, redirectErr := h.discovery.ResolveRedirect(r.Context(), discoverability.ContentAnnouncement, slug); redirectErr == nil {
+					if respondInternalPermanentRedirect(w, redirect, "/announcements/") {
+						return
+					}
+				}
+			}
+			respondProblem(w, http.StatusNotFound, "Not Found", "Announcement not found or inactive")
+			return
+		}
+		respondProblem(w, http.StatusInternalServerError, "Internal Server Error", "Unable to load announcement")
+		return
+	}
+	if h.discovery != nil {
+		res.SEO, _ = h.discovery.Metadata(r.Context(), discoverability.ContentAnnouncement, res.ID)
+	}
+	respondJSON(w, http.StatusOK, res)
 }
 
 // Admin API

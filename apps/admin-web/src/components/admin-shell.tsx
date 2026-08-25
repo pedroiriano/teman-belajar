@@ -17,6 +17,7 @@ const navigationGroups: Array<{ label: string; items: NavigationItem[] }> = [
     { href: "/dashboard/news", label: "Berita", icon: "news" },
     { href: "/dashboard/announcements", label: "Pengumuman", icon: "announcement" },
     { href: "/dashboard/media", label: "Media Library", icon: "media" },
+    { href: "/dashboard/taxonomy", label: "Taxonomy & SEO", icon: "folder" },
   ] },
   { label: "Platform", items: [
     { label: "FAQ & Taksonomi", icon: "folder", disabled: true },
@@ -35,6 +36,7 @@ const titleBySegment: Record<string, string> = {
   news: "Berita",
   announcements: "Pengumuman",
   media: "Media Library",
+  taxonomy: "Taxonomy & SEO",
   users: "Pengguna & Profil",
   create: "Buat baru",
 };

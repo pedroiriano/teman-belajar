@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { EmptyState, ErrorState, formatDate, PageHero, Pagination, type PaginationData } from "@/components/public-content";
 
 type News = { id: string; slug: string; title: string; excerpt?: string; published_at?: string };
@@ -13,6 +14,11 @@ async function getNews(page: number): Promise<NewsResult> {
     const payload = await res.json();
     return { ...payload, data: Array.isArray(payload.data) ? payload.data : [] };
   } catch { return { data: [], error: true }; }
+}
+
+export async function generateMetadata({ searchParams }: { searchParams: Promise<{ page?: string }> }): Promise<Metadata> {
+  const query = await searchParams; const page = Number.parseInt(query.page || "1", 10) || 1;
+  return { title: "Berita", description: "Kabar dan perkembangan terbaru Teman Belajar.", alternates: { canonical: "/news" }, robots: { index: page <= 1, follow: true } };
 }
 
 export default async function NewsPage({ searchParams }: { searchParams: Promise<{ page?: string }> }) {
