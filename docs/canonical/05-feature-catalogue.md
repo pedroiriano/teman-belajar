@@ -5,7 +5,7 @@
 **Product Type:** Enterprise Digital Learning Experience Platform (LXP + LMS)
 
 **Status:** Canonical  
-**Version:** 1.0
+**Version:** 1.1
 
 Priority: P0 Must, P1 Should, P2 Later.
 
@@ -32,6 +32,10 @@ Priority: P0 Must, P1 Should, P2 Later.
 | F-LMS-004 | Learning | Progress | P0 | Moodle |
 | F-LMS-005 | Learning | Certificate Metadata | P1 | Moodle/plugin |
 | F-LMS-006 | Learning | Badge | P1 | Moodle |
+| F-LXP-001 | Experience | Full Training Programs | P1 | Portal experience + Moodle learning state |
+| F-LXP-002 | Experience | Microlearning | P1 | Portal editorial; Moodle if formal |
+| F-LXP-003 | Experience | Webinar & Live Learning | P1 | Portal orchestration + approved provider/Moodle |
+| F-LXP-004 | Experience | Learning Paths | P1 | Portal composition + source-owned item state |
 | F-ME-001 | Experience | My Learning Dashboard | P0 | Aggregated |
 | F-ENG-001 | Engagement | Bookmark | P1 | Portal |
 | F-ENG-002 | Engagement | Rating | P1 | Portal |
@@ -45,6 +49,8 @@ Priority: P0 Must, P1 Should, P2 Later.
 | F-ADM-001 | Admin | Content Management | P0 | Portal |
 | F-ADM-002 | Admin | Taxonomy | P0 | Portal |
 | F-ADM-003 | Admin | Audit Viewer | P0 | Audit |
+| F-ADM-004 | Admin | Integration Health Center | P1 | Portal/observability read models |
+| F-ADM-005 | Admin | Non-secret Platform Configuration | P1 | Portal configuration |
 | F-AN-001 | Analytics | Portal Analytics | P1 | Portal |
 | F-AI-001 | AI | Semantic Search | P2 | AI/Search |
 | F-AI-002 | AI | Learning Assistant | P2 | AI Gateway |
@@ -82,3 +88,23 @@ Sebelum feature masuk development:
 | CMS/Knowledge administration | Cuba |
 | Media administration | Cuba |
 | Audit/config/integration health | Cuba |
+
+## Post-TASK-012 Task Mapping
+
+| Task | Feature IDs | Activation condition |
+|---|---|---|
+| TASK-013 | F-LXP-001 | Moodle provenance, programme APIs, Portal/Admin QA complete |
+| TASK-014 | F-LXP-002, F-ENG-001, F-KNW-004 | Editorial/formal boundary and media/search contracts complete |
+| TASK-015 | F-LXP-003, F-NOT-001 | Provider decision and TASK-021 reminder contract complete |
+| TASK-016 | F-LXP-004 | TASK-013–015 and versioned path/progress rules complete |
+| TASK-017 | F-FAQ-001 | CMS workflow, Auto-Save, SEO, public Help Center complete |
+| TASK-018 | F-ADM-004 | Sanitized health/readiness and RBAC complete |
+| TASK-019 | F-ADM-003 | Retention/privacy/export decisions and server authz complete |
+| TASK-020 | F-PUB-001, F-PUB-002, F-ADM-005 | Typed non-secret config, preview/publish/rollback complete |
+| TASK-021 | F-NOT-001, F-NOT-002 | In-app inbox complete; external channel separately approved |
+| TASK-022 | F-MED-002, F-MED-003 | Curated visibility, Media governance, public QA complete |
+| TASK-023 | F-ENG-003, F-ENG-004 | Safe evidence, explainability, privacy, fallback complete |
+| TASK-024 | All selected expansion features | Delta release evidence and explicit human decision complete |
+
+Detailed status and dependency order are authoritative in
+`docs/roadmap/POST-TASK-012-EXPANSION-ROADMAP.md`.

@@ -272,3 +272,27 @@ Setiap feature UI harus punya:
 - mobile;
 - keyboard test;
 - screen reader label untuk control penting.
+
+## 12. Expansion UI Activation Contract
+
+TASK-013–024 mengikuti
+`docs/roadmap/POST-TASK-012-EXPANSION-ROADMAP.md`. UI yang berlabel `Segera`
+adalah disclosure roadmap, bukan route palsu atau izin menampilkan data demo.
+
+| Surface | Task | Foundation | Minimum activation evidence |
+|---|---|---|---|
+| Pelatihan Penuh | TASK-013 | Techwind Portal + Cuba Admin | catalogue/detail, enrol/start truth, aggregated progress, degraded states |
+| Pembelajaran Singkat | TASK-014 | Techwind Portal + Cuba Admin | format/duration, authoring, media, bookmark/progress, discovery |
+| Webinar | TASK-015 | Techwind Portal + Cuba Admin | provider decision, schedule/time zone, capacity, registration, reminder |
+| Jalur Belajar | TASK-016 | Techwind Portal + Cuba Admin | composition, prerequisite, version, progress, next step |
+| FAQ/Help Center | TASK-017 | Techwind Portal + Cuba Admin | CMS workflow, public discovery, SEO/structured data |
+| Integration Health | TASK-018 | Cuba Admin | sanitized read-only status, freshness, RBAC, degraded states |
+| Audit | TASK-019 | Cuba Admin | filter/pagination/detail/export policy, privacy, authorization |
+| Configuration | TASK-020 | Cuba Admin + Techwind result | non-secret schema, preview/publish/version/rollback |
+| Notification bell/inbox | TASK-021 | Techwind Portal + Cuba Admin | unread/read/preferences/deep-link and resilient inbox |
+| Gallery/Video Hub | TASK-022 | Techwind Portal + Cuba Admin | curated collections, visibility, captions/SEO/usage |
+| Personalization | TASK-023 | Techwind Portal | safe evidence, reason, fallback, privacy and opt-out policy |
+
+Setiap activation PR harus menghapus status `Segera` hanya untuk feature yang
+selesai, mempertahankan states minimum Section 11, dan menyertakan browser QA
+mobile/desktop, keyboard, light/dark, serta accessibility evidence.

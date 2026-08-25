@@ -144,6 +144,18 @@ flowchart TB
 - competency gap analysis
 - AI-assisted content authoring
 
+### Post-TASK-012 Expansion Delivery
+
+TASK-013–024 menerjemahkan Growth scope dan foundation gaps menjadi bounded
+delivery units. Registry, status, dependency waves, human gates, dan aturan
+aktivasi menu `Segera` berada di
+`docs/roadmap/POST-TASK-012-EXPANSION-ROADMAP.md`.
+
+Roadmap tersebut tidak memindahkan formal learning ownership dari Moodle,
+tidak mengizinkan microservice/dependency baru tanpa ADR/approval, dan tidak
+mengubah status `PRODUCTION HOLD` TASK-012. TASK-024 hanya release gate untuk
+delta fitur ekspansi.
+
 ## 7. Non-Goals V1
 
 V1 tidak:
