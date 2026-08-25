@@ -2,7 +2,7 @@
 
 ## Disposition
 
-Implementation status: **RELEASE-CANDIDATE HARDENING COMPLETE / PR PENDING**
+Implementation status: **RELEASE-CANDIDATE HARDENING COMPLETE / PR #20 OPEN**
 
 Production status: **HOLD — HUMAN RELEASE APPROVAL REQUIRED**
 
@@ -86,5 +86,7 @@ The local Windows native Turbopack optional binding was unavailable, so the
 production frontend build was additionally verified with Next.js Webpack;
 protected CI remains authoritative for the normal Linux Turbopack build.
 
-PR and protected-check links are appended after publication. Until every human
-gate is closed, this handoff must not be interpreted as production approval.
+Remote review is [PR #20](https://github.com/pedroiriano/teman-belajar/pull/20).
+GitHub's check rollup for the current PR head is the authoritative remote CI
+state. The PR remains open and unmerged. Until every human gate is closed, this
+handoff must not be interpreted as production approval.
