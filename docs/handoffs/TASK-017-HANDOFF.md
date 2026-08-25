@@ -2,13 +2,14 @@
 
 ## Release state
 
-**IN REVIEW — PR #23 — NOT MERGED.** Implementation and local acceptance are
-complete. This record will be finalized with the protected-check result after
-the evidence commit. Merge remains forbidden without explicit human approval.
+**READY FOR HUMAN REVIEW — PR #23 — NOT MERGED.** Implementation, local
+acceptance, and the first complete protected-check run are green. Merge remains
+forbidden without explicit human approval.
 
 - Branch: `codex/task-017-faq-cms-help-center`.
 - Fresh-main base: `2ec78ae88d930550dcb64ce30f9fa670a5bdd04b`.
 - Source commit: `500ee15` (`feat(faq): add governed FAQ CMS and Help Center`).
+- PR evidence commit: `15486eb` (`docs(task-017): record PR and acceptance evidence`).
 - Pull request: [#23](https://github.com/pedroiriano/teman-belajar/pull/23).
 - Migration: `017_create_faq_help_center.sql`.
 - User-owned `latest_prompt.txt`: untracked, untouched, and excluded.
@@ -67,7 +68,7 @@ the evidence commit. Merge remains forbidden without explicit human approval.
 | Admin authenticated browser and responsive acceptance | PASS in fixed mobile viewport: SSO, seeded discovery, category/editor disclosures, Auto-Save indicator, published read-only/workflow state, and no persistent QA mutation |
 | Admin accessibility semantics | PASS: no unlabeled form controls, duplicate IDs, or images missing alt; skip link and native controls present |
 | Admin Light/Dark browser acceptance | PASS; Cuba surfaces remain readable and dark action accent is bright sky/light blue with no orange |
-| Protected PR checks | Pending |
+| Protected PR checks | PASS: API, both frontends, OpenAPI, governance, SAST Go, both npm SCA jobs, secret scan, Trivy, and SBOM |
 
 The final full `go test ./...` rerun encountered the pre-existing
 `TestIntegrationRepository_DeadLetter` shared-runtime race: the test indexes
@@ -86,5 +87,6 @@ test returned `/help#lokasi-kelas-formal` as expected.
 
 ## Remaining release procedure
 
-Commit, push, open a PR to protected `main`, and wait for every required check.
-Do not merge, deploy, rotate secrets, modify Identity, or start another task.
+Obtain explicit human approval before merging PR #23 through the protected
+branch workflow. Do not deploy, rotate secrets, modify Identity, or start
+another task as part of this handoff.
