@@ -2,14 +2,16 @@
 
 ## Release state
 
-**IMPLEMENTED — FINAL RELEASE GATES IN PROGRESS / NOT MERGED.** TASK-011D is the mandatory
+**PASS_PR_READY — NOT MERGED.** TASK-011D is the mandatory
 P0 discoverability gate before TASK-012. This record must be finalized with the
-reviewable commit, PR, protected CI, and merge state; it does not authorize
-TASK-012 or an unapproved merge.
+merge state after explicit human authorization; it does not authorize TASK-012
+or an unapproved merge.
 
 - Branch: `codex/task-011d-seo-taxonomy`.
 - Fresh-main base: `a6000b664833c8cd5da105c4151d09b062eba949`
   (protected merge of TASK-011C PR #17).
+- Source-final SHA: `e5c6d2d3c56a662d285ef3a414d6ba7b9dc8e9b1`.
+- Pull request: `#18`.
 - Migration: `016_create_seo_taxonomy_discovery.sql`.
 - User-owned `latest_prompt.txt`: untracked, untouched, and excluded.
 
@@ -68,8 +70,9 @@ Targeted domain, draft, PostgreSQL, search, handler, Admin, Portal, OpenAPI, and
 no-orange checks passed. The final backend gate, production Docker builds, and
 official runtime verification also passed. Public browser smoke proved News and
 Knowledge SSR metadata/JSON-LD, dynamic sitemap content, robots policy, and the
-historical-slug 308. Authenticated Admin create/Auto-Save/Media browser smoke is
-the only remaining local browser item before the PR can be release-ready.
+historical-slug 308. Authenticated Admin browser smoke proved representative
+SEO/Taxonomy editing, Media Asset selection with enforced alt input, server
+Auto-Save, reload recovery, and readable no-orange Light/Dark rendering.
 
 | Gate | Result |
 |---|---|
@@ -81,8 +84,8 @@ the only remaining local browser item before the PR can be release-ready.
 | Runtime sitemap and HTTP redirect smoke | PASS — dynamic entries present; historical News URL returns 308 to current URL |
 | OpenAPI lint | PASS; one pre-existing-style advisory for sitemap 4xx response |
 | Final local gate | PASS — Go test/vet/build; Admin and Portal lint/typecheck/build; OpenAPI, audit, SAST, governance; production Docker builds and endpoint verification |
-| Representative browser QA | PARTIAL — public metadata, sitemap/robots, real 308, and Admin Light/Dark no-orange passed; authenticated create/Auto-Save/Media awaits fresh human login |
-| Pull request / protected CI | PENDING |
+| Representative browser QA | PASS — Admin create-form SEO/Taxonomy/Media/Auto-Save recovery; News and Knowledge SSR metadata/JSON-LD; sitemap/robots; real 308; Admin Light/Dark with orange=0 |
+| Pull request / protected CI | PASS — PR #18 source-final SHA `e5c6d2d`; 11/11 required checks passed, including API, both frontends, OpenAPI, governance, SAST, SCA, secret scan, SBOM, and Trivy |
 
 ## Security and scope invariants
 
@@ -91,11 +94,15 @@ and TASK-012 are unchanged. Taxonomy/profile mutations are authorized
 server-side and audited without content bodies. Vendor originals and secrets
 remain untouched. Admin retains the bright-sky two-theme no-orange contract.
 
+One approved local recovery draft (`4cb993b3-4fb3-41e3-aae1-4babc602d29e`)
+remains unpublished as browser evidence. No canonical News record was created.
+
 ## Rollback and next gate
 
 Revert the TASK-011D application/documentation commits and rebuild through the
 official Docker wrapper. Do not reverse migration 016, delete volumes, edit
 slug rows manually, weaken publication checks, or modify finalized identity.
 
-P0 SEO gate remains **NOT CLOSED** until the final SHA passes protected checks
-and is merged with explicit human authorization. TASK-012 is **NOT IMPLEMENTED**.
+P0 SEO gate remains **NOT CLOSED** until PR #18 is merged through the protected
+workflow with explicit human authorization and `origin/main` is verified.
+TASK-012 is **NOT IMPLEMENTED**.
