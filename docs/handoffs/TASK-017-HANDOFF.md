@@ -2,13 +2,14 @@
 
 ## Release state
 
-**IN REVIEW — PR PENDING — NOT MERGED.** Implementation and local acceptance
-are complete. This record will be finalized with the source commit, PR number,
-and protected-check result after push. Merge remains forbidden without explicit
-human approval.
+**IN REVIEW — PR #23 — NOT MERGED.** Implementation and local acceptance are
+complete. This record will be finalized with the protected-check result after
+the evidence commit. Merge remains forbidden without explicit human approval.
 
 - Branch: `codex/task-017-faq-cms-help-center`.
 - Fresh-main base: `2ec78ae88d930550dcb64ce30f9fa670a5bdd04b`.
+- Source commit: `500ee15` (`feat(faq): add governed FAQ CMS and Help Center`).
+- Pull request: [#23](https://github.com/pedroiriano/teman-belajar/pull/23).
 - Migration: `017_create_faq_help_center.sql`.
 - User-owned `latest_prompt.txt`: untracked, untouched, and excluded.
 

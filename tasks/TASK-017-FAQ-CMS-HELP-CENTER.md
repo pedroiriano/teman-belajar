@@ -1,6 +1,6 @@
 # TASK-017 — FAQ CMS & Help Center
 
-**Status:** IN REVIEW — PR PENDING
+**Status:** IN REVIEW — PR #23
 **Owner Agent:** Backend/Frontend/SEO/QA
 **Feature:** F-FAQ-001
 **Dependencies:** TASK-011A, TASK-011D, TASK-004E
