@@ -57,3 +57,8 @@ robots, and content landing policies, read `TASK-011D-HANDOFF.md` together with
 `docs/runbooks/SEO-TAXONOMY-OPERATIONS.md`. TASK-011D is the mandatory P0 gate
 immediately before TASK-012; it does not authorize Identity, Moodle, framework,
 Docker-service, or TASK-012 changes.
+
+For production readiness, read `TASK-012-HANDOFF.md` together with
+`docs/readiness/TASK-012-PRODUCTION-READINESS.md`. A green TASK-012 PR is only a
+release candidate: backup/restore, staging, access, alert delivery,
+compatibility, secret action, deployment and final GO remain human-owned.

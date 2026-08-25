@@ -24,6 +24,9 @@ jobs:
       - name: Verify agent governance alignment
         shell: pwsh
         run: ./scripts/verify-agent-governance.ps1
+      - name: Verify production readiness governance
+        shell: pwsh
+        run: ./scripts/verify-production-readiness.ps1
 
   api:
     runs-on: ubuntu-latest

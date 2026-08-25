@@ -1,7 +1,7 @@
 [CmdletBinding()]
 param(
     [Parameter(Position = 0)]
-    [ValidateSet("config", "up", "down", "status", "logs", "sso", "moodle-reconcile", "verify")]
+    [ValidateSet("config", "up", "down", "status", "logs", "sso", "moodle-reconcile", "migrate-verify", "observability-verify", "verify")]
     [string]$Action = "status"
 )
 
@@ -185,6 +185,21 @@ switch ($Action) {
     "moodle-reconcile" {
         Invoke-Compose @("exec", "-T", "--user", "www-data", "moodle", "php", "/var/www/html/admin/cli/upgrade.php", "--non-interactive")
         Invoke-Compose @("exec", "-T", "--user", "www-data", "moodle", "php", "/var/www/html/public/local/temanbelajar/cli/reconcile_integration.php")
+    }
+    "migrate-verify" {
+        Invoke-Compose @("up", "--build", "--no-deps", "migrate")
+        Invoke-Compose @("ps", "--all", "migrate")
+        Invoke-Compose @(
+            "exec", "-T", "portal-db", "psql",
+            "-U", $Environment["TB_PORTAL_DB_USER"],
+            "-d", $Environment["TB_PORTAL_DB_NAME"],
+            "-v", "ON_ERROR_STOP=1",
+            "-c", "SELECT COUNT(*) AS applied, COUNT(*) FILTER (WHERE checksum_sha256 IS NOT NULL) AS checksummed, MAX(version) AS latest FROM schema_migrations;"
+        )
+    }
+    "observability-verify" {
+        Invoke-Compose @("exec", "-T", "prometheus", "promtool", "check", "config", "/etc/prometheus/prometheus.yml")
+        Invoke-Compose @("exec", "-T", "prometheus", "promtool", "check", "rules", "/etc/prometheus/alert.rules")
     }
     "verify" {
         if (-not (Get-Command curl.exe -ErrorAction SilentlyContinue)) {
