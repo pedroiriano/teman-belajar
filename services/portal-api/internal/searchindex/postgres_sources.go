@@ -18,14 +18,17 @@ type queryer interface {
 type NewsSource struct{ db queryer }
 type KnowledgeSource struct{ db queryer }
 type AnnouncementSource struct{ db queryer }
+type FAQSource struct{ db queryer }
 
 func NewNewsSource(db queryer) *NewsSource                 { return &NewsSource{db: db} }
 func NewKnowledgeSource(db queryer) *KnowledgeSource       { return &KnowledgeSource{db: db} }
 func NewAnnouncementSource(db queryer) *AnnouncementSource { return &AnnouncementSource{db: db} }
+func NewFAQSource(db queryer) *FAQSource                   { return &FAQSource{db: db} }
 
 func (*NewsSource) Type() string         { return string(domainsearch.ContentTypeNews) }
 func (*KnowledgeSource) Type() string    { return string(domainsearch.ContentTypeKnowledge) }
 func (*AnnouncementSource) Type() string { return string(domainsearch.ContentTypeAnnouncement) }
+func (*FAQSource) Type() string          { return string(domainsearch.ContentTypeFAQ) }
 
 func (s *NewsSource) Fetch(ctx context.Context) ([]domainsearch.IndexDocument, error) {
 	const query = `
@@ -163,6 +166,44 @@ func (s *AnnouncementSource) Fetch(ctx context.Context) ([]domainsearch.IndexDoc
 			DocumentID: "announcement_" + id, SourceType: s.Type(), SourceID: id,
 			Title: plainText(title), Summary: summary, BodyText: plainText(body), CategoryID: categoryID, CategoryName: categoryName, Tags: []string(tags),
 			URL: "/announcements/" + slug, PublishedAt: &publishedAt, UpdatedAt: updatedAt,
+		})
+	}
+	return documents, rows.Err()
+}
+
+func (s *FAQSource) Fetch(ctx context.Context) ([]domainsearch.IndexDocument, error) {
+	const query = `
+		SELECT i.id::text, i.question, i.answer, i.slug,
+		       c.id::text, c.name, i.published_at, i.updated_at
+		FROM faq_items i
+		JOIN faq_categories c ON c.id=i.category_id AND c.status='active'
+		WHERE i.status='published'
+		  AND i.published_at IS NOT NULL
+		  AND i.published_at <= NOW()
+		  AND i.indexable
+		ORDER BY c.sort_order, i.sort_order, i.question`
+	rows, err := s.db.QueryContext(ctx, query)
+	if err != nil {
+		return nil, fmt.Errorf("fetch published FAQs: %w", err)
+	}
+	defer rows.Close()
+
+	documents := make([]domainsearch.IndexDocument, 0)
+	for rows.Next() {
+		var id, question, answer, slug, categoryID, categoryName string
+		var publishedAt, updatedAt time.Time
+		if err := rows.Scan(&id, &question, &answer, &slug, &categoryID, &categoryName, &publishedAt, &updatedAt); err != nil {
+			return nil, fmt.Errorf("scan published FAQ: %w", err)
+		}
+		summary := plainText(answer)
+		if len([]rune(summary)) > 300 {
+			summary = string([]rune(summary)[:300])
+		}
+		documents = append(documents, domainsearch.IndexDocument{
+			DocumentID: "faq_" + id, SourceType: s.Type(), SourceID: id,
+			Title: plainText(question), Summary: summary, BodyText: plainText(answer),
+			CategoryID: categoryID, CategoryName: categoryName, Tags: []string{},
+			URL: "/help#" + slug, PublishedAt: &publishedAt, UpdatedAt: updatedAt,
 		})
 	}
 	return documents, rows.Err()

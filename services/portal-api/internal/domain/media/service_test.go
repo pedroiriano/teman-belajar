@@ -216,6 +216,9 @@ func TestPolicyConstantsAndUsageValidation(t *testing.T) {
 	if err := ValidateUsage("unknown", "id", "inline", 0); !errors.Is(err, ErrInvalidUsage) {
 		t.Fatalf("got %v", err)
 	}
+	if err := ValidateUsage("faq_item", "b3bd8919-a5cc-47d6-9a5b-f97cb7c4063f", "featured", 0); err != nil {
+		t.Fatalf("FAQ media usage rejected: %v", err)
+	}
 	filter, err := NormalizeListFilter(ListFilter{Page: 1, PageSize: 20, Kind: "image"})
 	if err != nil || filter.Kind != "image" {
 		t.Fatalf("unexpected filter: %#v %v", filter, err)

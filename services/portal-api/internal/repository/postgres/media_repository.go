@@ -110,7 +110,8 @@ func (r *MediaRepository) CheckIsPubliclyEligible(ctx context.Context, assetID s
 	// 1. A News that is 'published'
 	// 2. An Announcement that is 'published'
 	// 3. A Knowledge Revision that is the published_revision of its parent Knowledge Article.
-	// 4. An active image selected by a published, indexable SEO profile.
+	// 4. A published FAQ item.
+	// 5. An active image selected by a published, indexable SEO profile.
 	query := `
 		SELECT EXISTS (
 			SELECT 1 FROM media_usages mu
@@ -118,6 +119,7 @@ func (r *MediaRepository) CheckIsPubliclyEligible(ctx context.Context, assetID s
 			LEFT JOIN announcements a ON mu.entity_type = 'announcement' AND mu.entity_id = a.id::text
 			LEFT JOIN knowledge_revisions kr ON mu.entity_type = 'knowledge_revision' AND mu.entity_id = kr.id::text
 			LEFT JOIN knowledge_articles ka ON kr.article_id = ka.id
+			LEFT JOIN faq_items fi ON mu.entity_type = 'faq_item' AND mu.entity_id = fi.id::text
 			WHERE mu.media_id = $1
 			AND (
 				(mu.entity_type = 'news' AND n.status = 'published')
@@ -125,6 +127,8 @@ func (r *MediaRepository) CheckIsPubliclyEligible(ctx context.Context, assetID s
 				(mu.entity_type = 'announcement' AND a.status = 'published')
 				OR
 				(mu.entity_type = 'knowledge_revision' AND ka.status = 'published' AND ka.published_revision_no = kr.revision_no)
+				OR
+				(mu.entity_type = 'faq_item' AND fi.status = 'published' AND fi.published_at <= NOW())
 			)
 		) OR EXISTS (
 			SELECT 1 FROM seo_profiles seo
@@ -156,6 +160,7 @@ func (r *MediaRepository) UsageEntityExists(ctx context.Context, entityType, ent
 		WHEN 'news' THEN EXISTS(SELECT 1 FROM news WHERE id::text = $2)
 		WHEN 'announcement' THEN EXISTS(SELECT 1 FROM announcements WHERE id::text = $2)
 		WHEN 'knowledge_revision' THEN EXISTS(SELECT 1 FROM knowledge_revisions WHERE id::text = $2)
+		WHEN 'faq_item' THEN EXISTS(SELECT 1 FROM faq_items WHERE id::text = $2)
 		ELSE FALSE END`
 	var exists bool
 	err := r.db.QueryRowContext(ctx, query, entityType, entityID).Scan(&exists)

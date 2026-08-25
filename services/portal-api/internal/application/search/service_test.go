@@ -31,6 +31,14 @@ func TestServiceValidatesAndNormalizesTypedQuery(t *testing.T) {
 	}
 }
 
+func TestServiceAcceptsFAQContentType(t *testing.T) {
+	provider := &providerStub{}
+	_, err := NewService(provider).Search(context.Background(), domainsearch.Query{Text: "akun", ContentType: domainsearch.ContentTypeFAQ, Page: 1, PageSize: 20})
+	if err != nil || provider.query.ContentType != domainsearch.ContentTypeFAQ {
+		t.Fatalf("FAQ search rejected: query=%#v err=%v", provider.query, err)
+	}
+}
+
 func TestServiceRejectsUnsafeOrOutOfBoundsValues(t *testing.T) {
 	tests := []struct {
 		name  string

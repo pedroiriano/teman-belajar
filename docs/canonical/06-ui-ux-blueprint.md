@@ -296,3 +296,17 @@ adalah disclosure roadmap, bukan route palsu atau izin menampilkan data demo.
 Setiap activation PR harus menghapus status `Segera` hanya untuk feature yang
 selesai, mempertahankan states minimum Section 11, dan menyertakan browser QA
 mobile/desktop, keyboard, light/dark, serta accessibility evidence.
+
+## 13. FAQ CMS and Help Center Contract
+
+TASK-017 mengaktifkan **Admin → FAQ** dan Portal `/help`. Admin memakai Cuba
+workspace dengan daftar/filter di satu sisi dan editor terfokus di sisi lain;
+kategori, Media opsional, serta SEO merupakan disclosure bertahap agar form
+utama tetap ringkas. Auto-Save/recovery dan workflow editorial harus terlihat,
+tetapi kemampuan mutasi tetap ditentukan Portal API.
+
+Portal memakai pola Techwind Help Center: hero, pencarian berlabel, pengelompokan
+kategori, native `details/summary`, empty/error/loading states, optional image,
+dan tautan anchor stabil. Search variants adalah `noindex`. `FAQPage` JSON-LD
+hanya memuat FAQ published+indexable yang benar-benar terlihat pada response;
+raw HTML dan editor-supplied structured data dilarang.

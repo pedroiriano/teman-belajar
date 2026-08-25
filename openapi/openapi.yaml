@@ -211,10 +211,12 @@ paths:
         - FAQ
       operationId: listFaqs
       parameters:
-        - name: category
+        - name: q
           in: query
+          description: Optional question or answer search text
           schema:
             type: string
+            maxLength: 100
       responses:
         '200':
           description: FAQ list
@@ -227,16 +229,185 @@ paths:
                 properties:
                   data:
                     type: array
-                    items:
-                      $ref: '#/components/schemas/Faq'
-        '400':
-          description: Bad Request
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
+                    items: { $ref: '#/components/schemas/FaqPublicCategory' }
+                  total: { type: integer, minimum: 0 }
+        '422': { $ref: '#/components/responses/ValidationError' }
       security: []
-      summary: list Faqs
+      summary: List active categories and published FAQ items only
+  /admin/faqs/categories:
+    get:
+      tags: [Admin, FAQ]
+      operationId: listAdminFaqCategories
+      summary: List FAQ categories for editorial management
+      security:
+        - oidc: [content:read]
+      parameters:
+        - name: include_archived
+          in: query
+          schema: { type: boolean, default: false }
+      responses:
+        '200':
+          description: Ordered FAQ categories
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/FaqCategory' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+    post:
+      tags: [Admin, FAQ]
+      operationId: createFaqCategory
+      summary: Create an active FAQ category
+      security:
+        - oidc: [content:write]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/FaqCategoryWrite' }
+      responses:
+        '201':
+          description: Category created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/FaqCategory' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '422': { $ref: '#/components/responses/ValidationError' }
+  /admin/faqs/categories/{id}/archive:
+    post:
+      tags: [Admin, FAQ]
+      operationId: archiveFaqCategory
+      summary: Archive an unused FAQ category
+      security:
+        - oidc: [content:write]
+      parameters:
+        - $ref: '#/components/parameters/EntityId'
+      responses:
+        '204': { description: Category archived }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/ConflictError' }
+  /admin/faqs/items:
+    get:
+      tags: [Admin, FAQ]
+      operationId: listAdminFaqItems
+      summary: List FAQ items across editorial states
+      security:
+        - oidc: [content:read]
+      parameters:
+        - { name: q, in: query, schema: { type: string, maxLength: 100 } }
+        - { name: status, in: query, schema: { type: string, enum: [all, draft, in_review, approved, published, archived] } }
+        - { name: category_id, in: query, schema: { type: string, format: uuid } }
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: Filtered FAQ items
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/FaqItemList' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '422': { $ref: '#/components/responses/ValidationError' }
+    post:
+      tags: [Admin, FAQ]
+      operationId: createFaqItem
+      summary: Create a draft FAQ item
+      security:
+        - oidc: [content:write]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/FaqItemCreate' }
+      responses:
+        '201':
+          description: Draft FAQ created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/FaqItem' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '422': { $ref: '#/components/responses/ValidationError' }
+  /admin/faqs/items/{id}:
+    get:
+      tags: [Admin, FAQ]
+      operationId: getAdminFaqItem
+      summary: Get one FAQ item for editorial review
+      security:
+        - oidc: [content:read]
+      parameters:
+        - $ref: '#/components/parameters/EntityId'
+      responses:
+        '200':
+          description: FAQ item
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/FaqItem' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    patch:
+      tags: [Admin, FAQ]
+      operationId: updateFaqItem
+      summary: Update an editable draft FAQ with optimistic locking
+      security:
+        - oidc: [content:write]
+      parameters:
+        - $ref: '#/components/parameters/EntityId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/FaqItemUpdate' }
+      responses:
+        '200':
+          description: FAQ updated
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/FaqItem' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/ConflictError' }
+        '422': { $ref: '#/components/responses/ValidationError' }
+  /admin/faqs/items/{id}/transition:
+    post:
+      tags: [Admin, FAQ]
+      operationId: transitionFaqItem
+      summary: Apply an allowed server-side FAQ editorial transition
+      security:
+        - oidc: [content:write]
+      parameters:
+        - $ref: '#/components/parameters/EntityId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [status]
+              properties:
+                status: { $ref: '#/components/schemas/FaqStatus' }
+      responses:
+        '200':
+          description: FAQ transitioned
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/FaqItem' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/ConflictError' }
+        '422': { $ref: '#/components/responses/ValidationError' }
   /courses:
     get:
       tags:
@@ -1514,7 +1685,7 @@ paths:
               properties:
                 entity_type:
                   type: string
-                  enum: [news, announcement, knowledge_revision]
+                  enum: [news, announcement, knowledge_revision, faq_item]
                 entity_id:
                   type: string
                 usage_role:
@@ -1900,13 +2071,13 @@ paths:
                 $ref: '#/components/schemas/StatisticsResponse'
         '401':
           $ref: '#/components/responses/Unauthorized'
-  /api/v1/search:
+  /search:
     get:
       operationId: searchPublicContent
       tags:
         - Search
       summary: Search published public content
-      description: Searches the derived public index for visible Moodle courses, published knowledge revisions, published news, and active announcements. Raw engine filters are never accepted.
+      description: Searches the derived public index for visible Moodle courses, published knowledge revisions, published news, active announcements, and published indexable FAQs. Raw engine filters are never accepted.
       security: []
       parameters:
         - name: q
@@ -1928,6 +2099,7 @@ paths:
               - knowledge
               - news
               - announcement
+              - faq
         - name: category_id
           in: query
           description: Filter by canonical category UUID
@@ -2001,6 +2173,7 @@ paths:
                             - knowledge
                             - news
                             - announcement
+                            - faq
                         title:
                           type: string
                         snippet:
@@ -2600,24 +2773,106 @@ components:
         start_at: { type: [string, 'null'], format: date-time }
         end_at: { type: [string, 'null'], format: date-time }
         expected_version: { type: integer, format: int64, minimum: 1 }
-    Faq:
+    FaqStatus:
+      type: string
+      enum: [draft, in_review, approved, published, archived]
+    FaqCategory:
       type: object
-      required:
-        - id
-        - question
-        - answer
+      additionalProperties: false
+      required: [id, slug, name, description, sort_order, status, created_at, updated_at]
       properties:
-        id:
-          type: string
-          format: uuid
-        question:
-          type: string
-        answer:
-          type: string
-        category:
-          type:
-            - string
-            - 'null'
+        id: { type: string, format: uuid }
+        slug: { type: string, pattern: '^[a-z0-9]+(?:-[a-z0-9]+)*$' }
+        name: { type: string }
+        description: { type: string }
+        sort_order: { type: integer, minimum: 0, maximum: 10000 }
+        status: { type: string, enum: [active, archived] }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+    FaqCategoryWrite:
+      type: object
+      additionalProperties: false
+      required: [name, slug, description, sort_order]
+      properties:
+        name: { type: string, minLength: 2, maxLength: 120 }
+        slug: { type: string, minLength: 2, maxLength: 120, pattern: '^[a-z0-9]+(?:-[a-z0-9]+)*$' }
+        description: { type: string, maxLength: 500 }
+        sort_order: { type: integer, minimum: 0, maximum: 10000 }
+    FaqItem:
+      type: object
+      additionalProperties: false
+      required: [id, category_id, slug, question, answer, sort_order, status, seo_title, meta_description, indexable, version, created_at, updated_at]
+      properties:
+        id: { type: string, format: uuid }
+        category_id: { type: string, format: uuid }
+        category_name: { type: string }
+        category_slug: { type: string }
+        category_description: { type: string }
+        category_sort_order: { type: integer }
+        slug: { type: string, pattern: '^[a-z0-9]+(?:-[a-z0-9]+)*$' }
+        question: { type: string }
+        answer: { type: string }
+        sort_order: { type: integer, minimum: 0, maximum: 10000 }
+        status: { $ref: '#/components/schemas/FaqStatus' }
+        media_asset_id: { type: string, format: uuid }
+        media_alt: { type: string }
+        seo_title: { type: string }
+        meta_description: { type: string }
+        indexable: { type: boolean }
+        version: { type: integer, format: int64, minimum: 1 }
+        published_at: { type: string, format: date-time }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+    FaqItemCreate:
+      type: object
+      additionalProperties: false
+      required: [category_id, slug, question, answer, sort_order, seo_title, meta_description, indexable]
+      properties:
+        category_id: { type: string, format: uuid }
+        slug: { type: string, minLength: 2, maxLength: 160, pattern: '^[a-z0-9]+(?:-[a-z0-9]+)*$' }
+        question: { type: string, minLength: 5, maxLength: 300 }
+        answer: { type: string, minLength: 10, maxLength: 10000 }
+        sort_order: { type: integer, minimum: 0, maximum: 10000 }
+        media_asset_id: { type: [string, 'null'], format: uuid }
+        media_alt: { type: [string, 'null'], maxLength: 255 }
+        seo_title: { type: string, maxLength: 200 }
+        meta_description: { type: string, maxLength: 500 }
+        indexable: { type: boolean }
+    FaqItemUpdate:
+      allOf:
+        - $ref: '#/components/schemas/FaqItemCreate'
+        - type: object
+          required: [expected_version]
+          properties:
+            expected_version: { type: integer, format: int64, minimum: 1 }
+    FaqItemList:
+      type: object
+      additionalProperties: false
+      required: [data, pagination]
+      properties:
+        data:
+          type: array
+          items: { $ref: '#/components/schemas/FaqItem' }
+        pagination: { $ref: '#/components/schemas/Pagination' }
+    FaqPublicCategory:
+      type: object
+      additionalProperties: false
+      required: [category, items]
+      properties:
+        category: { $ref: '#/components/schemas/FaqPublicCategoryInfo' }
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/FaqItem' }
+    FaqPublicCategoryInfo:
+      type: object
+      additionalProperties: false
+      required: [id, slug, name, description, sort_order]
+      properties:
+        id: { type: string, format: uuid }
+        slug: { type: string }
+        name: { type: string }
+        description: { type: string }
+        sort_order: { type: integer, minimum: 0, maximum: 10000 }
     Course:
       type: object
       required:
@@ -3008,9 +3263,11 @@ components:
         - knowledge.edit
         - knowledge-hierarchy.create
         - knowledge-hierarchy.edit
+        - faq.create
+        - faq.edit
     FormDraftPayload:
       type: object
-      maxProperties: 8
+      maxProperties: 20
       additionalProperties:
         oneOf:
           - type: string
@@ -3026,7 +3283,7 @@ components:
       required: [form_key, entity_type, entity_id, schema_version, payload, base_entity_version, expected_revision, client_updated_at]
       properties:
         form_key: { $ref: '#/components/schemas/FormDraftKey' }
-        entity_type: { type: string, enum: [news, announcement, knowledge, knowledge_node] }
+        entity_type: { type: string, enum: [news, announcement, knowledge, knowledge_node, faq_item] }
         entity_id: { type: [string, 'null'], format: uuid }
         schema_version: { type: integer, const: 1 }
         payload: { $ref: '#/components/schemas/FormDraftPayload' }
@@ -3040,7 +3297,7 @@ components:
         id: { type: string, format: uuid }
         draft_key: { type: string, format: uuid }
         form_key: { $ref: '#/components/schemas/FormDraftKey' }
-        entity_type: { type: string, enum: [news, announcement, knowledge, knowledge_node] }
+        entity_type: { type: string, enum: [news, announcement, knowledge, knowledge_node, faq_item] }
         entity_id: { type: string, format: uuid }
         schema_version: { type: integer, const: 1 }
         payload: { $ref: '#/components/schemas/FormDraftPayload' }

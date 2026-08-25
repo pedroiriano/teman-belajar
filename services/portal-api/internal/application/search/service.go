@@ -101,7 +101,7 @@ func invalid(field, message string) error {
 
 func knownContentType(value domainsearch.ContentType) bool {
 	switch value {
-	case domainsearch.ContentTypeCourse, domainsearch.ContentTypeKnowledge, domainsearch.ContentTypeNews, domainsearch.ContentTypeAnnouncement:
+	case domainsearch.ContentTypeCourse, domainsearch.ContentTypeKnowledge, domainsearch.ContentTypeNews, domainsearch.ContentTypeAnnouncement, domainsearch.ContentTypeFAQ:
 		return true
 	default:
 		return false

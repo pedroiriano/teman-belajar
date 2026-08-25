@@ -1,0 +1,2 @@
+"use client";
+export default function HelpError({reset}:{reset:()=>void}){return <div className="portal-container py-20"><div role="alert" className="rounded-2xl border border-rose-200 bg-rose-50 p-8 text-center"><h1 className="text-xl font-black text-rose-900">Pusat Bantuan belum dapat ditampilkan</h1><p className="mt-2 text-sm text-rose-700">Coba muat ulang setelah beberapa saat.</p><button type="button" onClick={reset} className="portal-button-secondary mt-5">Coba lagi</button></div></div>}

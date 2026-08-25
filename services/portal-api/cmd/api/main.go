@@ -27,6 +27,7 @@ import (
 	"teman-belajar-api/internal/domain/cms"
 	"teman-belajar-api/internal/domain/discoverability"
 	"teman-belajar-api/internal/domain/draft"
+	"teman-belajar-api/internal/domain/faq"
 	"teman-belajar-api/internal/domain/knowledge"
 	"teman-belajar-api/internal/domain/learning"
 	"teman-belajar-api/internal/domain/media"
@@ -87,6 +88,8 @@ func main() {
 	engagementResolver := engagementapplication.NewKnowledgeTargetResolver(knowledgeRepo)
 	discoveryRepo := postgres.NewDiscoverabilityRepository(db)
 	discoverySvc := discoverability.NewService(discoveryRepo, auditRepo)
+	faqRepo := postgres.NewFAQRepository(db)
+	faqSvc := faq.NewService(faqRepo, auditRepo)
 
 	moodleToken := os.Getenv("TB_MOODLE_WEBSERVICE_TOKEN")
 	moodleBaseURL := os.Getenv("MOODLE_INTERNAL_BASE_URL")
@@ -121,6 +124,7 @@ func main() {
 	knowledgeHandler := handler.NewKnowledgeHandler(knowledgeSvc, hierarchySvc, discoverySvc)
 	hierarchyHandler := handler.NewKnowledgeHierarchyHandler(hierarchySvc)
 	discoveryHandler := handler.NewDiscoverabilityHandler(discoverySvc)
+	faqHandler := handler.NewFAQHandler(faqSvc)
 	draftHandler := handler.NewDraftHandler(draftSvc)
 	learningHandler := handler.NewLearningHandler(learningSvc)
 
@@ -230,6 +234,7 @@ func main() {
 	})
 	mux.HandleFunc("/api/v1/announcements", cmsHandler.ListActiveAnnouncements)
 	mux.HandleFunc("GET /api/v1/announcements/{slug}", cmsHandler.GetPublicAnnouncement)
+	mux.HandleFunc("GET /api/v1/faqs", faqHandler.PublicList)
 	mux.HandleFunc("GET /api/v1/discovery/sitemap", discoveryHandler.Sitemap)
 	mux.HandleFunc("GET /api/v1/discovery/{kind}/{slug}", discoveryHandler.Landing)
 
@@ -281,6 +286,14 @@ func main() {
 	mux.Handle("POST /api/v1/admin/taxonomy/{kind}/{id}/archive", adminAuthMiddleware(http.HandlerFunc(discoveryHandler.ArchiveTerm)))
 	mux.Handle("GET /api/v1/admin/discoverability/{contentType}/{contentId}", adminAuthMiddleware(http.HandlerFunc(discoveryHandler.AdminProfile)))
 	mux.Handle("PUT /api/v1/admin/discoverability/{contentType}/{contentId}", adminAuthMiddleware(http.HandlerFunc(discoveryHandler.AdminProfile)))
+	mux.Handle("GET /api/v1/admin/faqs/categories", adminAuthMiddleware(http.HandlerFunc(faqHandler.Categories)))
+	mux.Handle("POST /api/v1/admin/faqs/categories", adminAuthMiddleware(http.HandlerFunc(faqHandler.Categories)))
+	mux.Handle("POST /api/v1/admin/faqs/categories/{id}/archive", adminAuthMiddleware(http.HandlerFunc(faqHandler.ArchiveCategory)))
+	mux.Handle("GET /api/v1/admin/faqs/items", adminAuthMiddleware(http.HandlerFunc(faqHandler.Items)))
+	mux.Handle("POST /api/v1/admin/faqs/items", adminAuthMiddleware(http.HandlerFunc(faqHandler.Items)))
+	mux.Handle("GET /api/v1/admin/faqs/items/{id}", adminAuthMiddleware(http.HandlerFunc(faqHandler.GetItem)))
+	mux.Handle("PATCH /api/v1/admin/faqs/items/{id}", adminAuthMiddleware(http.HandlerFunc(faqHandler.UpdateItem)))
+	mux.Handle("POST /api/v1/admin/faqs/items/{id}/transition", adminAuthMiddleware(http.HandlerFunc(faqHandler.Transition)))
 
 	mux.HandleFunc("GET /api/v1/knowledge", knowledgeHandler.ListPublicArticles)
 	mux.HandleFunc("GET /api/v1/knowledge/tree", hierarchyHandler.PublicTree)

@@ -97,6 +97,30 @@ erDiagram
     string usage_role
     int sort_order
   }
+  FAQ_CATEGORY {
+    uuid id PK
+    string slug UK
+    string name UK
+    string description
+    int sort_order
+    string status
+  }
+  FAQ_ITEM {
+    uuid id PK
+    uuid category_id FK
+    string slug UK
+    string question
+    text answer
+    int sort_order
+    string status
+    uuid media_asset_id FK
+    string media_alt
+    string seo_title
+    string meta_description
+    boolean indexable
+    bigint version
+    timestamptz published_at
+  }
   BOOKMARK {
     uuid id PK
     string user_subject
@@ -262,6 +286,8 @@ erDiagram
   KNOWLEDGE_NODE ||--o{ KNOWLEDGE_ARTICLE_NODE : classifies
   KNOWLEDGE_ARTICLE ||--o| KNOWLEDGE_ARTICLE_NODE : has_primary_placement
   MEDIA_ASSET ||--o{ MEDIA_USAGES : used_in
+  FAQ_CATEGORY ||--o{ FAQ_ITEM : groups
+  MEDIA_ASSET ||--o{ FAQ_ITEM : illustrates
   USER_PROFILE ||--o| MOODLE_USER_MAPPING : maps_to
   USER_PROFILE ||--o{ AUDIT_EVENT : acts
   EVENT_INBOX ||--o| EVENT_OUTBOX : creates

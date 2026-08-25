@@ -41,7 +41,9 @@ Request-wide multipart maximum is 33,554,432 bytes. SVG, executable, archive, un
 - Portal Administrator and Content Editor: list/view/select/upload/update/rename/archive/attach/detach.
 - Reviewer: list/view/select only.
 - UI hiding is not authorization. Portal API denies Reviewer mutations.
-- Allowed entity types: `news`, `announcement`, `knowledge_revision`.
+- Allowed entity types: `news`, `announcement`, `knowledge_revision`,
+  `faq_item`. FAQ uses curated images only; the FAQ item stores the selected
+  Media Asset UUID and its required non-empty alternative text.
 - Allowed roles: `inline`, `featured`, `attachment`.
 - Attach only after entity ID exists. Usage identity is `(media_id, entity_type, entity_id, usage_role)` and attach is idempotent.
 - Archive is denied while any usage exists. Public delivery additionally requires an eligible published owner.
@@ -49,6 +51,10 @@ Request-wide multipart maximum is 33,554,432 bytes. SVG, executable, archive, un
 ## 6. Editor Contract
 
 One `MediaPicker`/Integrated Media Manager is reused by every supported editor. Selection returns media ID, display/original names, detected MIME, title, alt, caption, and size—never storage internals. Image Markdown uses image semantics and requires alt/decorative intent. PDF Markdown uses link semantics. Do not use a generic image token for PDF.
+
+FAQ authoring is intentionally image-only. The image is rendered only when its
+FAQ owner is published and its category remains active; Admin must repair any
+failed usage attachment before moving the FAQ out of draft.
 
 ## 7. Change Checklist
 

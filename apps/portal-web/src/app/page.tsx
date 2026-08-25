@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { PortalIcon, type PortalIconName } from "@/components/portal-icon";
+import { getPublicFAQs } from "@/lib/faqs";
 
 type Highlight = { href: string; label: string; title: string; copy: string; icon: PortalIconName; tone: string };
 
@@ -23,14 +24,9 @@ const categories = [
   { title: "Profesional", query: "profesional", icon: "briefcase" as const },
 ];
 
-const faqs = [
-  ["Apa yang dapat ditemukan di Teman Belajar?", "Teman Belajar menyatukan kelas formal, artikel pengetahuan, berita, dan pengumuman organisasi dalam pengalaman yang konsisten."],
-  ["Di mana kelas formal saya dipelajari?", "Kelas formal tetap dikelola oleh Moodle. Teman Belajar menyediakan pengalaman penemuan dan ringkasan pembelajaran, lalu mengarahkan Anda dengan SSO yang aman."],
-  ["Bagaimana kualitas artikel dijaga?", "Artikel melewati alur draft, review, persetujuan, publikasi, dan arsip. Konten publik berasal dari revisi yang telah disetujui."],
-  ["Apakah tema terang dan gelap tersedia?", "Ya. Pilihan tema tersimpan di perangkat dan dapat diubah kapan saja melalui kontrol pada header."],
-];
-
-export default function Home() {
+export default async function Home() {
+  const faqResult = await getPublicFAQs();
+  const faqs = faqResult.data.flatMap((group) => group.items).slice(0, 4);
   return (
     <>
       <section className="portal-hero relative overflow-hidden text-white">
@@ -94,7 +90,7 @@ export default function Home() {
       </section>
 
       <section id="faq" className="portal-section">
-        <div className="portal-container grid gap-12 lg:grid-cols-[.7fr_1.3fr]"><div><p className="portal-eyebrow">Pertanyaan umum</p><h2 className="portal-section-title">Kenali cara kerja Teman Belajar</h2><p className="portal-section-copy">Jawaban ringkas untuk membantu Anda mulai menggunakan platform.</p></div><div className="grid gap-4">{faqs.map(([question, answer]) => <details key={question} className="portal-faq"><summary>{question}</summary><p>{answer}</p></details>)}</div></div>
+        <div className="portal-container grid gap-12 lg:grid-cols-[.7fr_1.3fr]"><div><p className="portal-eyebrow">Pertanyaan umum</p><h2 className="portal-section-title">Kenali cara kerja Teman Belajar</h2><p className="portal-section-copy">Jawaban terkurasi untuk membantu Anda mulai menggunakan platform.</p><Link href="/help" className="portal-button-secondary mt-6">Buka Pusat Bantuan</Link></div><div className="grid gap-4">{faqs.length?faqs.map((item) => <details key={item.id} className="portal-faq"><summary>{item.question}</summary><p>{item.answer}</p></details>):<div className="portal-card p-6 text-sm text-slate-500">FAQ terbit akan tampil di sini. Buka Pusat Bantuan untuk mencoba kembali.</div>}</div></div>
       </section>
 
       <section className="pb-16 sm:pb-20 lg:pb-24">

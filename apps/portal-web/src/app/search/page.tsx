@@ -10,6 +10,7 @@ const contentTypes = [
   { value: "knowledge", label: "Pengetahuan" },
   { value: "news", label: "Berita" },
   { value: "announcement", label: "Pengumuman" },
+  { value: "faq", label: "FAQ" },
 ] as const;
 
 type SearchDocument = {
@@ -64,7 +65,7 @@ function searchHref(parameters: { q: string; contentType?: string; page?: number
 }
 
 function TypeBadge({ type }: { type: string }) {
-  const labels: Record<string, string> = { course: "Kelas", knowledge: "Pengetahuan", news: "Berita", announcement: "Pengumuman" };
+  const labels: Record<string, string> = { course: "Kelas", knowledge: "Pengetahuan", news: "Berita", announcement: "Pengumuman", faq: "FAQ" };
   return <span className="portal-badge">{labels[type] ?? "Konten"}</span>;
 }
 
