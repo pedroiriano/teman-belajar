@@ -132,9 +132,9 @@ export default function CreateKnowledgePage() {
             </div>
 
           </div>
+        <SeoDiscoverySection compact embedded value={seo} onChange={setSEO} contentTitle={title} contentSummary={summary} contentBody={body} routePrefix="/knowledge/" />
         <div className="admin-form-footer"><Link href="/dashboard/knowledge" className="admin-button-secondary">Batal</Link><button type="submit" disabled={loading} className="admin-button">{loading ? "Menyimpan…" : "Simpan draft"}</button></div>
       </form>
-      <SeoDiscoverySection value={seo} onChange={setSEO} contentTitle={title} contentSummary={summary} contentBody={body} routePrefix="/knowledge/" />
     </div>
   );
 }

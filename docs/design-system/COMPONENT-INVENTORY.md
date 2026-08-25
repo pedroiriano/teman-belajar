@@ -54,7 +54,7 @@ Status implementasi berikut wajib dipertahankan. `Implemented` berarti pola vend
 | Light/dark theme | Implemented | Implemented | shared persistence key, separate tokens |
 | Engagement controls | Bookmark/rating on Knowledge; saved/recent/recommendation learner sections | Not applicable | Techwind-derived, TASK-008 |
 | Knowledge hierarchy | Three-pane explorer, mobile drawer, breadcrumb, TOC | Cuba tree manager, node forms, explicit archive confirmation | TASK-011B; semantic application components |
-| SEO & discoverability | SSR metadata, breadcrumb, taxonomy/node landings | Shared full panel plus compact News/Announcement progressive disclosure, search/social preview, pre-publication checklist, taxonomy governance | TASK-011D foundation; Media Picker and Auto-Save reused; one draft save flow; no orange |
+| SEO & discoverability | SSR metadata, breadcrumb, taxonomy/node landings | Shared compact News/Announcement/Knowledge progressive disclosure, search/social preview, pre-publication checklist, taxonomy governance | TASK-011D foundation; Media Picker and Auto-Save reused; one editable save flow; no orange |
 
 TASK-008 carry-forward: the Cuba Admin shell now includes desktop sidebar
 close/reopen with layout expansion; the mobile drawer retains overlay, X,

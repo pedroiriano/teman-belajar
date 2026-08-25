@@ -23,15 +23,12 @@ consumers.forEach((source, index) => {
   if (!source.includes("SeoDiscoverySection")) throw new Error(`consumer ${index + 1} does not reuse SeoDiscoverySection`);
   if (!source.includes("useAutoSaveDraft")) throw new Error(`consumer ${index + 1} lost canonical auto-save`);
 });
-for (const index of [0, 1, 2, 3]) {
-  if (!consumers[index].includes("SeoDiscoverySection compact")) throw new Error(`News/Announcement consumer ${index + 1} did not adopt compact discovery UX`);
+for (const [index, source] of consumers.entries()) {
+  if (!source.includes("SeoDiscoverySection compact")) throw new Error(`authoring consumer ${index + 1} did not adopt compact discovery UX`);
 }
-for (const index of [0, 2]) {
+for (const index of [0, 2, 4]) {
   const discovery = consumers[index].indexOf("SeoDiscoverySection compact embedded");
   const footer = consumers[index].indexOf("admin-form-footer", discovery);
   if (discovery < 0 || footer < discovery) throw new Error(`create consumer ${index + 1} must place discovery settings before the single save footer`);
-}
-for (const index of [4, 5]) {
-  if (consumers[index].includes("SeoDiscoverySection compact")) throw new Error(`Knowledge consumer ${index + 1} changed outside the requested UX scope`);
 }
 console.log("Admin SEO & Discovery contract: PASS");
