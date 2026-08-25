@@ -7,6 +7,11 @@ Audit date: 2026-08-25 (Asia/Jakarta)
 Source branch: `codex/task-012-production-readiness` from fresh `main` at
 `5596882e2b0ee28d9f1c26ab151327cbe883c0ea`
 
+Integration record: [PR #20](https://github.com/pedroiriano/teman-belajar/pull/20)
+passed all 11 protected checks and was merged to `main` at
+`00619d68fd576c29cc49891aa49b8c32a06dfd0f`. This merge is not production
+authorization.
+
 This package is an evidence index, not a production approval. No agent may
 self-approve release readiness. No production deployment, production secret
 rotation, destructive operation, migration rewrite, identity-boundary change,
@@ -33,9 +38,9 @@ an ignored `moodle.tgz`; both require an explicit product/release disposition.
 
 | AC | Current evidence | Status before human release approval | Required closure |
 |---|---|---|---|
-| AC-01 Critical journeys E2E | Prior browser evidence covers Portal/Admin/Moodle SSO/SLO and content journeys; current branch must pass PR checks and final browser smoke | LOCAL EVIDENCE; STAGING PENDING | Execute signed release-candidate E2E in staging and attach immutable evidence |
+| AC-01 Critical journeys E2E | Prior browser evidence covers Portal/Admin/Moodle SSO/SLO and content journeys; PR #20 protected checks and final anonymous browser smoke passed | LOCAL EVIDENCE; STAGING PENDING | Execute signed release-candidate E2E in staging and attach immutable evidence |
 | AC-02 Backup + restore | Governed drill procedure exists; no existing data or volume was touched | PENDING | Approve an isolated restore target, RPO/RTO, encrypted destination, and execute the drill |
-| AC-03 No high/critical issue | CI runs gosec, govulncheck, npm audit, Gitleaks and Trivy filesystem/config/API/Portal/Admin-image checks | PR CHECKS PENDING; COVERAGE GAP | All protected checks green; scan every remaining deployable image/artifact and sign any exception |
+| AC-03 No high/critical issue | All 11 PR #20 protected checks passed, including gosec, govulncheck, npm audit, Gitleaks and Trivy filesystem/config/API/Portal/Admin-image checks | PR PASS; COVERAGE GAP | Scan every remaining deployable image/artifact and sign any exception |
 | AC-04 Performance baseline | Read-only local probe passed 40 requests/endpoint with 0% errors; p95 health 1.97ms, news 3.54ms, knowledge 2.59ms | LOCAL PASS/PROVISIONAL | Product owner approves SLO; run representative staging workload |
 | AC-05 SSO Portal↔Moodle | Historical same-browser local E2E PASS; identity code remains frozen | LOCAL PASS; PRODUCTION-LIKE PENDING | Execute staging test using production-like HTTPS, cookie domains, proxies and IdP |
 | AC-06 Moodle unavailable | Adapter timeout/unavailable tests and prior local degradation evidence exist | LOCAL PASS; STAGING PENDING | Run approved staging fault exercise and verify user-facing degradation/alerts |

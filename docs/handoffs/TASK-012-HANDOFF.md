@@ -2,13 +2,18 @@
 
 ## Disposition
 
-Implementation status: **RELEASE-CANDIDATE HARDENING COMPLETE / PR #20 OPEN**
+Implementation status: **RELEASE-CANDIDATE HARDENING MERGED TO `main` VIA PR #20**
 
 Production status: **HOLD — HUMAN RELEASE APPROVAL REQUIRED**
 
 TASK-012 began from fresh `main` commit
 `5596882e2b0ee28d9f1c26ab151327cbe883c0ea`. This task does not deploy
 production and does not self-approve the release.
+
+The implementation was merged through the protected-branch workflow as
+[PR #20](https://github.com/pedroiriano/teman-belajar/pull/20) at merge commit
+`00619d68fd576c29cc49891aa49b8c32a06dfd0f` after all 11 required checks
+passed. Integration into `main` does not change the production hold.
 
 ## Safe Changes Implemented
 
@@ -60,7 +65,8 @@ The authoritative status and recommendations are in
 - Production deployment/secret rotation/destructive action: not performed.
 - Branch protection: read-only audit only; no bypass or mutation.
 - `latest_prompt.txt`: remains untracked and excluded from every commit.
-- TASK-012 PR must not be merged without explicit human approval.
+- PR #20 was merged only after explicit human approval through the protected
+  workflow; no branch-protection bypass was used.
 
 ## Verification Evidence
 
@@ -86,7 +92,8 @@ The local Windows native Turbopack optional binding was unavailable, so the
 production frontend build was additionally verified with Next.js Webpack;
 protected CI remains authoritative for the normal Linux Turbopack build.
 
-Remote review is [PR #20](https://github.com/pedroiriano/teman-belajar/pull/20).
-GitHub's check rollup for the current PR head is the authoritative remote CI
-state. The PR remains open and unmerged. Until every human gate is closed, this
-handoff must not be interpreted as production approval.
+Remote review [PR #20](https://github.com/pedroiriano/teman-belajar/pull/20)
+passed all 11 protected checks and was merged into `main` at
+`00619d68fd576c29cc49891aa49b8c32a06dfd0f`. Until every human gate is closed,
+the merged implementation and this handoff must not be interpreted as
+production approval.
