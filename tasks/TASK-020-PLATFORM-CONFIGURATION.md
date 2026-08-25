@@ -1,8 +1,8 @@
 # TASK-020 — Platform Configuration & Dynamic Site Management
 
-**Status:** PLANNED  
-**Owner Agent:** Product/Backend/Frontend/Security/QA  
-**Feature:** F-ADM-005  
+**Status:** PLANNED
+**Owner Agent:** Product/Backend/Frontend/Security/QA
+**Feature:** F-ADM-005
 **Dependencies:** CMS, Media, TASK-011D
 
 ## Objective

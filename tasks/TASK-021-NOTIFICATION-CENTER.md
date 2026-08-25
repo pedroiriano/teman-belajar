@@ -1,8 +1,8 @@
 # TASK-021 — Notification Center
 
-**Status:** PLANNED  
-**Owner Agent:** Backend/Frontend/Security/QA  
-**Feature:** F-NOT-001, F-NOT-002  
+**Status:** PLANNED
+**Owner Agent:** Backend/Frontend/Security/QA
+**Feature:** F-NOT-001, F-NOT-002
 **Dependencies:** Event and audit infrastructure
 
 ## Objective

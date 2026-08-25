@@ -1,8 +1,8 @@
 # TASK-013 — Pelatihan Penuh / Full Training Programs
 
-**Status:** PLANNED  
-**Owner Agent:** Product/Backend/Frontend/Moodle/QA  
-**Feature:** F-LXP-001  
+**Status:** PLANNED
+**Owner Agent:** Product/Backend/Frontend/Moodle/QA
+**Feature:** F-LXP-001
 **Dependencies:** TASK-005, TASK-006, TASK-007
 
 ## Objective

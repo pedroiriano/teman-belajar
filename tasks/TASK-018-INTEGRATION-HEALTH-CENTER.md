@@ -1,8 +1,8 @@
 # TASK-018 — Integration Health Center
 
-**Status:** PLANNED  
-**Owner Agent:** Backend/Frontend/DevOps/Security/QA  
-**Feature:** F-ADM-004  
+**Status:** PLANNED
+**Owner Agent:** Backend/Frontend/DevOps/Security/QA
+**Feature:** F-ADM-004
 **Dependencies:** TASK-009, TASK-011, TASK-012
 
 ## Objective

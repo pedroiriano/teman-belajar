@@ -1,8 +1,8 @@
 # TASK-017 — FAQ CMS & Help Center
 
-**Status:** PLANNED  
-**Owner Agent:** Backend/Frontend/SEO/QA  
-**Feature:** F-FAQ-001  
+**Status:** PLANNED
+**Owner Agent:** Backend/Frontend/SEO/QA
+**Feature:** F-FAQ-001
 **Dependencies:** TASK-011A, TASK-011D, TASK-004E
 
 ## Objective

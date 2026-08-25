@@ -1,8 +1,8 @@
 # TASK-016 — Jalur Belajar / Learning Paths
 
-**Status:** PLANNED  
-**Owner Agent:** Product/Backend/Frontend/Moodle/QA  
-**Feature:** F-LXP-004  
+**Status:** PLANNED
+**Owner Agent:** Product/Backend/Frontend/Moodle/QA
+**Feature:** F-LXP-004
 **Dependencies:** TASK-013, TASK-014, TASK-015
 
 ## Objective

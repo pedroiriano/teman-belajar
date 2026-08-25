@@ -1,8 +1,8 @@
 # TASK-015 — Webinar & Live Learning
 
-**Status:** PLANNED  
-**Owner Agent:** Product/Backend/Frontend/Integration/Security/QA  
-**Feature:** F-LXP-003  
+**Status:** PLANNED
+**Owner Agent:** Product/Backend/Frontend/Integration/Security/QA
+**Feature:** F-LXP-003
 **Dependencies:** TASK-021, approved Moodle/provider adapter
 
 ## Objective

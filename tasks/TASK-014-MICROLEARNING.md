@@ -1,8 +1,8 @@
 # TASK-014 — Pembelajaran Singkat / Microlearning
 
-**Status:** PLANNED  
-**Owner Agent:** Product/Backend/Frontend/QA  
-**Feature:** F-LXP-002  
+**Status:** PLANNED
+**Owner Agent:** Product/Backend/Frontend/QA
+**Feature:** F-LXP-002
 **Dependencies:** Media, Knowledge, Unified Search, TASK-008
 
 ## Objective

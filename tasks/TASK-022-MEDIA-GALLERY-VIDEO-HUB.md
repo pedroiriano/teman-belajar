@@ -1,8 +1,8 @@
 # TASK-022 — Media Gallery & Video Hub
 
-**Status:** PLANNED  
-**Owner Agent:** Backend/Frontend/Media/SEO/QA  
-**Feature:** F-MED-002, F-MED-003  
+**Status:** PLANNED
+**Owner Agent:** Backend/Frontend/Media/SEO/QA
+**Feature:** F-MED-002, F-MED-003
 **Dependencies:** TASK-004E, TASK-011D
 
 ## Objective

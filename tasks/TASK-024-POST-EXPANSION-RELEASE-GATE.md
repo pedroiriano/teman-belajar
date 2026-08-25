@@ -1,8 +1,8 @@
 # TASK-024 — Post-Expansion Release Gate
 
-**Status:** PLANNED  
-**Owner Agent:** Release/Security/QA/DevOps  
-**Feature:** Expansion release gate  
+**Status:** PLANNED
+**Owner Agent:** Release/Security/QA/DevOps
+**Feature:** Expansion release gate
 **Dependencies:** TASK-013–023 yang dipilih untuk release candidate
 
 ## Objective

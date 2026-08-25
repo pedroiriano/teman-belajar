@@ -1,8 +1,8 @@
 # TASK-019 — Audit Center
 
-**Status:** PLANNED  
-**Owner Agent:** Backend/Frontend/Security/Privacy/QA  
-**Feature:** F-ADM-003  
+**Status:** PLANNED
+**Owner Agent:** Backend/Frontend/Security/Privacy/QA
+**Feature:** F-ADM-003
 **Dependencies:** Existing audit events, TASK-010
 
 ## Objective

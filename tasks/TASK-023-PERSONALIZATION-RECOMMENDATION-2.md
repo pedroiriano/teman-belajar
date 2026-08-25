@@ -1,8 +1,8 @@
 # TASK-023 — Experience Personalization & Recommendation 2.0
 
-**Status:** PLANNED  
-**Owner Agent:** Product/Data/Backend/Frontend/Security/Privacy/QA  
-**Feature:** F-ENG-004  
+**Status:** PLANNED
+**Owner Agent:** Product/Data/Backend/Frontend/Security/Privacy/QA
+**Feature:** F-ENG-004
 **Dependencies:** TASK-006, TASK-008, TASK-013, TASK-014, TASK-015, TASK-016
 
 ## Objective

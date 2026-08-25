@@ -1,8 +1,8 @@
 # Post-TASK-012 Expansion Roadmap — TASK-013–024
 
-**Status:** Canonical Roadmap  
+**Status:** Canonical Roadmap
 **Baseline:** TASK-012 telah diintegrasikan; keputusan produksi tetap
-`PRODUCTION HOLD` sampai seluruh gate manusia TASK-012 diselesaikan.  
+`PRODUCTION HOLD` sampai seluruh gate manusia TASK-012 diselesaikan.
 **Scope:** Pengembangan fitur yang masih berlabel `Segera` dan kapabilitas
 pendukung setelah foundation release.
 
