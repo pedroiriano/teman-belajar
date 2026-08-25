@@ -149,6 +149,14 @@ a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visib
   .admin-form-header { @apply border-b px-5 py-5 sm:px-7; border-color: var(--admin-border); }
   .admin-form-body { @apply space-y-6 p-5 sm:p-7; }
   .admin-form-footer { @apply flex flex-col-reverse gap-3 border-t px-5 py-4 sm:flex-row sm:justify-end sm:px-7; background: var(--admin-panel-muted); border-color: var(--admin-border); }
+  .admin-disclosure { @apply rounded-2xl border p-4; color: var(--admin-copy); background: var(--admin-panel-muted); border-color: var(--admin-border); }
+  .admin-disclosure > summary { @apply cursor-pointer font-bold; color: var(--admin-ink); }
+  .admin-discovery-chip { @apply rounded-full px-3 py-1.5; color: var(--admin-copy); background: var(--admin-panel-strong); }
+  .admin-discovery-chip[data-accent="true"] { color: var(--admin-accent-text); background: var(--admin-accent-soft); }
+  .admin-tag-option { @apply cursor-pointer rounded-full border px-3 py-2 text-xs font-bold transition; color: var(--admin-copy); background: var(--admin-panel); border-color: var(--admin-border); }
+  .admin-tag-option:hover,
+  .admin-tag-option[data-selected="true"] { color: var(--admin-accent-text); background: var(--admin-accent-soft); border-color: var(--admin-accent-border); }
+  .admin-discovery-preview { @apply rounded-2xl border p-5; color: var(--admin-copy); background: var(--admin-panel); border-color: var(--admin-border); }
   .admin-status { @apply inline-flex items-center rounded-full px-2.5 py-1 text-xs font-bold capitalize; }
   .admin-empty { @apply px-6 py-14 text-center; color: var(--admin-muted); }
   .admin-alert-error { @apply rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm font-semibold text-rose-700; }

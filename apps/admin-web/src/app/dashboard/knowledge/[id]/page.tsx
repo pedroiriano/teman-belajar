@@ -78,7 +78,7 @@ export default function AdminKnowledgeDetailPage() {
     }
   };
 
-  const handleSaveRevision = async () => {
+  const handleSave = async () => {
     setActionLoading(true);
     setError("");
     if (!primaryNodeId) {
@@ -86,25 +86,22 @@ export default function AdminKnowledgeDetailPage() {
       setActionLoading(false);
       return;
     }
+    const contentDirty = article.body !== body;
     const hierarchyDirty = primaryNodeId !== (article.hierarchy?.node_id || "");
-    const res = article.body === body && hierarchyDirty
-      ? await assignKnowledgeArticleNodeAction(id, primaryNodeId)
-      : await createKnowledgeRevisionAction(id, { body, expected_revision_no: article.current_revision_no, seo, primary_node_id: primaryNodeId || undefined, media_usages: mediaUsagesFromMarkdown(body) });
-    if (!res.success) {
-      setError(res.error || "Revisi baru belum dapat disimpan");
-      setActionLoading(false);
-    } else {
-      const seoResult = await saveDiscoverabilityProfileAction("knowledge", id, seo);
-      if (!seoResult.success) { setError(seoResult.error || "SEO & Discovery belum dapat disimpan"); setActionLoading(false); return; }
-      await autoSave.finalize();
-      router.push("/dashboard/knowledge");
+    if (contentDirty || hierarchyDirty) {
+      const revisionResult = !contentDirty && hierarchyDirty
+        ? await assignKnowledgeArticleNodeAction(id, primaryNodeId)
+        : await createKnowledgeRevisionAction(id, { body, expected_revision_no: article.current_revision_no, seo, primary_node_id: primaryNodeId || undefined, media_usages: mediaUsagesFromMarkdown(body) });
+      if (!revisionResult.success) {
+        setError(revisionResult.error || "Revisi baru belum dapat disimpan");
+        setActionLoading(false);
+        return;
+      }
     }
-  };
-
-  const handleSaveSEO = async () => {
-    setActionLoading(true); setError(""); const result = await saveDiscoverabilityProfileAction("knowledge", id, seo);
-    if (!result.success) { setError(result.error || "SEO & Discovery belum dapat disimpan"); setActionLoading(false); return; }
-    await autoSave.finalize(); router.refresh(); setActionLoading(false);
+    const seoResult = await saveDiscoverabilityProfileAction("knowledge", id, seo);
+    if (!seoResult.success) { setError(seoResult.error || "Pengaturan publikasi belum dapat disimpan"); setActionLoading(false); return; }
+    await autoSave.finalize();
+    router.push("/dashboard/knowledge");
   };
 
   if (loading) return <div className="admin-card animate-pulse p-8"><div className="h-7 w-72 rounded bg-slate-100" /><div className="mt-6 h-72 rounded-xl bg-slate-100" /></div>;
@@ -190,24 +187,14 @@ export default function AdminKnowledgeDetailPage() {
                   aria-label="Isi revisi artikel"
                 />
                 
-                {(article.body !== body || primaryNodeId !== (article.hierarchy?.node_id || "")) && (
-                  <div className="flex justify-end">
-                    <button
-                      onClick={handleSaveRevision}
-                      disabled={actionLoading}
-                      className="admin-button"
-                    >
-                      Simpan sebagai revisi draft baru
-                    </button>
-                  </div>
-                )}
               </div>
             )}
             </div>
           </div>
+          {canCreateRevision && <SeoDiscoverySection compact embedded value={seo} onChange={setSEO} contentTitle={article.title} contentSummary={article.summary || ""} contentBody={body || article.body || ""} routePrefix="/knowledge/" />}
+          {canCreateRevision && <div className="admin-form-footer"><button type="button" className="admin-button" disabled={actionLoading || !primaryNodeId || !body} onClick={handleSave}>Simpan perubahan</button></div>}
       </section>
-      <SeoDiscoverySection value={seo} onChange={setSEO} contentTitle={article.title} contentSummary={article.summary || ""} contentBody={body || article.body || ""} routePrefix="/knowledge/" disabled={!canCreateRevision} />
-      {canCreateRevision && <div className="flex justify-end"><button type="button" className="admin-button" disabled={actionLoading} onClick={handleSaveSEO}>Simpan SEO &amp; Discovery</button></div>}
+      {!canCreateRevision && <SeoDiscoverySection compact value={seo} onChange={setSEO} contentTitle={article.title} contentSummary={article.summary || ""} contentBody={body || article.body || ""} routePrefix="/knowledge/" disabled />}
     </div>
   );
 }

@@ -15,11 +15,13 @@ type Props = {
   contentBody?: string;
   routePrefix: "/news/" | "/announcements/" | "/knowledge/";
   disabled?: boolean;
+  compact?: boolean;
+  embedded?: boolean;
 };
 
 type Check = { code: string; status: "BLOCKER" | "WARNING" | "PASS"; message: string };
 
-export function SeoDiscoverySection({ value, onChange, contentTitle, contentSummary, contentBody = "", routePrefix, disabled = false }: Props) {
+export function SeoDiscoverySection({ value, onChange, contentTitle, contentSummary, contentBody = "", routePrefix, disabled = false, compact = false, embedded = false }: Props) {
   const id = useId();
   const [categories, setCategories] = useState<TaxonomyTerm[]>([]);
   const [tags, setTags] = useState<TaxonomyTerm[]>([]);
@@ -59,6 +61,90 @@ export function SeoDiscoverySection({ value, onChange, contentTitle, contentSumm
   ], [effectiveDescription, effectiveTitle, hasHeading, hasInternalLink, value.category_id, value.indexable, value.slug, value.social_image_alt, value.social_media_id]);
 
   const mediaSelected = (media: MediaSelection) => { onChange({ ...value, social_media_id: media.id, social_image_alt: media.alt_text || "" }); setSelectedMediaName(media.display_filename || media.original_filename || media.id); };
+
+  const blockerCount = checks.filter((check) => check.status === "BLOCKER").length;
+  const warningCount = checks.filter((check) => check.status === "WARNING").length;
+  const selectedCategory = categories.find((category) => category.id === value.category_id)?.name;
+
+  if (compact) {
+    return <section className={embedded ? "border-t border-slate-200" : "admin-form-card"} aria-labelledby={`${id}-title`}>
+      <div className="admin-form-header">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div className="flex items-center gap-3">
+            <span className="admin-stat-icon"><AdminIcon name="search" className="h-5 w-5" /></span>
+            <div>
+              <p className="admin-kicker">Publikasi</p>
+              <h2 id={`${id}-title`} className="font-black text-slate-900">Kategori dan tampilan publik</h2>
+              <p className="mt-1 text-xs text-slate-500">Pilih klasifikasi konten. Pengaturan pencarian lainnya sudah menggunakan nilai otomatis.</p>
+            </div>
+          </div>
+          <div className="flex flex-wrap gap-2 text-xs font-bold" aria-live="polite">
+            <span className="admin-discovery-chip" data-accent="true">{selectedCategory || "Tanpa kategori"}</span>
+            <span className="admin-discovery-chip">{value.tag_ids.length} tag</span>
+          </div>
+        </div>
+      </div>
+      <div className="admin-form-body">
+        {taxonomyError && <div className="admin-alert-error" role="alert">{taxonomyError}</div>}
+
+        <div>
+          <label htmlFor={`${id}-category`} className="admin-label">Kategori</label>
+          <select id={`${id}-category`} className="admin-input" disabled={disabled} value={value.category_id || ""} onChange={(event) => set("category_id", event.target.value || null)}>
+            <option value="">Pilih kategori</option>
+            {categories.map((term) => <option key={term.id} value={term.id}>{term.name}</option>)}
+          </select>
+          <p className="mt-2 text-xs text-slate-500">Gunakan satu kategori utama agar konten mudah ditemukan.</p>
+        </div>
+
+        <details className="admin-disclosure">
+          <summary className="cursor-pointer font-bold text-slate-900">Tag <span className="font-normal text-slate-500">({value.tag_ids.length} dipilih)</span></summary>
+          <fieldset disabled={disabled} className="mt-4">
+            <legend className="sr-only">Pilih tag</legend>
+            {tags.length ? <div className="flex flex-wrap gap-2">{tags.map((tag) => <label key={tag.id} className="admin-tag-option" data-selected={value.tag_ids.includes(tag.id)}><input className="sr-only" type="checkbox" checked={value.tag_ids.includes(tag.id)} onChange={() => toggleTag(tag.id)} />{tag.name}</label>)}</div> : <p className="text-sm text-slate-500">Belum ada tag aktif. Tag dapat dikelola melalui menu Taxonomy.</p>}
+          </fieldset>
+        </details>
+
+        <details className="admin-disclosure">
+          <summary className="cursor-pointer font-bold text-slate-900">Tampilan di hasil pencarian <span className="font-normal text-slate-500">(otomatis)</span></summary>
+          <div className="mt-5 grid gap-5">
+            <div>
+              <label htmlFor={`${id}-slug`} className="admin-label">Alamat URL</label>
+              <input id={`${id}-slug`} className="admin-input" value={value.slug} disabled={disabled} maxLength={120} onChange={(event) => set("slug", event.target.value)} aria-describedby={`${id}-slug-help`} />
+              <p id={`${id}-slug-help`} className="mt-2 text-xs text-slate-500">Alamat publik: <span className="font-semibold text-slate-700">{routePrefix}{value.slug || "slug-konten"}</span>. Dibuat otomatis dari judul; ubah hanya jika diperlukan.</p>
+            </div>
+            <div className="grid gap-5 md:grid-cols-2">
+              <div><label htmlFor={`${id}-seo-title`} className="admin-label">Judul pencarian <span className="font-normal text-slate-500">(opsional)</span></label><input id={`${id}-seo-title`} className="admin-input" value={value.seo_title} disabled={disabled} maxLength={200} onChange={(event) => set("seo_title", event.target.value)} placeholder={contentTitle || "Mengikuti judul konten"} /></div>
+              <div><label htmlFor={`${id}-description`} className="admin-label">Deskripsi pencarian <span className="font-normal text-slate-500">(opsional)</span></label><textarea id={`${id}-description`} className="admin-input" rows={3} value={value.meta_description} disabled={disabled} maxLength={500} onChange={(event) => set("meta_description", event.target.value)} placeholder={contentSummary || "Mengikuti ringkasan konten"} /></div>
+            </div>
+            <section className="admin-discovery-preview" aria-label="Pratinjau hasil pencarian">
+              <p className="admin-kicker">Pratinjau hasil pencarian</p>
+              <p className="mt-3 text-lg font-bold text-sky-800">{effectiveTitle}</p>
+              <p className="mt-1 truncate text-xs text-emerald-700">teman-belajar.local{canonical}</p>
+              <p className="mt-2 text-sm leading-6 text-slate-600">{effectiveDescription}</p>
+            </section>
+          </div>
+        </details>
+
+        <details className="admin-disclosure">
+          <summary className="cursor-pointer font-bold text-slate-900">Tampilan saat dibagikan <span className="font-normal text-slate-500">(opsional)</span></summary>
+          <div className="mt-5 grid gap-5">
+            <section className="admin-discovery-preview overflow-hidden !p-0" aria-label="Pratinjau saat dibagikan"><div className="flex aspect-[3/1] items-center justify-center text-sm font-bold text-sky-700" style={{ background: "var(--admin-accent-soft)" }}>{value.social_media_id ? selectedMediaName || "Gambar terpilih" : "Menggunakan gambar bawaan"}</div><div className="p-5"><p className="font-black text-slate-900">{socialTitle}</p><p className="mt-2 text-sm text-slate-600">{socialDescription}</p></div></section>
+            <div className="flex flex-wrap items-center gap-3">{!disabled && <MediaPicker imageOnly onSelect={mediaSelected} buttonLabel={value.social_media_id ? "Ganti gambar" : "Pilih gambar"} />}{value.social_media_id && <><span className="max-w-xs truncate text-xs text-slate-500">{selectedMediaName || value.social_media_id}</span>{!disabled && <button type="button" className="admin-button-secondary" onClick={() => { onChange({ ...value, social_media_id: null, social_image_alt: "" }); setSelectedMediaName(""); }}>Hapus</button>}</>}</div>
+            <div className="grid gap-5 md:grid-cols-2"><div><label htmlFor={`${id}-social-title`} className="admin-label">Judul saat dibagikan <span className="font-normal text-slate-500">(opsional)</span></label><input id={`${id}-social-title`} className="admin-input" disabled={disabled} value={value.social_title} maxLength={200} onChange={(event) => set("social_title", event.target.value)} placeholder="Mengikuti judul pencarian" /></div><div><label htmlFor={`${id}-social-description`} className="admin-label">Deskripsi saat dibagikan <span className="font-normal text-slate-500">(opsional)</span></label><textarea id={`${id}-social-description`} className="admin-input" disabled={disabled} rows={2} value={value.social_description} maxLength={500} onChange={(event) => set("social_description", event.target.value)} placeholder="Mengikuti deskripsi pencarian" /></div></div>
+          </div>
+        </details>
+
+        <details className="admin-disclosure">
+          <summary className="cursor-pointer font-bold text-slate-900">Pemeriksaan sebelum terbit <span className="font-normal text-slate-500">({blockerCount} perlu diperbaiki, {warningCount} saran)</span></summary>
+          <div className="mt-5 grid gap-5">
+            <ul className="grid gap-3 sm:grid-cols-2">{checks.map((check) => <li key={check.code} className="flex gap-3 rounded-xl border border-slate-200 bg-white p-4"><span className={`h-fit rounded-full px-2 py-1 text-[10px] font-black ${check.status === "PASS" ? "bg-emerald-50 text-emerald-700" : check.status === "BLOCKER" ? "bg-rose-50 text-rose-700" : "bg-sky-50 text-sky-800"}`}>{check.status === "PASS" ? "SIAP" : check.status === "BLOCKER" ? "WAJIB" : "SARAN"}</span><span className="text-xs leading-5 text-slate-600">{check.message}</span></li>)}</ul>
+            <div><label htmlFor={`${id}-canonical`} className="admin-label">Alamat kanonis internal <span className="font-normal text-slate-500">(opsional)</span></label><input id={`${id}-canonical`} className="admin-input" disabled={disabled} value={value.canonical_path || ""} onChange={(event) => set("canonical_path", event.target.value || null)} placeholder={`${routePrefix}${value.slug || "slug-konten"}`} /><p className="mt-2 text-xs text-slate-500">Kosongkan untuk menggunakan alamat URL di atas.</p></div>
+            <label className="flex items-start gap-3 text-sm font-bold text-slate-700"><input type="checkbox" className="mt-1" checked={value.indexable === "true"} disabled={disabled} onChange={(event) => set("indexable", String(event.target.checked))} /><span>Izinkan mesin pencari mengindeks konten setelah diterbitkan.</span></label>
+          </div>
+        </details>
+      </div>
+    </section>;
+  }
 
   return <section className="admin-form-card" aria-labelledby={`${id}-title`}>
     <div className="admin-form-header"><div className="flex items-center gap-3"><span className="admin-stat-icon"><AdminIcon name="search" className="h-5 w-5" /></span><div><p className="admin-kicker">Discoverability</p><h2 id={`${id}-title`} className="font-black text-slate-900">SEO &amp; Discovery</h2><p className="mt-1 text-xs text-slate-500">Metadata server-rendered, taxonomy terkontrol, dan pratinjau publik.</p></div></div></div>

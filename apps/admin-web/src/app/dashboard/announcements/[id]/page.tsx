@@ -170,10 +170,11 @@ export default function AdminAnnouncementDetailPage() {
             <div><h3 className="admin-label">Isi pengumuman</h3><div className="rounded-xl border border-slate-200 bg-slate-50 p-4 font-mono text-sm leading-7 text-slate-600 whitespace-pre-wrap">{ann.body}</div></div>
             </>}
           </div>
-          {canEdit && <div className="admin-form-footer"><button type="button" className="admin-button" disabled={actionLoading || !title || !seo.slug || !body} onClick={handleSave}>Simpan perubahan kanonis</button></div>}
+          {canEdit && <SeoDiscoverySection compact embedded value={seo} onChange={setSEO} contentTitle={title || ann.title} contentSummary={(body || ann.body || "").slice(0, 300)} contentBody={body || ann.body || ""} routePrefix="/announcements/" />}
+          {canEdit && <div className="admin-form-footer"><button type="button" className="admin-button" disabled={actionLoading || !title || !seo.slug || !body} onClick={handleSave}>Simpan perubahan</button></div>}
       </section>
-      <SeoDiscoverySection value={seo} onChange={setSEO} contentTitle={title || ann.title} contentSummary={(body || ann.body || "").slice(0, 300)} contentBody={body || ann.body || ""} routePrefix="/announcements/" disabled={!canEditSEO} />
-      {canEditSEO && <div className="flex justify-end"><button type="button" className="admin-button" disabled={actionLoading} onClick={handleSaveSEO}>Simpan SEO &amp; Discovery</button></div>}
+      {!canEdit && <SeoDiscoverySection compact value={seo} onChange={setSEO} contentTitle={title || ann.title} contentSummary={(body || ann.body || "").slice(0, 300)} contentBody={body || ann.body || ""} routePrefix="/announcements/" disabled={!canEditSEO} />}
+      {!canEdit && canEditSEO && <div className="flex justify-end"><button type="button" className="admin-button" disabled={actionLoading} onClick={handleSaveSEO}>Simpan pengaturan publikasi</button></div>}
     </div>
   );
 }

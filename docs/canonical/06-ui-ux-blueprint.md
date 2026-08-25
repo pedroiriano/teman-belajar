@@ -206,11 +206,21 @@ Admin content editors use one Cuba-aligned Integrated Media Manager with Library
 
 ## SEO and Public Discoverability
 
-News, Announcement, and Knowledge authoring reuse one Cuba **SEO & Discovery**
-section for slug, controlled Category/Tags, metadata, Media Asset social image,
-indexability, previews, and an advisory BLOCKER/WARNING/PASS checklist. These
-fields participate in TASK-011A Auto-Save. The section must use Admin semantic
+News, Announcement, and Knowledge authoring reuse one Cuba discoverability
+component for slug, controlled Category/Tags, metadata, Media Asset social
+image, indexability, previews, and an advisory checklist. These fields
+participate in TASK-011A Auto-Save. The component must use Admin semantic
 tokens and pass the light/dark no-orange contract.
+
+News, Announcement, and Knowledge editors use its compact
+progressive-disclosure variant: Category remains immediately visible, Tag shows
+its selected count, and URL, search preview, social sharing, and
+pre-publication checks stay collapsed until requested. Create and editable
+detail screens place this component inside the same authoring surface before
+one primary save footer. Technical SEO terminology and a second save action
+must not interrupt the normal content-authoring flow. Knowledge retains its
+required primary hierarchy control and revision semantics within this shared
+flow.
 
 Portal public detail and discovery pages use Techwind-derived breadcrumb/card
 patterns. Critical title, description, canonical, robots, Open Graph, and
