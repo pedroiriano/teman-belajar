@@ -3,6 +3,10 @@
 **Owner Agent:** QA + Security + DevOps (human-owned approval)
 **Dependencies:** P0 feature completion
 
+**Implementation Integration:** PR #20 merged to `main` through the protected
+workflow at `00619d68fd576c29cc49891aa49b8c32a06dfd0f`; production remains on
+hold pending the canonical human-decision matrix.
+
 ## Objective
 Menghasilkan evidence bahwa release layak production.
 
