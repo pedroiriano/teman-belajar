@@ -45,6 +45,9 @@ powershell -NoProfile -ExecutionPolicy Bypass -File infrastructure/docker/teman-
 # Build dan jalankan migrator saja; tidak merekonsiliasi atau mengubah SSO
 powershell -NoProfile -ExecutionPolicy Bypass -File infrastructure/docker/teman-belajar-docker.ps1 migrate-verify
 
+# Build image final Portal/Admin dan pastikan npm/npx tidak ikut runtime
+powershell -NoProfile -ExecutionPolicy Bypass -File infrastructure/docker/teman-belajar-docker.ps1 frontend-image-verify
+
 # Stop container/network; volume dipertahankan
 powershell -NoProfile -ExecutionPolicy Bypass -File infrastructure/docker/teman-belajar-docker.ps1 down
 ```

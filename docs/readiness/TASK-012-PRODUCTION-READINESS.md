@@ -18,8 +18,8 @@ The repository has a healthy local 19-service Compose topology, local endpoint
 verification, CI/SAST/SCA/secret/config scanning, OIDC/Moodle regression
 evidence, and an observability stack. TASK-012 adds forward migration checksum
 enforcement, stricter operational alert rules, a repeatable read-only local
-performance probe, release/backup/rollback runbooks, and a static readiness
-guard.
+performance probe, release/backup/rollback runbooks, a static readiness guard,
+and minimal Portal/Admin runtime images without the unused npm package manager.
 
 Production cannot yet be approved. The repository intentionally contains no
 production deployment definition or production environment evidence. A backup

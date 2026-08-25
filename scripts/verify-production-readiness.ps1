@@ -41,6 +41,8 @@ Require-FileMarker ".github/workflows/security.yml" @(
     "teman-belajar-admin:task012",
     "exit-code: 1"
 )
+Require-FileMarker "apps/portal-web/Dockerfile" @("removing npm/npx", "/usr/local/lib/node_modules/npm")
+Require-FileMarker "apps/admin-web/Dockerfile" @("removing npm/npx", "/usr/local/lib/node_modules/npm")
 
 $TrackedPrompt = & git -C $RepositoryRoot ls-files -- "latest_prompt.txt"
 if ($LASTEXITCODE -ne 0) {

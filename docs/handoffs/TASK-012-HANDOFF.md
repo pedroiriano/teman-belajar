@@ -25,6 +25,9 @@ production and does not self-approve the release.
    readiness regression guard were added. CI runs the static guard.
 5. Canonical release-gate, backup/restore and rollback runbooks plus the
    evidence/human-decision matrix were added.
+6. Portal/Admin final images remove npm/npx after the build stage. The first PR
+   scan exposed one critical and eight high npm-package findings in the Portal
+   runtime; no ignore rule or risk exception was added.
 
 ## Audit Findings Carried to Humans
 
@@ -70,6 +73,7 @@ The authoritative status and recommendations are in
 | Portal lint / typecheck / hierarchy / Webpack build | PASS |
 | Admin lint / typecheck / theme / no-orange / media / drafts / hierarchy / Webpack build | PASS |
 | Portal/Admin production npm audit | PASS; 0 vulnerabilities each |
+| Portal/Admin final image npm/npx absence | PASS; governed Docker build and runtime assertion |
 | govulncheck / gosec medium+ | PASS; 0 reachable vulnerabilities / 0 issues |
 | Redocly OpenAPI | PASS; valid with one pre-existing sitemap 4XX warning |
 | Prometheus config / alert rules | PASS; six rules |
