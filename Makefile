@@ -1,4 +1,4 @@
-.PHONY: all bootstrap build test lint docker-config up down status logs sso verify
+.PHONY: all bootstrap build test lint docker-config up down status logs sso verify frontend-image-verify migrate-verify observability-verify
 
 all: bootstrap build test
 
@@ -39,3 +39,12 @@ sso:
 
 verify:
 	powershell -NoProfile -ExecutionPolicy Bypass -File infrastructure/docker/teman-belajar-docker.ps1 verify
+
+observability-verify:
+	powershell -NoProfile -ExecutionPolicy Bypass -File infrastructure/docker/teman-belajar-docker.ps1 observability-verify
+
+migrate-verify:
+	powershell -NoProfile -ExecutionPolicy Bypass -File infrastructure/docker/teman-belajar-docker.ps1 migrate-verify
+
+frontend-image-verify:
+	powershell -NoProfile -ExecutionPolicy Bypass -File infrastructure/docker/teman-belajar-docker.ps1 frontend-image-verify

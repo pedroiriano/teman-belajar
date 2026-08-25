@@ -1,7 +1,7 @@
 # Environment Security Matrix
 
 **Status:** Canonical
-**Last reviewed:** 2026-08-18
+**Last reviewed:** 2026-08-25
 **Applies to:** Teman Belajar local, test, staging, and production runtimes
 
 ## Policy
@@ -32,6 +32,7 @@
 | Cookie secure flag | Development exception on HTTP loopback | Test-specific | Secure + HttpOnly + SameSite policy | No | Cookie metadata | Production HTTPS requires secure cookies | Session confidentiality |
 | CORS | Same-origin/BFF baseline | Explicit test origins | Strict allowlist | No | Policy | No wildcard credentialed CORS | Prevent cross-origin credential abuse |
 | HTTPS | Loopback HTTP exception | Internal test | Required at public ingress | No | Yes | No production HTTP exception | Transport confidentiality/integrity |
+| Migration checksum policy | `adopt` only for the approved legacy pre-production ledger | `strict` on fresh ephemeral DB | `strict`; environment-specific adoption requires human reconciliation | No | No | Missing value defaults to `strict` in the binary | Detect mutated or missing migration history |
 
 ## Production readiness gaps
 

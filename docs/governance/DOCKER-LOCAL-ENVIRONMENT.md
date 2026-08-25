@@ -120,6 +120,10 @@ Normal recreate container tidak menghapus volume. Sebelum migrasi volume: hentik
 
 - Semua long-running service wajib memiliki health check.
 - `migrate` adalah one-shot job; kondisi benar adalah `Exited (0)`.
+- Migrator menyimpan checksum SHA-256 dari teks SQL kanonis LF. Binary default
+  adalah `strict`; `adopt` hanya boleh dipakai pada ledger lokal pre-production
+  yang sudah memperoleh persetujuan eksplisit. Mismatch isi selalu gagal
+  tertutup dan migrasi rilis tidak boleh diedit.
 - `api` menunggu `migrate` selesai serta Keycloak/Redis sehat.
 - `web` dan `admin` menunggu API serta Keycloak sehat.
 - `moodle` menunggu `moodle-db` sehat.

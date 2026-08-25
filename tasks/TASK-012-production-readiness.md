@@ -1,4 +1,5 @@
 # TASK-012 — Production Readiness Gate
+**Status:** IN PROGRESS — PRODUCTION HOLD / HUMAN DECISIONS REQUIRED
 **Owner Agent:** QA + Security + DevOps (human-owned approval)
 **Dependencies:** P0 feature completion
 
@@ -19,3 +20,14 @@ Menghasilkan evidence bahwa release layak production.
 
 ## Definition of Done
 Human release owner menyetujui evidence package. Agent tidak boleh self-approve production release.
+
+## Canonical Evidence
+
+- `docs/readiness/TASK-012-PRODUCTION-READINESS.md`
+- `docs/runbooks/PRODUCTION-RELEASE-GATE.md`
+- `docs/runbooks/BACKUP-RESTORE-DRILL.md`
+- `docs/runbooks/ROLLBACK.md`
+- `docs/handoffs/TASK-012-HANDOFF.md`
+
+A merged implementation PR does not complete AC-02, AC-07, AC-08, AC-09 or
+AC-10 and is not production authorization.

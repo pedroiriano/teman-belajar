@@ -39,11 +39,20 @@ powershell -NoProfile -ExecutionPolicy Bypass -File infrastructure/docker/teman-
 # Smoke test status + delapan endpoint
 powershell -NoProfile -ExecutionPolicy Bypass -File infrastructure/docker/teman-belajar-docker.ps1 verify
 
+# Validasi sintaks konfigurasi dan seluruh alert rule Prometheus
+powershell -NoProfile -ExecutionPolicy Bypass -File infrastructure/docker/teman-belajar-docker.ps1 observability-verify
+
+# Build dan jalankan migrator saja; tidak merekonsiliasi atau mengubah SSO
+powershell -NoProfile -ExecutionPolicy Bypass -File infrastructure/docker/teman-belajar-docker.ps1 migrate-verify
+
+# Build image final Portal/Admin dan pastikan npm/npx tidak ikut runtime
+powershell -NoProfile -ExecutionPolicy Bypass -File infrastructure/docker/teman-belajar-docker.ps1 frontend-image-verify
+
 # Stop container/network; volume dipertahankan
 powershell -NoProfile -ExecutionPolicy Bypass -File infrastructure/docker/teman-belajar-docker.ps1 down
 ```
 
-Alias Makefile: `make docker-config`, `make up`, `make status`, `make logs`, `make sso`, `make verify`, dan `make down`.
+Alias Makefile: `make docker-config`, `make up`, `make status`, `make logs`, `make sso`, `make verify`, `make observability-verify`, dan `make down`.
 
 ## URL Default
 

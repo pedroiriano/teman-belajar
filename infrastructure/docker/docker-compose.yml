@@ -240,6 +240,9 @@ services:
     environment:
       DATABASE_URL: postgres://${TB_PORTAL_DB_USER:?Set TB_PORTAL_DB_USER in infrastructure/docker/.env}:${TB_PORTAL_DB_PASSWORD:?Set TB_PORTAL_DB_PASSWORD in infrastructure/docker/.env}@portal-db:5432/${TB_PORTAL_DB_NAME:?Set TB_PORTAL_DB_NAME in infrastructure/docker/.env}?sslmode=disable
       MIGRATIONS_DIR: /app/migrations
+      # Local-only adoption of the explicitly approved pre-production legacy ledger.
+      # The migrator binary defaults to strict and production must remain strict.
+      MIGRATION_CHECKSUM_POLICY: ${TB_MIGRATION_CHECKSUM_POLICY:-adopt}
     depends_on:
       portal-db:
         condition: service_healthy
@@ -512,7 +515,6 @@ volumes:
     name: teman-belajar-loki-data
   tempo-data:
     name: teman-belajar-tempo-data
-
 
 
 

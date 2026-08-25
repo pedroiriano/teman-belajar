@@ -2,7 +2,7 @@ groups:
 - name: API_Alerts
   rules:
   - alert: API_High_Error_Rate
-    expr: sum(rate(http_requests_total{status_class="5xx"}[5m])) / sum(rate(http_requests_total[5m])) > 0.05
+    expr: sum(rate(http_requests_total{status_class="5xx"}[5m])) / clamp_min(sum(rate(http_requests_total[5m])), 0.001) > 0.05
     for: 2m
     labels:
       severity: critical
@@ -18,4 +18,40 @@ groups:
     annotations:
       summary: "Portal API is down"
       description: "Prometheus cannot scrape the API."
+
+  - alert: API_High_Latency
+    expr: histogram_quantile(0.95, sum by (le) (rate(http_request_duration_seconds_bucket[5m]))) > 1
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      summary: "Portal API p95 latency is above one second"
+      description: "The five-minute API p95 exceeded the provisional readiness threshold."
+
+  - alert: Event_Inbox_Failed
+    expr: event_inbox_backlog{status="dead_letter"} > 0
+    for: 5m
+    labels:
+      severity: critical
+    annotations:
+      summary: "Moodle event inbox contains failed events"
+      description: "At least one event remains in the dead-letter state."
+
+  - alert: Event_Inbox_Backlog_High
+    expr: event_inbox_backlog{status="pending"} > 100
+    for: 10m
+    labels:
+      severity: warning
+    annotations:
+      summary: "Moodle event inbox backlog is high"
+      description: "More than 100 events have remained pending for ten minutes."
+
+  - alert: SSO_Failure_Burst
+    expr: sum(increase(sso_events_total{status="failure"}[10m])) > 5
+    for: 2m
+    labels:
+      severity: warning
+    annotations:
+      summary: "SSO failures exceeded the provisional burst threshold"
+      description: "More than five failed SSO events were observed in ten minutes."
 
