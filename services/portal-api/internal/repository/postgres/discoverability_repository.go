@@ -70,11 +70,11 @@ func (r *DiscoverabilityRepository) ListTerms(ctx context.Context, kind discover
 }
 
 func (r *DiscoverabilityRepository) ArchiveTerm(ctx context.Context, kind discoverability.TermKind, id, actorID string) error {
-	table := "tags"
+	query := `UPDATE tags SET status='archived',updated_at=NOW() WHERE id=$1 AND status='active'`
 	if kind == discoverability.KindCategory {
-		table = "categories"
+		query = `UPDATE categories SET status='archived',updated_at=NOW() WHERE id=$1 AND status='active'`
 	}
-	result, err := r.db.ExecContext(ctx, `UPDATE `+table+` SET status='archived',updated_at=NOW() WHERE id=$1 AND status='active'`, id)
+	result, err := r.db.ExecContext(ctx, query, id)
 	if err != nil {
 		return fmt.Errorf("archive taxonomy term: %w", err)
 	}
@@ -416,20 +416,20 @@ func (r *DiscoverabilityRepository) GetLanding(ctx context.Context, kind discove
 			return nil, err
 		}
 	}
-	filterNews := "n.category_id=$1"
-	filterAnn := "a.category_id=$1"
-	filterKnowledge := "k.category_id=$1"
-	if kind == discoverability.KindTag {
-		filterNews = "EXISTS(SELECT 1 FROM content_tags ct WHERE ct.content_type='news' AND ct.content_id=n.id AND ct.tag_id=$1)"
-		filterAnn = "EXISTS(SELECT 1 FROM content_tags ct WHERE ct.content_type='announcement' AND ct.content_id=a.id AND ct.tag_id=$1)"
-		filterKnowledge = "EXISTS(SELECT 1 FROM content_tags ct WHERE ct.content_type='knowledge' AND ct.content_id=k.id AND ct.tag_id=$1)"
-	}
-	query := fmt.Sprintf(`SELECT content_type,slug,title,summary,url,updated_at FROM (
-		SELECT 'news' content_type,n.slug,n.title,COALESCE(n.excerpt,'') summary,'/news/'||n.slug url,n.updated_at FROM news n LEFT JOIN seo_profiles s ON s.content_type='news' AND s.content_id=n.id WHERE n.status='published' AND n.published_at<=NOW() AND COALESCE(s.indexable,true) AND %s
-		UNION ALL SELECT 'announcement',a.slug,a.title,left(a.body,500),'/announcements/'||a.slug,a.updated_at FROM announcements a LEFT JOIN seo_profiles s ON s.content_type='announcement' AND s.content_id=a.id WHERE a.status='published' AND a.published_at<=NOW() AND (a.start_at IS NULL OR a.start_at<=NOW()) AND (a.end_at IS NULL OR a.end_at>NOW()) AND COALESCE(s.indexable,true) AND %s
+	query := `SELECT content_type,slug,title,summary,url,updated_at FROM (
+		SELECT 'news' content_type,n.slug,n.title,COALESCE(n.excerpt,'') summary,'/news/'||n.slug url,n.updated_at FROM news n LEFT JOIN seo_profiles s ON s.content_type='news' AND s.content_id=n.id WHERE n.status='published' AND n.published_at<=NOW() AND COALESCE(s.indexable,true) AND n.category_id=$1
+		UNION ALL SELECT 'announcement',a.slug,a.title,left(a.body,500),'/announcements/'||a.slug,a.updated_at FROM announcements a LEFT JOIN seo_profiles s ON s.content_type='announcement' AND s.content_id=a.id WHERE a.status='published' AND a.published_at<=NOW() AND (a.start_at IS NULL OR a.start_at<=NOW()) AND (a.end_at IS NULL OR a.end_at>NOW()) AND COALESCE(s.indexable,true) AND a.category_id=$1
 		UNION ALL SELECT 'knowledge',k.slug,k.title,COALESCE(k.summary,''),'/knowledge/'||k.slug,k.updated_at FROM knowledge_articles k LEFT JOIN seo_profiles s ON s.content_type='knowledge' AND s.content_id=k.id WHERE k.published_revision_no IS NOT NULL AND COALESCE(s.indexable,true)
-		AND NOT EXISTS(WITH RECURSIVE ancestors AS (SELECT pn.id,pn.parent_id,pn.status FROM knowledge_article_nodes pan JOIN knowledge_nodes pn ON pn.id=pan.node_id WHERE pan.article_id=k.id UNION ALL SELECT parent.id,parent.parent_id,parent.status FROM knowledge_nodes parent JOIN ancestors child ON parent.id=child.parent_id) SELECT 1 FROM ancestors WHERE status<>'active') AND %s
-	) x ORDER BY updated_at DESC,title LIMIT 100`, filterNews, filterAnn, filterKnowledge)
+		AND NOT EXISTS(WITH RECURSIVE ancestors AS (SELECT pn.id,pn.parent_id,pn.status FROM knowledge_article_nodes pan JOIN knowledge_nodes pn ON pn.id=pan.node_id WHERE pan.article_id=k.id UNION ALL SELECT parent.id,parent.parent_id,parent.status FROM knowledge_nodes parent JOIN ancestors child ON parent.id=child.parent_id) SELECT 1 FROM ancestors WHERE status<>'active') AND k.category_id=$1
+	) x ORDER BY updated_at DESC,title LIMIT 100`
+	if kind == discoverability.KindTag {
+		query = `SELECT content_type,slug,title,summary,url,updated_at FROM (
+			SELECT 'news' content_type,n.slug,n.title,COALESCE(n.excerpt,'') summary,'/news/'||n.slug url,n.updated_at FROM news n LEFT JOIN seo_profiles s ON s.content_type='news' AND s.content_id=n.id WHERE n.status='published' AND n.published_at<=NOW() AND COALESCE(s.indexable,true) AND EXISTS(SELECT 1 FROM content_tags ct WHERE ct.content_type='news' AND ct.content_id=n.id AND ct.tag_id=$1)
+			UNION ALL SELECT 'announcement',a.slug,a.title,left(a.body,500),'/announcements/'||a.slug,a.updated_at FROM announcements a LEFT JOIN seo_profiles s ON s.content_type='announcement' AND s.content_id=a.id WHERE a.status='published' AND a.published_at<=NOW() AND (a.start_at IS NULL OR a.start_at<=NOW()) AND (a.end_at IS NULL OR a.end_at>NOW()) AND COALESCE(s.indexable,true) AND EXISTS(SELECT 1 FROM content_tags ct WHERE ct.content_type='announcement' AND ct.content_id=a.id AND ct.tag_id=$1)
+			UNION ALL SELECT 'knowledge',k.slug,k.title,COALESCE(k.summary,''),'/knowledge/'||k.slug,k.updated_at FROM knowledge_articles k LEFT JOIN seo_profiles s ON s.content_type='knowledge' AND s.content_id=k.id WHERE k.published_revision_no IS NOT NULL AND COALESCE(s.indexable,true)
+			AND NOT EXISTS(WITH RECURSIVE ancestors AS (SELECT pn.id,pn.parent_id,pn.status FROM knowledge_article_nodes pan JOIN knowledge_nodes pn ON pn.id=pan.node_id WHERE pan.article_id=k.id UNION ALL SELECT parent.id,parent.parent_id,parent.status FROM knowledge_nodes parent JOIN ancestors child ON parent.id=child.parent_id) SELECT 1 FROM ancestors WHERE status<>'active') AND EXISTS(SELECT 1 FROM content_tags ct WHERE ct.content_type='knowledge' AND ct.content_id=k.id AND ct.tag_id=$1)
+		) x ORDER BY updated_at DESC,title LIMIT 100`
+	}
 	rows, err := r.db.QueryContext(ctx, query, landing.Term.ID)
 	if err != nil {
 		return nil, err
