@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"time"
 
+	"teman-belajar-api/internal/domain/discoverability"
 	"teman-belajar-api/internal/domain/knowledge"
 	"teman-belajar-api/internal/transport/http/middleware"
 )
@@ -14,10 +15,11 @@ import (
 type KnowledgeHandler struct {
 	svc       *knowledge.Service
 	hierarchy *knowledge.HierarchyService
+	discovery *discoverability.Service
 }
 
-func NewKnowledgeHandler(svc *knowledge.Service, hierarchy *knowledge.HierarchyService) *KnowledgeHandler {
-	return &KnowledgeHandler{svc: svc, hierarchy: hierarchy}
+func NewKnowledgeHandler(svc *knowledge.Service, hierarchy *knowledge.HierarchyService, discovery *discoverability.Service) *KnowledgeHandler {
+	return &KnowledgeHandler{svc: svc, hierarchy: hierarchy, discovery: discovery}
 }
 
 // Request & Response Types
@@ -31,6 +33,7 @@ type ArticlePublicResponse struct {
 	PublishedAt    *time.Time                  `json:"published_at,omitempty"`
 	LastReviewedAt *time.Time                  `json:"last_reviewed_at,omitempty"`
 	Hierarchy      *knowledge.ArticleHierarchy `json:"hierarchy,omitempty"`
+	SEO            *discoverability.Metadata   `json:"seo,omitempty"`
 }
 
 type ArticleAdminResponse struct {
@@ -130,11 +133,26 @@ func (h *KnowledgeHandler) GetPublicArticle(w http.ResponseWriter, r *http.Reque
 	article, rev, related, err := h.svc.GetPublicArticleWithRevision(r.Context(), slug)
 	if err != nil {
 		if err == knowledge.ErrArticleNotFound {
+			if h.discovery != nil {
+				if redirect, redirectErr := h.discovery.ResolveRedirect(r.Context(), discoverability.ContentKnowledge, slug); redirectErr == nil {
+					if respondInternalPermanentRedirect(w, redirect, "/knowledge/") {
+						return
+					}
+				}
+			}
 			respondProblem(w, http.StatusNotFound, "Not Found", "Article not found or not published")
 			return
 		}
 		respondProblem(w, http.StatusInternalServerError, "Internal Server Error", err.Error())
 		return
+	}
+	var publicHierarchy *knowledge.ArticleHierarchy
+	if h.hierarchy != nil {
+		publicHierarchy, err = h.hierarchy.ArticleHierarchy(r.Context(), article.ID, true)
+		if err != nil {
+			respondProblem(w, http.StatusNotFound, "Not Found", "Article hierarchy is not public")
+			return
+		}
 	}
 
 	res := struct {
@@ -152,8 +170,9 @@ func (h *KnowledgeHandler) GetPublicArticle(w http.ResponseWriter, r *http.Reque
 		},
 		Related: make([]ArticlePublicResponse, len(related)),
 	}
-	if h.hierarchy != nil {
-		res.Hierarchy, _ = h.hierarchy.ArticleHierarchy(r.Context(), article.ID, true)
+	res.Hierarchy = publicHierarchy
+	if h.discovery != nil {
+		res.SEO, _ = h.discovery.Metadata(r.Context(), discoverability.ContentKnowledge, article.ID)
 	}
 
 	for i, rel := range related {

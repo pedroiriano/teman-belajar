@@ -204,6 +204,21 @@ Component library:
 
 Admin content editors use one Cuba-aligned Integrated Media Manager with Library/Unggah Baru tabs, search, filter, pagination, consent-based image compression, accessible alt/decorative intent, and MIME-aware Markdown insertion. Parallel per-editor media pickers are forbidden.
 
+## SEO and Public Discoverability
+
+News, Announcement, and Knowledge authoring reuse one Cuba **SEO & Discovery**
+section for slug, controlled Category/Tags, metadata, Media Asset social image,
+indexability, previews, and an advisory BLOCKER/WARNING/PASS checklist. These
+fields participate in TASK-011A Auto-Save. The section must use Admin semantic
+tokens and pass the light/dark no-orange contract.
+
+Portal public detail and discovery pages use Techwind-derived breadcrumb/card
+patterns. Critical title, description, canonical, robots, Open Graph, and
+application-owned structured data are rendered by Next.js server components;
+client hydration is not required for crawler-visible metadata. Search and
+query/filter variants are noindex. Thin Category, Tag, and Knowledge-node
+landings remain noindex under the documented threshold policy.
+
 Supported Admin authoring forms use one shared recovery contract: server-side
 draft authority, user-partitioned IndexedDB fallback, three-second idle save,
 visible Indonesian save state, explicit conflict recovery, and final cleanup.

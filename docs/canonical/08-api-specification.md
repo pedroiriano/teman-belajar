@@ -113,8 +113,8 @@ them through the Admin BFF only.
 The public Knowledge tree contains active nodes only, deterministic children,
 depth, and published article counts. `GET /knowledge` accepts an optional
 `node` UUID filter and Knowledge detail responses include authoritative
-hierarchy breadcrumbs when assigned. Search hits may include
-`hierarchy_path`; this is derived by the indexer and is never an authorization
+hierarchy breadcrumbs when assigned. Search hits may include `hierarchy_path`;
+this is derived by the indexer and is never an authorization
 signal.
 
 Hierarchy mutation endpoints require Portal Administrator or Content Editor;
@@ -123,6 +123,19 @@ bounded fields, and optimistic versions where applicable. Conflicts return the
 canonical 409 problem response. Article placement is updated through
 `PUT /admin/knowledge/{id}/primary-node`. The exact wire schemas, status codes,
 and request bounds are authoritative in `openapi/openapi.yaml`.
+
+## SEO and Taxonomy API
+
+`/admin/taxonomy/{kind}` governs controlled Categories and Tags;
+`/admin/discoverability/{contentType}/{contentId}` reads/replaces the canonical
+authoring profile and performs safe slug transitions. Both require bearer auth
+and server-side editor/administrator authorization.
+
+Public content detail responses include resolved `seo` metadata. Historical
+slugs return an internal 308. `/discovery/sitemap` supplies canonical eligible
+URLs without bodies or history URLs, while `/discovery/{kind}/{slug}` applies
+the thin-landing policy. Portal Web exposes `/sitemap.xml` and `/robots.txt` as
+Next.js metadata routes. `openapi/openapi.yaml` remains the executable contract.
 
 Internal:
 - `/internal/v1/moodle/events`

@@ -2,11 +2,10 @@
 
 ## Release state
 
-**PASS_PR_READY — NOT MERGED.** TASK-011C is the human-assigned canonical
-identifier for the bounded Admin color/accessibility correction. The branch is
-ready for protected review after local implementation and acceptance. This
-status does not declare release, does not close the Admin UI pre-production
-gate, and does not authorize TASK-012.
+**PASS_CANONICAL_RELEASED.** TASK-011C is the human-assigned canonical
+identifier for the bounded Admin color/accessibility correction. PR #17 was
+merged through the protected workflow on 2026-08-25. This closes the Admin UI
+pre-production gate but does not authorize TASK-012.
 
 - Pull request: `#17` — `TASK-011C: Admin Cuba harmonization and no-orange
   enforcement`.
@@ -15,8 +14,8 @@ gate, and does not authorize TASK-012.
 - Protected evidence head `dfb57a5a19783fa3c8e49e432ed8e37210ecec2f`:
   **11/11 SUCCESS**; GitHub reported merge state `CLEAN` before this evidence-only
   documentation update.
-- Merge authorization: **NOT GRANTED**; a separate explicit human approval is
-  required after protected checks pass.
+- Merge authorization: granted by the human and executed through the protected
+  workflow; canonical merge `a6000b664833c8cd5da105c4151d09b062eba949`.
 - TASK-012: **NOT STARTED**.
 
 ## Fresh-main provenance
@@ -158,8 +157,7 @@ Protected GitHub evidence for head `dfb57a5a19783fa3c8e49e432ed8e37210ecec2f`:
   Trivy, and SBOM generation all `SUCCESS`;
 - total protected result: 11/11 `SUCCESS`;
 - PR #17 merge state after those results: `CLEAN`;
-- merge remains intentionally unexecuted because human approval has not been
-  granted.
+- protected merge completed without bypass.
 
 The Windows host build still lacks the optional native SWC binding and advises
 Webpack when Turbopack loads only WASM. This is a known host-tooling limitation,
@@ -198,9 +196,8 @@ remove security checks, or reintroduce orange as an emergency workaround.
 
 ## Next gate
 
-PR #17 is open and its implementation/metadata head passed every protected CI
-and DevSecOps check. This final evidence-only documentation commit must pass the
-same protected workflows. Do not merge without the user's separate approval.
-The expected state remains **PASS_PR_READY / ADMIN UI GATE NOT CLOSED /
-TASK-012 NOT READY** until the protected merge is explicitly approved and
-completed.
+PR #17 and its implementation/metadata head passed every protected CI and
+DevSecOps check, then merged as
+`a6000b664833c8cd5da105c4151d09b062eba949` without bypass. The canonical state
+is **PASS_CANONICAL_RELEASED / ADMIN UI GATE CLOSED**. TASK-011D is the next P0
+gate; TASK-012 remains not started.

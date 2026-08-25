@@ -51,3 +51,9 @@ identifier. Read `TASK-011C-HANDOFF.md` and
 `docs/design-system/ADMIN-UI-VISUAL-CONTRACT.md`. Cuba Admin uses bright
 sky/light blue in both themes; orange/amber is forbidden across all
 application-controlled states, and both static regression guards are required.
+
+For public discoverability, taxonomy, SEO metadata, slug history, sitemap,
+robots, and content landing policies, read `TASK-011D-HANDOFF.md` together with
+`docs/runbooks/SEO-TAXONOMY-OPERATIONS.md`. TASK-011D is the mandatory P0 gate
+immediately before TASK-012; it does not authorize Identity, Moodle, framework,
+Docker-service, or TASK-012 changes.

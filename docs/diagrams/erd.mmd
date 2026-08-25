@@ -21,6 +21,7 @@ erDiagram
     string slug UK
     string title
     string status
+    uuid category_id FK
     timestamptz start_at
     timestamptz end_at
     bigint version
@@ -30,6 +31,37 @@ erDiagram
     string domain
     string slug
     string name
+    string normalized_name UK
+    string status
+  }
+  TAG {
+    uuid id PK
+    string slug UK
+    string name
+    string normalized_name UK
+    string status
+  }
+  CONTENT_TAG {
+    string content_type PK
+    uuid content_id PK
+    uuid tag_id PK,FK
+  }
+  SEO_PROFILE {
+    string content_type PK
+    uuid content_id PK
+    string seo_title
+    string meta_description
+    uuid social_media_id FK
+    boolean indexable
+    string canonical_path
+  }
+  SLUG_REDIRECT {
+    uuid id PK
+    string content_type
+    uuid content_id
+    string old_slug UK
+    string new_slug
+    int http_status
   }
   KNOWLEDGE_ARTICLE {
     uuid id PK
@@ -212,7 +244,19 @@ erDiagram
   }
 
   CATEGORY ||--o{ NEWS : categorizes
+  CATEGORY ||--o{ ANNOUNCEMENT : categorizes
   CATEGORY ||--o{ KNOWLEDGE_ARTICLE : categorizes
+  TAG ||--o{ CONTENT_TAG : labels
+  NEWS ||--o{ CONTENT_TAG : tagged
+  ANNOUNCEMENT ||--o{ CONTENT_TAG : tagged
+  KNOWLEDGE_ARTICLE ||--o{ CONTENT_TAG : tagged
+  NEWS ||--o| SEO_PROFILE : describes
+  ANNOUNCEMENT ||--o| SEO_PROFILE : describes
+  KNOWLEDGE_ARTICLE ||--o| SEO_PROFILE : describes
+  MEDIA_ASSET ||--o{ SEO_PROFILE : social_image
+  NEWS ||--o{ SLUG_REDIRECT : preserves_slug
+  ANNOUNCEMENT ||--o{ SLUG_REDIRECT : preserves_slug
+  KNOWLEDGE_ARTICLE ||--o{ SLUG_REDIRECT : preserves_slug
   KNOWLEDGE_ARTICLE ||--o{ KNOWLEDGE_REVISION : has
   KNOWLEDGE_NODE ||--o{ KNOWLEDGE_NODE : contains
   KNOWLEDGE_NODE ||--o{ KNOWLEDGE_ARTICLE_NODE : classifies

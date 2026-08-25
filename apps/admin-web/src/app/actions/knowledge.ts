@@ -6,6 +6,8 @@ import { getServerAccessToken } from "@/lib/server-auth";
 import { attachMediaUsages } from "@/lib/media-usages";
 import type { MediaUsageInput } from "@/components/media/types";
 import type { KnowledgeHierarchyResponse, KnowledgeNodeInput, KnowledgeNodeType } from "@/types/knowledge-hierarchy";
+import type { SEOFormValue } from "@/components/seo/types";
+import { saveDiscoverabilityProfileAction } from "@/app/actions/discoverability";
 
 async function knowledgeHierarchyRequest(path: string, init?: RequestInit) {
   const session: any = await getServerSession(authOptions);
@@ -58,7 +60,7 @@ export async function assignKnowledgeArticleNodeAction(articleId: string, nodeId
   return knowledgeHierarchyRequest(`/api/v1/admin/knowledge/${encodeURIComponent(articleId)}/primary-node`, { method: "PUT", body: JSON.stringify({ node_id: nodeId }) });
 }
 
-export async function createKnowledgeAction(data: { title: string; slug: string; summary: string; body: string; primary_node_id?: string; media_usages?: MediaUsageInput[] }) {
+export async function createKnowledgeAction(data: { title: string; slug: string; summary: string; body: string; seo: SEOFormValue; primary_node_id?: string; media_usages?: MediaUsageInput[] }) {
   const session: any = await getServerSession(authOptions);
   const accessToken = await getServerAccessToken();
   
@@ -89,6 +91,8 @@ export async function createKnowledgeAction(data: { title: string; slug: string;
     }
 
     const created = await res.json();
+	const seoResult = await saveDiscoverabilityProfileAction("knowledge", created.id, data.seo);
+	if (!seoResult.success) return { success: false, error: "Artikel tersimpan, tetapi SEO & Discovery gagal disimpan. Perbaiki sebelum publikasi.", createdId: created.id };
 	if (data.primary_node_id) {
 	  const assignment = await assignKnowledgeArticleNodeAction(created.id, data.primary_node_id);
 	  if (!assignment.success) return { success: false, error: "Artikel tersimpan, tetapi struktur pengetahuan gagal ditetapkan. Periksa konflik hierarchy sebelum melanjutkan.", createdId: created.id };
@@ -101,7 +105,7 @@ export async function createKnowledgeAction(data: { title: string; slug: string;
   }
 }
 
-export async function createKnowledgeRevisionAction(id: string, data: { body: string; expected_revision_no: number; primary_node_id?: string; media_usages?: MediaUsageInput[] }) {
+export async function createKnowledgeRevisionAction(id: string, data: { body: string; expected_revision_no: number; seo: SEOFormValue; primary_node_id?: string; media_usages?: MediaUsageInput[] }) {
   const session: any = await getServerSession(authOptions);
   const accessToken = await getServerAccessToken();
   
@@ -130,6 +134,8 @@ export async function createKnowledgeRevisionAction(id: string, data: { body: st
     }
 
     const created = await res.json();
+	const seoResult = await saveDiscoverabilityProfileAction("knowledge", id, data.seo);
+	if (!seoResult.success) return { success: false, error: "Revisi tersimpan, tetapi SEO & Discovery gagal disimpan.", createdId: created.id };
 	if (data.primary_node_id) {
 	  const assignment = await assignKnowledgeArticleNodeAction(id, data.primary_node_id);
 	  if (!assignment.success) return { success: false, error: "Revisi tersimpan, tetapi struktur pengetahuan gagal diperbarui. Muat ulang sebelum melanjutkan.", createdId: created.id };

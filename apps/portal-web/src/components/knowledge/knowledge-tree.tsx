@@ -17,7 +17,7 @@ export type PublicKnowledgeTreeResponse = { data: PublicKnowledgeNode[]; max_dep
 
 function NodeList({ nodes, activeNodeId, nested = false }: { nodes: PublicKnowledgeNode[]; activeNodeId?: string; nested?: boolean }) {
   return <ul className="space-y-1" role={nested ? "group" : "tree"}>{nodes.map((node) => <li key={node.id} role="treeitem" aria-expanded={node.children?.length ? true : undefined} aria-selected={activeNodeId === node.id}>
-    <Link href={`/knowledge?node=${encodeURIComponent(node.id)}`} className={`portal-tree-link ${activeNodeId === node.id ? "is-active" : ""}`} aria-current={activeNodeId === node.id ? "page" : undefined}>
+    <Link href={`/knowledge/topics/${encodeURIComponent(node.id)}`} className={`portal-tree-link ${activeNodeId === node.id ? "is-active" : ""}`} aria-current={activeNodeId === node.id ? "page" : undefined}>
       <span className="min-w-0 flex-1 truncate">{node.title}</span><span className="portal-tree-count">{node.article_count}</span>
     </Link>
     {node.children?.length ? <div className="ml-3 border-l pl-3" style={{ borderColor: "var(--portal-border)" }}><NodeList nodes={node.children} activeNodeId={activeNodeId} nested /></div> : null}

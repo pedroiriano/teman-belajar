@@ -342,6 +342,18 @@ func (s *Service) GetActiveAnnouncements(ctx context.Context) (*AnnouncementList
 	return &AnnouncementList{Data: items}, nil
 }
 
+func (s *Service) GetPublicAnnouncementBySlug(ctx context.Context, slug string) (*Announcement, error) {
+	item, err := s.repo.GetAnnouncementBySlug(ctx, slug)
+	if err != nil {
+		return nil, err
+	}
+	now := time.Now().UTC()
+	if item.Status != StatusPublished || item.PublishedAt == nil || item.PublishedAt.After(now) || (item.StartAt != nil && item.StartAt.After(now)) || (item.EndAt != nil && !item.EndAt.After(now)) {
+		return nil, ErrNotFound
+	}
+	return item, nil
+}
+
 type AnnouncementListPaginated struct {
 	Data       []Announcement `json:"data"`
 	Pagination Pagination     `json:"pagination"`

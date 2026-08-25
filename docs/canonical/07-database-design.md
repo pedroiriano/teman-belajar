@@ -173,6 +173,24 @@ Index berdasarkan query nyata:
 - hierarchy publication by `status`;
 - article placement by unique `article_id` and lookup by `node_id`.
 
+## SEO and Taxonomy (Migration 016)
+
+- `categories` is the controlled editorial classification table. Migration 016
+  adds normalized identity, description, active/archive state, and lifecycle
+  fields; uniqueness is enforced by `(domain, normalized_name)` and
+  `(domain, slug)`.
+- `tags` is a flat controlled reusable vocabulary with normalized name and
+  unique slug. `content_tags` is the normalized many-to-many relation for News,
+  Announcement, and Knowledge; tags are never comma-separated.
+- `seo_profiles` owns optional Category, SEO/social metadata, active-image Media
+  Asset ID, indexability, and safe internal canonical override per content.
+- `slug_redirects` owns published slug history. Route and old slug are unique;
+  self-loops and unsafe paths are constrained, while the repository prevents
+  cycles/collisions and collapses chains transactionally.
+- `announcements.category_id` and the existing Knowledge category reference use
+  the controlled Category table. Public/search/sitemap queries additionally
+  enforce publication and active Knowledge ancestry.
+
 ## 9. Audit
 
 Audit log bukan pengganti application logs.

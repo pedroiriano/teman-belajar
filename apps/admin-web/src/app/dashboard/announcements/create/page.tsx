@@ -12,26 +12,28 @@ import type { MediaSelection } from "@/components/media/types";
 import { DraftStatus } from "@/components/drafts/DraftStatus";
 import type { DraftPayload } from "@/components/drafts/types";
 import { useAutoSaveDraft } from "@/components/drafts/use-auto-save-draft";
+import { SeoDiscoverySection } from "@/components/seo/SeoDiscoverySection";
+import { emptySEOValue, pickSEOValue, type SEOFormValue } from "@/components/seo/types";
 
-type AnnouncementDraft = DraftPayload & { title: string; slug: string; body: string; start_at: string | null; end_at: string | null; media_asset_ids: string[] };
-const emptyDraft: AnnouncementDraft = { title: "", slug: "", body: "", start_at: null, end_at: null, media_asset_ids: [] };
+type AnnouncementDraft = DraftPayload & SEOFormValue & { title: string; body: string; start_at: string | null; end_at: string | null; media_asset_ids: string[] };
+const emptyDraft: AnnouncementDraft = { ...emptySEOValue(), title: "", body: "", start_at: null, end_at: null, media_asset_ids: [] };
 
 export default function CreateAnnouncementPage() {
   const router = useRouter();
   
   const [title, setTitle] = useState("");
-  const [slug, setSlug] = useState("");
+  const [seo, setSEO] = useState<SEOFormValue>(emptySEOValue());
   const [body, setBody] = useState("");
   const [startAt, setStartAt] = useState("");
   const [endAt, setEndAt] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const value = useMemo<AnnouncementDraft>(() => ({
-    title, slug, body, start_at: startAt || null, end_at: endAt || null,
+    ...seo, title, body, start_at: startAt || null, end_at: endAt || null,
     media_asset_ids: [...new Set(mediaUsagesFromMarkdown(body).map((usage) => usage.media_id))],
-  }), [body, endAt, slug, startAt, title]);
+  }), [body, endAt, seo, startAt, title]);
   const applyDraft = (draft: AnnouncementDraft) => {
-    setTitle(draft.title); setSlug(draft.slug); setBody(draft.body);
+    setTitle(draft.title); setSEO(pickSEOValue(draft)); setBody(draft.body);
     setStartAt(draft.start_at ?? ""); setEndAt(draft.end_at ?? "");
   };
   const autoSave = useAutoSaveDraft({ formKey: "announcement.create", entityType: "announcement", value, emptyValue: emptyDraft, onRecover: applyDraft, onStartNew: applyDraft });
@@ -39,7 +41,7 @@ export default function CreateAnnouncementPage() {
   const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
     setTitle(val);
-    setSlug(val.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, ''));
+    setSEO((current) => ({ ...current, slug: val.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '') }));
   };
 
   const insertMedia = (selection: MediaSelection) => {
@@ -58,10 +60,11 @@ export default function CreateAnnouncementPage() {
       
       const res = await createAnnouncementAction({ 
         title, 
-        slug, 
+        slug: seo.slug,
         body, 
         start_at: parsedStart, 
         end_at: parsedEnd,
+        seo,
         media_usages: mediaUsagesFromMarkdown(body)
       });
 
@@ -91,7 +94,7 @@ export default function CreateAnnouncementPage() {
               </div>
             )}
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
               <div className="space-y-2">
                 <label htmlFor="announcement-title" className="admin-label">Judul <span className="text-rose-600">*</span></label>
                 <input 
@@ -102,18 +105,6 @@ export default function CreateAnnouncementPage() {
                   onChange={handleTitleChange}
                   className="admin-input"
                   placeholder="Contoh: Jadwal pemeliharaan platform"
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <label htmlFor="announcement-slug" className="admin-label">Slug URL <span className="text-rose-600">*</span></label>
-                <input 
-                  id="announcement-slug"
-                  type="text" 
-                  required
-                  value={slug}
-                  onChange={(e) => setSlug(e.target.value)}
-                  className="admin-input"
                 />
               </div>
             </div>
@@ -159,6 +150,7 @@ export default function CreateAnnouncementPage() {
           </div>
         <div className="admin-form-footer"><Link href="/dashboard/announcements" className="admin-button-secondary">Batal</Link><button type="submit" disabled={loading} className="admin-button">{loading ? "Menyimpan…" : "Simpan draft"}</button></div>
       </form>
+      <SeoDiscoverySection value={seo} onChange={setSEO} contentTitle={title} contentSummary={body.slice(0, 300)} contentBody={body} routePrefix="/announcements/" />
     </div>
   );
 }

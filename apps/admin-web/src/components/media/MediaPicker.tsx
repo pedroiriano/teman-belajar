@@ -7,9 +7,9 @@ import { AdminIcon } from "@/components/admin-icon";
 import MediaUploadPanel from "./MediaUploadPanel";
 import type { MediaAsset, MediaPolicy, MediaSelection } from "./types";
 
-type Props = { onSelect: (media: MediaSelection) => void; buttonLabel?: string };
+type Props = { onSelect: (media: MediaSelection) => void; buttonLabel?: string; imageOnly?: boolean };
 
-export default function MediaPicker({ onSelect, buttonLabel = "Pilih media" }: Props) {
+export default function MediaPicker({ onSelect, buttonLabel = "Pilih media", imageOnly = false }: Props) {
   const titleId = useId();
   const [isOpen, setIsOpen] = useState(false);
   const [tab, setTab] = useState<"library" | "upload">("library");
@@ -19,7 +19,7 @@ export default function MediaPicker({ onSelect, buttonLabel = "Pilih media" }: P
   const [altText, setAltText] = useState("");
   const [decorative, setDecorative] = useState(false);
   const [query, setQuery] = useState("");
-  const [kind, setKind] = useState("all");
+  const [kind, setKind] = useState(imageOnly ? "image" : "all");
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -68,13 +68,13 @@ export default function MediaPicker({ onSelect, buttonLabel = "Pilih media" }: P
     return () => { controller.abort(); clearTimeout(timer); };
   }, [isOpen, tab, page, query, kind]);
 
-  const choose = (asset: MediaAsset) => { setSelected(asset); setAltText(asset.alt_text ?? ""); setDecorative(false); };
+  const choose = (asset: MediaAsset) => { if (imageOnly && !asset.detected_mime_type.startsWith("image/")) return; setSelected(asset); setAltText(asset.alt_text ?? ""); setDecorative(false); };
   const confirm = () => {
     if (!selected) return;
     if (selected.detected_mime_type.startsWith("image/") && !decorative && !altText.trim()) { setError("Isi teks alternatif atau tandai gambar sebagai dekoratif."); return; }
     onSelect({ ...selected, insertion_alt_text: decorative ? "" : altText.trim(), decorative }); setIsOpen(false);
   };
-  const uploadComplete = (selection: MediaSelection) => { onSelect(selection); setIsOpen(false); };
+  const uploadComplete = (selection: MediaSelection) => { if (imageOnly && !selection.detected_mime_type.startsWith("image/")) { setError("Gambar sosial harus menggunakan aset gambar."); setTab("library"); return; } onSelect(selection); setIsOpen(false); };
   const pages = Math.max(1, Math.ceil(total / 12));
 
   return <>
@@ -86,7 +86,7 @@ export default function MediaPicker({ onSelect, buttonLabel = "Pilih media" }: P
         <div className="flex-1 overflow-y-auto p-5 sm:p-6">
           {error && <div className="admin-alert-error mb-4" role="alert">{error}</div>}
           {tab === "upload" ? <MediaUploadPanel compact policy={policy} requireInsertionAlt onUploaded={uploadComplete} /> : <>
-            <div className="mb-5 grid gap-3 sm:grid-cols-[1fr_180px]"><div><label htmlFor={`${titleId}-search`} className="sr-only">Cari media</label><input id={`${titleId}-search`} className="admin-input" placeholder="Cari nama atau judul media…" value={query} onChange={(event) => { setQuery(event.target.value); setPage(1); }} /></div><div><label htmlFor={`${titleId}-kind`} className="sr-only">Jenis media</label><select id={`${titleId}-kind`} className="admin-input" value={kind} onChange={(event) => { setKind(event.target.value); setPage(1); }}><option value="all">Semua jenis</option><option value="image">Gambar</option><option value="document">Dokumen PDF</option></select></div></div>
+            <div className={`mb-5 grid gap-3 ${imageOnly ? "" : "sm:grid-cols-[1fr_180px]"}`}><div><label htmlFor={`${titleId}-search`} className="sr-only">Cari media</label><input id={`${titleId}-search`} className="admin-input" placeholder="Cari nama atau judul media…" value={query} onChange={(event) => { setQuery(event.target.value); setPage(1); }} /></div>{!imageOnly && <div><label htmlFor={`${titleId}-kind`} className="sr-only">Jenis media</label><select id={`${titleId}-kind`} className="admin-input" value={kind} onChange={(event) => { setKind(event.target.value); setPage(1); }}><option value="all">Semua jenis</option><option value="image">Gambar</option><option value="document">Dokumen PDF</option></select></div>}</div>
             {loading ? <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4" aria-label="Memuat media">{Array.from({ length: 8 }, (_, index) => <div key={index} className="aspect-square animate-pulse rounded-xl bg-slate-100" />)}</div> : media.length === 0 ? <div className="admin-empty"><h3 className="font-black text-slate-900">Media tidak ditemukan</h3><p className="mt-2 text-sm">Ubah pencarian atau unggah aset baru.</p></div> : <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">{media.map((asset) => <button key={asset.id} type="button" disabled={asset.status !== "active"} aria-pressed={selected?.id === asset.id} className="admin-accent-control group overflow-hidden rounded-xl border text-left transition focus-visible:outline focus-visible:outline-2" onClick={() => choose(asset)}><span className="flex aspect-square items-center justify-center overflow-hidden bg-slate-100">{asset.detected_mime_type.startsWith("image/") ? <img src={`/api/bff/media/${asset.id}/content`} alt="" className="h-full w-full object-cover transition group-hover:scale-105" /> : <span className="text-xs font-black text-slate-500">PDF</span>}</span><span className="block truncate p-3 text-xs font-bold text-slate-700" title={asset.display_filename ?? asset.original_filename ?? "Media"}>{asset.display_filename ?? asset.original_filename ?? "Media"}</span></button>)}</div>}
             <div className="mt-5 flex items-center justify-between"><p className="text-xs text-slate-500">{total} aset · halaman {page} dari {pages}</p><div className="flex gap-2"><button type="button" className="admin-button-secondary" disabled={page <= 1} onClick={() => setPage((value) => value - 1)}>Sebelumnya</button><button type="button" className="admin-button-secondary" disabled={page >= pages} onClick={() => setPage((value) => value + 1)}>Berikutnya</button></div></div>
             {selected?.detected_mime_type.startsWith("image/") && <div className="mt-5 rounded-xl border p-4"><label className="admin-label" htmlFor={`${titleId}-alt`}>Teks alternatif untuk penyisipan</label><input id={`${titleId}-alt`} className="admin-input" value={altText} disabled={decorative} onChange={(event) => setAltText(event.target.value)} maxLength={255} /><label className="mt-3 flex items-center gap-2 text-sm font-bold text-slate-700"><input type="checkbox" checked={decorative} onChange={(event) => setDecorative(event.target.checked)} /> Dekoratif</label></div>}

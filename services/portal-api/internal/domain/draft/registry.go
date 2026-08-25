@@ -33,54 +33,74 @@ type formDefinition struct {
 	fields     map[string]fieldRule
 }
 
+func withSEOFields(fields map[string]fieldRule) map[string]fieldRule {
+	seoFields := map[string]fieldRule{
+		"category_id":        {kind: fieldNullableUUID, max: 36},
+		"tag_ids":            {kind: fieldUUIDList, max: 20},
+		"seo_title":          {kind: fieldString, max: 200},
+		"meta_description":   {kind: fieldString, max: 500},
+		"social_title":       {kind: fieldString, max: 200},
+		"social_description": {kind: fieldString, max: 500},
+		"social_media_id":    {kind: fieldNullableUUID, max: 36},
+		"social_image_alt":   {kind: fieldString, max: 255},
+		"indexable":          {kind: fieldString, max: 5},
+		"canonical_path":     {kind: fieldNullableString, max: 500},
+	}
+	for key, rule := range seoFields {
+		fields[key] = rule
+	}
+	return fields
+}
+
 var formDefinitions = map[string]formDefinition{
 	"news.create": {
 		entityType: "news",
-		fields: map[string]fieldRule{
+		fields: withSEOFields(map[string]fieldRule{
 			"title": {kind: fieldString, max: 200}, "slug": {kind: fieldString, max: 220},
 			"excerpt": {kind: fieldString, max: 500}, "body": {kind: fieldString, max: 200000},
 			"media_asset_ids": {kind: fieldUUIDList, max: 100},
-		},
+		}),
 	},
 	"news.edit": {
 		entityType: "news", edit: true,
-		fields: map[string]fieldRule{
+		fields: withSEOFields(map[string]fieldRule{
 			"title": {kind: fieldString, max: 200}, "slug": {kind: fieldString, max: 220},
 			"excerpt": {kind: fieldString, max: 500}, "body": {kind: fieldString, max: 200000},
 			"media_asset_ids": {kind: fieldUUIDList, max: 100},
-		},
+		}),
 	},
 	"announcement.create": {
 		entityType: "announcement",
-		fields: map[string]fieldRule{
+		fields: withSEOFields(map[string]fieldRule{
 			"title": {kind: fieldString, max: 200}, "slug": {kind: fieldString, max: 220},
 			"body": {kind: fieldString, max: 200000}, "start_at": {kind: fieldNullableString, max: 64},
 			"end_at": {kind: fieldNullableString, max: 64}, "media_asset_ids": {kind: fieldUUIDList, max: 100},
-		},
+		}),
 	},
 	"announcement.edit": {
 		entityType: "announcement", edit: true,
-		fields: map[string]fieldRule{
+		fields: withSEOFields(map[string]fieldRule{
 			"title": {kind: fieldString, max: 200}, "slug": {kind: fieldString, max: 220},
 			"body": {kind: fieldString, max: 200000}, "start_at": {kind: fieldNullableString, max: 64},
 			"end_at": {kind: fieldNullableString, max: 64}, "media_asset_ids": {kind: fieldUUIDList, max: 100},
-		},
+		}),
 	},
 	"knowledge.create": {
 		entityType: "knowledge",
-		fields: map[string]fieldRule{
+		fields: withSEOFields(map[string]fieldRule{
 			"title": {kind: fieldString, max: 255}, "slug": {kind: fieldString, max: 255},
 			"summary": {kind: fieldString, max: 2000}, "body": {kind: fieldString, max: 200000},
 			"primary_node_id": {kind: fieldNullableUUID, max: 36},
 			"media_asset_ids": {kind: fieldUUIDList, max: 100},
-		},
+		}),
 	},
 	"knowledge.edit": {
 		entityType: "knowledge", edit: true,
-		fields: map[string]fieldRule{
+		fields: withSEOFields(map[string]fieldRule{
 			"body": {kind: fieldString, max: 200000}, "primary_node_id": {kind: fieldNullableUUID, max: 36},
+			"slug":            {kind: fieldString, max: 255},
 			"media_asset_ids": {kind: fieldUUIDList, max: 100},
-		},
+		}),
 	},
 	"knowledge-hierarchy.create": {
 		entityType: "knowledge_node",

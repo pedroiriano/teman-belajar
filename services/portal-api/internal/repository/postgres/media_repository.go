@@ -110,6 +110,7 @@ func (r *MediaRepository) CheckIsPubliclyEligible(ctx context.Context, assetID s
 	// 1. A News that is 'published'
 	// 2. An Announcement that is 'published'
 	// 3. A Knowledge Revision that is the published_revision of its parent Knowledge Article.
+	// 4. An active image selected by a published, indexable SEO profile.
 	query := `
 		SELECT EXISTS (
 			SELECT 1 FROM media_usages mu
@@ -124,6 +125,17 @@ func (r *MediaRepository) CheckIsPubliclyEligible(ctx context.Context, assetID s
 				(mu.entity_type = 'announcement' AND a.status = 'published')
 				OR
 				(mu.entity_type = 'knowledge_revision' AND ka.status = 'published' AND ka.published_revision_no = kr.revision_no)
+			)
+		) OR EXISTS (
+			SELECT 1 FROM seo_profiles seo
+			LEFT JOIN news sn ON seo.content_type='news' AND seo.content_id=sn.id
+			LEFT JOIN announcements sa ON seo.content_type='announcement' AND seo.content_id=sa.id
+			LEFT JOIN knowledge_articles sk ON seo.content_type='knowledge' AND seo.content_id=sk.id
+			WHERE seo.social_media_id=$1 AND seo.indexable
+			AND (
+				(seo.content_type='news' AND sn.status='published' AND sn.published_at<=NOW()) OR
+				(seo.content_type='announcement' AND sa.status='published' AND sa.published_at<=NOW() AND (sa.start_at IS NULL OR sa.start_at<=NOW()) AND (sa.end_at IS NULL OR sa.end_at>NOW())) OR
+				(seo.content_type='knowledge' AND sk.status='published' AND sk.published_revision_no IS NOT NULL)
 			)
 		)
 	`

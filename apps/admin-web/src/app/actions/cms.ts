@@ -6,6 +6,8 @@ import { revalidatePath } from "next/cache";
 import { getServerAccessToken } from "@/lib/server-auth";
 import { attachMediaUsages } from "@/lib/media-usages";
 import type { MediaUsageInput } from "@/components/media/types";
+import type { SEOFormValue } from "@/components/seo/types";
+import { saveDiscoverabilityProfileAction } from "@/app/actions/discoverability";
 
 const API_BASE = process.env.PORTAL_API_INTERNAL_URL;
 
@@ -13,7 +15,7 @@ if (!API_BASE) {
   throw new Error("Missing required environment variable: PORTAL_API_INTERNAL_URL");
 }
 
-export async function createNewsAction(data: { title: string, slug: string, excerpt: string, body: string, media_usages?: MediaUsageInput[] }) {
+export async function createNewsAction(data: { title: string, slug: string, excerpt: string, body: string, seo: SEOFormValue, media_usages?: MediaUsageInput[] }) {
   const session: any = await getServerSession(authOptions);
   const accessToken = await getServerAccessToken();
   
@@ -36,6 +38,8 @@ export async function createNewsAction(data: { title: string, slug: string, exce
   }
 
   const created = await res.json();
+  const seoResult = await saveDiscoverabilityProfileAction("news", created.id, data.seo);
+  if (!seoResult.success) return { success: false, error: "Berita tersimpan, tetapi SEO & Discovery gagal disimpan. Perbaiki sebelum publikasi.", createdId: created.id };
   const failed = await attachMediaUsages(API_BASE!, accessToken, "news", created.id, data.media_usages ?? []);
   revalidatePath("/dashboard/news");
   if (failed.length) return { success: false, error: "Berita tersimpan, tetapi sebagian relasi media gagal. Jangan terbitkan sebelum rekonsiliasi.", createdId: created.id };
@@ -69,7 +73,7 @@ export async function transitionNewsAction(id: string, status: string) {
   return { success: true };
 }
 
-export async function updateNewsAction(id: string, data: { title: string; slug: string; excerpt: string; body: string; expected_version: number; media_usages?: MediaUsageInput[] }) {
+export async function updateNewsAction(id: string, data: { title: string; slug: string; excerpt: string; body: string; expected_version: number; seo: SEOFormValue; media_usages?: MediaUsageInput[] }) {
   const session: any = await getServerSession(authOptions);
   const accessToken = await getServerAccessToken();
   if (!session || !accessToken) return { success: false, error: "Unauthorized" };
@@ -83,13 +87,15 @@ export async function updateNewsAction(id: string, data: { title: string; slug: 
     return { success: false, error: problem?.detail || "Berita belum dapat diperbarui", conflict: res.status === 409 };
   }
   const updated = await res.json();
+  const seoResult = await saveDiscoverabilityProfileAction("news", updated.id, data.seo);
+  if (!seoResult.success) return { success: false, error: "Berita diperbarui, tetapi SEO & Discovery gagal disimpan.", data: updated };
   const failed = await attachMediaUsages(API_BASE!, accessToken, "news", updated.id, data.media_usages ?? []);
   revalidatePath(`/dashboard/news/${id}`); revalidatePath("/dashboard/news");
   if (failed.length) return { success: false, error: "Berita diperbarui, tetapi sebagian relasi media gagal. Jangan ajukan review sebelum rekonsiliasi.", data: updated };
   return { success: true, data: updated };
 }
 
-export async function createAnnouncementAction(data: { title: string, slug: string, body: string, start_at: Date | null, end_at: Date | null, media_usages?: MediaUsageInput[] }) {
+export async function createAnnouncementAction(data: { title: string, slug: string, body: string, start_at: Date | null, end_at: Date | null, seo: SEOFormValue, media_usages?: MediaUsageInput[] }) {
   const session: any = await getServerSession(authOptions);
   const accessToken = await getServerAccessToken();
   
@@ -118,6 +124,8 @@ export async function createAnnouncementAction(data: { title: string, slug: stri
   }
 
   const created = await res.json();
+  const seoResult = await saveDiscoverabilityProfileAction("announcement", created.id, data.seo);
+  if (!seoResult.success) return { success: false, error: "Pengumuman tersimpan, tetapi SEO & Discovery gagal disimpan. Perbaiki sebelum publikasi.", createdId: created.id };
   const failed = await attachMediaUsages(API_BASE!, accessToken, "announcement", created.id, data.media_usages ?? []);
   revalidatePath("/dashboard/announcements");
   if (failed.length) return { success: false, error: "Pengumuman tersimpan, tetapi sebagian relasi media gagal. Jangan terbitkan sebelum rekonsiliasi.", createdId: created.id };
@@ -151,7 +159,7 @@ export async function transitionAnnouncementAction(id: string, status: string) {
   return { success: true };
 }
 
-export async function updateAnnouncementAction(id: string, data: { title: string; slug: string; body: string; start_at: Date | null; end_at: Date | null; expected_version: number; media_usages?: MediaUsageInput[] }) {
+export async function updateAnnouncementAction(id: string, data: { title: string; slug: string; body: string; start_at: Date | null; end_at: Date | null; expected_version: number; seo: SEOFormValue; media_usages?: MediaUsageInput[] }) {
   const session: any = await getServerSession(authOptions);
   const accessToken = await getServerAccessToken();
   if (!session || !accessToken) return { success: false, error: "Unauthorized" };
@@ -165,6 +173,8 @@ export async function updateAnnouncementAction(id: string, data: { title: string
     return { success: false, error: problem?.detail || "Pengumuman belum dapat diperbarui", conflict: res.status === 409 };
   }
   const updated = await res.json();
+  const seoResult = await saveDiscoverabilityProfileAction("announcement", updated.id, data.seo);
+  if (!seoResult.success) return { success: false, error: "Pengumuman diperbarui, tetapi SEO & Discovery gagal disimpan.", data: updated };
   const failed = await attachMediaUsages(API_BASE!, accessToken, "announcement", updated.id, data.media_usages ?? []);
   revalidatePath(`/dashboard/announcements/${id}`); revalidatePath("/dashboard/announcements");
   if (failed.length) return { success: false, error: "Pengumuman diperbarui, tetapi sebagian relasi media gagal. Jangan ajukan review sebelum rekonsiliasi.", data: updated };

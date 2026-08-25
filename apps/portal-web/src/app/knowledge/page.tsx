@@ -1,4 +1,6 @@
 import Link from "next/link";
+import type { Metadata } from "next";
+import { permanentRedirect } from "next/navigation";
 import { KnowledgeTree, findKnowledgeNode, type PublicKnowledgeTreeResponse } from "@/components/knowledge/knowledge-tree";
 import { EmptyState, ErrorState, formatDate, PageHero, type PaginationData } from "@/components/public-content";
 
@@ -35,10 +37,16 @@ function knowledgePath(nodeId: string | undefined, page: number) {
   return `/knowledge${query.size ? `?${query}` : ""}`;
 }
 
+export async function generateMetadata({ searchParams }: { searchParams: Promise<{ page?: string; node?: string }> }): Promise<Metadata> {
+  const query = await searchParams; const page = Number.parseInt(query.page || "1", 10) || 1;
+  return { title: "Pusat Pengetahuan", description: "Jelajahi pengetahuan terverifikasi Teman Belajar.", alternates: { canonical: "/knowledge" }, robots: { index: page <= 1 && !query.node, follow: true } };
+}
+
 export default async function KnowledgePage({ searchParams }: { searchParams: Promise<{ page?: string; node?: string }> }) {
   const query = await searchParams;
   const page = Math.max(1, Number.parseInt(query.page || "1", 10) || 1);
   const nodeId = query.node && /^[0-9a-f-]{36}$/i.test(query.node) ? query.node : undefined;
+  if (nodeId) permanentRedirect(`/knowledge/topics/${nodeId}`);
   const [knowledgeResponse, treeResponse] = await Promise.all([getKnowledge(page, nodeId), getTree()]);
   const tree = treeResponse?.data ?? [];
   const selection = findKnowledgeNode(tree, nodeId);
