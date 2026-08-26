@@ -9,7 +9,7 @@ const [picker, uploader, insertion, news, knowledge, announcement, revision, pol
   read("src/app/dashboard/media/page.tsx"), read("src/components/media/MediaPreviewImage.tsx"),
 ]);
 
-assert.match(picker, /Media Library/); assert.match(picker, /Unggah Baru/); assert.match(picker, /role="dialog"/); assert.match(picker, /aria-modal="true"/);
+assert.match(picker, /Pustaka Media/); assert.match(picker, /Unggah Baru/); assert.match(picker, /role="dialog"/); assert.match(picker, /aria-modal="true"/);
 assert.match(uploader, /compressImage/); assert.match(uploader, /Setuju dan kompres/); assert.match(uploader, /requireInsertionAlt/);
 assert.match(insertion, /detected_mime_type === "application\/pdf"/); assert.match(insertion, /Teks alternatif wajib/); assert.doesNotMatch(insertion, /!\[Media\]/);
 for (const editor of [news, knowledge, announcement, revision]) { assert.match(editor, /<MediaPicker/); assert.match(editor, /mediaMarkdown/); }

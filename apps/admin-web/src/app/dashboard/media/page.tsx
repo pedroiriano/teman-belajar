@@ -4,18 +4,18 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { getServerAccessToken } from "@/lib/server-auth";
 import MediaUploader from "./MediaUploader";
-import { AdminIcon } from "@/components/admin-icon";
 import { AdminPagination } from "@/components/admin-pagination";
+import { AdminDataTable } from "@/components/admin-data-table";
 import { AdminUnauthorized } from "@/components/admin-states";
 import { MediaPreviewImage } from "@/components/media/MediaPreviewImage";
 import type { MediaAsset } from "@/components/media/types";
 
-async function getAdminMedia(token: string, query: string, kind: string, page: number) {
+async function getAdminMedia(token: string, query: string, kind: string, page: number, pageSize: number) {
   const API_BASE = process.env.PORTAL_API_INTERNAL_URL;
   if (!API_BASE) throw new Error("Missing PORTAL_API_INTERNAL_URL");
 
   try {
-    const params = new URLSearchParams({ q: query, kind, page: String(page), page_size: "20" });
+    const params = new URLSearchParams({ q: query, kind, page: String(page), page_size: String(pageSize) });
     const res = await fetch(`${API_BASE}/api/v1/admin/media?${params}`, {
       headers: {
         'Authorization': `Bearer ${token}`
@@ -39,7 +39,7 @@ function formatBytes(bytes: number, decimals = 2) {
   return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`;
 }
 
-export default async function AdminMediaPage({ searchParams }: { searchParams: Promise<{ q?: string; kind?: string; page?: string }> }) {
+export default async function AdminMediaPage({ searchParams }: { searchParams: Promise<{ q?: string; kind?: string; page?: string; page_size?: string }> }) {
   const session: any = await getServerSession(authOptions);
   const accessToken = await getServerAccessToken();
 
@@ -64,10 +64,13 @@ export default async function AdminMediaPage({ searchParams }: { searchParams: P
   const query = (params.q ?? "").slice(0, 100);
   const kind = ["all", "image", "document"].includes(params.kind ?? "") ? params.kind! : "all";
   const page = Math.max(1, Number.parseInt(params.page ?? "1", 10) || 1);
-  const mediaRes = accessToken ? await getAdminMedia(accessToken, query, kind, page) : null;
+  const requestedPageSize = Number.parseInt(params.page_size || "20", 10);
+  const pageSize = [10, 20, 50].includes(requestedPageSize) ? requestedPageSize : 20;
+  const mediaRes = accessToken ? await getAdminMedia(accessToken, query, kind, page, pageSize) : null;
   const mediaAssets: MediaAsset[] = Array.isArray(mediaRes?.data) ? mediaRes.data : [];
   const total = Number(mediaRes?.meta?.total ?? 0);
-  const pages = Math.max(1, Math.ceil(total / 20));
+  const pages = Math.max(1, Math.ceil(total / pageSize));
+  if (total > 0 && page > pages) redirect(`/dashboard/media?q=${encodeURIComponent(query)}&kind=${kind}&page=${pages}&page_size=${pageSize}`);
 
   return (
     <div className="admin-page">
@@ -84,20 +87,8 @@ export default async function AdminMediaPage({ searchParams }: { searchParams: P
 
         {mediaAssets.some((asset) => asset.detected_mime_type.startsWith("image/")) && <section className="mb-7" aria-labelledby="media-gallery-title"><div className="mb-4 flex items-end justify-between"><div><p className="text-xs font-black uppercase tracking-wider text-slate-400">Pratinjau visual</p><h2 id="media-gallery-title" className="mt-1 text-xl font-black text-slate-900">Galeri aset</h2></div><span className="admin-status bg-slate-100 text-slate-600">{total} aset</span></div><div className="grid grid-cols-2 gap-4 md:grid-cols-4 xl:grid-cols-6">{mediaAssets.filter((asset) => asset.detected_mime_type.startsWith("image/")).slice(0, 6).map((asset) => <Link key={asset.id} href={`/dashboard/media/${asset.id}`} className="admin-card group overflow-hidden"><span className="block aspect-square overflow-hidden bg-slate-100"><MediaPreviewImage src={`/api/bff/media/${asset.id}/content`} alt={asset.alt_text || asset.display_filename || asset.original_filename || "Pratinjau media"} className="h-full w-full object-cover transition duration-300 group-hover:scale-105" /></span><span className="block truncate p-3 text-xs font-bold text-slate-700">{asset.display_filename || asset.original_filename}</span></Link>)}</div></section>}
 
-        <div className="admin-table-shell"><div className="admin-table-toolbar"><div className="flex items-center gap-3"><span className="admin-stat-icon"><AdminIcon name="file" className="h-5 w-5" /></span><div><h2 className="font-black text-slate-900">Daftar aset</h2><p className="mt-1 text-xs text-slate-500">Metadata, ukuran, dan status media</p></div></div></div><div className="overflow-x-auto"><table className="admin-table">
-            <thead>
-              <tr><th>Pratinjau</th><th>Detail berkas</th><th>Ukuran</th><th>Dibuat</th><th>Aksi</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {!mediaRes || !mediaRes.data || mediaRes.data.length === 0 ? (
-                <tr>
-                  <td colSpan={5} className="admin-empty">
-                    {canUpload ? "Belum ada media. Silakan unggah berkas baru." : "Belum ada media yang dapat ditinjau."}
-                  </td>
-                </tr>
-              ) : (
-                mediaAssets.map((asset) => (
+        <AdminDataTable title="Daftar aset" description="Metadata, ukuran, dan status media" itemCount={total} headers={["Pratinjau", "Detail berkas", "Ukuran", "Dibuat", "Aksi"]} emptyState={canUpload ? "Belum ada media. Silakan unggah berkas baru." : "Belum ada media yang dapat ditinjau."} error={mediaRes ? null : "Data media gagal dimuat."} retryHref="/dashboard/media">
+                {mediaAssets.map((asset) => (
                   <tr key={asset.id} className="hover:bg-slate-50 transition-colors">
                     <td className="p-4">
                       {asset.detected_mime_type.startsWith('image/') ? (
@@ -122,7 +113,7 @@ export default async function AdminMediaPage({ searchParams }: { searchParams: P
                         <span>{asset.detected_mime_type}</span>
                         <span className={`inline-block px-1.5 py-0.5 rounded text-[10px] w-fit font-medium capitalize
                           ${asset.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
-                          {asset.status}
+                          {asset.status === "active" ? "Aktif" : asset.status === "archived" ? "Diarsipkan" : asset.status}
                         </span>
                       </div>
                     </td>
@@ -130,14 +121,13 @@ export default async function AdminMediaPage({ searchParams }: { searchParams: P
                       {formatBytes(asset.size_bytes)}
                     </td>
                     <td className="p-4 text-sm text-slate-600">
-                      {asset.created_at ? new Date(asset.created_at).toLocaleDateString() : '-'}
+                      {asset.created_at ? new Date(asset.created_at).toLocaleDateString("id-ID") : '-'}
                     </td>
                     <td className="p-4 text-sm">
                       <div className="flex gap-3">
                         <Link href={`/dashboard/media/${asset.id}`} className="font-bold text-sky-700 hover:text-sky-600">
                           {canUpload ? "Kelola" : "Lihat"}
                         </Link>
-                        {/* We could add a public view link if active, e.g. /api/v1/media/{id}/content */}
                         {asset.status === 'active' && (
                           <a 
                             href={`/api/bff/media/${asset.id}/content`}
@@ -151,12 +141,9 @@ export default async function AdminMediaPage({ searchParams }: { searchParams: P
                       </div>
                     </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table></div>
-        </div>
-        <AdminPagination page={page} pages={pages} total={total} pageSize={20} pathname="/dashboard/media" query={{ q: query, kind }} />
+                ))}
+        </AdminDataTable>
+        <AdminPagination page={page} pages={pages} total={total} pageSize={pageSize} pathname="/dashboard/media" query={{ q: query, kind }} />
       </div>
     </div>
   );

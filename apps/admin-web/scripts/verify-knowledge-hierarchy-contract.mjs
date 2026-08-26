@@ -17,7 +17,7 @@ assert.match(manager, /readOnly=\{readOnly\} nested \/>/);
 assert.match(manager, /knowledge-hierarchy\.create/);
 assert.match(manager, /knowledge-hierarchy\.edit/);
 assert.match(manager, /window\.confirm/);
-assert.match(manager, /Mode baca Reviewer/);
+assert.match(manager, /Mode baca Peninjau/);
 assert.match(selector, /getKnowledgeHierarchyAction\(false\)/);
 for (const editor of [create, edit]) {
   assert.match(editor, /<KnowledgeNodeSelect/);

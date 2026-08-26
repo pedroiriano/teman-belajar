@@ -117,7 +117,7 @@ export default function AdminNewsDetailPage() {
                   disabled={actionLoading}
                   className="admin-button"
                 >
-                  Ajukan review
+                  Ajukan peninjauan
                 </button>
               )}
 
@@ -128,7 +128,7 @@ export default function AdminNewsDetailPage() {
                     disabled={actionLoading}
                     className="admin-button-secondary !text-rose-700"
                   >
-                    Kembalikan ke draft
+                    Kembalikan ke draf
                   </button>
                   <button 
                     onClick={() => handleTransition('approved')} 

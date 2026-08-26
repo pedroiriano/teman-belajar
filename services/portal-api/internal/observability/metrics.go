@@ -87,6 +87,11 @@ var (
 		Help:    "Duration of event processing",
 		Buckets: prometheus.DefBuckets,
 	}, []string{"event_type"})
+
+	NotificationActionsTotal = promauto.NewCounterVec(prometheus.CounterOpts{
+		Name: "notification_actions_total",
+		Help: "Total in-app notification actions by bounded result",
+	}, []string{"action"})
 )
 
 func RecordSSOEvent(eventType, status string) {
@@ -114,4 +119,8 @@ func SetEventInboxBacklog(status string, count float64) {
 // RecordEventProcessDuration records event processing duration.
 func RecordEventProcessDuration(eventType string, durationSec float64) {
 	EventInboxProcessDuration.WithLabelValues(eventType).Observe(durationSec)
+}
+
+func RecordNotificationAction(action string) {
+	NotificationActionsTotal.WithLabelValues(action).Inc()
 }

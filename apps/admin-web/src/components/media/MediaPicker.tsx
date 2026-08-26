@@ -61,9 +61,9 @@ export default function MediaPicker({ onSelect, buttonLabel = "Pilih media", ima
       setLoading(true); setError("");
       const params = new URLSearchParams({ page: String(page), page_size: "12", q: query, kind });
       void fetch(`/api/bff/media?${params}`, { signal: controller.signal }).then(async (response) => {
-        const payload = await response.json(); if (!response.ok) throw new Error(payload.detail || payload.title || "Media Library belum dapat dimuat");
+        const payload = await response.json(); if (!response.ok) throw new Error(payload.detail || payload.title || "Pustaka Media belum dapat dimuat");
         setMedia(Array.isArray(payload.data) ? payload.data : []); setTotal(Number(payload.meta?.total ?? 0));
-      }).catch((caught) => { if (!controller.signal.aborted) setError(caught instanceof Error ? caught.message : "Media Library belum dapat dimuat"); }).finally(() => { if (!controller.signal.aborted) setLoading(false); });
+      }).catch((caught) => { if (!controller.signal.aborted) setError(caught instanceof Error ? caught.message : "Pustaka Media belum dapat dimuat"); }).finally(() => { if (!controller.signal.aborted) setLoading(false); });
     }, 250);
     return () => { controller.abort(); clearTimeout(timer); };
   }, [isOpen, tab, page, query, kind]);

@@ -35,7 +35,7 @@ export default async function HelpCenterPage({ searchParams }: { searchParams: P
     : "";
 
   return <>
-    <PageHero eyebrow="Pusat bantuan" title="Jawaban yang mudah ditemukan" description="Telusuri pertanyaan umum yang telah melewati workflow editorial Teman Belajar." />
+    <PageHero eyebrow="Pusat bantuan" title="Jawaban yang mudah ditemukan" description="Telusuri pertanyaan umum yang telah melewati alur kerja editorial Teman Belajar." />
     <section className="portal-container py-12 sm:py-16">
       <form action="/help" method="GET" role="search" className="portal-card mx-auto flex max-w-3xl flex-col gap-3 p-5 sm:flex-row">
         <div className="min-w-0 flex-1">

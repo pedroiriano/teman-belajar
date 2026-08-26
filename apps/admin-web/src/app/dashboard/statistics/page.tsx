@@ -2,6 +2,7 @@ import { Suspense, type ReactNode } from "react";
 import { getServerAccessToken } from "@/lib/server-auth";
 import { StatisticsFilter } from "@/components/statistics-filter";
 import type { ContentDaily, PageDaily, PromValue, SearchDaily, SourceState, StatisticsResponse } from "@/types/analytics";
+import { AdminDataTable } from "@/components/admin-data-table";
 
 const API_BASE = process.env.PORTAL_API_INTERNAL_URL || "http://api:8080";
 
@@ -53,9 +54,7 @@ function Section({ id, title, description, children }: { id: string; title: stri
 }
 
 function DataTable({ headers, children, empty }: { headers: string[]; children: ReactNode; empty?: boolean }) {
-  return (
-    <div className="admin-card overflow-hidden"><div className="overflow-x-auto"><table className="min-w-full text-left text-sm"><thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500 dark:bg-slate-800/70"><tr>{headers.map((header) => <th key={header} className="whitespace-nowrap px-5 py-4 font-black">{header}</th>)}</tr></thead><tbody className="divide-y divide-slate-100 dark:divide-slate-800">{empty ? <tr><td colSpan={headers.length} className="px-5 py-10 text-center text-slate-500">Belum ada data untuk rentang ini.</td></tr> : children}</tbody></table></div></div>
-  );
+  return <AdminDataTable compact title={`Statistik ${headers.join(" ")}`} itemCount={empty ? 0 : 1} headers={headers} emptyState="Belum ada data untuk rentang ini.">{empty ? null : children}</AdminDataTable>;
 }
 
 export default async function StatisticsPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
@@ -82,7 +81,7 @@ export default async function StatisticsPage({ searchParams }: { searchParams: P
 
   return (
     <div className="admin-page space-y-10">
-      <header className="admin-page-header"><div><p className="admin-kicker">ANALYTICS & OBSERVABILITY</p><h1 className="admin-page-title">Statistik Platform</h1><p className="admin-page-copy">Statistik produk yang terkurasi; dashboard infrastruktur tetap terpisah dari UI produk.</p></div><Suspense fallback={<div className="h-10 w-44 animate-pulse rounded-xl bg-slate-200 dark:bg-slate-800" />}><StatisticsFilter /></Suspense></header>
+      <header className="admin-page-header"><div><p className="admin-kicker">ANALITIK & OBSERVABILITAS</p><h1 className="admin-page-title">Statistik Platform</h1><p className="admin-page-copy">Statistik produk yang terkurasi; dasbor infrastruktur tetap terpisah dari antarmuka produk.</p></div><Suspense fallback={<div className="h-10 w-44 animate-pulse rounded-xl bg-slate-200 dark:bg-slate-800" />}><StatisticsFilter /></Suspense></header>
       <nav aria-label="Bagian statistik" className="admin-card flex gap-2 overflow-x-auto p-2">{nav.map(([href, label]) => <a key={href} href={`#${href}`} className="whitespace-nowrap rounded-xl px-3 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800">{label}</a>)}</nav>
 
       <Section id="ringkasan" title="Ringkasan" description={`Snapshot terpilih untuk ${days} hari terakhir.`}>
@@ -90,13 +89,13 @@ export default async function StatisticsPage({ searchParams }: { searchParams: P
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4"><StatCard label="Tayangan Halaman Portal" value={number(totalPageViews)} note="Hanya portal.page_view; konten dan Admin tidak digandakan." /><StatCard label="Pengunjung Unik" value={visitors} note="Distinct visitor Portal; presisi dibatasi retensi 30 hari." /><StatCard label="Pembelajar Aktif" value={periodLearner ? number(periodLearner.active_learners) : "Tidak tersedia"} note="Distinct genuine learner dari Moodle untuk seluruh periode." /><StatCard label="Tingkat Penyelesaian" value={periodLearner ? percent(periodLearner.completion_rate) : "Tidak tersedia"} note="Completed eligible enrolments dibagi cohort eligible yang sama." /></div>
       </Section>
 
-      <Section id="traffic" title="Pengunjung & Halaman" description="Traffic Portal publik tanpa event Admin atau event konten sekunder."><DataTable headers={["Tanggal", "Path", "Views", "Unique Visitors Harian"]} empty={!data.page_views?.length}>{data.page_views?.map((row: PageDaily) => <tr key={`${row.date}:${row.path}`} className="hover:bg-slate-50/70 dark:hover:bg-slate-800/40"><td className="px-5 py-4">{row.date}</td><td className="max-w-xs truncate px-5 py-4 font-semibold" title={row.path}>{row.path}</td><td className="px-5 py-4">{number(row.views)}</td><td className="px-5 py-4">{number(row.unique_visitors)}</td></tr>)}</DataTable></Section>
+      <Section id="traffic" title="Pengunjung & Halaman" description="Lalu lintas Portal publik tanpa event Admin atau event konten sekunder."><DataTable headers={["Tanggal", "Path", "Tayangan", "Pengunjung Unik Harian"]} empty={!data.page_views?.length}>{data.page_views?.map((row: PageDaily) => <tr key={`${row.date}:${row.path}`} className="hover:bg-slate-50/70 dark:hover:bg-slate-800/40"><td className="px-5 py-4">{row.date}</td><td className="max-w-xs truncate px-5 py-4 font-semibold" title={row.path}>{row.path}</td><td className="px-5 py-4">{number(row.views)}</td><td className="px-5 py-4">{number(row.unique_visitors)}</td></tr>)}</DataTable></Section>
 
-      <Section id="content" title="Konten" description="content.viewed dikelompokkan ketat menurut tipe dan target; unique visitors ditampilkan per hari."><DataTable headers={["Tanggal", "Jenis", "Target", "Views", "Unique Visitors Harian"]} empty={!content.length}>{content.slice(0, 50).map((row: ContentDaily) => <tr key={`${row.date}:${row.content_type}:${row.target_id}`}><td className="px-5 py-4">{row.date}</td><td className="px-5 py-4 capitalize">{row.content_type}</td><td className="max-w-xs truncate px-5 py-4 font-semibold" title={row.target_id}>{row.target_id}</td><td className="px-5 py-4">{number(row.views)}</td><td className="px-5 py-4">{number(row.unique_visitors)}</td></tr>)}</DataTable></Section>
+      <Section id="content" title="Konten" description="content.viewed dikelompokkan ketat menurut jenis dan target; pengunjung unik ditampilkan per hari."><DataTable headers={["Tanggal", "Jenis", "Target", "Tayangan", "Pengunjung Unik Harian"]} empty={!content.length}>{content.slice(0, 50).map((row: ContentDaily) => <tr key={`${row.date}:${row.content_type}:${row.target_id}`}><td className="px-5 py-4">{row.date}</td><td className="px-5 py-4 capitalize">{row.content_type}</td><td className="max-w-xs truncate px-5 py-4 font-semibold" title={row.target_id}>{row.target_id}</td><td className="px-5 py-4">{number(row.views)}</td><td className="px-5 py-4">{number(row.unique_visitors)}</td></tr>)}</DataTable></Section>
 
       <Section id="learning" title="Pembelajaran" description="Cohort formal Moodle; staf, guest, site admin, akun nonaktif, dan pengguna tanpa role learner tidak dihitung.">
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4"><StatCard label="Pembelajar Aktif" value={periodLearner ? number(periodLearner.active_learners) : "Tidak tersedia"} note="Distinct learner dalam rentang terpilih." /><StatCard label="Mulai Belajar" value={periodLearner ? number(periodLearner.learning_starts) : "Tidak tersedia"} note="Aktivitas mulai pada cohort terpilih." /><StatCard label="Pendaftaran Terkualifikasi" value={periodLearner ? number(periodLearner.eligible_enrolments) : "Tidak tersedia"} note="Denominator completion rate." /><StatCard label="Selesai" value={periodLearner ? number(periodLearner.completions) : "Tidak tersedia"} note="Enrolment eligible selesai sampai akhir periode." /></div>
-        <DataTable headers={["Kursus", "Akses", "Learner Unik"]} empty={!periodLearner?.top_courses?.length}>{periodLearner?.top_courses.map((course) => <tr key={course.course_id}><td className="px-5 py-4 font-semibold">{course.course_name}</td><td className="px-5 py-4">{number(course.accesses)}</td><td className="px-5 py-4">{number(course.unique_learners)}</td></tr>)}</DataTable>
+        <DataTable headers={["Kursus", "Akses", "Pembelajar Unik"]} empty={!periodLearner?.top_courses?.length}>{periodLearner?.top_courses.map((course) => <tr key={course.course_id}><td className="px-5 py-4 font-semibold">{course.course_name}</td><td className="px-5 py-4">{number(course.accesses)}</td><td className="px-5 py-4">{number(course.unique_learners)}</td></tr>)}</DataTable>
       </Section>
 
       <Section id="api" title="API" description="Sinyal Prometheus; nol, no-series, invalid, dan unavailable memiliki state berbeda.">

@@ -40,7 +40,7 @@ export async function proxyDraftRequest(request: NextRequest, backendPath: strin
   if (request.method === "PUT") {
     body = await request.text();
     if (new TextEncoder().encode(body).byteLength > maximumDraftRequestBytes) {
-      return NextResponse.json({ title: "Validation failed", status: 422, code: "DRAFT_VALIDATION_FAILED", detail: "Draft request exceeds the maximum size" }, { status: 422 });
+      return NextResponse.json({ title: "Validasi gagal", status: 422, code: "DRAFT_VALIDATION_FAILED", detail: "Permintaan draf melebihi ukuran maksimum" }, { status: 422 });
     }
     let parsed: unknown;
     try {
@@ -49,10 +49,10 @@ export async function proxyDraftRequest(request: NextRequest, backendPath: strin
       return NextResponse.json({ title: "Validation failed", status: 422, code: "DRAFT_VALIDATION_FAILED", detail: "Invalid JSON request" }, { status: 422 });
     }
     if (!parsed || Array.isArray(parsed) || typeof parsed !== "object") {
-      return NextResponse.json({ title: "Validation failed", status: 422, code: "DRAFT_VALIDATION_FAILED", detail: "Draft request must be an object" }, { status: 422 });
+      return NextResponse.json({ title: "Validasi gagal", status: 422, code: "DRAFT_VALIDATION_FAILED", detail: "Permintaan draf harus berupa objek" }, { status: 422 });
     }
     if (Object.keys(parsed).some((key) => !allowedTopLevelFields.has(key))) {
-      return NextResponse.json({ title: "Validation failed", status: 422, code: "DRAFT_VALIDATION_FAILED", detail: "Draft request contains unknown fields" }, { status: 422 });
+      return NextResponse.json({ title: "Validasi gagal", status: 422, code: "DRAFT_VALIDATION_FAILED", detail: "Permintaan draf memuat bidang yang tidak dikenal" }, { status: 422 });
     }
     headers.set("Content-Type", "application/json");
   }

@@ -68,7 +68,7 @@ export default async function UserDetailPage({ params }: { params: Promise<{ id:
               <h3 className="text-lg font-black text-slate-900 mb-4 border-b border-slate-100 pb-3 dark:border-slate-800">Informasi Akun</h3>
               <dl className="space-y-4">
                 <div>
-                  <dt className="text-xs font-bold uppercase tracking-wider text-slate-500">Username</dt>
+                  <dt className="text-xs font-bold uppercase tracking-wider text-slate-500">Nama Pengguna</dt>
                   <dd className="mt-1 text-sm font-medium text-slate-900">{user.username}</dd>
                 </div>
                 <div>
@@ -81,7 +81,7 @@ export default async function UserDetailPage({ params }: { params: Promise<{ id:
                     <span className={`admin-status ${
                       user.enabled ? "bg-green-100 text-green-800" : "bg-red-50 text-rose-700"
                     }`}>
-                      {user.enabled ? "Active" : "Disabled"}
+                      {user.enabled ? "Aktif" : "Nonaktif"}
                     </span>
                   </dd>
                 </div>

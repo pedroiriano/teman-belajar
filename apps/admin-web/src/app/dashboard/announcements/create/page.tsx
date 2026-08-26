@@ -83,7 +83,7 @@ export default function CreateAnnouncementPage() {
 
   return (
     <div className="admin-page max-w-5xl">
-      <div className="admin-page-header"><div><Link href="/dashboard/announcements" className="text-sm font-bold text-sky-700">← Kembali ke Pengumuman</Link><p className="admin-kicker mt-5">Editor pengumuman</p><h1 className="admin-page-title">Buat pengumuman baru</h1><p className="admin-page-copy">Atur periode tayang agar informasi muncul pada waktu yang tepat.</p></div><span className="admin-status bg-slate-100 text-slate-600">Status: Draft</span></div>
+      <div className="admin-page-header"><div><Link href="/dashboard/announcements" className="text-sm font-bold text-sky-700">← Kembali ke Pengumuman</Link><p className="admin-kicker mt-5">Editor pengumuman</p><h1 className="admin-page-title">Buat pengumuman baru</h1><p className="admin-page-copy">Atur periode tayang agar informasi muncul pada waktu yang tepat.</p></div><span className="admin-status bg-slate-100 text-slate-600">Status: Draf</span></div>
       <DraftStatus state={autoSave.state} message={autoSave.message} lastSavedAt={autoSave.lastSavedAt} recovery={autoSave.recovery} onRecover={autoSave.recoverFrom} onKeepCurrent={autoSave.keepCurrent} onDiscard={autoSave.discard} onStartNew={autoSave.startNew} onRetry={autoSave.saveNow} />
       <form onSubmit={handleSubmit} className="admin-form-card">
         <div className="admin-form-header"><div className="flex items-center gap-3"><span className="admin-stat-icon"><AdminIcon name="announcement" className="h-5 w-5" /></span><div><h2 className="font-black text-slate-900">Informasi pengumuman</h2><p className="mt-1 text-xs text-slate-500">Lengkapi isi dan jadwal publikasi.</p></div></div></div>
@@ -149,7 +149,7 @@ export default function CreateAnnouncementPage() {
 
           </div>
         <SeoDiscoverySection compact embedded value={seo} onChange={setSEO} contentTitle={title} contentSummary={body.slice(0, 300)} contentBody={body} routePrefix="/announcements/" />
-        <div className="admin-form-footer"><Link href="/dashboard/announcements" className="admin-button-secondary">Batal</Link><button type="submit" disabled={loading} className="admin-button">{loading ? "Menyimpan…" : "Simpan draft"}</button></div>
+        <div className="admin-form-footer"><Link href="/dashboard/announcements" className="admin-button-secondary">Batal</Link><button type="submit" disabled={loading} className="admin-button">{loading ? "Menyimpan…" : "Simpan draf"}</button></div>
       </form>
     </div>
   );

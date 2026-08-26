@@ -189,6 +189,29 @@ a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visib
   .admin-accent-control[aria-selected="true"] { border-color: var(--admin-accent-border); background: var(--admin-accent-soft); }
   .admin-tree-row { @apply flex items-center gap-2 rounded-xl border px-3 py-2; color: var(--admin-copy); background: var(--admin-panel); border-color: var(--admin-border); }
   .admin-tree-row[aria-selected="true"] { background: var(--admin-accent-soft); border-color: var(--admin-accent-border); }
+  .notification-popover { @apply absolute right-0 top-[calc(100%+.75rem)] z-50 w-[min(92vw,28rem)] overflow-hidden rounded-2xl border shadow-2xl; color: var(--admin-ink); background: var(--admin-panel); border-color: var(--admin-border); }
+  .notification-toolbar { @apply flex items-center justify-between gap-3 border-b p-4; border-color: var(--admin-border); }
+  .notification-list { @apply max-h-[26rem] overflow-y-auto; }
+  .notification-item { @apply flex items-start gap-3 border-b p-4 transition; border-color: var(--admin-border); }
+  .notification-item.is-unread { background: var(--admin-accent-soft); }
+  .notification-item:hover { background: var(--admin-panel-muted); }
+  .notification-event { @apply rounded-full px-2 py-1 text-[10px] font-black uppercase tracking-wide; color: var(--admin-accent-text); background: var(--admin-accent-soft); }
+  .notification-unread-dot { @apply h-2 w-2 rounded-full; background: var(--admin-primary); }
+  .notification-count { @apply absolute -right-1.5 -top-1.5 grid min-h-5 min-w-5 place-items-center rounded-full px-1 text-[10px] font-black; color: var(--admin-on-primary); background: var(--admin-primary); }
+  .notification-pagination { @apply flex flex-wrap items-center justify-between gap-3 border-t p-4 text-xs; color: var(--admin-muted); border-color: var(--admin-border); }
+  .notification-preferences { @apply border-t p-4; border-color: var(--admin-border); }
+  .notification-preferences > summary { @apply cursor-pointer font-black; }
+  .notification-preference { @apply flex items-center justify-between gap-3 rounded-xl border p-3; border-color: var(--admin-border); background: var(--admin-panel-muted); }
+  .notification-preference strong, .notification-preference small { @apply block; }
+  .notification-preference small { @apply mt-1 text-xs; color: var(--admin-muted); }
+  .notification-preference input { accent-color: var(--admin-primary); }
+  .admin-pagination { @apply mt-5 flex flex-wrap items-center justify-between gap-4 rounded-2xl border px-4 py-3 text-sm; color: var(--admin-muted); background: var(--admin-panel); border-color: var(--admin-border); }
+  .admin-page-size, .admin-pagination-controls, .admin-page-numbers { @apply flex items-center gap-1; }
+  .admin-page-size > span { @apply mr-2 text-xs font-bold; }
+  .admin-page-size a, .admin-page-numbers a, .admin-page-numbers button { @apply grid min-h-9 min-w-9 place-items-center rounded-lg px-2 font-bold transition; color: var(--admin-copy); }
+  .admin-page-size a:hover, .admin-page-numbers a:hover, .admin-page-numbers button:hover, .admin-page-size a.is-active, .admin-page-numbers a.is-active, .admin-page-numbers button.is-active { color: var(--admin-accent-text); background: var(--admin-accent-soft); }
+  .admin-page-numbers > span { @apply px-1; }
+  @media (max-width: 639px) { .admin-page-numbers { display: none; } .admin-pagination { align-items: stretch; } .admin-pagination-controls { width: 100%; justify-content: space-between; } }
 }
 
 /* Legacy actions are mapped to the Admin semantic blue instead of Cuba demo colors. */

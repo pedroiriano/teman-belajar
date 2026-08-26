@@ -111,7 +111,7 @@ function NodeEditor({ node, tree, readOnly, onSaved, onArchived, onCancel }: { n
           <div className="sm:col-span-2"><label className="admin-label" htmlFor="node-description">Deskripsi</label><textarea id="node-description" className="admin-input mt-2" rows={3} maxLength={1000} value={form.description} disabled={readOnly} onChange={(event) => set("description", event.target.value)} /></div>
         </div>
       </div>
-      <div className="admin-form-footer"><div className="flex gap-2">{node && !readOnly && node.status === "active" ? <button type="button" className="admin-button-secondary !text-rose-700" onClick={() => void archive()} disabled={saving}>Arsipkan</button> : null}<button type="button" className="admin-button-secondary" onClick={onCancel}>Tutup</button></div>{!readOnly ? <button className="admin-button" disabled={saving}>{saving ? "Menyimpan…" : node ? "Simpan perubahan" : "Buat node"}</button> : <span className="admin-status bg-slate-100 text-slate-600">Mode baca Reviewer</span>}</div>
+      <div className="admin-form-footer"><div className="flex gap-2">{node && !readOnly && node.status === "active" ? <button type="button" className="admin-button-secondary !text-rose-700" onClick={() => void archive()} disabled={saving}>Arsipkan</button> : null}<button type="button" className="admin-button-secondary" onClick={onCancel}>Tutup</button></div>{!readOnly ? <button className="admin-button" disabled={saving}>{saving ? "Menyimpan…" : node ? "Simpan perubahan" : "Buat node"}</button> : <span className="admin-status bg-slate-100 text-slate-600">Mode baca Peninjau</span>}</div>
     </form>
   </div>;
 }

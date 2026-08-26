@@ -9,7 +9,7 @@ const stateLabel: Record<DraftSaveState, string> = {
   menyimpan: "Menyimpan",
   tersimpan: "Tersimpan",
   lokal: "Tersimpan lokal",
-  konflik: "Konflik draft",
+  konflik: "Konflik draf",
   gagal: "Gagal menyimpan",
 };
 
@@ -37,19 +37,19 @@ export function DraftStatus<TPayload extends DraftPayload>({ state, message, las
       </div>
       <div className="flex flex-wrap gap-2">
         {(state === "lokal" || state === "gagal") && <button type="button" className="admin-button-secondary" onClick={onRetry}>Coba lagi</button>}
-        {allowStartNew && <button type="button" className="admin-button-secondary" onClick={onStartNew}>Draft baru</button>}
+        {allowStartNew && <button type="button" className="admin-button-secondary" onClick={onStartNew}>Draf baru</button>}
       </div>
       {recovery && (
         <div className="draft-recovery" role="alert">
           <div>
             <h2 className="font-black">Pulihkan pekerjaan sebelumnya?</h2>
-            <p className="mt-1 text-sm leading-6">{recovery.conflict ? "Salinan server dan perangkat berbeda. Pilih salah satu secara sadar; tidak ada versi yang ditimpa otomatis." : "Draft tersimpan ditemukan. Anda dapat memulihkannya atau mempertahankan isi form saat ini."}</p>
+            <p className="mt-1 text-sm leading-6">{recovery.conflict ? "Salinan server dan perangkat berbeda. Pilih salah satu secara sadar; tidak ada versi yang ditimpa otomatis." : "Draf tersimpan ditemukan. Anda dapat memulihkannya atau mempertahankan isi formulir saat ini."}</p>
           </div>
           <div className="mt-4 flex flex-wrap gap-2">
             {recovery.server && <button type="button" className={recovery.recommended === "server" ? "admin-button" : "admin-button-secondary"} onClick={() => onRecover("server")}>Pulihkan versi server</button>}
             {recovery.local && <button type="button" className={recovery.recommended === "local" ? "admin-button" : "admin-button-secondary"} onClick={() => onRecover("local")}>Pulihkan versi perangkat</button>}
             <button type="button" className="admin-button-secondary" onClick={onKeepCurrent}>Pertahankan isi saat ini</button>
-            <button type="button" className="admin-button-secondary" onClick={onDiscard}>Buang draft tersimpan</button>
+            <button type="button" className="admin-button-secondary" onClick={onDiscard}>Buang draf tersimpan</button>
           </div>
         </div>
       )}

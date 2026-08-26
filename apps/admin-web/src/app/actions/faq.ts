@@ -13,6 +13,7 @@ if (!API_BASE) throw new Error("Missing required environment variable: PORTAL_AP
 export type FAQCategory = { id: string; slug: string; name: string; description: string; sort_order: number; status: "active" | "archived" };
 export type FAQItem = { id: string; category_id: string; category_name: string; category_slug: string; slug: string; question: string; answer: string; sort_order: number; status: "draft" | "in_review" | "approved" | "published" | "archived"; media_asset_id?: string; media_alt?: string; seo_title: string; meta_description: string; indexable: boolean; version: number; updated_at: string };
 export type FAQInput = { category_id: string; slug: string; question: string; answer: string; sort_order: number; media_asset_id: string | null; media_alt: string | null; seo_title: string; meta_description: string; indexable: boolean; expected_version?: number };
+export type FAQPagination = { page: number; page_size: number; total: number; total_pages: number };
 
 async function identity() {
   const session: any = await getServerSession(authOptions);
@@ -25,17 +26,25 @@ async function problem(response: Response, fallback: string) {
   return body?.detail || fallback;
 }
 
-export async function getFAQWorkspaceAction() {
+export async function getFAQWorkspaceAction(filter: { q?: string; status?: string; categoryId?: string; page?: number; pageSize?: number } = {}) {
   const { session, token } = await identity();
-  if (!session || !token) return { success: false as const, error: "Unauthorized", categories: [], items: [], roles: [] };
+  const emptyPagination: FAQPagination = { page: 1, page_size: 20, total: 0, total_pages: 0 };
+  if (!session || !token) return { success: false as const, error: "Sesi tidak sah", categories: [], items: [], pagination: emptyPagination, roles: [] };
   const headers = { Authorization: `Bearer ${token}` };
+  const itemQuery = new URLSearchParams({
+    q: (filter.q || "").slice(0, 200),
+    status: filter.status || "all",
+    category_id: filter.categoryId || "",
+    page: String(Math.max(1, filter.page || 1)),
+    page_size: String([10, 20, 50].includes(filter.pageSize || 20) ? filter.pageSize : 20),
+  });
   const [categoriesResponse, itemsResponse] = await Promise.all([
     fetch(`${API_BASE}/api/v1/admin/faqs/categories?include_archived=true`, { headers, cache: "no-store" }),
-    fetch(`${API_BASE}/api/v1/admin/faqs/items?page=1&page_size=100&status=all`, { headers, cache: "no-store" }),
+    fetch(`${API_BASE}/api/v1/admin/faqs/items?${itemQuery}`, { headers, cache: "no-store" }),
   ]);
-  if (!categoriesResponse.ok || !itemsResponse.ok) return { success: false as const, error: "FAQ belum dapat dimuat", categories: [], items: [], roles: session.roles || [] };
+  if (!categoriesResponse.ok || !itemsResponse.ok) return { success: false as const, error: "FAQ belum dapat dimuat", categories: [], items: [], pagination: emptyPagination, roles: session.roles || [] };
   const categories = await categoriesResponse.json(); const items = await itemsResponse.json();
-  return { success: true as const, categories: (categories.data || []) as FAQCategory[], items: (items.data || []) as FAQItem[], roles: (session.roles || []) as string[] };
+  return { success: true as const, categories: (categories.data || []) as FAQCategory[], items: (items.data || []) as FAQItem[], pagination: items.pagination as FAQPagination, roles: (session.roles || []) as string[] };
 }
 
 export async function createFAQCategoryAction(input: { name: string; slug: string; description: string; sort_order: number }) {

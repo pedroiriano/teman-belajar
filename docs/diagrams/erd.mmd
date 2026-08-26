@@ -266,6 +266,30 @@ erDiagram
     timestamptz created_at
     timestamptz updated_at
   }
+  NOTIFICATION_INBOX {
+    uuid id PK
+    uuid user_subject
+    string audience
+    string event_id
+    string schema_version
+    string source
+    string event_type
+    string title
+    string body
+    string deep_link
+    string priority
+    timestamptz available_at
+    timestamptz expires_at
+    timestamptz read_at
+    timestamptz created_at
+  }
+  NOTIFICATION_PREFERENCE {
+    uuid user_subject PK
+    string audience PK
+    string event_type PK
+    boolean enabled
+    timestamptz updated_at
+  }
 
   CATEGORY ||--o{ NEWS : categorizes
   CATEGORY ||--o{ ANNOUNCEMENT : categorizes
@@ -291,6 +315,7 @@ erDiagram
   USER_PROFILE ||--o| MOODLE_USER_MAPPING : maps_to
   USER_PROFILE ||--o{ AUDIT_EVENT : acts
   EVENT_INBOX ||--o| EVENT_OUTBOX : creates
+  NOTIFICATION_PREFERENCE ||--o{ NOTIFICATION_INBOX : controls_delivery
   ANALYTICS_EVENTS }o--|| ANALYTICS_PAGE_DAILY : rolls_up
   ANALYTICS_EVENTS }o--|| ANALYTICS_SEARCH_DAILY : rolls_up
   ANALYTICS_EVENTS }o--|| ANALYTICS_CONTENT_DAILY : rolls_up

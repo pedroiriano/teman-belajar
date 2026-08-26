@@ -8,6 +8,7 @@ import {
 } from "@/app/actions/discoverability";
 import { AdminIcon } from "@/components/admin-icon";
 import type { TaxonomyTerm } from "@/components/seo/types";
+import { AdminClientPagination } from "@/components/admin-pagination";
 
 type Kind = "categories" | "tags";
 type StatusFilter = "active" | "archived" | "all";
@@ -148,7 +149,7 @@ export default function TaxonomyPage() {
             Siapkan istilah yang konsisten agar editor lebih mudah mengelompokkan konten dan pembaca lebih mudah menemukannya.
           </p>
         </div>
-        <div className="flex flex-wrap gap-2" aria-label="Ringkasan taxonomy aktif">
+        <div className="flex flex-wrap gap-2" aria-label="Ringkasan taksonomi aktif">
           <span className="admin-discovery-chip" data-accent="true">{activeCategoryCount} kategori aktif</span>
           <span className="admin-discovery-chip" data-accent="true">{activeTagCount} tag aktif</span>
         </div>
@@ -170,7 +171,7 @@ export default function TaxonomyPage() {
           </div>
         </div>
 
-        <div className="admin-taxonomy-tabs" role="tablist" aria-label="Pilih jenis taxonomy">
+        <div className="admin-taxonomy-tabs" role="tablist" aria-label="Pilih jenis taksonomi">
           {(["categories", "tags"] as const).map((kind) => {
             const config = termConfig[kind];
             const terms = kind === "categories" ? categories : tags;
@@ -229,6 +230,8 @@ function TermPanel({
   const [description, setDescription] = useState("");
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("active");
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
   const slug = slugify(name);
   const isCreating = busy === `create:${kind}`;
 
@@ -240,6 +243,8 @@ function TermPanel({
         .some((value) => value.toLowerCase().includes(normalizedQuery)))
       .sort((a, b) => a.name.localeCompare(b.name, "id"));
   }, [query, statusFilter, terms]);
+  const totalPages = Math.max(1, Math.ceil(filteredTerms.length / pageSize));
+  const visibleTerms = filteredTerms.slice((Math.min(page, totalPages) - 1) * pageSize, Math.min(page, totalPages) * pageSize);
 
   const resetComposer = () => {
     setName("");
@@ -351,7 +356,7 @@ function TermPanel({
             type="search"
             className="admin-input pl-11"
             value={query}
-            onChange={(event) => setQuery(event.target.value)}
+            onChange={(event) => { setQuery(event.target.value); setPage(1); }}
             placeholder={`Cari nama, slug, atau deskripsi ${config.singular}…`}
           />
         </div>
@@ -361,7 +366,7 @@ function TermPanel({
             id={`${kind}-status`}
             className="admin-input"
             value={statusFilter}
-            onChange={(event) => setStatusFilter(event.target.value as StatusFilter)}
+            onChange={(event) => { setStatusFilter(event.target.value as StatusFilter); setPage(1); }}
           >
             <option value="active">Aktif</option>
             <option value="archived">Diarsipkan</option>
@@ -373,7 +378,7 @@ function TermPanel({
       <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500" aria-live="polite">
         <span>{filteredTerms.length} {config.singular} ditampilkan</span>
         {(query || statusFilter !== "active") && (
-          <button type="button" className="font-bold text-sky-700" onClick={() => { setQuery(""); setStatusFilter("active"); }}>
+            <button type="button" className="font-bold text-sky-700" onClick={() => { setQuery(""); setStatusFilter("active"); setPage(1); }}>
             Reset filter
           </button>
         )}
@@ -389,7 +394,7 @@ function TermPanel({
         </div>
       ) : (
         <ul className="grid gap-3" aria-label={`Daftar ${config.title}`}>
-          {filteredTerms.map((term) => (
+          {visibleTerms.map((term) => (
             <li key={term.id} className="admin-taxonomy-row">
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-2">
@@ -418,6 +423,7 @@ function TermPanel({
           ))}
         </ul>
       )}
+      <AdminClientPagination page={Math.min(page, totalPages)} pages={totalPages} total={filteredTerms.length} pageSize={pageSize} onPageChange={setPage} onPageSizeChange={(size) => { setPageSize(size); setPage(1); }} />
     </div>
   );
 }

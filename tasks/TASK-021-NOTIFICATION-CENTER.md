@@ -1,6 +1,6 @@
 # TASK-021 — Notification Center
 
-**Status:** PLANNED
+**Status:** IMPLEMENTED — CORRECTIVE RELEASE
 **Owner Agent:** Backend/Frontend/Security/QA
 **Feature:** F-NOT-001, F-NOT-002
 **Dependencies:** Event and audit infrastructure
@@ -32,13 +32,13 @@ kanal email hanya ditambahkan melalui adapter dan keputusan manusia.
 
 ## Required Tests
 
-- [ ] event/idempotency/preference unit and integration
-- [ ] cross-user/authz/deep-link/rate-limit negative tests
-- [ ] Admin/Portal bell and inbox E2E, keyboard/mobile/light/dark
+- [x] event/idempotency/preference unit tests
+- [x] cross-user/authz/deep-link/rate-limit negative tests
+- [ ] Admin/Portal bell and inbox browser acceptance, keyboard/mobile/light/dark (final verification pending)
 
 ## Documentation Impact
 
-- [ ] event/OpenAPI/ERD/migration/retention/runbook/handoff
+- [x] event/OpenAPI/ERD/migration/retention/runbook/handoff
 
 ## Definition of Done
 

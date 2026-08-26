@@ -1,39 +1,44 @@
-# TASK-025 Handoff: Indonesian UI Language Harmonization & Cuba Data Tables
+# TASK-025 Handoff — Indonesian UI and Cuba Data Presentation Recovery
 
-## Task Details
-- **Task ID**: TASK-025 (Created for this purpose)
-- **Base SHA**: (Latest `main`)
-- **Modules Migrated**: 
-  - Admin: Dashboard, Shell Navigation, FAQ, Media, Users.
-  - Portal: Chrome, Landing pages.
-- **Language Policy**:
-  - Human-facing UI uses standard Indonesian (KBBI).
-  - English is preserved strictly for technical identifiers, routes, CSS classes, schema definitions, internal database naming, etc.
-- **Glossary Path**: `docs/governance/UI-LANGUAGE-TERMINOLOGY.md`
+## Status
 
-## Architecture & Cuba Alignment
-- **Admin Data Table Architecture**: 
-  - Preserved Cuba pattern layout, headers, sorting, and styling components.
-  - Translated headers to Indonesian (e.g. `Username` -> `Nama Pengguna` in Users page).
-- **Pagination Architecture**:
-  - Built a reusable `AdminPagination` component at `apps/admin-web/src/components/admin-pagination.tsx` to handle standard Cuba-aligned pagination interactions (Next/Prev, Ellipsis page handling, Result count).
-  - Adopted Indonesian terminology for "Sebelumnya" and "Berikutnya".
-  - Refactored `apps/admin-web/src/app/dashboard/media/page.tsx` to use `AdminPagination`.
-- **Server/Client Pagination Decisions**: 
-  - Server-side pagination is maintained for Media. 
-  - Bounded data like Users is left as-is (client-side capable/unpaginated) as requested by the task constraints to avoid forcing architecture-breaking API changes.
-- **Responsive & Accessibility**:
-  - Preserved existing semantic HTML tables with horizontal overflow (`overflow-x-auto`).
-  - Added `aria-label`s to Pagination components (`aria-label="Paginasi"`).
-  - Product Identity ("Teman Belajar") is completely untouched.
+`IMPLEMENTED — CORRECTIVE RELEASE` on
+`codex/task-021-task-025-regression-recovery`, based on canonical SHA
+`bb10b118c95c3432b8c51c2e2bbc5855d8153016`.
 
-## Security & Integrations
-- **Identity / Moodle**: Unchanged.
-- **Routes / API / Database**: Unchanged.
+## Findings
 
-## Quality Gates
-- **Targeted Tests / Browser QA**:
-  - Verified component structure and pagination links generate correct query strings (`?page=N`).
-  - Lint & Typecheck: Clean pass across apps (after clearing `.next` cache).
-- **CI**: Scheduled to pass.
-- **Next Roadmap Task**: Proceed with existing planned roadmap tasks (e.g., TASK-013 Full Training Programs).
+PR #25 introduced useful Indonesian presentation changes and a pagination
+component, but the reusable `AdminDataTable` was absent while Users imported it.
+A follow-up restored compilation by inlining an English table, and later dirty
+work removed the pagination component, glossary, language guard, and handoff.
+This corrective task preserves valid copy and restores the missing shared
+contracts instead of reverting the full change.
+
+## Result
+
+- `AdminDataTable` is the minimum reusable Cuba-derived table shell with
+  consistent header, count, loading, empty, and error presentation.
+- `AdminPagination` supports URL-driven server pages; `AdminClientPagination`
+  supplies the same Cuba interaction to client workspaces.
+- News, Announcements, Knowledge, and Media use existing server-side
+  `page/page_size` APIs. FAQ now sends search/status/category/page/page_size to
+  its existing server API instead of fetching 100 rows and filtering locally.
+- User Management stays a bounded Keycloak view; no Identity/RBAC endpoint or
+  behavior was changed. Analytics tables remain bounded aggregate slices where
+  no paginated source contract exists.
+- Search/filter state is retained through query parameters on server pages and
+  retained client state in FAQ/Notification workspaces.
+- Visible table/status/date/action copy is Indonesian and human-facing dates use
+  `id-ID`; English technical routes, fields, functions, role/status identifiers,
+  and event names remain unchanged.
+- Representative browser QA proved the shared Cuba table/error state, dark mode,
+  visible mobile bell, and a 390 px layout without body overflow. Portal browser
+  QA proved the final Indonesian copy and light/dark behavior.
+- One root language guard replaces duplicate per-app scanners. Separate focused
+  guards cover Admin data presentation and Notification recovery.
+
+The single glossary is `docs/governance/UI-LANGUAGE-TERMINOLOGY.md`. Admin
+bright sky/light-blue and no-orange enforcement remain mandatory in both themes.
+Final test, browser, CI, PR, merge, and main evidence is authoritative in the
+protected GitHub release metadata and final task output.

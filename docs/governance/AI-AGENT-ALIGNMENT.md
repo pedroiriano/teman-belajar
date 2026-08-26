@@ -62,6 +62,13 @@ a new convention.
 - Cuba Admin uses bright sky/light blue in both themes and forbids orange/amber
   across all application-controlled states. Agents must run the canonical
   theme and no-orange guards; warning uses yellow, not an orange substitute.
+- Application-controlled Portal/Admin copy follows
+  `docs/governance/UI-LANGUAGE-TERMINOLOGY.md`. Agents update that single
+  glossary and run the one root language guard; never translate routes, schema
+  fields, roles, event names, or code identifiers.
+- Admin data listings reuse the Cuba-derived table/pagination components and
+  existing server-side paging where available; do not fetch unbounded datasets
+  merely to paginate in the browser.
 - Shared packages contain neutral contracts/primitives, not mixed vendor themes.
 - A new route/menu must have real authorized behavior; otherwise mark it
   `Segera` or omit it.
@@ -85,6 +92,9 @@ the relevant canonical mapping, tests, and handoff in the same change.
   authority, fingerprint guests, or expose another user's personal state.
 - Personal responses use private/no-store semantics. Logs exclude subject,
   email, tokens, raw personal history, and raw search query.
+- Notification delivery is in-app first, idempotent, subject-partitioned, and
+  limited to validated internal links. Email, SMS, push providers, and a new
+  notification service require separate human/architecture approval.
 - Do not disable authentication, health checks, validation, tests, audit, or
   security scans to obtain a green result.
 

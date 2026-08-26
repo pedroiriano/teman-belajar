@@ -1,84 +1,17 @@
 import Link from "next/link";
-import React from "react";
 
-export interface AdminPaginationProps {
-  page: number;
-  pages: number;
-  total: number;
-  pageSize: number;
-  pathname: string;
-  query?: Record<string, string | number | undefined>;
+export interface AdminPaginationProps{page:number;pages:number;total:number;pageSize:number;pathname:string;query?:Record<string,string|number|undefined>;pageSizeOptions?:number[]}
+
+function numbers(page:number,pages:number):(number|"…")[]{if(pages<=7)return Array.from({length:pages},(_,index)=>index+1);if(page<=3)return[1,2,3,4,"…",pages];if(page>=pages-2)return[1,"…",pages-3,pages-2,pages-1,pages];return[1,"…",page-1,page,page+1,"…",pages]}
+function clean(query:Record<string,string|number|undefined>){return Object.fromEntries(Object.entries(query).filter(([,value])=>value!==undefined&&value!==""))}
+
+export function AdminPagination({page,pages,total,pageSize,pathname,query={},pageSizeOptions=[10,20,50]}:AdminPaginationProps){
+ if(total===0)return null;const current=Math.min(Math.max(1,page),Math.max(1,pages));const href=(next:number,size=pageSize)=>({pathname,query:clean({...query,page:next,page_size:size})});const start=(current-1)*pageSize+1,end=Math.min(current*pageSize,total);
+ return <nav className="admin-pagination" aria-label="Paginasi data"><p>Menampilkan {start}–{end} dari {total} data</p><div className="admin-page-size"><span>Data per halaman</span>{pageSizeOptions.map((size)=><Link key={size} href={href(1,size)} aria-current={size===pageSize?"true":undefined} className={size===pageSize?"is-active":""}>{size}</Link>)}</div><div className="admin-pagination-controls">{current>1?<Link className="admin-button-secondary !min-h-9 !px-3" href={href(current-1)} rel="prev">Sebelumnya</Link>:<span className="admin-button-secondary !min-h-9 !px-3 opacity-50" aria-disabled="true">Sebelumnya</span>}<div className="admin-page-numbers">{numbers(current,pages).map((value,index)=>value==="…"?<span key={`ellipsis-${index}`} aria-hidden="true">…</span>:<Link key={value} href={href(value)} aria-label={`Halaman ${value}`} aria-current={value===current?"page":undefined} className={value===current?"is-active":""}>{value}</Link>)}</div>{current<pages?<Link className="admin-button-secondary !min-h-9 !px-3" href={href(current+1)} rel="next">Berikutnya</Link>:<span className="admin-button-secondary !min-h-9 !px-3 opacity-50" aria-disabled="true">Berikutnya</span>}</div></nav>
 }
 
-export function AdminPagination({ page, pages, total, pageSize, pathname, query = {} }: AdminPaginationProps) {
-  const start = (page - 1) * pageSize + 1;
-  const end = Math.min(page * pageSize, total);
-  
-  if (total === 0) return null;
 
-  // Generate page numbers
-  const getPageNumbers = () => {
-    const pageNumbers: (number | "...")[] = [];
-    if (pages <= 7) {
-      for (let i = 1; i <= pages; i++) pageNumbers.push(i);
-    } else {
-      if (page <= 3) {
-        pageNumbers.push(1, 2, 3, 4, "...", pages);
-      } else if (page >= pages - 2) {
-        pageNumbers.push(1, "...", pages - 3, pages - 2, pages - 1, pages);
-      } else {
-        pageNumbers.push(1, "...", page - 1, page, page + 1, "...", pages);
-      }
-    }
-    return pageNumbers;
-  };
-
-  const q = (p: number) => ({ ...query, page: p });
-
-  return (
-    <nav className="mt-5 flex items-center justify-between flex-wrap gap-4" aria-label="Paginasi">
-      <p className="text-sm text-slate-500">
-        Menampilkan {start}–{end} dari {total} data
-      </p>
-      
-      <div className="flex gap-1 items-center">
-        {page > 1 ? (
-          <Link className="admin-button-secondary !px-3" href={{ pathname, query: q(page - 1) }}>
-            Sebelumnya
-          </Link>
-        ) : (
-          <span className="admin-button-secondary !px-3 opacity-50">Sebelumnya</span>
-        )}
-        
-        <div className="hidden sm:flex gap-1 px-2">
-          {getPageNumbers().map((p, i) => 
-            p === "..." ? (
-              <span key={`dots-${i}`} className="px-2 py-1 text-slate-400">...</span>
-            ) : (
-              <Link 
-                key={p} 
-                href={{ pathname, query: q(p) }}
-                className={`grid h-8 min-w-8 place-items-center rounded-md text-sm font-bold transition ${
-                  p === page 
-                    ? "bg-sky-50 text-sky-700" 
-                    : "text-slate-600 hover:bg-slate-50"
-                }`}
-                aria-current={p === page ? "page" : undefined}
-              >
-                {p}
-              </Link>
-            )
-          )}
-        </div>
-
-        {page < pages ? (
-          <Link className="admin-button-secondary !px-3" href={{ pathname, query: q(page + 1) }}>
-            Berikutnya
-          </Link>
-        ) : (
-          <span className="admin-button-secondary !px-3 opacity-50">Berikutnya</span>
-        )}
-      </div>
-    </nav>
-  );
+export function AdminClientPagination({page,pages,total,pageSize,onPageChange,onPageSizeChange,pageSizeOptions=[10,20,50]}:{page:number;pages:number;total:number;pageSize:number;onPageChange:(page:number)=>void;onPageSizeChange?:(pageSize:number)=>void;pageSizeOptions?:number[]}){
+ if(total===0)return null;const current=Math.min(Math.max(1,page),Math.max(1,pages));const start=(current-1)*pageSize+1,end=Math.min(current*pageSize,total);
+ return <nav className="admin-pagination" aria-label="Paginasi data"><p>Menampilkan {start}–{end} dari {total} data</p>{onPageSizeChange&&<label className="admin-page-size"><span>Data per halaman</span><select className="admin-input !min-h-9 !w-auto !py-1" value={pageSize} onChange={(event)=>onPageSizeChange(Number(event.target.value))}>{pageSizeOptions.map((size)=><option key={size} value={size}>{size}</option>)}</select></label>}<div className="admin-pagination-controls"><button type="button" className="admin-button-secondary !min-h-9 !px-3" disabled={current<=1} onClick={()=>onPageChange(current-1)}>Sebelumnya</button><div className="admin-page-numbers">{numbers(current,pages).map((value,index)=>value==="…"?<span key={`ellipsis-${index}`} aria-hidden="true">…</span>:<button type="button" key={value} aria-label={`Halaman ${value}`} aria-current={value===current?"page":undefined} className={value===current?"is-active":""} onClick={()=>onPageChange(value)}>{value}</button>)}</div><button type="button" className="admin-button-secondary !min-h-9 !px-3" disabled={current>=pages} onClick={()=>onPageChange(current+1)}>Berikutnya</button></div></nav>
 }

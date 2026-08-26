@@ -1,54 +1,63 @@
 # UI Language Terminology & Glossary
 
-This document governs the official Indonesian translation terms used across Teman Belajar (Portal and Admin Web) to maintain consistency and enforce a professional, human-facing UI.
+This is the single canonical glossary for application-controlled presentation
+copy in the Teman Belajar Portal and Admin Web.
 
-## General Principles
-1. **Human-Facing UI = Bahasa Indonesia**: All presentation copy (navigation, buttons, modals, empty states) must be in standard Indonesian.
-2. **Technical Identifiers = Unchanged**: Do not translate variables, API routes, JSON keys, CSS classes, roles (e.g. `Portal Administrator`), or technical metrics.
-3. **Admin Tables = Cuba Aligned**: Admin Data Tables and Pagination must follow the Cuba layout and behavior.
+## Rules
 
-## Core Terminology Mapping
+1. Human-facing navigation, headings, labels, actions, validation, empty/error
+   states, tooltips, and accessibility names use natural Indonesian.
+2. Technical contracts remain English: routes, query parameters, JSON/database
+   fields, functions, classes, event names, role identifiers, and vendor/product
+   proper nouns are not translated.
+3. User-generated and editorial content is displayed as authored.
+4. Admin tables and pagination follow the Cuba-derived pattern; Portal remains
+   Techwind-derived. The two theme foundations must not cross-import.
+5. Run `node scripts/verify-ui-language-contract.mjs` after changing UI copy.
 
-| Source Term (English) | Target Display (Indonesian) | Context / Component | Exemption / Unchanged Internal |
-| --- | --- | --- | --- |
-| Admin Console | Panel Administrasi | Branding, header, navigation | Route `/dashboard` unchanged |
-| Workspace | Ruang Kerja | Shell group title | - |
-| Media Library | Pustaka Media | Sidebar, page title | Route `/dashboard/media` unchanged |
-| Dashboard | Dasbor | Main landing | Route `/dashboard` unchanged |
-| Learning Experience | Pengalaman Belajar | Portal slogan/brand | - |
-| Workflow editorial | Alur Kerja Editorial | Admin instructions | - |
-| Search | Cari | Input placeholders | Query param `?search=` unchanged |
-| Taxonomy & SEO | Taksonomi & SEO | Navigation | Route `/dashboard/taxonomy` unchanged |
+## Core Terms
 
-## Actions & Status
-
-| Source Term | Target Display | Context / Component |
+| Technical/source term | Indonesian display | Internal exemption |
 | --- | --- | --- |
-| Preview | Pratinjau | Link, Button |
-| Draft | Draf | Status badge |
-| Review | Tinjau / Peninjauan | Button, Status |
-| Published | Terbit | Status badge |
-| Archive | Arsipkan | Action Button |
-| Create | Tambah / Buat | Button |
-| Edit | Ubah / Sunting | Action Link |
-| Save | Simpan | Button |
-| Cancel | Batal | Button |
-| Delete | Hapus | Button |
+| Admin Console | Panel Administrasi | `/dashboard` unchanged |
+| Dashboard | Dasbor | component/route identifiers unchanged |
+| Workspace | Ruang Kerja | internal identifiers unchanged |
+| Media Library | Pustaka Media | `/dashboard/media` unchanged |
+| Taxonomy | Taksonomi | API/schema identifiers unchanged |
+| Learning Experience | Pengalaman Belajar | product architecture terms may remain technical in docs |
+| Workflow | Alur Kerja | event `content.workflow` unchanged |
+| Preview | Pratinjau | source identifiers unchanged |
+| Draft | Draf | status `draft` unchanged |
+| Review | Tinjau / Peninjauan | status `in_review` unchanged |
+| Published | Terbit | status `published` unchanged |
+| Upload / Download | Unggah / Unduh | HTTP and function identifiers unchanged |
+| Save / Cancel | Simpan / Batal | function identifiers unchanged |
+| Active / Disabled | Aktif / Nonaktif | status identifiers unchanged |
+| Caption | Keterangan | database field `caption` unchanged |
 
-## Admin Data Tables & Pagination Terminology
+## Notification Terms
 
-| Source Term | Target Display | Context / Component |
+| Technical/source term | Indonesian display | Internal exemption |
 | --- | --- | --- |
-| Previous | Sebelumnya | Pagination control |
-| Next | Berikutnya | Pagination control |
-| Loading... | Memuat data... | Table state |
-| No data available | Belum ada data. | Table empty state |
-| No results found | Tidak ada data yang sesuai dengan pencarian. | Search empty state |
-| Showing X to Y of Z entries | Menampilkan X–Y dari Z data | Pagination info |
+| Notification | Notifikasi | package/table/JSON identifiers unchanged |
+| Notification Center | Pusat Notifikasi | route identifiers unchanged |
+| Unread / Read | Belum Dibaca / Sudah Dibaca | `read_at` unchanged |
+| Mark as read | Tandai sebagai sudah dibaca | function/API identifiers unchanged |
+| Mark all as read | Tandai semua sudah dibaca | function/API identifiers unchanged |
+| Preferences | Pengaturan Notifikasi | event types unchanged |
 
-## Technical Exemptions
-The following terms remain in English because they are recognized technical standards or have no clear, natural Indonesian equivalent that preserves their technical meaning:
-- API, URL, HTTP/HTTPS, JSON, JSON-LD
-- SEO, Open Graph, OAuth, OIDC, SSO, OpenAPI
-- Next.js, React, PostgreSQL, Redis, MinIO, Meilisearch, Keycloak, Moodle, Docker, Prometheus, Grafana, Loki, Tempo
-- Webhook, WebSocket, UUID, SHA-256
+## Tables and Pagination
+
+| Source term | Indonesian display |
+| --- | --- |
+| Previous / Next | Sebelumnya / Berikutnya |
+| Loading | Memuat data… |
+| No data available | Belum ada data. |
+| No results found | Tidak ada data yang sesuai dengan pencarian. |
+| Showing X–Y of Z entries | Menampilkan X–Y dari Z data |
+| Rows per page | Data per halaman |
+
+Technical standards and product names such as API, URL, HTTP, JSON, JSON-LD,
+SEO, Open Graph, OAuth, OIDC, SSO, OpenAPI, Next.js, React, PostgreSQL, Redis,
+MinIO, Meilisearch, Keycloak, Moodle, Docker, Prometheus, Grafana, Loki, Tempo,
+Webhook, WebSocket, UUID, and SHA-256 remain unchanged.

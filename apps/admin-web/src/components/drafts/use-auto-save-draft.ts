@@ -147,11 +147,11 @@ export function useAutoSaveDraft<TPayload extends DraftPayload>(options: AutoSav
         localSaved = false;
       }
       setState("tersimpan");
-      setMessage(localSaved ? "Draft tersimpan di server dan perangkat ini." : "Draft tersimpan di server; penyimpanan lokal tidak tersedia.");
+      setMessage(localSaved ? "Draf tersimpan di server dan perangkat ini." : "Draf tersimpan di server; penyimpanan lokal tidak tersedia.");
       return true;
     } catch (error) {
       setState(localSaved ? "lokal" : "gagal");
-      setMessage(localSaved ? "Server belum terjangkau. Salinan aman tersimpan di perangkat ini." : (error instanceof Error ? error.message : "Draft belum dapat disimpan."));
+      setMessage(localSaved ? "Server belum terjangkau. Salinan aman tersimpan di perangkat ini." : (error instanceof Error ? error.message : "Draf belum dapat disimpan."));
       return false;
     } finally {
       saveInFlight.current = false;
@@ -209,7 +209,7 @@ export function useAutoSaveDraft<TPayload extends DraftPayload>(options: AutoSav
           const conflict = Boolean(server && local && serialized(server.payload) !== serialized(local.payload));
           setRecovery({ server, local, recommended: newerSource(server, local), conflict });
           setState(conflict ? "konflik" : "siap");
-          setMessage(conflict ? "Ditemukan dua versi draft. Tinjau pilihan pemulihan." : "Draft tersimpan ditemukan dan siap dipulihkan.");
+          setMessage(conflict ? "Ditemukan dua versi draf. Tinjau pilihan pemulihan." : "Draf tersimpan ditemukan dan siap dipulihkan.");
         } else {
           lastSubmitted.current = serialized(valueRef.current);
           setState("siap");
@@ -250,7 +250,7 @@ export function useAutoSaveDraft<TPayload extends DraftPayload>(options: AutoSav
     } else {
       lastSubmitted.current = serialized(selected);
       setState("tersimpan");
-      setMessage("Draft server dipulihkan.");
+      setMessage("Draf server dipulihkan.");
       setLastSavedAt(recovery?.server?.updated_at);
     }
   }, [options, recovery, savePayload]);
@@ -269,7 +269,7 @@ export function useAutoSaveDraft<TPayload extends DraftPayload>(options: AutoSav
     setRecovery(undefined);
     options.onStartNew(options.emptyValue);
     setState("siap");
-    setMessage("Draft dibuang. Form siap digunakan kembali.");
+    setMessage("Draf dibuang. Form siap digunakan kembali.");
   }, [options]);
 
   const startNew = useCallback(() => {
@@ -282,7 +282,7 @@ export function useAutoSaveDraft<TPayload extends DraftPayload>(options: AutoSav
     setURLDraftKey(key);
     options.onStartNew(options.emptyValue);
     setState("siap");
-    setMessage("Draft baru dibuat. Draft sebelumnya tetap tersimpan.");
+    setMessage("Draf baru dibuat. Draf sebelumnya tetap tersimpan.");
   }, [options, setURLDraftKey]);
 
   const finalize = useCallback(async () => {

@@ -22,6 +22,7 @@ import (
 	searchadapter "teman-belajar-api/internal/adapters/search"
 	engagementapplication "teman-belajar-api/internal/application/engagement"
 	integrationapplication "teman-belajar-api/internal/application/integration"
+	notificationapplication "teman-belajar-api/internal/application/notification"
 	searchapplication "teman-belajar-api/internal/application/search"
 	"teman-belajar-api/internal/domain/analytics"
 	"teman-belajar-api/internal/domain/cms"
@@ -90,6 +91,8 @@ func main() {
 	discoverySvc := discoverability.NewService(discoveryRepo, auditRepo)
 	faqRepo := postgres.NewFAQRepository(db)
 	faqSvc := faq.NewService(faqRepo, auditRepo)
+	notificationRepo := postgres.NewNotificationRepository(db)
+	notificationSvc := notificationapplication.NewService(notificationRepo, auditRepo, 90)
 
 	moodleToken := os.Getenv("TB_MOODLE_WEBSERVICE_TOKEN")
 	moodleBaseURL := os.Getenv("MOODLE_INTERNAL_BASE_URL")
@@ -127,6 +130,7 @@ func main() {
 	faqHandler := handler.NewFAQHandler(faqSvc)
 	draftHandler := handler.NewDraftHandler(draftSvc)
 	learningHandler := handler.NewLearningHandler(learningSvc)
+	notificationHandler := handler.NewNotificationHandler(notificationSvc)
 
 	// Media Storage & Services
 	minioEndpoint := os.Getenv("MINIO_ENDPOINT")
@@ -253,6 +257,12 @@ func main() {
 	mux.Handle("GET /api/v1/me/recent-views", authMiddleware(http.HandlerFunc(engagementHandler.ListRecentViews)))
 	mux.Handle("PUT /api/v1/me/recent-views/{targetType}/{targetId}", authMiddleware(http.HandlerFunc(engagementHandler.RecentView)))
 	mux.Handle("GET /api/v1/me/recommendations", authMiddleware(http.HandlerFunc(engagementHandler.Recommendations)))
+	mux.Handle("GET /api/v1/me/notifications", authMiddleware(http.HandlerFunc(notificationHandler.List)))
+	mux.Handle("GET /api/v1/me/notifications/summary", authMiddleware(http.HandlerFunc(notificationHandler.Summary)))
+	mux.Handle("PATCH /api/v1/me/notifications/{id}/read", authMiddleware(http.HandlerFunc(notificationHandler.MarkRead)))
+	mux.Handle("POST /api/v1/me/notifications/read-all", authMiddleware(http.HandlerFunc(notificationHandler.MarkAllRead)))
+	mux.Handle("GET /api/v1/me/notification-preferences", authMiddleware(http.HandlerFunc(notificationHandler.Preferences)))
+	mux.Handle("PUT /api/v1/me/notification-preferences/{eventType}", authMiddleware(http.HandlerFunc(notificationHandler.SetPreference)))
 	mux.HandleFunc("GET /api/v1/ratings/{targetType}/{targetId}", engagementHandler.RatingSummary)
 
 	// Learning endpoints
