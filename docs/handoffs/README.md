@@ -68,3 +68,4 @@ For FAQ CMS and Help Center expansion work, read `TASK-017-HANDOFF.md` together
 with `docs/runbooks/FAQ-CMS-HELP-CENTER-OPERATIONS.md`. FAQ answers are plain
 text, public visibility is publication-gated, JSON-LD must match visible
 indexable content, and Admin Auto-Save/Media/workflow rules must not be weakened.
+TASK-017 is `DONE — MERGED via PR #23` through squash commit `224abe0e`.

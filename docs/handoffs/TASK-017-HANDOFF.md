@@ -2,15 +2,17 @@
 
 ## Release state
 
-**READY FOR HUMAN REVIEW — PR #23 — NOT MERGED.** Implementation, local
-acceptance, and the first complete protected-check run are green. Merge remains
-forbidden without explicit human approval.
+**DONE — MERGED via PR #23.** Implementation, local acceptance, and protected
+checks passed before PR #23 was squash-merged into `main`.
 
 - Branch: `codex/task-017-faq-cms-help-center`.
 - Fresh-main base: `2ec78ae88d930550dcb64ce30f9fa670a5bdd04b`.
 - Source commit: `500ee15` (`feat(faq): add governed FAQ CMS and Help Center`).
 - PR evidence commit: `15486eb` (`docs(task-017): record PR and acceptance evidence`).
 - Pull request: [#23](https://github.com/pedroiriano/teman-belajar/pull/23).
+- Squash merge commit: `224abe0e380df47b4a65a76c4131ce63a6554183`
+  (`feat: implement TASK-017 FAQ CMS and Help Center (#23)`).
+- Merged at: `2026-08-26T01:11:15Z` (`2026-08-26 08:11:15 WIB`).
 - Migration: `017_create_faq_help_center.sql`.
 - User-owned `latest_prompt.txt`: untracked, untouched, and excluded.
 
@@ -85,8 +87,8 @@ records, credentials, and production were untouched. The worker then indexed
 15 news, 1 knowledge article, and 4 published FAQs, and the FAQ search smoke
 test returned `/help#lokasi-kelas-formal` as expected.
 
-## Remaining release procedure
+## Post-merge state
 
-Obtain explicit human approval before merging PR #23 through the protected
-branch workflow. Do not deploy, rotate secrets, modify Identity, or start
-another task as part of this handoff.
+No TASK-017 implementation work remains. This merge does not authorize
+production deployment, secret rotation, Identity changes, or relaxation of
+TASK-012 `PRODUCTION HOLD` and its outstanding human decisions.
