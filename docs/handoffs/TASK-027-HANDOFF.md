@@ -2,7 +2,7 @@
 
 ## Status
 
-`IMPLEMENTED — READY FOR REVIEW`
+`DONE — MERGED via PR #30`
 
 ## Implemented
 
@@ -42,8 +42,15 @@
   slug/SEO input family, use dark surfaces with light readable text.
 - Agent-governance verification and final whitespace review passed.
 
-No commit, push, PR, merge, production deployment, secret rotation, schema
-change, or Identity/SSO/RBAC change is part of this local handoff.
+## Merge record
+
+- Source commit: `fc0d826b3ad71b7914239ae724081e4605c850c4`.
+- Protected checks: 11/11 passed.
+- PR: `#30`.
+- Squash commit on `main`: `f6fc598ee231d2c879d7b5aca7ab13158fbaa3e8`.
+- Merged at: `2026-08-26T12:16:37Z`.
+- No branch-protection bypass, production deployment, secret rotation, schema
+  change, or Identity/SSO/RBAC change occurred.
 
 ## Rollback
 

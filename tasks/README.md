@@ -34,7 +34,7 @@ Task awal:
 - TASK-024 Post-Expansion Release Gate — `PLANNED`
 - TASK-025 Indonesian UI Language Harmonization, Cuba Data Tables & Pagination — `IMPLEMENTED — CORRECTIVE RELEASE`
 - TASK-026 Full Techwind & Cuba Runtime UI Foundation Migration — `DONE — MERGED via PR #28`
-- TASK-027 Full Route Online Course UI Harmonization — `IMPLEMENTED — READY FOR REVIEW`
+- TASK-027 Full Route Online Course UI Harmonization — `DONE — MERGED via PR #30`
 
 ## Rule
 
