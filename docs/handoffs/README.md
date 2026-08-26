@@ -90,4 +90,6 @@ and `docs/design-system/FULL-ROUTE-ONLINE-COURSE-MATRIX.md`. The primary Portal
 baseline is Techwind `html/index-course.html`; the primary Admin baseline is
 Cuba `html/template/template/dashboard-03.html`. This extends TASK-026 across
 all active routes without authorizing fake `Segera` features, vendor demo
-runtime, Identity changes, or weakening the Admin no-orange contract.
+runtime, Identity changes, or weakening the Admin no-orange contract. TASK-027
+is `DONE — MERGED via PR #30` through squash commit
+`f6fc598ee231d2c879d7b5aca7ab13158fbaa3e8`.
