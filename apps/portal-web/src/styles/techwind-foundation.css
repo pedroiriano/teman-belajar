@@ -1,0 +1,86 @@
+/*
+ * Teman Belajar Techwind runtime foundation.
+ * Source map: vendor/ui-templates/techwind/ORIGINAL/html/assets/css/tailwind.css
+ * Product components remain semantic aliases; vendor demo branding/data are excluded.
+ */
+.techwind-foundation {
+  font-family: var(--font-techwind-nunito), ui-sans-serif, system-ui, sans-serif;
+  min-width: 320px;
+}
+
+.techwind-topnav {
+  width: 100%;
+  transition: background-color 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+}
+
+.techwind-topnav.nav-sticky {
+  box-shadow: 0 8px 30px rgba(15, 23, 42, 0.08);
+}
+
+.navigation-menu {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.navigation-menu a,
+.navigation-menu summary,
+.navbar-toggle,
+.techwind-back-to-top {
+  -webkit-tap-highlight-color: transparent;
+}
+
+.navbar-toggle {
+  position: relative;
+}
+
+.navbar-toggle.open {
+  transform: translateY(-1px);
+}
+
+.logo {
+  text-decoration: none;
+}
+
+.techwind-card,
+.portal-card {
+  isolation: isolate;
+}
+
+.techwind-button-primary,
+.portal-button-primary,
+.techwind-button-secondary,
+.portal-button-secondary {
+  touch-action: manipulation;
+}
+
+.techwind-form-control,
+.portal-control,
+.portal-search-input {
+  font: inherit;
+}
+
+.techwind-footer {
+  position: relative;
+}
+
+.techwind-back-to-top {
+  will-change: transform, opacity;
+}
+
+@media (max-width: 1279px) {
+  .navigation-menu {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .techwind-foundation *,
+  .techwind-foundation *::before,
+  .techwind-foundation *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}

@@ -1,0 +1,75 @@
+/*
+ * Teman Belajar Cuba runtime foundation.
+ * Source map: vendor/ui-templates/cuba/ORIGINAL/html/template/assets/css
+ * Product tokens override vendor color values; the bright sky/light-blue palette remains mandatory.
+ */
+.cuba-foundation {
+  font-family: var(--font-cuba-rubik), ui-sans-serif, system-ui, sans-serif;
+  min-width: 320px;
+}
+
+.page-wrapper {
+  min-height: 100vh;
+  width: 100%;
+}
+
+.page-header,
+.sidebar-wrapper,
+.page-body-wrapper,
+.page-body,
+.footer {
+  min-width: 0;
+}
+
+.page-header {
+  transition: background-color 180ms ease, border-color 180ms ease;
+}
+
+.sidebar-wrapper {
+  overflow: hidden;
+}
+
+.page-body-wrapper {
+  display: flex;
+  min-height: 100vh;
+  flex-direction: column;
+}
+
+.page-body {
+  flex: 1 1 auto;
+}
+
+.cuba-card,
+.admin-card,
+.admin-form-card,
+.cuba-data-table {
+  isolation: isolate;
+}
+
+.cuba-table {
+  font-variant-numeric: tabular-nums;
+}
+
+.cuba-pagination a,
+.cuba-pagination button,
+.admin-button,
+.admin-button-secondary {
+  touch-action: manipulation;
+}
+
+.admin-input,
+.admin-topbar-search,
+.cuba-table {
+  font-family: inherit;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cuba-foundation *,
+  .cuba-foundation *::before,
+  .cuba-foundation *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}

@@ -2,11 +2,12 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useCallback, useMemo, useRef, useState, type ReactNode } from "react";
 
 import { AdminIcon, type AdminIconName } from "@/components/admin-icon";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { AdminNotificationCenter } from "@/components/notification-center";
+import { useCubaDisclosureRuntime, useCubaDrawerRuntime } from "@/components/cuba-runtime";
 
 type NavigationItem = { href?: string; label: string; icon: AdminIconName; disabled?: boolean };
 
@@ -125,63 +126,14 @@ export function AdminShell({ children, userName, userEmail, role }: { children: 
     [query],
   );
 
-  useEffect(() => {
-    if (!mobileSidebarOpen) return;
-    const previousOverflow = document.body.style.overflow;
-    const opener = mobileMenuButtonRef.current;
-    document.body.style.overflow = "hidden";
-    const drawer = mobileDrawerRef.current;
-    const focusableSelector = 'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
-    const focusable = () => Array.from(drawer?.querySelectorAll<HTMLElement>(focusableSelector) ?? []).filter((element) => element.getClientRects().length > 0);
-    window.requestAnimationFrame(() => focusable()[0]?.focus());
-
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        event.preventDefault();
-        setMobileSidebarOpen(false);
-        return;
-      }
-      if (event.key !== "Tab") return;
-      const items = focusable();
-      if (items.length === 0) {
-        event.preventDefault();
-        drawer?.focus();
-        return;
-      }
-      const first = items[0];
-      const last = items[items.length - 1];
-      if (event.shiftKey && document.activeElement === first) {
-        event.preventDefault();
-        last.focus();
-      } else if (!event.shiftKey && document.activeElement === last) {
-        event.preventDefault();
-        first.focus();
-      }
-    };
-
-    document.addEventListener("keydown", onKeyDown);
-    return () => {
-      document.removeEventListener("keydown", onKeyDown);
-      document.body.style.overflow = previousOverflow;
-      opener?.focus();
-    };
-  }, [mobileSidebarOpen]);
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      const details = document.querySelector<HTMLDetailsElement>('details.admin-profile-dropdown');
-      if (details && details.hasAttribute('open') && !details.contains(event.target as Node)) {
-        details.removeAttribute('open');
-      }
-    };
-    document.addEventListener('click', handleClickOutside);
-    return () => document.removeEventListener('click', handleClickOutside);
-  }, []);
+  const closeMobileSidebar = useCallback(() => setMobileSidebarOpen(false), []);
+  useCubaDrawerRuntime({ open: mobileSidebarOpen, drawerRef: mobileDrawerRef, openerRef: mobileMenuButtonRef, onClose: closeMobileSidebar });
+  useCubaDisclosureRuntime();
 
   return (
-    <div className={`min-h-screen lg:grid ${desktopSidebarOpen ? "lg:grid-cols-[276px_1fr]" : "lg:grid-cols-[1fr]"}`}>
+    <div id="pageWrapper" className={`page-wrapper compact-wrapper cuba-foundation min-h-screen lg:grid ${desktopSidebarOpen ? "lg:grid-cols-[276px_1fr]" : "lg:grid-cols-[1fr]"}`}>
       {desktopSidebarOpen && (
-        <aside id="admin-sidebar" className="admin-sidebar fixed inset-y-0 left-0 z-40 hidden w-[276px] lg:block">
+        <aside id="admin-sidebar" className="sidebar-wrapper admin-sidebar fixed inset-y-0 left-0 z-40 hidden w-[276px] lg:block" data-sidebar-layout="stroke-svg">
           <Sidebar pathname={pathname} desktopClose={() => setDesktopSidebarOpen(false)} />
         </aside>
       )}
@@ -196,8 +148,8 @@ export function AdminShell({ children, userName, userEmail, role }: { children: 
           </aside>
         </div>
       )}
-      <div className={`min-w-0 ${desktopSidebarOpen ? "lg:col-start-2" : "lg:col-start-1"}`}>
-        <header className="admin-topbar sticky top-0 z-30 border-b backdrop-blur">
+      <div className={`page-body-wrapper min-w-0 ${desktopSidebarOpen ? "lg:col-start-2" : "lg:col-start-1"}`}>
+        <header className="page-header admin-topbar sticky top-0 z-30 border-b backdrop-blur">
           <div className="flex h-[76px] items-center gap-3 px-4 sm:px-6 lg:px-8">
             <button ref={mobileMenuButtonRef} type="button" className="admin-menu-button grid h-10 w-10 place-items-center rounded-xl border lg:hidden" aria-label="Buka navigasi admin" aria-controls="admin-mobile-sidebar" aria-expanded={mobileSidebarOpen} onClick={() => setMobileSidebarOpen(true)}>
               <AdminIcon name="menu" className="h-5 w-5" />
@@ -229,8 +181,8 @@ export function AdminShell({ children, userName, userEmail, role }: { children: 
           </div>
           <div className="flex min-h-11 items-center gap-2 border-t px-4 text-xs text-slate-500 sm:px-6 lg:px-8"><Link href="/dashboard" className="font-bold text-sky-700">Admin</Link>{breadcrumbs.slice(1).map((crumb) => <span key={crumb} className="flex items-center gap-2"><span aria-hidden="true">/</span><span>{crumb}</span></span>)}</div>
         </header>
-        <main id="admin-content" className="min-h-[calc(100vh-154px)] p-4 sm:p-6 lg:p-8">{children}</main>
-        <footer className="admin-footer"><span>© {new Date().getFullYear()} Teman Belajar</span><span>Panel Administrasi · pengalaman berbasis Cuba</span></footer>
+        <main id="admin-content" className="page-body min-h-[calc(100vh-154px)] p-4 sm:p-6 lg:p-8">{children}</main>
+        <footer className="footer admin-footer"><span>© {new Date().getFullYear()} Teman Belajar</span><span>Panel Administrasi · pengalaman perusahaan</span></footer>
       </div>
     </div>
   );

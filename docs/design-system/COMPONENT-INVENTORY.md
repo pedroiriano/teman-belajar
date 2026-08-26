@@ -30,9 +30,11 @@ Status:
 | Accessibility Helpers | N | N | S |
 | Light/Dark Theme Toggle | R/Adapt | R/Adapt | Application-specific controller, shared persistence contract |
 
-## Implementation Baseline (TASK-007R UI reconciliation)
+## Implementation Baseline (TASK-026 runtime foundation)
 
-Status implementasi berikut wajib dipertahankan. `Implemented` berarti pola vendor sudah diadaptasi ke React/Next.js dan token Teman Belajar; bukan berarti seluruh halaman demo vendor disalin.
+Status implementasi berikut wajib dipertahankan. `Implemented` berarti pola
+vendor berjalan melalui foundation React/Next.js dan semantic token Teman
+Belajar; bukan berarti seluruh halaman demo atau plugin vendor disalin.
 
 | Area | Portal / Techwind | Admin / Cuba | Canonical implementation |
 |---|---|---|---|
@@ -64,9 +66,9 @@ Escape, focus containment/restore, and body-scroll locking.
 
 ### Strict maintenance rules
 
-1. New Portal UI must start from a relevant Techwind pattern and use `portal-*` semantic classes.
-2. New Admin UI must render inside `AdminShell` and use `admin-*` semantic classes.
-3. Never import vendor JavaScript, Pug, precompiled CSS, demo data, or global theme into product code.
+1. New Portal UI must compose the Techwind foundation and `portal-*` semantic aliases.
+2. New Admin UI must render inside the Cuba foundation `AdminShell` and use `admin-*` semantic aliases.
+3. Never load vendor global JavaScript, Pug, complete precompiled CSS, demo data, or branding. Adapt relevant CSS/behavior through the declared runtime entry points.
 4. A vendor demo component is only implemented when a product feature needs it. Unsupported menu entries must be visibly disabled or omitted; never create deceptive links.
 5. Every interactive component requires keyboard behavior, an accessible name, and loading/error/empty states where applicable.
 6. Portal and Admin theme tokens must remain isolated even though their stored light/dark preference uses the same contract.
@@ -74,21 +76,18 @@ Escape, focus containment/restore, and body-scroll locking.
    `ADMIN-UI-VISUAL-CONTRACT.md`: bright sky/light blue in both themes, no
    orange/amber application color, and yellow-only warning semantics.
 
-Inventory is maintained against implemented product patterns. At TASK-011B
-verification time, each governed `ORIGINAL/` directory contains only its vendor
-drop placeholder README; exact licensed source-page comparison is therefore not
-available in this repository checkout. This limitation must not be rewritten as
-an exact vendor-source audit.
+Inventory is maintained against implemented product patterns and the immutable
+licensed sources present at TASK-026. Tree baselines and runtime inclusion/
+exclusion are recorded in `VENDOR-UI-RUNTIME-MANIFEST.md`.
 
 ## Vendor Intake Report
 
-### Current vendor-reference availability
+### Current vendor-source availability
 
-- Techwind location: `vendor/ui-templates/techwind/ORIGINAL/`; current content:
-  `README_DROP_TECHWIND_HERE.md` only.
-- Cuba location: `vendor/ui-templates/cuba/ORIGINAL/`; current content:
-  `README_DROP_CUBA_HERE.md` only.
-- Product code must continue using the established Techwind-derived Portal and
-  Cuba-derived Admin semantic patterns. Once licensed originals are supplied,
-  they remain read-only and only task-relevant patterns may be adapted. Do not
-  invent package/dependency claims from a missing vendor drop.
+- Techwind licensed HTML/CSS/JS/assets are available under its `ORIGINAL/`
+  tree; the bundled CSS declares Tailwind 4.2.2.
+- Cuba licensed HTML/Pug/CSS/JS/assets are available under its `ORIGINAL/`
+  tree; its build manifest declares Vite 6.0.1 and Tailwind 3.4.17.
+- Product runtime remains Next.js 16/React 19/Tailwind 3.4.19. Relevant vendor
+  patterns are translated into the bounded foundation; vendor build systems
+  and global bundles are reference inputs, not product dependencies.

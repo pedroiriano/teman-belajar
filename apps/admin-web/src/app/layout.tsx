@@ -1,13 +1,14 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Rubik } from "next/font/google";
 import { getServerSession } from "next-auth/next";
 import { AdminShell } from "@/components/admin-shell";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { authOptions } from "@/lib/auth";
 import { AnalyticsTracker } from "@/components/analytics-tracker";
+import "@/styles/cuba-foundation.css";
 import "./globals.css";
 
-const inter = Inter({ subsets: ["latin"], display: "swap" });
+const cubaFont = Rubik({ subsets: ["latin"], display: "swap", variable: "--font-cuba-rubik" });
 export const metadata: Metadata = { title: { default: "Admin Teman Belajar", template: "%s | Admin Teman Belajar" }, description: "Panel administrasi Teman Belajar untuk pengelolaan konten dan alur kerja editorial." };
 
 const themeInitializationScript = `
@@ -31,7 +32,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
   return (
     <html lang="id" suppressHydrationWarning>
       <head><script dangerouslySetInnerHTML={{ __html: themeInitializationScript }} /></head>
-      <body className={`${inter.className} admin-root min-h-screen antialiased`}>
+      <body data-ui-foundation="cuba" className={`${cubaFont.variable} font-rubik cuba-foundation admin-root min-h-screen antialiased`}>
         <AnalyticsTracker />
         <a href="#admin-content" className="fixed left-4 top-3 z-[100] -translate-y-20 rounded-lg bg-slate-950 px-4 py-2 text-sm font-bold text-white focus:translate-y-0">Lewati ke konten</a>
         {session ? <AdminShell userName={session.user?.name} userEmail={session.user?.email} role={session.roles?.includes("Portal Administrator") ? "Portal Administrator" : session.roles?.includes("Reviewer") ? "Reviewer" : "Content Editor"}>{children}</AdminShell> : (

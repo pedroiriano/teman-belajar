@@ -1,5 +1,5 @@
 # ADR-013 — Techwind + Cuba as UI Vendor Foundations
-**Status:** Accepted
+**Status:** Superseded by ADR-018
 
 ## Context
 
@@ -18,6 +18,10 @@ Menggabungkan keduanya dalam satu global theme berisiko menimbulkan konflik CSS,
 5. Theme/CSS vendor tidak boleh cross-import.
 6. `packages/ui` hanya shared neutral primitive.
 7. shadcn/ui bersifat selective fallback.
+
+> ADR-018 mengganti pendekatan reference-only ini dengan runtime foundation
+> yang eksplisit dan dapat diuji, tanpa mengubah batas aplikasi atau kewajiban
+> menjaga vendor `ORIGINAL/` tetap read-only.
 
 ## Consequences
 

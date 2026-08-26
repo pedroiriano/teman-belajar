@@ -2,12 +2,13 @@
 
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
-import { useEffect, useState, type ReactNode } from "react";
+import { type ReactNode } from "react";
 
 import { PortalIcon } from "@/components/portal-icon";
 import { SilentSsoBridge } from "@/components/silent-sso-bridge";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { PortalNotificationCenter } from "@/components/notification-center";
+import { useTechwindRuntime } from "@/components/techwind-runtime";
 
 type NavigationItem = { href?: string; label: string; description: string; comingSoon?: boolean };
 type NavigationGroup = { label: string; items: NavigationItem[] };
@@ -62,7 +63,7 @@ function NavigationGroupItems({ group, mobile = false }: { group: NavigationGrou
 
 function Brand({ inverted = false }: { inverted?: boolean }) {
   return (
-    <Link href="/" className="group flex shrink-0 items-center gap-3" aria-label="Teman Belajar — Beranda">
+    <Link href="/" className="logo group flex shrink-0 items-center gap-3" aria-label="Teman Belajar — Beranda">
       <span className="grid h-11 w-11 place-items-center rounded-xl bg-teal-700 text-white shadow-lg shadow-teal-900/15 transition group-hover:-rotate-3">
         <PortalIcon name="graduation" className="h-6 w-6" />
       </span>
@@ -77,51 +78,7 @@ function Brand({ inverted = false }: { inverted?: boolean }) {
 export function PortalChrome({ authenticated, children }: { authenticated: boolean; children: ReactNode }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [showBackToTop, setShowBackToTop] = useState(false);
-
-  useEffect(() => {
-    const frame = window.requestAnimationFrame(() => {
-      setMenuOpen(false);
-      document.querySelectorAll<HTMLDetailsElement>(".portal-nav-group[open], .portal-mobile-group[open]").forEach((group) => group.removeAttribute("open"));
-    });
-    return () => window.cancelAnimationFrame(frame);
-  }, [pathname, searchParams]);
-  useEffect(() => {
-    const closeDropdowns = (event: KeyboardEvent) => {
-      if (event.key !== "Escape") return;
-      document.querySelectorAll<HTMLDetailsElement>(".portal-nav-group[open], .portal-mobile-group[open]").forEach((group) => group.removeAttribute("open"));
-    };
-    window.addEventListener("keydown", closeDropdowns);
-    return () => window.removeEventListener("keydown", closeDropdowns);
-  }, []);
-  useEffect(() => {
-    const handleDocumentClick = (event: MouseEvent) => {
-      const target = event.target as HTMLElement;
-      const navGroup = target.closest<HTMLDetailsElement>(".portal-nav-group, .portal-mobile-group");
-      
-      if (!navGroup) {
-        document.querySelectorAll<HTMLDetailsElement>(".portal-nav-group[open], .portal-mobile-group[open]").forEach((group) => group.removeAttribute("open"));
-      } else {
-        const summary = target.closest("summary");
-        if (summary && summary.parentElement === navGroup) {
-          if (!navGroup.hasAttribute("open")) {
-            document.querySelectorAll<HTMLDetailsElement>(".portal-nav-group[open], .portal-mobile-group[open]").forEach((group) => {
-              if (group !== navGroup) group.removeAttribute("open");
-            });
-          }
-        }
-      }
-    };
-    document.addEventListener("click", handleDocumentClick);
-    return () => document.removeEventListener("click", handleDocumentClick);
-  }, []);
-  useEffect(() => {
-    const onScroll = () => setShowBackToTop(window.scrollY > 520);
-    onScroll();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
+  const { menuOpen, navSticky, showBackToTop, toggleMenu, scrollToTop } = useTechwindRuntime(`${pathname}?${searchParams}`);
 
   const active = (href: string) => {
     const basePath = href.split(/[?#]/)[0];
@@ -163,12 +120,12 @@ export function PortalChrome({ authenticated, children }: { authenticated: boole
     <>
       <a href="#main-content" className="fixed left-4 top-3 z-[100] -translate-y-20 rounded-lg bg-slate-950 px-4 py-2 text-sm font-bold text-white focus:translate-y-0">Lewati ke konten utama</a>
       {!authenticated ? <SilentSsoBridge /> : null}
-      <header className="portal-header sticky top-0 z-50 border-b backdrop-blur">
+      <header id="topnav" className={`techwind-topnav portal-header defaultscroll sticky top-0 z-50 border-b backdrop-blur ${navSticky ? "nav-sticky" : ""}`}>
         <div className="portal-container flex h-[76px] items-center justify-between gap-4">
           <div className="flex flex-1 items-center justify-start">
             <Brand />
           </div>
-          <nav className="hidden items-center justify-center gap-1 xl:flex" aria-label="Navigasi utama">
+          <nav id="navigation" className="navigation-menu hidden items-center justify-center gap-1 xl:flex" aria-label="Navigasi utama">
             <Link href="/" aria-current={active("/") ? "page" : undefined} className={`portal-nav-link ${active("/") ? "is-active" : ""}`}>Beranda</Link>
             {navigationGroups.map((group) => (
               <details key={group.label} className="portal-nav-group">
@@ -192,7 +149,7 @@ export function PortalChrome({ authenticated, children }: { authenticated: boole
             ) : (
               <Link href="/api/auth/signin?callbackUrl=/" className="portal-button-primary hidden sm:inline-flex">Masuk</Link>
             )}
-            <button type="button" className="portal-menu-button grid h-11 w-11 place-items-center rounded-xl border xl:hidden" aria-label={menuOpen ? "Tutup navigasi" : "Buka navigasi"} aria-expanded={menuOpen} aria-controls="portal-mobile-navigation" onClick={() => setMenuOpen((value) => !value)}>
+            <button id="isToggle" type="button" className={`navbar-toggle portal-menu-button grid h-11 w-11 place-items-center rounded-xl border xl:hidden ${menuOpen ? "open" : ""}`} aria-label={menuOpen ? "Tutup navigasi" : "Buka navigasi"} aria-expanded={menuOpen} aria-controls="portal-mobile-navigation" onClick={toggleMenu}>
               <PortalIcon name={menuOpen ? "close" : "menu"} className="h-6 w-6" />
             </button>
           </div>
@@ -222,7 +179,7 @@ export function PortalChrome({ authenticated, children }: { authenticated: boole
         )}
       </header>
       <main id="main-content">{children}</main>
-      <footer className="portal-footer border-t border-slate-800 bg-[#102a43] text-slate-300">
+      <footer className="techwind-footer portal-footer border-t border-slate-800 bg-[#102a43] text-slate-300">
         <div className="portal-container grid gap-10 py-14 md:grid-cols-2 lg:grid-cols-[1.35fr_.8fr_.8fr_1fr]">
           <div><Brand inverted /><p className="mt-5 max-w-md text-sm leading-7 text-slate-400">Ruang belajar terpadu untuk menemukan wawasan, mengikuti pembelajaran formal, dan bertumbuh bersama organisasi.</p></div>
           <div><h2 className="text-sm font-bold text-white">Jelajahi</h2><div className="mt-4 grid gap-3 text-sm"><Link href="/my-learning">Pembelajaran Saya</Link><Link href="/knowledge">Pusat Pengetahuan</Link><Link href="/search">Pencarian</Link></div></div>
@@ -231,7 +188,7 @@ export function PortalChrome({ authenticated, children }: { authenticated: boole
         </div>
         <div className="border-t border-white/10"><div className="portal-container flex flex-col gap-2 py-5 text-xs text-slate-500 sm:flex-row sm:items-center sm:justify-between"><span>© {new Date().getFullYear()} Teman Belajar.</span><span>Platform Pengalaman Belajar Digital Perusahaan</span></div></div>
       </footer>
-      <button type="button" className={`portal-back-to-top ${showBackToTop ? "is-visible" : ""}`} onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })} aria-label="Kembali ke atas">
+      <button type="button" id="back-to-top" className={`techwind-back-to-top portal-back-to-top ${showBackToTop ? "is-visible" : ""}`} onClick={scrollToTop} aria-label="Kembali ke atas">
         <PortalIcon name="arrow-up" className="h-5 w-5" />
       </button>
     </>

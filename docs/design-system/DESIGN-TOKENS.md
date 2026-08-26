@@ -1,10 +1,10 @@
 # Design Tokens — Teman Belajar
 
-**Status:** Canonical through TASK-011C.
+**Status:** Canonical through TASK-026.
 
 ## Implemented Experience Tokens
 
-### Portal / Learner (Techwind-inspired)
+### Portal / Learner (Techwind runtime foundation)
 
 | Semantic token | Light | Dark |
 |---|---|---|
@@ -22,7 +22,7 @@
 Large surface radius: `1rem` to `1.5rem`. Dark surfaces follow the Techwind
 `slate-900`/`slate-800` hierarchy; they must not use Cuba card variables.
 
-### Admin / Backoffice (Cuba-inspired)
+### Admin / Backoffice (Cuba runtime foundation)
 
 | Semantic token | Light | Dark |
 |---|---|---|
