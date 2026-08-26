@@ -29,6 +29,9 @@ deployment is claimed by this handoff.
 - Added the aggregation metric, OpenAPI contract, ERD/database documentation,
   navigation and route-matrix updates, regression guards, and operations
   runbook.
+- Enforced Alpine OpenSSL `3.5.8-r0` or newer in API, Portal, and Admin runtime
+  images after protected Trivy identified CVE-2026-14456 in the inherited
+  `3.5.7-r0` packages.
 
 ## Security and architecture boundaries
 
