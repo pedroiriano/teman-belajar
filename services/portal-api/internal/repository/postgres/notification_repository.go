@@ -17,20 +17,39 @@ func NewNotificationRepository(db *sql.DB) *NotificationRepository {
 
 type notificationScanner interface{ Scan(...any) error }
 
-const notificationColumns = `id, audience, event_type, title, body, deep_link, priority, available_at, expires_at, read_at, created_at`
+const (
+	deliverNotificationQuery = `
+		INSERT INTO notification.inbox
+			(id, user_subject, audience, event_id, schema_version, source, event_type, title, body, deep_link, priority, available_at, expires_at, created_at)
+		SELECT $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14
+		WHERE COALESCE((SELECT enabled FROM notification.preferences WHERE user_subject=$2 AND audience=$3 AND event_type=$7), TRUE)
+		ON CONFLICT (user_subject, audience, event_id) DO NOTHING
+		RETURNING id, audience, event_type, title, body, deep_link, priority, available_at, expires_at, read_at, created_at`
+	findDeliveredNotificationQuery = `SELECT id, audience, event_type, title, body, deep_link, priority, available_at, expires_at, read_at, created_at
+		FROM notification.inbox WHERE user_subject=$1 AND audience=$2 AND event_id=$3`
+	countActiveNotificationsQuery = `SELECT COUNT(*) FROM notification.inbox
+		WHERE user_subject=$1 AND audience=$2 AND available_at <= $3 AND expires_at > $3`
+	countActiveUnreadNotificationsQuery = `SELECT COUNT(*) FROM notification.inbox
+		WHERE user_subject=$1 AND audience=$2 AND available_at <= $3 AND expires_at > $3 AND read_at IS NULL`
+	listActiveNotificationsQuery = `SELECT id, audience, event_type, title, body, deep_link, priority, available_at, expires_at, read_at, created_at
+		FROM notification.inbox
+		WHERE user_subject=$1 AND audience=$2 AND available_at <= $3 AND expires_at > $3
+		ORDER BY created_at DESC,id DESC LIMIT $4 OFFSET $5`
+	listActiveUnreadNotificationsQuery = `SELECT id, audience, event_type, title, body, deep_link, priority, available_at, expires_at, read_at, created_at
+		FROM notification.inbox
+		WHERE user_subject=$1 AND audience=$2 AND available_at <= $3 AND expires_at > $3 AND read_at IS NULL
+		ORDER BY created_at DESC,id DESC LIMIT $4 OFFSET $5`
+	markNotificationReadQuery = `UPDATE notification.inbox SET read_at=COALESCE(read_at,NOW())
+		WHERE id=$1 AND user_subject=$2 AND audience=$3 AND available_at<=NOW() AND expires_at>NOW()
+		RETURNING id, audience, event_type, title, body, deep_link, priority, available_at, expires_at, read_at, created_at`
+)
 
 func scanNotification(row notificationScanner, item *domain.Notification) error {
 	return row.Scan(&item.ID, &item.Audience, &item.EventType, &item.Title, &item.Body, &item.DeepLink, &item.Priority, &item.AvailableAt, &item.ExpiresAt, &item.ReadAt, &item.CreatedAt)
 }
 
 func (r *NotificationRepository) Deliver(ctx context.Context, input domain.Delivery, item domain.Notification) (domain.DeliveryResult, error) {
-	row := r.db.QueryRowContext(ctx, `
-		INSERT INTO notification.inbox
-			(id, user_subject, audience, event_id, schema_version, source, event_type, title, body, deep_link, priority, available_at, expires_at, created_at)
-		SELECT $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14
-		WHERE COALESCE((SELECT enabled FROM notification.preferences WHERE user_subject=$2 AND audience=$3 AND event_type=$7), TRUE)
-		ON CONFLICT (user_subject, audience, event_id) DO NOTHING
-		RETURNING `+notificationColumns,
+	row := r.db.QueryRowContext(ctx, deliverNotificationQuery,
 		item.ID, input.UserSubject, input.Audience, input.EventID, input.SchemaVersion, input.Source, input.EventType, item.Title, item.Body, item.DeepLink, item.Priority, item.AvailableAt, item.ExpiresAt, item.CreatedAt)
 	var created domain.Notification
 	if err := scanNotification(row, &created); err == nil {
@@ -39,7 +58,7 @@ func (r *NotificationRepository) Deliver(ctx context.Context, input domain.Deliv
 		return domain.DeliveryResult{}, err
 	}
 	var existing domain.Notification
-	err := scanNotification(r.db.QueryRowContext(ctx, `SELECT `+notificationColumns+` FROM notification.inbox WHERE user_subject=$1 AND audience=$2 AND event_id=$3`, input.UserSubject, input.Audience, input.EventID), &existing)
+	err := scanNotification(r.db.QueryRowContext(ctx, findDeliveredNotificationQuery, input.UserSubject, input.Audience, input.EventID), &existing)
 	if err == nil {
 		return domain.DeliveryResult{Notification: &existing}, nil
 	}
@@ -50,19 +69,20 @@ func (r *NotificationRepository) Deliver(ctx context.Context, input domain.Deliv
 }
 
 func (r *NotificationRepository) List(ctx context.Context, subject string, filter domain.ListFilter) (domain.Page, error) {
-	condition := ""
-	if filter.Unread {
-		condition = " AND read_at IS NULL"
-	}
 	var total, unread int
-	base := ` FROM notification.inbox WHERE user_subject=$1 AND audience=$2 AND available_at <= $3 AND expires_at > $3`
-	if err := r.db.QueryRowContext(ctx, `SELECT COUNT(*)`+base+condition, subject, filter.Audience, filter.Now).Scan(&total); err != nil {
+	countQuery := countActiveNotificationsQuery
+	listQuery := listActiveNotificationsQuery
+	if filter.Unread {
+		countQuery = countActiveUnreadNotificationsQuery
+		listQuery = listActiveUnreadNotificationsQuery
+	}
+	if err := r.db.QueryRowContext(ctx, countQuery, subject, filter.Audience, filter.Now).Scan(&total); err != nil {
 		return domain.Page{}, err
 	}
-	if err := r.db.QueryRowContext(ctx, `SELECT COUNT(*)`+base+` AND read_at IS NULL`, subject, filter.Audience, filter.Now).Scan(&unread); err != nil {
+	if err := r.db.QueryRowContext(ctx, countActiveUnreadNotificationsQuery, subject, filter.Audience, filter.Now).Scan(&unread); err != nil {
 		return domain.Page{}, err
 	}
-	rows, err := r.db.QueryContext(ctx, `SELECT `+notificationColumns+base+condition+` ORDER BY created_at DESC,id DESC LIMIT $4 OFFSET $5`, subject, filter.Audience, filter.Now, filter.PageSize, (filter.Page-1)*filter.PageSize)
+	rows, err := r.db.QueryContext(ctx, listQuery, subject, filter.Audience, filter.Now, filter.PageSize, (filter.Page-1)*filter.PageSize)
 	if err != nil {
 		return domain.Page{}, err
 	}
@@ -93,7 +113,7 @@ func (r *NotificationRepository) UnreadCount(ctx context.Context, subject string
 
 func (r *NotificationRepository) MarkRead(ctx context.Context, subject string, audience domain.Audience, id string) (*domain.Notification, error) {
 	var item domain.Notification
-	err := scanNotification(r.db.QueryRowContext(ctx, `UPDATE notification.inbox SET read_at=COALESCE(read_at,NOW()) WHERE id=$1 AND user_subject=$2 AND audience=$3 AND available_at<=NOW() AND expires_at>NOW() RETURNING `+notificationColumns, id, subject, audience), &item)
+	err := scanNotification(r.db.QueryRowContext(ctx, markNotificationReadQuery, id, subject, audience), &item)
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, domain.ErrNotFound
 	}
