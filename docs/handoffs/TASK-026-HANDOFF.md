@@ -2,7 +2,11 @@
 
 ## Status
 
-`IMPLEMENTED — RELEASE CANDIDATE` pending protected PR completion.
+`DONE — MERGED via PR #28`.
+
+- Reviewed branch head: `1b1281b4a989e0f137683d7207f7d53f24b3ecff`.
+- Squash commit on `main`: `9e20a07b41b19c19bf4f78788459017f17063f4b`.
+- All 11 protected checks passed before merge; no bypass was used.
 
 ## Outcome
 
@@ -62,6 +66,5 @@ combination. Protected Linux CI is the broad final authority. Any future vendor
 snapshot refresh must be isolated, license-reviewed and update the manifest and
 tree guard together.
 
-Final commit, PR, protected checks, browser evidence and merged `main` SHA are
-reported in the release output and GitHub metadata, which are authoritative
-over this pre-merge handoff status.
+PR #28, its protected checks, browser evidence, and the merged `main` SHA above
+are the authoritative TASK-026 release record.
