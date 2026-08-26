@@ -83,7 +83,7 @@ export default async function AdminKnowledgePage() {
                           article.status === 'draft' ? 'bg-gray-100 text-gray-800' : 
                           article.status === 'in_review' ? 'bg-yellow-100 text-yellow-800' :
                           'bg-blue-100 text-blue-800'}`}>
-                        {{ draft: 'Draf', in_review: 'Peninjauan', published: 'Terbit', archived: 'Diarsipkan' }[article.status] || article.status.replace('_', ' ')}
+                        {({ draft: 'Draf', in_review: 'Peninjauan', published: 'Terbit', archived: 'Diarsipkan', approved: 'Disetujui', rejected: 'Ditolak' } as Record<string, string>)[article.status] || article.status.replace('_', ' ')}
                       </span>
                     </td>
                     <td className="p-4 text-sm text-slate-600">
