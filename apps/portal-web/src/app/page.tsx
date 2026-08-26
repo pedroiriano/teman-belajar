@@ -6,14 +6,14 @@ import { getPublicFAQs } from "@/lib/faqs";
 type Highlight = { href: string; label: string; title: string; copy: string; icon: PortalIconName; tone: string };
 
 const highlights: Highlight[] = [
-  { href: "/knowledge", label: "Pusat Pengetahuan", title: "Jawaban tepercaya saat dibutuhkan", copy: "Panduan dan praktik terbaik melalui workflow review editorial.", icon: "book", tone: "bg-teal-50 text-teal-800" },
+  { href: "/knowledge", label: "Pusat Pengetahuan", title: "Jawaban tepercaya saat dibutuhkan", copy: "Panduan dan praktik terbaik melalui alur kerja peninjauan editorial.", icon: "book", tone: "bg-teal-50 text-teal-800" },
   { href: "/news", label: "Berita", title: "Perkembangan organisasi dalam satu ruang", copy: "Ikuti program, inisiatif, dan cerita pembelajaran terbaru.", icon: "news", tone: "bg-sky-50 text-sky-800" },
   { href: "/announcements", label: "Pengumuman", title: "Informasi penting tanpa terlewat", copy: "Pantau informasi aktif dan jadwal yang relevan untuk pekerjaan Anda.", icon: "calendar", tone: "bg-amber-50 text-amber-800" },
 ];
 
 const learningPaths = [
   { title: "Kelas dan program", copy: "Akses pembelajaran formal yang dikelola melalui Moodle.", icon: "graduation" as const, href: "/my-learning", label: "Buka pembelajaran" },
-  { title: "Knowledge on demand", copy: "Cari pengetahuan terkurasi untuk mendukung pekerjaan sehari-hari.", icon: "book" as const, href: "/knowledge", label: "Telusuri artikel" },
+  { title: "Pengetahuan saat dibutuhkan", copy: "Cari pengetahuan terkurasi untuk mendukung pekerjaan sehari-hari.", icon: "book" as const, href: "/knowledge", label: "Telusuri artikel" },
   { title: "Pencarian terpadu", copy: "Temukan kelas, artikel, berita, dan pengumuman dari satu pencarian.", icon: "search" as const, href: "/search", label: "Mulai mencari" },
 ];
 
@@ -38,7 +38,7 @@ export default async function Home() {
             <h1 className="max-w-3xl text-4xl font-black leading-[1.08] tracking-tight sm:text-5xl lg:text-6xl">Satu ruang untuk perjalanan belajar yang <span className="text-teal-300">lebih bermakna.</span></h1>
             <p className="mt-6 max-w-2xl text-base leading-8 text-slate-300 sm:text-lg">Temukan pembelajaran formal, pengetahuan organisasi, dan informasi penting melalui pengalaman yang sederhana, aman, dan terhubung.</p>
             <div className="mt-9 flex flex-col gap-3 sm:flex-row"><Link href="/search" className="portal-button-primary !bg-teal-500 !text-slate-950 hover:!bg-teal-400">Jelajahi Teman Belajar <span className="ml-2" aria-hidden="true">→</span></Link><Link href="/api/auth/signin?callbackUrl=/" className="portal-button-secondary !border-white/20 !bg-white/10 !text-white hover:!border-white/50 hover:!bg-white/15">Masuk ke akun</Link></div>
-            <div className="mt-10 flex flex-wrap gap-x-8 gap-y-3 text-sm text-slate-300"><span className="flex items-center gap-2"><b className="text-teal-300">✓</b> SSO terpusat</span><span className="flex items-center gap-2"><b className="text-teal-300">✓</b> Konten terkurasi</span><span className="flex items-center gap-2"><b className="text-teal-300">✓</b> Mobile-first</span></div>
+            <div className="mt-10 flex flex-wrap gap-x-8 gap-y-3 text-sm text-slate-300"><span className="flex items-center gap-2"><b className="text-teal-300">✓</b> SSO terpusat</span><span className="flex items-center gap-2"><b className="text-teal-300">✓</b> Konten terkurasi</span><span className="flex items-center gap-2"><b className="text-teal-300">✓</b> Mengutamakan perangkat seluler</span></div>
           </div>
           <div className="relative mx-auto w-full max-w-lg" aria-label="Pratinjau pengalaman Teman Belajar">
             <div className="absolute -inset-8 rounded-full bg-teal-400/10 blur-3xl" />
@@ -80,13 +80,13 @@ export default async function Home() {
 
       <section id="media" className="portal-section overflow-hidden bg-[#102a43] text-white">
         <div className="portal-container grid items-center gap-12 lg:grid-cols-[.85fr_1.15fr]">
-          <div><p className="text-xs font-black uppercase tracking-[.2em] text-teal-300">Media pembelajaran</p><h2 className="mt-4 text-3xl font-black tracking-tight sm:text-4xl">Visual yang hidup di dalam konten tepercaya.</h2><p className="mt-5 text-base leading-8 text-slate-300">Gambar dan dokumen dikelola melalui Media Library, lalu hanya tersedia secara publik ketika terhubung ke konten yang telah diterbitkan.</p><Link href="/knowledge" className="portal-button-primary mt-8 !bg-teal-500 !text-slate-950">Lihat konten bermedia</Link></div>
+          <div><p className="text-xs font-black uppercase tracking-[.2em] text-teal-300">Media pembelajaran</p><h2 className="mt-4 text-3xl font-black tracking-tight sm:text-4xl">Visual yang hidup di dalam konten tepercaya.</h2><p className="mt-5 text-base leading-8 text-slate-300">Gambar dan dokumen dikelola melalui Pustaka Media, lalu hanya tersedia secara publik ketika terhubung ke konten yang telah diterbitkan.</p><Link href="/knowledge" className="portal-button-primary mt-8 !bg-teal-500 !text-slate-950">Lihat konten bermedia</Link></div>
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-3" aria-label="Galeri kapabilitas media"><div className="portal-gallery-tile col-span-2 row-span-2 min-h-72 sm:col-span-2"><PortalIcon name="gallery" className="h-12 w-12" /><p className="mt-5 text-xl font-black">Galeri terkurasi</p><p className="mt-2 text-sm text-slate-300">Terhubung ke artikel, berita, dan pengumuman.</p></div><div className="portal-gallery-tile min-h-32"><PortalIcon name="play" className="h-8 w-8" /><p className="mt-3 font-bold">Media visual</p></div><div className="portal-gallery-tile min-h-32"><PortalIcon name="shield" className="h-8 w-8" /><p className="mt-3 font-bold">Akses aman</p></div></div>
         </div>
       </section>
 
       <section className="portal-section portal-section-muted">
-        <div className="portal-container"><div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">{[["1", "Identitas terpusat"], ["2", "Experience terpisah"], ["5", "Tahap editorial"], ["24/7", "Akses pengetahuan"]].map(([value, label]) => <div key={label} className="portal-card p-6 text-center"><p className="text-3xl font-black text-teal-700">{value}</p><p className="mt-2 text-sm font-bold text-slate-600">{label}</p></div>)}</div></div>
+        <div className="portal-container"><div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">{[["1", "Identitas terpusat"], ["2", "Pengalaman terpisah"], ["5", "Tahap editorial"], ["24/7", "Akses pengetahuan"]].map(([value, label]) => <div key={label} className="portal-card p-6 text-center"><p className="text-3xl font-black text-teal-700">{value}</p><p className="mt-2 text-sm font-bold text-slate-600">{label}</p></div>)}</div></div>
       </section>
 
       <section id="faq" className="portal-section">

@@ -41,42 +41,36 @@ export default async function UsersPage() {
           )}
         </div>
 
-        <AdminDataTable
-          title="Daftar pengguna"
-          description="Akun terdaftar dalam sistem"
-          itemCount={users.length}
-          headers={["Nama", "Nama Pengguna", "Email", "Status", "Dibuat pada", "Aksi"]}
-          emptyState="Belum ada pengguna."
-        >
+        <AdminDataTable title="Daftar pengguna" description="Akun terdaftar dalam sistem" itemCount={users.length} headers={["Nama", "Nama Pengguna", "Email", "Status", "Dibuat pada", "Aksi"]} emptyState="Belum ada pengguna.">
           {users.map((user) => (
-            <tr key={user.id} className="hover:bg-slate-50 transition-colors">
-              <td className="p-4 whitespace-nowrap">
-                <div className="font-medium text-slate-900">
-                  {[user.firstName, user.lastName].filter(Boolean).join(" ") || "-"}
-                </div>
-              </td>
-              <td className="p-4 whitespace-nowrap">
-                <div className="text-sm text-slate-600">{user.username}</div>
-              </td>
-              <td className="p-4 whitespace-nowrap">
-                <div className="text-sm text-slate-600">{user.email || "-"}</div>
-              </td>
-              <td className="p-4 whitespace-nowrap">
-                <span className={`admin-status ${
-                  user.enabled ? 'bg-green-100 text-green-800' : 'bg-red-50 text-rose-700'
-                }`}>
-                  {user.enabled ? "Aktif" : "Nonaktif"}
-                </span>
-              </td>
-              <td className="p-4 whitespace-nowrap text-sm text-slate-600">
-                {user.createdTimestamp ? new Date(user.createdTimestamp).toLocaleDateString("id-ID") : "-"}
-              </td>
-              <td className="p-4 text-sm">
-                <Link href={`/dashboard/users/${user.id}`} className="mr-4 font-bold text-sky-700 hover:text-sky-600">
-                  Buka detail →
-                </Link>
-              </td>
-            </tr>
+                    <tr key={user.id} className="hover:bg-slate-50 transition-colors">
+                      <td className="p-4 whitespace-nowrap">
+                        <div className="font-medium text-slate-900">
+                          {[user.firstName, user.lastName].filter(Boolean).join(" ") || "-"}
+                        </div>
+                      </td>
+                      <td className="p-4 whitespace-nowrap">
+                        <div className="text-sm text-slate-600">{user.username}</div>
+                      </td>
+                      <td className="p-4 whitespace-nowrap">
+                        <div className="text-sm text-slate-600">{user.email || "-"}</div>
+                      </td>
+                      <td className="p-4 whitespace-nowrap">
+                        <span className={`admin-status ${
+                          user.enabled ? 'bg-green-100 text-green-800' : 'bg-red-50 text-rose-700'
+                        }`}>
+                          {user.enabled ? "Aktif" : "Nonaktif"}
+                        </span>
+                      </td>
+                      <td className="p-4 whitespace-nowrap text-sm text-slate-600">
+                        {user.createdTimestamp ? new Date(user.createdTimestamp).toLocaleDateString("id-ID") : "-"}
+                      </td>
+                      <td className="p-4 text-sm">
+                        <Link href={`/dashboard/users/${user.id}`} className="mr-4 font-bold text-sky-700 hover:text-sky-600">
+                          Buka detail →
+                        </Link>
+                      </td>
+                    </tr>
           ))}
         </AdminDataTable>
       </div>

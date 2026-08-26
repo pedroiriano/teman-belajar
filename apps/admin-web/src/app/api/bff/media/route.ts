@@ -16,10 +16,10 @@ export async function POST(req: NextRequest) {
     if (!policyRes.ok) return NextResponse.json(policyPayload, { status: policyRes.status });
     const contentLength = Number(req.headers.get("content-length") || 0);
     if (contentLength > Number(policyPayload.data?.max_multipart_bytes || 0)) {
-      return NextResponse.json({ type: "about:blank", title: "Payload Too Large", status: 413, detail: "Upload exceeds the request-wide media limit" }, { status: 413 });
+      return NextResponse.json({ type: "about:blank", title: "Permintaan terlalu besar", status: 413, detail: "Unggahan melebihi batas ukuran permintaan media" }, { status: 413 });
     }
     const contentType = req.headers.get("content-type");
-    if (!contentType?.startsWith("multipart/form-data;")) return NextResponse.json({ title: "Invalid multipart request" }, { status: 400 });
+    if (!contentType?.startsWith("multipart/form-data;")) return NextResponse.json({ title: "Permintaan multipart tidak valid" }, { status: 400 });
     const requestInit: RequestInit & { duplex: "half" } = {
       method: "POST",
       headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": contentType },

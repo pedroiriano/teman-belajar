@@ -1,0 +1,1 @@
+import { NextRequest } from "next/server";import { proxyPortalNotification } from "@/lib/notifications/proxy";export async function POST(request:NextRequest){return proxyPortalNotification(request,"read-all")}

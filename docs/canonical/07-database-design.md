@@ -191,6 +191,21 @@ Index berdasarkan query nyata:
   the controlled Category table. Public/search/sitemap queries additionally
   enforce publication and active Knowledge ancestry.
 
+## Notification Center (Migration 018)
+
+- `notification.inbox` stores the Portal-owned in-app delivery record. The
+  opaque OIDC UUID `user_subject` is never accepted from the browser; all reads
+  and mutations include subject plus audience predicates.
+- `(user_subject, audience, event_id)` is unique, making repeated event delivery
+  idempotent without using mutable presentation text as a key.
+- `notification.preferences` stores explicit per-subject, per-audience,
+  per-event-type choices. No row means enabled; delivery evaluates the choice
+  atomically.
+- Available/expiry timestamps support scheduled reminders and bounded retention.
+  Default retention is 90 days and accepted configuration is 1–365 days.
+- Migration 018 is additive and forward-only. Rollback removes application
+  consumers while leaving the schema applied.
+
 ## 9. Audit
 
 Audit log bukan pengganti application logs.

@@ -6,6 +6,7 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 
 import { AdminIcon, type AdminIconName } from "@/components/admin-icon";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { AdminNotificationCenter } from "@/components/notification-center";
 
 type NavigationItem = { href?: string; label: string; icon: AdminIconName; disabled?: boolean };
 
@@ -39,6 +40,7 @@ const titleBySegment: Record<string, string> = {
   taxonomy: "Taksonomi & SEO",
   faqs: "FAQ",
   users: "Pengguna & Profil",
+  notifications: "Pusat Notifikasi",
   create: "Buat baru",
 };
 
@@ -103,7 +105,7 @@ function Sidebar({ pathname, close, desktopClose }: { pathname: string; close?: 
       </nav>
       <div className="m-3 rounded-xl border admin-sidebar-border admin-sidebar-box-bg p-4">
         <p className="text-xs font-bold admin-sidebar-title">Alur Kerja Editorial</p>
-        <p className="mt-1 text-[11px] leading-5 admin-sidebar-copy">Draft → Review → Setujui → Terbit → Arsip</p>
+        <p className="mt-1 text-[11px] leading-5 admin-sidebar-copy">Draf → Peninjauan → Setujui → Terbit → Arsip</p>
       </div>
     </div>
   );
@@ -214,7 +216,7 @@ export function AdminShell({ children, userName, userEmail, role }: { children: 
             </div>
             <div className="ml-auto flex items-center gap-2 sm:gap-3">
               <ThemeToggle />
-              <button type="button" className="admin-icon-button hidden sm:grid" aria-label="Notifikasi" title="Notifikasi belum diaktifkan"><AdminIcon name="bell" className="h-5 w-5" /></button>
+              <AdminNotificationCenter />
               <details className="relative admin-profile-dropdown">
                 <summary className="group flex cursor-pointer list-none items-center gap-2 rounded-xl p-1.5 transition hover:bg-slate-100 dark:hover:bg-slate-800/50">
                   <span className="grid h-10 w-10 place-items-center rounded-xl bg-sky-100 text-sm font-black text-sky-700 dark:bg-sky-900/30 dark:text-sky-400">{initials}</span>
@@ -228,7 +230,7 @@ export function AdminShell({ children, userName, userEmail, role }: { children: 
           <div className="flex min-h-11 items-center gap-2 border-t px-4 text-xs text-slate-500 sm:px-6 lg:px-8"><Link href="/dashboard" className="font-bold text-sky-700">Admin</Link>{breadcrumbs.slice(1).map((crumb) => <span key={crumb} className="flex items-center gap-2"><span aria-hidden="true">/</span><span>{crumb}</span></span>)}</div>
         </header>
         <main id="admin-content" className="min-h-[calc(100vh-154px)] p-4 sm:p-6 lg:p-8">{children}</main>
-        <footer className="admin-footer"><span>© {new Date().getFullYear()} Teman Belajar</span><span>Admin Console · Cuba-derived experience</span></footer>
+        <footer className="admin-footer"><span>© {new Date().getFullYear()} Teman Belajar</span><span>Panel Administrasi · pengalaman berbasis Cuba</span></footer>
       </div>
     </div>
   );

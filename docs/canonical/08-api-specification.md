@@ -91,11 +91,22 @@ Authenticated:
 - `GET /me/recent-views`
 - `PUT /me/recent-views/{targetType}/{targetId}`
 - `GET /me/recommendations`
+- `GET /me/notifications`
+- `GET /me/notifications/summary`
+- `PATCH /me/notifications/{id}/read`
+- `POST /me/notifications/read-all`
+- `GET|PUT /me/notification-preferences[/{eventType}]`
 
 Public aggregate:
 - `GET /ratings/{targetType}/{targetId}`
 
 Engagement identity always comes from validated access-token `sub`; the API accepts no user selector. TASK-008 accepts `targetType=knowledge` only. Canonical wire details and problem responses remain authoritative in `openapi/openapi.yaml`.
+
+Notification identity also comes exclusively from validated access-token `sub`.
+The trusted Portal/Admin BFF fixes `audience`; the API rechecks Admin roles,
+partitions every read/mutation by subject and audience, rate-limits mutations,
+and accepts only audience-specific internal deep-links. Inbox responses are
+paginated and `no-store`. Event names and wire fields remain canonical English.
 
 Admin:
 - `/admin/news`

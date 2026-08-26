@@ -8,7 +8,7 @@ import { AnalyticsTracker } from "@/components/analytics-tracker";
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"], display: "swap" });
-export const metadata: Metadata = { title: { default: "Admin Teman Belajar", template: "%s | Admin Teman Belajar" }, description: "Backoffice Teman Belajar untuk pengelolaan konten dan workflow editorial." };
+export const metadata: Metadata = { title: { default: "Admin Teman Belajar", template: "%s | Admin Teman Belajar" }, description: "Panel administrasi Teman Belajar untuk pengelolaan konten dan alur kerja editorial." };
 
 const themeInitializationScript = `
   (() => {

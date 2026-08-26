@@ -3,6 +3,7 @@ import type { SVGProps } from "react";
 export type PortalIconName =
   | "arrow-up"
   | "book"
+  | "bell"
   | "bookmark"
   | "briefcase"
   | "calendar"
@@ -25,6 +26,7 @@ export type PortalIconName =
 const paths: Record<PortalIconName, string> = {
   "arrow-up": "M12 19V5m0 0-6 6m6-6 6 6",
   book: "M4 5.5A3.5 3.5 0 0 1 7.5 2H20v17H7.5A3.5 3.5 0 0 0 4 22V5.5Zm0 0V19",
+  bell: "M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9Zm-8 12h4",
   bookmark: "M6 3h12v18l-6-4-6 4V3Z",
   briefcase: "M9 6V4h6v2m5 4v9H4v-9m-1-3h18v5H3V7Zm7 5h4",
   calendar: "M6 3v3m12-3v3M4 9h16M5 5h14a1 1 0 0 1 1 1v14H4V6a1 1 0 0 1 1-1Z",

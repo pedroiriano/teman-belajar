@@ -1,0 +1,1 @@
+import { NextRequest } from "next/server";import { proxyPortalNotification } from "@/lib/notifications/proxy";export async function PATCH(request:NextRequest,context:{params:Promise<{id:string}>}){return proxyPortalNotification(request,"inbox",(await context.params).id)}

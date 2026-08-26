@@ -28,11 +28,11 @@ Task awal:
 - TASK-018 Integration Health Center — `PLANNED`
 - TASK-019 Audit Center — `PLANNED`
 - TASK-020 Platform Configuration & Dynamic Site Management — `PLANNED`
-- TASK-021 Notification Center — `PLANNED`
+- TASK-021 Notification Center — `IMPLEMENTED — CORRECTIVE RELEASE`
 - TASK-022 Media Gallery & Video Hub — `PLANNED`
 - TASK-023 Experience Personalization & Recommendation 2.0 — `PLANNED`
 - TASK-024 Post-Expansion Release Gate — `PLANNED`
-- TASK-025 Indonesian UI Language Harmonization & Cuba Data Tables — `IN PROGRESS`
+- TASK-025 Indonesian UI Language Harmonization, Cuba Data Tables & Pagination — `IMPLEMENTED — CORRECTIVE RELEASE`
 
 ## Rule
 

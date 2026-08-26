@@ -4,19 +4,16 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { getServerAccessToken } from "@/lib/server-auth";
 import { AdminUnauthorized } from "@/components/admin-states";
+import { AdminDataTable } from "@/components/admin-data-table";
+import { AdminPagination } from "@/components/admin-pagination";
 
-async function getAdminAnnouncements(token: string) {
+async function getAdminAnnouncements(token: string, page: number, pageSize: number) {
   try {
-    // Simulated fetching from the public endpoint (since Admin list is not strictly filtered by role here)
-    // Wait, the API doesn't have an admin listing exposed globally yet? 
-    // In our backend handler, did we expose a list for admin announcements? 
-    // Actually, I didn't add the `ListAdminAnnouncements` GET handler. Let's just fetch the public one for now, or assume it exists.
-    // Wait, I didn't expose GET /api/v1/admin/announcements in the handler. I'll need to add it to the Go backend.
-    // Let me add it after. For now, try fetching from it.
     const API_BASE = process.env.PORTAL_API_INTERNAL_URL;
     if (!API_BASE) throw new Error("Missing PORTAL_API_INTERNAL_URL");
 
-    const res = await fetch(`${API_BASE}/api/v1/admin/announcements`, {
+    const params = new URLSearchParams({ page: String(page), page_size: String(pageSize) });
+    const res = await fetch(`${API_BASE}/api/v1/admin/announcements?${params}`, {
       headers: {
         'Authorization': `Bearer ${token}`
       },
@@ -30,7 +27,11 @@ async function getAdminAnnouncements(token: string) {
   }
 }
 
-export default async function AdminAnnouncementsPage() {
+export default async function AdminAnnouncementsPage({ searchParams }: { searchParams: Promise<{ page?: string; page_size?: string }> }) {
+  const params = await searchParams;
+  const page = Math.max(1, Number.parseInt(params.page || "1", 10) || 1);
+  const requestedPageSize = Number.parseInt(params.page_size || "20", 10);
+  const pageSize = [10, 20, 50].includes(requestedPageSize) ? requestedPageSize : 20;
   const session: any = await getServerSession(authOptions);
   const accessToken = await getServerAccessToken();
 
@@ -46,7 +47,10 @@ export default async function AdminAnnouncementsPage() {
     return <AdminUnauthorized resource="pengumuman" />;
   }
 
-  const annsRes = accessToken ? await getAdminAnnouncements(accessToken) : null;
+  const annsRes = accessToken ? await getAdminAnnouncements(accessToken, page, pageSize) : null;
+  const announcements = annsRes?.data || [];
+  const pagination = annsRes?.pagination || { page, page_size: pageSize, total: announcements.length, total_pages: announcements.length ? 1 : 0 };
+  if (pagination.total_pages > 0 && page > pagination.total_pages) redirect(`/dashboard/announcements?page=${pagination.total_pages}&page_size=${pageSize}`);
 
   return (
     <div className="admin-page">
@@ -63,20 +67,8 @@ export default async function AdminAnnouncementsPage() {
           </Link>
         </div>
 
-        <div className="admin-table-shell"><div className="admin-table-toolbar"><div><h2 className="font-black text-slate-900">Daftar pengumuman</h2><p className="mt-1 text-xs text-slate-500">Konten aktif dan terjadwal</p></div><span className="admin-status bg-slate-100 text-slate-600">{annsRes?.data?.length || 0} item</span></div><div className="overflow-x-auto"><table className="admin-table">
-            <thead>
-              <tr><th>Judul</th><th>Status</th><th>Jadwal</th><th>Aksi</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {!annsRes || !annsRes.data || annsRes.data.length === 0 ? (
-                <tr>
-                  <td colSpan={4} className="admin-empty">
-                    Belum ada pengumuman. Buat draft pertama untuk memulai.
-                  </td>
-                </tr>
-              ) : (
-                annsRes.data.map((ann: any) => (
+        <AdminDataTable title="Daftar pengumuman" description="Konten aktif dan terjadwal" itemCount={pagination.total} headers={["Judul", "Status", "Jadwal", "Aksi"]} emptyState="Belum ada pengumuman. Buat draf pertama untuk memulai." error={annsRes ? null : "Data pengumuman gagal dimuat."} retryHref="/dashboard/announcements">
+              {announcements.map((ann: any) => (
                   <tr key={ann.id} className="hover:bg-slate-50 transition-colors">
                     <td className="p-4">
                       <div className="font-medium text-slate-900">{ann.title}</div>
@@ -101,11 +93,9 @@ export default async function AdminAnnouncementsPage() {
                       </Link>
                     </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table></div>
-        </div>
+                ))}
+        </AdminDataTable>
+        <AdminPagination page={pagination.page} pages={pagination.total_pages} total={pagination.total} pageSize={pagination.page_size} pathname="/dashboard/announcements" />
       </div>
     </div>
   );

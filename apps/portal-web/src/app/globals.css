@@ -110,6 +110,26 @@ a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visib
   .portal-faq summary::after { content: "+"; @apply grid h-7 w-7 shrink-0 place-items-center rounded-full text-lg; color: var(--portal-primary-hover); background: var(--portal-primary-soft); }
   .portal-faq[open] summary::after { content: "−"; }
   .portal-faq p { @apply border-t px-5 py-5 text-sm leading-7; color: var(--portal-copy); border-color: var(--portal-border); }
+  .portal-notification-popover { @apply absolute right-0 top-[calc(100%+.75rem)] z-[70] w-[min(92vw,28rem)] overflow-hidden rounded-2xl border shadow-2xl; color: var(--portal-ink); background: var(--portal-panel); border-color: var(--portal-border); }
+  .portal-notification-toolbar { @apply flex items-center justify-between gap-3 border-b p-4; border-color: var(--portal-border); }
+  .portal-notification-list { @apply max-h-[26rem] overflow-y-auto; }
+  .portal-notification-item { @apply flex items-start gap-3 border-b p-4 transition; border-color: var(--portal-border); }
+  .portal-notification-item.is-unread { background: var(--portal-primary-soft); }
+  .portal-notification-item:hover { background: var(--portal-panel-muted); }
+  .portal-notification-event { @apply rounded-full px-2 py-1 text-[10px] font-black uppercase; color: var(--portal-primary-hover); background: var(--portal-primary-soft); }
+  .portal-notification-dot { @apply h-2 w-2 rounded-full; background: var(--portal-primary); }
+  .portal-notification-count { @apply absolute -right-1.5 -top-1.5 grid min-h-5 min-w-5 place-items-center rounded-full px-1 text-[10px] font-black text-white; background: var(--portal-primary-hover); }
+  .portal-notification-state { @apply p-8 text-center text-sm; color: var(--portal-muted); }
+  .portal-notification-state strong, .portal-notification-state p { @apply block; }
+  .portal-notification-state p { @apply mt-1 text-xs; }
+  .portal-notification-error { @apply m-4 rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-800; }
+  .portal-notification-pagination { @apply flex flex-wrap items-center justify-between gap-3 border-t p-4 text-xs; color: var(--portal-muted); border-color: var(--portal-border); }
+  .portal-notification-preferences { @apply border-t p-4; border-color: var(--portal-border); }
+  .portal-notification-preferences > summary { @apply cursor-pointer font-black; }
+  .portal-notification-preference { @apply flex items-center justify-between gap-3 rounded-xl border p-3; border-color: var(--portal-border); background: var(--portal-panel-muted); }
+  .portal-notification-preference strong, .portal-notification-preference small { @apply block; }
+  .portal-notification-preference small { @apply mt-1 text-xs; color: var(--portal-muted); }
+  .portal-notification-preference input { accent-color: var(--portal-primary); }
 }
 
 .portal-footer a { transition: color 160ms ease; }

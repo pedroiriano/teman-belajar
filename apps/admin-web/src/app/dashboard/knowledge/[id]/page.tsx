@@ -109,7 +109,7 @@ export default function AdminKnowledgeDetailPage() {
 
   return (
     <div className="admin-page max-w-5xl">
-      <div className="admin-page-header"><div><Link href="/dashboard/knowledge" className="text-sm font-bold text-sky-700">&larr; Kembali ke Pengetahuan</Link><p className="admin-kicker mt-5">Detail editorial</p><h1 className="admin-page-title">{article.title}</h1><p className="admin-page-copy">Kelola revisi serta transisi review dan publikasi.</p></div><span className="admin-status bg-sky-50 text-sky-800">{article.status}</span></div>
+      <div className="admin-page-header"><div><Link href="/dashboard/knowledge" className="text-sm font-bold text-sky-700">&larr; Kembali ke Pengetahuan</Link><p className="admin-kicker mt-5">Detail editorial</p><h1 className="admin-page-title">{article.title}</h1><p className="admin-page-copy">Kelola revisi serta transisi peninjauan dan publikasi.</p></div><span className="admin-status bg-sky-50 text-sky-800">{({ draft: "Draf", in_review: "Peninjauan", approved: "Disetujui", published: "Terbit", archived: "Diarsipkan" } as Record<string, string>)[article.status] || article.status}</span></div>
       {error && <div className="admin-alert-error mb-5" role="alert">{error}</div>}
       {canCreateRevision && <DraftStatus state={autoSave.state} message={autoSave.message} lastSavedAt={autoSave.lastSavedAt} recovery={autoSave.recovery} onRecover={autoSave.recoverFrom} onKeepCurrent={autoSave.keepCurrent} onDiscard={autoSave.discard} onStartNew={autoSave.startNew} onRetry={autoSave.saveNow} allowStartNew={false} />}
       <section className="admin-form-card">
@@ -122,7 +122,7 @@ export default function AdminKnowledgeDetailPage() {
                   disabled={actionLoading}
                   className="admin-button"
                 >
-                  Ajukan review
+                  Ajukan peninjauan
                 </button>
               )}
 
@@ -133,7 +133,7 @@ export default function AdminKnowledgeDetailPage() {
                     disabled={actionLoading}
                     className="admin-button-secondary !text-rose-700"
                   >
-                    Kembalikan ke draft
+                    Kembalikan ke draf
                   </button>
                   <button 
                     onClick={() => handleTransition('approved')} 

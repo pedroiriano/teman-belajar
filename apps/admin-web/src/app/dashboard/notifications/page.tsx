@@ -1,0 +1,2 @@
+import { AdminNotificationCenter } from "@/components/notification-center";
+export default function NotificationsPage(){return <div className="admin-page max-w-5xl"><div className="admin-page-header"><div><p className="admin-kicker">Akun</p><h1 className="admin-page-title">Pusat Notifikasi</h1><p className="admin-page-copy">Ikuti pembaruan penting dan kelola pengaturan notifikasi dalam aplikasi.</p></div></div><AdminNotificationCenter mode="page"/></div>}

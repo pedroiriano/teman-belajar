@@ -1,0 +1,1 @@
+import { NextRequest } from "next/server";import { proxyPortalNotification } from "@/lib/notifications/proxy";export async function GET(request:NextRequest){return proxyPortalNotification(request,"summary")}

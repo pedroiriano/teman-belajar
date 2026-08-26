@@ -7,6 +7,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { PortalIcon } from "@/components/portal-icon";
 import { SilentSsoBridge } from "@/components/silent-sso-bridge";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { PortalNotificationCenter } from "@/components/notification-center";
 
 type NavigationItem = { href?: string; label: string; description: string; comingSoon?: boolean };
 type NavigationGroup = { label: string; items: NavigationItem[] };
@@ -185,6 +186,7 @@ export function PortalChrome({ authenticated, children }: { authenticated: boole
               <input id="portal-search" type="search" name="q" required maxLength={200} placeholder="Cari konten dan kelas" className="portal-search-input w-56" />
             </form>
             <ThemeToggle />
+            {authenticated ? <PortalNotificationCenter /> : null}
             {authenticated ? (
               <Link href="/api/auth/federated-logout" prefetch={false} className="portal-button-secondary hidden sm:inline-flex">Keluar</Link>
             ) : (
@@ -227,7 +229,7 @@ export function PortalChrome({ authenticated, children }: { authenticated: boole
           <div><h2 className="text-sm font-bold text-white">Informasi</h2><div className="mt-4 grid gap-3 text-sm"><Link href="/news">Berita</Link><Link href="/announcements">Pengumuman</Link><Link href="/help">FAQ</Link></div></div>
           <div><h2 className="text-sm font-bold text-white">Fondasi platform</h2><p className="mt-4 text-sm leading-7 text-slate-400">Composable LXP + Moodle LMS dengan identitas terpusat dan pengalaman yang aman.</p></div>
         </div>
-        <div className="border-t border-white/10"><div className="portal-container flex flex-col gap-2 py-5 text-xs text-slate-500 sm:flex-row sm:items-center sm:justify-between"><span>© {new Date().getFullYear()} Teman Belajar.</span><span>Enterprise Digital Learning Experience Platform</span></div></div>
+        <div className="border-t border-white/10"><div className="portal-container flex flex-col gap-2 py-5 text-xs text-slate-500 sm:flex-row sm:items-center sm:justify-between"><span>© {new Date().getFullYear()} Teman Belajar.</span><span>Platform Pengalaman Belajar Digital Perusahaan</span></div></div>
       </footer>
       <button type="button" className={`portal-back-to-top ${showBackToTop ? "is-visible" : ""}`} onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })} aria-label="Kembali ke atas">
         <PortalIcon name="arrow-up" className="h-5 w-5" />

@@ -31,14 +31,14 @@ export default async function Home() {
             Satu tempat yang aman untuk menyusun, meninjau, menyetujui, dan menerbitkan konten Teman Belajar.
           </p>
         </div>
-        <p className="relative text-xs text-slate-500">Enterprise Digital Learning Experience Platform</p>
+        <p className="relative text-xs text-slate-500">Platform Pengalaman Belajar Digital Perusahaan</p>
       </section>
 
       <section className="flex items-center justify-center bg-slate-50 p-6">
         <div className="admin-card w-full max-w-md p-7 sm:p-9">
           <span className="grid h-12 w-12 place-items-center rounded-2xl bg-sky-100 font-black text-sky-700 lg:hidden">TB</span>
           <p className="mt-6 text-xs font-black uppercase tracking-[.18em] text-sky-600">Akses terproteksi</p>
-          <h2 className="mt-3 text-3xl font-black text-slate-900">Masuk ke Admin Console</h2>
+          <h2 className="mt-3 text-3xl font-black text-slate-900">Masuk ke Panel Administrasi</h2>
           <p className="mt-3 text-sm leading-6 text-slate-500">
             Gunakan akun organisasi Anda. Hak akses Editor, Reviewer, atau Portal Administrator diperlukan.
           </p>

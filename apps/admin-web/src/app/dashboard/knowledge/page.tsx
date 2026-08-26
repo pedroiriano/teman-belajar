@@ -4,13 +4,16 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { getServerAccessToken } from "@/lib/server-auth";
 import { AdminUnauthorized } from "@/components/admin-states";
+import { AdminDataTable } from "@/components/admin-data-table";
+import { AdminPagination } from "@/components/admin-pagination";
 
-async function getAdminKnowledge(token: string) {
+async function getAdminKnowledge(token: string, page: number, pageSize: number) {
   const API_BASE = process.env.PORTAL_API_INTERNAL_URL;
   if (!API_BASE) throw new Error("Missing PORTAL_API_INTERNAL_URL");
 
   try {
-    const res = await fetch(`${API_BASE}/api/v1/admin/knowledge`, {
+    const params = new URLSearchParams({ page: String(page), page_size: String(pageSize) });
+    const res = await fetch(`${API_BASE}/api/v1/admin/knowledge?${params}`, {
       headers: {
         'Authorization': `Bearer ${token}`
       },
@@ -24,7 +27,11 @@ async function getAdminKnowledge(token: string) {
   }
 }
 
-export default async function AdminKnowledgePage() {
+export default async function AdminKnowledgePage({ searchParams }: { searchParams: Promise<{ page?: string; page_size?: string }> }) {
+  const params = await searchParams;
+  const page = Math.max(1, Number.parseInt(params.page || "1", 10) || 1);
+  const requestedPageSize = Number.parseInt(params.page_size || "20", 10);
+  const pageSize = [10, 20, 50].includes(requestedPageSize) ? requestedPageSize : 20;
   const session: any = await getServerSession(authOptions);
   const accessToken = await getServerAccessToken();
 
@@ -41,14 +48,17 @@ export default async function AdminKnowledgePage() {
     return <AdminUnauthorized resource="artikel pengetahuan" />;
   }
 
-  const knowledgeRes = accessToken ? await getAdminKnowledge(accessToken) : null;
+  const knowledgeRes = accessToken ? await getAdminKnowledge(accessToken, page, pageSize) : null;
+  const articles = knowledgeRes?.data || [];
+  const pagination = knowledgeRes?.pagination || { page, page_size: pageSize, total: articles.length, total_pages: articles.length ? 1 : 0 };
+  if (pagination.total_pages > 0 && page > pagination.total_pages) redirect(`/dashboard/knowledge?page=${pagination.total_pages}&page_size=${pageSize}`);
 
   return (
     <div className="admin-page">
       <div>
         <div className="admin-page-header">
           <div>
-            <p className="admin-kicker">Manajemen konten</p><h1 className="admin-page-title">Pusat Pengetahuan</h1><p className="admin-page-copy">Kelola artikel, revisi, dan workflow review.</p>
+            <p className="admin-kicker">Manajemen konten</p><h1 className="admin-page-title">Pusat Pengetahuan</h1><p className="admin-page-copy">Kelola artikel, revisi, dan alur kerja peninjauan.</p>
           </div>
           <div className="flex flex-wrap gap-3"><Link href="/dashboard/knowledge-hierarchy" className="admin-button-secondary">Kelola struktur</Link><Link
               href="/dashboard/knowledge/create"
@@ -58,20 +68,8 @@ export default async function AdminKnowledgePage() {
             </Link></div>
         </div>
 
-        <div className="admin-table-shell"><div className="admin-table-toolbar"><div><h2 className="font-black text-slate-900">Daftar artikel</h2><p className="mt-1 text-xs text-slate-500">Versi dan status publikasi</p></div><span className="admin-status bg-slate-100 text-slate-600">{knowledgeRes?.data?.length || 0} item</span></div><div className="overflow-x-auto"><table className="admin-table">
-            <thead>
-              <tr><th>Judul</th><th>Status</th><th>Revisi aktif / terbit</th><th>Aksi</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {!knowledgeRes || !knowledgeRes.data || knowledgeRes.data.length === 0 ? (
-                <tr>
-                  <td colSpan={4} className="admin-empty">
-                    Belum ada artikel pengetahuan. Buat draft pertama untuk memulai.
-                  </td>
-                </tr>
-              ) : (
-                knowledgeRes.data.map((article: any) => (
+        <AdminDataTable title="Daftar artikel" description="Versi dan status publikasi" itemCount={pagination.total} headers={["Judul", "Status", "Revisi aktif / terbit", "Aksi"]} emptyState="Belum ada artikel pengetahuan. Buat draf pertama untuk memulai." error={knowledgeRes ? null : "Data artikel gagal dimuat."} retryHref="/dashboard/knowledge">
+              {articles.map((article: any) => (
                   <tr key={article.id} className="hover:bg-slate-50 transition-colors">
                     <td className="p-4">
                       <div className="font-medium text-slate-900">{article.title}</div>
@@ -95,11 +93,9 @@ export default async function AdminKnowledgePage() {
                       </Link>
                     </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table></div>
-        </div>
+                ))}
+        </AdminDataTable>
+        <AdminPagination page={pagination.page} pages={pagination.total_pages} total={pagination.total} pageSize={pagination.page_size} pathname="/dashboard/knowledge" />
       </div>
     </div>
   );

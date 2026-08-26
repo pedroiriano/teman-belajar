@@ -4,18 +4,16 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { getServerAccessToken } from "@/lib/server-auth";
 import { AdminUnauthorized } from "@/components/admin-states";
+import { AdminDataTable } from "@/components/admin-data-table";
+import { AdminPagination } from "@/components/admin-pagination";
 
-async function getAdminNews(token: string) {
-  // In a real implementation we would fetch /api/v1/admin/news 
-  // with the Authorization: Bearer ${token} header.
-  // For the sake of this vertical slice, we will simulate the fetch 
-  // or use the public endpoint as a fallback if the admin API requires deeper BFF setup.
-  
+async function getAdminNews(token: string, page: number, pageSize: number) {
   const API_BASE = process.env.PORTAL_API_INTERNAL_URL;
   if (!API_BASE) throw new Error("Missing PORTAL_API_INTERNAL_URL");
 
   try {
-    const res = await fetch(`${API_BASE}/api/v1/admin/news`, {
+    const params = new URLSearchParams({ page: String(page), page_size: String(pageSize) });
+    const res = await fetch(`${API_BASE}/api/v1/admin/news?${params}`, {
       headers: {
         'Authorization': `Bearer ${token}`
       },
@@ -29,7 +27,11 @@ async function getAdminNews(token: string) {
   }
 }
 
-export default async function AdminNewsPage() {
+export default async function AdminNewsPage({ searchParams }: { searchParams: Promise<{ page?: string; page_size?: string }> }) {
+  const params = await searchParams;
+  const page = Math.max(1, Number.parseInt(params.page || "1", 10) || 1);
+  const requestedPageSize = Number.parseInt(params.page_size || "20", 10);
+  const pageSize = [10, 20, 50].includes(requestedPageSize) ? requestedPageSize : 20;
   const session: any = await getServerSession(authOptions);
   const accessToken = await getServerAccessToken();
 
@@ -46,7 +48,11 @@ export default async function AdminNewsPage() {
     return <AdminUnauthorized resource="berita" />;
   }
 
-  const newsRes = accessToken ? await getAdminNews(accessToken) : null;
+  const newsRes = accessToken ? await getAdminNews(accessToken, page, pageSize) : null;
+  const news = newsRes?.data || [];
+  const pagination = newsRes?.pagination || { page, page_size: pageSize, total: news.length, total_pages: news.length ? 1 : 0 };
+  if (pagination.total_pages > 0 && page > pagination.total_pages) redirect(`/dashboard/news?page=${pagination.total_pages}&page_size=${pageSize}`);
+  if (pagination.total_pages > 0 && page > pagination.total_pages) redirect(`/dashboard/news?page=${pagination.total_pages}&page_size=${pageSize}`);
 
   return (
     <div className="admin-page">
@@ -55,7 +61,7 @@ export default async function AdminNewsPage() {
           <div>
             <p className="admin-kicker">Manajemen konten</p>
             <h1 className="admin-page-title">Berita</h1>
-            <p className="admin-page-copy">Susun dan kelola workflow berita Teman Belajar.</p>
+            <p className="admin-page-copy">Susun dan kelola alur kerja berita Teman Belajar.</p>
           </div>
           <Link 
             href="/dashboard/news/create" 
@@ -65,23 +71,8 @@ export default async function AdminNewsPage() {
           </Link>
         </div>
 
-        <div className="admin-table-shell">
-          <div className="admin-table-toolbar"><div><h2 className="font-black text-slate-900">Daftar berita</h2><p className="mt-1 text-xs text-slate-500">Seluruh status editorial</p></div><span className="admin-status bg-slate-100 text-slate-600">{newsRes?.data?.length || 0} item</span></div>
-          <div className="overflow-x-auto"><table className="admin-table">
-            <thead>
-              <tr>
-                <th>Judul</th><th>Status</th><th>Dipublikasikan</th><th>Aksi</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {!newsRes || !newsRes.data || newsRes.data.length === 0 ? (
-                <tr>
-                    <td colSpan={4} className="admin-empty">
-                    Belum ada berita. Buat draft pertama untuk memulai.
-                  </td>
-                </tr>
-              ) : (
-                newsRes.data.map((news: any) => (
+        <AdminDataTable title="Daftar berita" description="Seluruh status editorial" itemCount={pagination.total} headers={["Judul", "Status", "Diterbitkan", "Aksi"]} emptyState="Belum ada berita. Buat draf pertama untuk memulai." error={newsRes ? null : "Data berita gagal dimuat."} retryHref="/dashboard/news">
+              {news.map((news: any) => (
                   <tr key={news.id} className="hover:bg-slate-50 transition-colors">
                     <td className="p-4">
                       <div className="font-medium text-slate-900">{news.title}</div>
@@ -97,7 +88,7 @@ export default async function AdminNewsPage() {
                       </span>
                     </td>
                     <td className="p-4 text-sm text-slate-600">
-                      {news.published_at ? new Date(news.published_at).toLocaleDateString() : '-'}
+                      {news.published_at ? new Date(news.published_at).toLocaleDateString("id-ID") : '-'}
                     </td>
                     <td className="p-4 text-sm">
                       <Link href={`/dashboard/news/${news.id}`} className="mr-4 font-bold text-sky-700 hover:text-sky-600">
@@ -105,11 +96,9 @@ export default async function AdminNewsPage() {
                       </Link>
                     </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table></div>
-        </div>
+                ))}
+        </AdminDataTable>
+        <AdminPagination page={pagination.page} pages={pagination.total_pages} total={pagination.total} pageSize={pagination.page_size} pathname="/dashboard/news" />
       </div>
     </div>
   );

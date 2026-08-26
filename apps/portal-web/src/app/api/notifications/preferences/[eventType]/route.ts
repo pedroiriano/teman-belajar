@@ -1,0 +1,1 @@
+import { NextRequest } from "next/server";import { proxyPortalNotification } from "@/lib/notifications/proxy";export async function PUT(request:NextRequest,context:{params:Promise<{eventType:string}>}){return proxyPortalNotification(request,"preferences",(await context.params).eventType)}

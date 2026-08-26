@@ -47,7 +47,7 @@ export default async function CreateUserPage() {
                   <input type="email" name="email" required maxLength={320} className="admin-input" placeholder="contoh@temanbelajar.local" />
                 </div>
                 <div>
-                  <label className="admin-label">Username *</label>
+                  <label className="admin-label">Nama pengguna *</label>
                   <input type="text" name="username" required maxLength={255} className="admin-input" placeholder="Masukkan username unik" />
                 </div>
               </div>

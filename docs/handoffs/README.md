@@ -69,3 +69,11 @@ with `docs/runbooks/FAQ-CMS-HELP-CENTER-OPERATIONS.md`. FAQ answers are plain
 text, public visibility is publication-gated, JSON-LD must match visible
 indexable content, and Admin Auto-Save/Media/workflow rules must not be weakened.
 TASK-017 is `DONE — MERGED via PR #23` through squash commit `224abe0e`.
+
+For the Notification Center, read `TASK-021-HANDOFF.md`,
+`docs/governance/NOTIFICATION-CENTER.md`, its threat model, and operations
+runbook. For Indonesian UI copy and Cuba data presentation, read
+`TASK-025-HANDOFF.md` and the single canonical terminology glossary. TASK-021
+and TASK-025 corrective release status must be taken from their latest factual
+handoffs; neither authorizes Identity/SSO/RBAC, external notification channels,
+or production deployment.
