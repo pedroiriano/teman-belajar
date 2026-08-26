@@ -88,7 +88,7 @@ export default async function AdminAnnouncementsPage() {
                           ann.status === 'draft' ? 'bg-gray-100 text-gray-800' : 
                           ann.status === 'in_review' ? 'bg-yellow-100 text-yellow-800' :
                           'bg-blue-100 text-blue-800'}`}>
-                        {ann.status.replace('_', ' ')}
+                        {{ draft: 'Draf', in_review: 'Peninjauan', published: 'Terbit', archived: 'Diarsipkan' }[ann.status] || ann.status.replace('_', ' ')}
                       </span>
                     </td>
                     <td className="p-4 text-sm text-slate-600">
