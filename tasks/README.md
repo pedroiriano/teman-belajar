@@ -32,6 +32,7 @@ Task awal:
 - TASK-022 Media Gallery & Video Hub — `PLANNED`
 - TASK-023 Experience Personalization & Recommendation 2.0 — `PLANNED`
 - TASK-024 Post-Expansion Release Gate — `PLANNED`
+- TASK-025 Indonesian UI Language Harmonization & Cuba Data Tables — `IN PROGRESS`
 
 ## Rule
 

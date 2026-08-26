@@ -53,11 +53,11 @@ export default async function UsersPage() {
             <table className="admin-table">
               <thead>
                 <tr>
-                  <th>Name</th>
-                  <th>Username</th>
+                  <th>Nama</th>
+                  <th>Nama Pengguna</th>
                   <th>Email</th>
                   <th>Status</th>
-                  <th>Created</th>
+                  <th>Dibuat pada</th>
                   <th>Aksi</th>
                 </tr>
               </thead>

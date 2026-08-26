@@ -9,7 +9,7 @@ const modules: Array<{ href: string; title: string; copy: string; icon: AdminIco
   { href: "/dashboard/knowledge", title: "Pusat Pengetahuan", copy: "Kelola artikel, revisi, dan proses review.", icon: "knowledge", label: "Knowledge" },
   { href: "/dashboard/news", title: "Berita", copy: "Susun kabar dan cerita pembelajaran organisasi.", icon: "news", label: "CMS" },
   { href: "/dashboard/announcements", title: "Pengumuman", copy: "Atur informasi aktif dan terjadwal.", icon: "announcement", label: "Jadwal" },
-  { href: "/dashboard/media", title: "Media Library", copy: "Kelola gambar dan dokumen yang aman.", icon: "media", label: "Aset" },
+  { href: "/dashboard/media", title: "Pustaka Media", copy: "Kelola gambar dan dokumen yang aman.", icon: "media", label: "Aset" },
 ];
 
 const workflow = [["1", "Draft", "Editor"], ["2", "Dalam review", "Editor"], ["3", "Disetujui", "Reviewer"], ["4", "Terbit", "Reviewer"], ["5", "Arsip", "Editorial"]];
@@ -24,7 +24,7 @@ export default async function AdminDashboard() {
 
   const name = session.user?.name?.split(" ")[0] || "Tim";
   return <div className="admin-page space-y-7">
-    <div className="admin-page-header"><div><p className="admin-kicker">Dashboard editorial</p><h1 className="admin-page-title">Selamat datang, {name}</h1><p className="admin-page-copy">Pantau fondasi workflow dan buka modul kerja Anda.</p></div><div className="inline-flex items-center rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-bold text-emerald-800"><span className="mr-2 h-2 w-2 rounded-full bg-emerald-500" />Workflow aktif</div></div>
+    <div className="admin-page-header"><div><p className="admin-kicker">Dasbor editorial</p><h1 className="admin-page-title">Selamat datang, {name}</h1><p className="admin-page-copy">Pantau fondasi workflow dan buka modul kerja Anda.</p></div><div className="inline-flex items-center rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-bold text-emerald-800"><span className="mr-2 h-2 w-2 rounded-full bg-emerald-500" />Workflow aktif</div></div>
 
     <div className="grid gap-5 xl:grid-cols-[1.35fr_1fr]">
       <section className="relative min-h-64 overflow-hidden rounded-2xl bg-gradient-to-br from-sky-600 via-sky-500 to-cyan-400 p-7 text-white shadow-xl shadow-sky-950/10 sm:p-8" aria-labelledby="welcome-title"><div className="absolute -right-12 -top-16 h-64 w-64 rounded-full border-[36px] border-white/10" aria-hidden="true" /><div className="relative max-w-xl"><p className="text-xs font-black uppercase tracking-[.2em] text-sky-100">Teman Belajar Admin</p><h2 id="welcome-title" className="mt-4 text-3xl font-black sm:text-4xl">Kelola konten dengan alur yang jelas.</h2><p className="mt-4 max-w-lg text-sm leading-7 text-sky-50">Mulai dari draft, review bersama, lalu terbitkan pengalaman belajar yang berkualitas.</p>{canCreate ? <Link href="/dashboard/knowledge/create" className="mt-7 inline-flex min-h-11 items-center rounded-xl border border-white/40 bg-white/15 px-5 text-sm font-bold text-white transition hover:bg-white/25">Buat artikel baru <AdminIcon name="arrow" className="ml-2 h-4 w-4" /></Link> : <p className="mt-7 inline-flex min-h-11 items-center rounded-xl border border-white/30 bg-white/10 px-5 text-sm font-bold text-white">Tinjau konten yang menunggu persetujuan.</p>}</div></section>

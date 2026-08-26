@@ -10,14 +10,14 @@ import { ThemeToggle } from "@/components/theme-toggle";
 type NavigationItem = { href?: string; label: string; icon: AdminIconName; disabled?: boolean };
 
 const navigationGroups: Array<{ label: string; items: NavigationItem[] }> = [
-  { label: "Workspace", items: [{ href: "/dashboard", label: "Ringkasan", icon: "dashboard" }, { href: "/dashboard/statistics", label: "Statistik", icon: "dashboard" }] },
+  { label: "Ruang Kerja", items: [{ href: "/dashboard", label: "Ringkasan", icon: "dashboard" }, { href: "/dashboard/statistics", label: "Statistik", icon: "dashboard" }] },
   { label: "Konten", items: [
     { href: "/dashboard/knowledge", label: "Pusat Pengetahuan", icon: "knowledge" },
     { href: "/dashboard/knowledge-hierarchy", label: "Struktur Pengetahuan", icon: "folder" },
     { href: "/dashboard/news", label: "Berita", icon: "news" },
     { href: "/dashboard/announcements", label: "Pengumuman", icon: "announcement" },
-    { href: "/dashboard/media", label: "Media Library", icon: "media" },
-    { href: "/dashboard/taxonomy", label: "Taxonomy & SEO", icon: "folder" },
+    { href: "/dashboard/media", label: "Pustaka Media", icon: "media" },
+    { href: "/dashboard/taxonomy", label: "Taksonomi & SEO", icon: "folder" },
   ] },
   { label: "Platform", items: [
     { href: "/dashboard/faqs", label: "FAQ", icon: "folder" },
@@ -29,14 +29,14 @@ const navigationGroups: Array<{ label: string; items: NavigationItem[] }> = [
 ];
 
 const titleBySegment: Record<string, string> = {
-  dashboard: "Dashboard",
+  dashboard: "Dasbor",
   statistics: "Statistik",
   knowledge: "Pusat Pengetahuan",
   "knowledge-hierarchy": "Struktur Pengetahuan",
   news: "Berita",
   announcements: "Pengumuman",
-  media: "Media Library",
-  taxonomy: "Taxonomy & SEO",
+  media: "Pustaka Media",
+  taxonomy: "Taksonomi & SEO",
   faqs: "FAQ",
   users: "Pengguna & Profil",
   create: "Buat baru",
@@ -49,7 +49,7 @@ function Brand({ desktopClose }: { desktopClose?: () => void }) {
         <span className="admin-brand-mark grid h-11 w-11 shrink-0 place-items-center rounded-xl font-black shadow-lg shadow-sky-500/20">TB</span>
         <span className="min-w-0">
           <span className="block truncate font-extrabold admin-sidebar-title">Teman Belajar</span>
-          <span className="block truncate text-[10px] font-bold uppercase tracking-[.18em] text-slate-400">Admin Console</span>
+          <span className="block truncate text-[10px] font-bold uppercase tracking-[.18em] text-slate-400">Panel Administrasi</span>
         </span>
       </Link>
       {desktopClose && (
@@ -102,7 +102,7 @@ function Sidebar({ pathname, close, desktopClose }: { pathname: string; close?: 
         ))}
       </nav>
       <div className="m-3 rounded-xl border admin-sidebar-border admin-sidebar-box-bg p-4">
-        <p className="text-xs font-bold admin-sidebar-title">Workflow editorial</p>
+        <p className="text-xs font-bold admin-sidebar-title">Alur Kerja Editorial</p>
         <p className="mt-1 text-[11px] leading-5 admin-sidebar-copy">Draft → Review → Setujui → Terbit → Arsip</p>
       </div>
     </div>

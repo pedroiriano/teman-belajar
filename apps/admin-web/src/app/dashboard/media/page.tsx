@@ -5,6 +5,7 @@ import Link from "next/link";
 import { getServerAccessToken } from "@/lib/server-auth";
 import MediaUploader from "./MediaUploader";
 import { AdminIcon } from "@/components/admin-icon";
+import { AdminPagination } from "@/components/admin-pagination";
 import { AdminUnauthorized } from "@/components/admin-states";
 import { MediaPreviewImage } from "@/components/media/MediaPreviewImage";
 import type { MediaAsset } from "@/components/media/types";
@@ -73,7 +74,7 @@ export default async function AdminMediaPage({ searchParams }: { searchParams: P
       <div>
         <div className="admin-page-header">
           <div>
-            <p className="admin-kicker">Manajemen aset</p><h1 className="admin-page-title">Media Library</h1><p className="admin-page-copy">Kelola gambar dan dokumen yang digunakan dalam konten Teman Belajar.</p>
+            <p className="admin-kicker">Manajemen aset</p><h1 className="admin-page-title">Pustaka Media</h1><p className="admin-page-copy">Kelola gambar dan dokumen yang digunakan dalam konten Teman Belajar.</p>
           </div>
         </div>
 
@@ -155,7 +156,7 @@ export default async function AdminMediaPage({ searchParams }: { searchParams: P
             </tbody>
           </table></div>
         </div>
-        <nav className="mt-5 flex items-center justify-between" aria-label="Paginasi Media Library"><p className="text-sm text-slate-500">Halaman {page} dari {pages} · {total} aset</p><div className="flex gap-2">{page > 1 ? <Link className="admin-button-secondary" href={{ pathname: "/dashboard/media", query: { q: query, kind, page: page - 1 } }}>Sebelumnya</Link> : <span className="admin-button-secondary opacity-50">Sebelumnya</span>}{page < pages ? <Link className="admin-button-secondary" href={{ pathname: "/dashboard/media", query: { q: query, kind, page: page + 1 } }}>Berikutnya</Link> : <span className="admin-button-secondary opacity-50">Berikutnya</span>}</div></nav>
+        <AdminPagination page={page} pages={pages} total={total} pageSize={20} pathname="/dashboard/media" query={{ q: query, kind }} />
       </div>
     </div>
   );

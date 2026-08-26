@@ -67,7 +67,7 @@ function Brand({ inverted = false }: { inverted?: boolean }) {
       </span>
       <span>
         <span className={`block text-lg font-extrabold leading-5 ${inverted ? "text-white" : "text-slate-900"}`}>Teman Belajar</span>
-        <span className={`block text-[10px] font-bold uppercase tracking-[0.18em] ${inverted ? "text-teal-300" : "text-teal-700"}`}>Learning Experience</span>
+        <span className={`block text-[10px] font-bold uppercase tracking-[0.18em] ${inverted ? "text-teal-300" : "text-teal-700"}`}>Pengalaman Belajar</span>
       </span>
     </Link>
   );
