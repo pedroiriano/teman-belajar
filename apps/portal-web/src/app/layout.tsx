@@ -1,13 +1,14 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Nunito } from "next/font/google";
 import { getServerSession } from "next-auth/next";
 import { PortalChrome } from "@/components/portal-chrome";
 import { AnalyticsTracker } from "@/components/analytics-tracker";
 import { StructuredData } from "@/components/structured-data";
 import { authOptions } from "@/lib/auth";
+import "@/styles/techwind-foundation.css";
 import "./globals.css";
 
-const inter = Inter({ subsets: ["latin"], display: "swap" });
+const techwindFont = Nunito({ subsets: ["latin"], display: "swap", variable: "--font-techwind-nunito" });
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.PORTAL_PUBLIC_BASE_URL || "http://localhost:3000"),
@@ -36,7 +37,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
   return (
     <html lang="id" data-scroll-behavior="smooth" suppressHydrationWarning>
       <head><script dangerouslySetInnerHTML={{ __html: themeInitializationScript }} /></head>
-      <body className={`${inter.className} portal-root min-h-screen antialiased`}>
+      <body data-ui-foundation="techwind" className={`${techwindFont.variable} font-nunito techwind-foundation portal-root min-h-screen antialiased`}>
         <StructuredData value={{ "@context": "https://schema.org", "@graph": [{ "@type": "Organization", "@id": `${publicBase}#organization`, name: "Teman Belajar", url: publicBase }, { "@type": "WebSite", "@id": `${publicBase}#website`, name: "Teman Belajar", url: publicBase, publisher: { "@id": `${publicBase}#organization` } }] }} />
         <AnalyticsTracker />
         <PortalChrome authenticated={Boolean(session)}>{children}</PortalChrome>

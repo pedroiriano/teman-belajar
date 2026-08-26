@@ -100,6 +100,11 @@ Rules:
     `docs/design-system/ADMIN-UI-VISUAL-CONTRACT.md`. Orange and amber are
     forbidden across every application-controlled Admin state; warning uses
     semantic yellow. Run both Admin theme and no-orange regression guards.
+13. Techwind and Cuba are full, bounded runtime UI foundations under ADR-018,
+    not optional visual inspiration. New Portal UI must compose the Techwind
+    foundation; new Admin UI must compose the Cuba foundation. Keep product
+    semantic aliases thin, do not create a parallel design system, and run
+    `npm run test:vendor-foundation` for the affected application.
 
 ## 4. Backend Rules
 

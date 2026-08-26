@@ -90,14 +90,14 @@ Acceptance requires:
 4. no browser console error or hydration warning is introduced;
 5. static guards, lint, typecheck, production build, and dependency audit pass.
 
-## 6. Cuba reference limitation
+## 6. Cuba runtime source
 
-`vendor/ui-templates/cuba/ORIGINAL/` is read-only. In the current checkout it
-contains only `README_DROP_CUBA_HERE.md`, so exact licensed-source or pixel-level
-comparison is unavailable. Implementations must preserve the established
-Cuba-derived information hierarchy and semantic Admin patterns without
-inventing vendor files, dependencies, or claims. When licensed originals are
-supplied, only task-relevant patterns may be inspected and adapted.
+`vendor/ui-templates/cuba/ORIGINAL/` is the immutable licensed reference. The
+relevant shell, component, icon and typography patterns are adapted through
+`apps/admin-web/src/styles/cuba-foundation.css`, the React-safe Cuba runtime,
+and semantic `admin-*` product aliases. Vendor source, branding, demo data,
+unused plugins, and incompatible global initializers must never enter the
+application runtime. See ADR-018 and `UI-SOURCE-MAPPING.md`.
 
 ## 7. Change authority
 

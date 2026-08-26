@@ -12,7 +12,8 @@
     "test:seo": "node scripts/verify-seo-discovery-contract.mjs",
     "test:faq": "node scripts/verify-faq-contract.mjs",
     "test:language": "node ../../scripts/verify-ui-language-contract.mjs",
-    "test:notifications": "node ../../scripts/verify-notification-contract.mjs"
+    "test:notifications": "node ../../scripts/verify-notification-contract.mjs",
+    "test:vendor-foundation": "node ../../scripts/verify-ui-foundation-contract.mjs portal"
   },
   "dependencies": {
     "next": "16.3.0",

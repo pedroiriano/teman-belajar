@@ -77,3 +77,10 @@ runbook. For Indonesian UI copy and Cuba data presentation, read
 and TASK-025 corrective release status must be taken from their latest factual
 handoffs; neither authorizes Identity/SSO/RBAC, external notification channels,
 or production deployment.
+
+For the full runtime UI foundations, read `TASK-026-HANDOFF.md`, ADR-018,
+`docs/design-system/VENDOR-UI-RUNTIME-MANIFEST.md`, and
+`docs/design-system/UI-FOUNDATION-INTEGRATION-GUIDE.md`. Techwind is mandatory
+for Portal and Cuba is mandatory for Admin; vendor originals remain immutable,
+cross-imports and parallel UI frameworks are forbidden, and Admin no-orange
+plus bright sky/light-blue remains authoritative.
