@@ -1,6 +1,6 @@
 # Design Tokens — Teman Belajar
 
-**Status:** Canonical through TASK-026.
+**Status:** Canonical through TASK-027.
 
 ## Implemented Experience Tokens
 

@@ -15,7 +15,7 @@
   --admin-ink: #1e293b;
   --admin-copy: #475569;
   --admin-muted: #475569;
-  --admin-surface: #f6f7fb;
+  --admin-surface: #f5f7fb;
   --admin-panel: #ffffff;
   --admin-panel-muted: #f8fafc;
   --admin-panel-strong: #f1f5f9;
@@ -30,8 +30,19 @@
     --admin-sidebar-text: #475569;
     --admin-sidebar-title: #0f172a;
   --admin-topbar: rgba(255, 255, 255, .94);
-  --admin-shadow: 0 8px 25px rgba(30, 41, 59, .06);
+  --admin-shadow: 0 8px 24px rgba(30, 41, 59, .07);
 }
+
+.dashboard-03-layout .page-body { background-image: radial-gradient(circle at 96% 3%, var(--admin-accent-soft), transparent 18rem); }
+.cuba-course-banner { @apply relative min-h-64 overflow-hidden rounded-xl p-7 text-white shadow-xl sm:p-8; background: linear-gradient(135deg, #0284c7 0%, #0ea5e9 54%, #38bdf8 100%); box-shadow: 0 18px 38px rgba(2, 132, 199, .2); }
+.cuba-course-banner-orb { @apply absolute -right-12 -top-16 h-64 w-64 rounded-full border-[36px] border-white/10; }
+.cuba-course-banner-action { @apply mt-7 inline-flex min-h-11 items-center rounded-lg border border-white/40 bg-white/15 px-5 text-sm font-bold text-white transition hover:bg-white/25; }
+.cuba-course-banner-visual { @apply absolute bottom-6 right-8 hidden h-36 w-36 place-items-center rounded-full border-[20px] border-white/10 text-white/80 2xl:grid; }
+.cuba-course-banner-visual span { @apply absolute -left-5 -top-3 h-10 w-10 rotate-12 rounded-xl bg-white/10; }
+.cuba-course-widget { min-height: 9rem; }
+.cuba-course-module { border-top: 3px solid color-mix(in srgb, var(--admin-primary) 82%, transparent); }
+.cuba-course-module:hover { border-color: var(--admin-accent-border); box-shadow: 0 16px 34px var(--admin-accent-soft); }
+.cuba-course-schedule > div:first-child { background: linear-gradient(90deg, var(--admin-panel), var(--admin-panel-muted)); border-color: var(--admin-border); }
 
 :root[data-theme="dark"] {
   color-scheme: dark;
@@ -72,12 +83,12 @@ a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visib
 ::selection { color: var(--admin-ink); background: var(--admin-accent-soft); }
 
 @layer components {
-  .admin-card { @apply rounded-2xl border; color: var(--admin-ink); background: var(--admin-panel); border-color: var(--admin-border); box-shadow: var(--admin-shadow); }
-  .admin-button { @apply inline-flex min-h-10 items-center justify-center rounded-xl px-4 py-2 text-sm font-bold shadow-sm transition disabled:cursor-not-allowed disabled:opacity-50; color: var(--admin-on-primary); background: var(--admin-primary); }
+  .admin-card { @apply rounded-xl border; color: var(--admin-ink); background: var(--admin-panel); border-color: color-mix(in srgb, var(--admin-border) 78%, transparent); box-shadow: var(--admin-shadow); transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease; }
+  .admin-button { @apply inline-flex min-h-10 items-center justify-center rounded-lg px-4 py-2 text-sm font-bold shadow-sm transition disabled:cursor-not-allowed disabled:opacity-50; color: var(--admin-on-primary); background: var(--admin-primary); }
   .admin-button:hover { background: var(--admin-primary-hover); }
-  .admin-button-secondary { @apply inline-flex min-h-10 items-center justify-center rounded-xl border px-4 py-2 text-sm font-bold transition; color: var(--admin-copy); background: var(--admin-panel); border-color: var(--admin-border); }
+  .admin-button-secondary { @apply inline-flex min-h-10 items-center justify-center rounded-lg border px-4 py-2 text-sm font-bold transition; color: var(--admin-copy); background: var(--admin-panel); border-color: var(--admin-border); }
   .admin-button-secondary:hover { color: var(--admin-accent-text); border-color: var(--admin-accent-border); }
-  .admin-input { @apply w-full rounded-xl border px-4 py-3 text-sm focus:ring-2; color: var(--admin-ink); -webkit-text-fill-color: var(--admin-ink); caret-color: var(--admin-accent-text); background-color: var(--admin-field); border-color: var(--admin-border); --tw-ring-color: var(--admin-focus); }
+  .admin-input { @apply w-full rounded-lg border px-4 py-3 text-sm focus:ring-2; min-height: 44px; color: var(--admin-ink); -webkit-text-fill-color: var(--admin-ink); caret-color: var(--admin-accent-text); background-color: var(--admin-field); border-color: var(--admin-border); --tw-ring-color: var(--admin-focus); }
   .admin-input::placeholder { color: var(--admin-muted); }
   .admin-input:focus { border-color: var(--admin-accent-border); }
   .admin-input[readonly] { background-color: var(--admin-field-readonly); }
@@ -96,7 +107,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visib
   .admin-checkbox { @apply h-4 w-4 rounded border; color: var(--admin-accent-border); accent-color: var(--admin-accent-border); border-color: var(--admin-border); }
   .admin-checkbox:disabled { cursor: not-allowed; opacity: .55; }
   .admin-label { @apply mb-2 block text-sm font-bold; color: var(--admin-copy); }
-  .admin-page { @apply mx-auto w-full max-w-7xl; }
+  .admin-page { @apply mx-auto w-full max-w-[1500px]; }
   
   .admin-sidebar { color: var(--admin-sidebar-text); background: var(--admin-sidebar); border-right: 1px solid var(--admin-sidebar-border); }
   .admin-sidebar-border { border-color: var(--admin-sidebar-border) !important; }
@@ -131,22 +142,27 @@ a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visib
   .admin-profile-menu > a { @apply block px-4 py-3 text-sm font-bold transition; color: var(--admin-copy); }
   .admin-profile-menu > a:hover { color: var(--admin-accent-text); background: var(--admin-panel-muted); }
   .admin-footer { @apply flex min-h-[58px] flex-col justify-center gap-1 border-t px-4 py-3 text-xs sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8; color: var(--admin-muted); background: var(--admin-panel); border-color: var(--admin-border); }
-  .admin-page-header { @apply mb-7 flex flex-col justify-between gap-4 lg:flex-row lg:items-end; }
+  .admin-page-header { @apply relative mb-7 flex flex-col justify-between gap-4 overflow-hidden rounded-xl border p-5 lg:flex-row lg:items-end lg:p-6; color: var(--admin-ink); background: linear-gradient(105deg, var(--admin-panel) 0%, var(--admin-panel) 62%, var(--admin-accent-soft) 100%); border-color: var(--admin-border); box-shadow: var(--admin-shadow); }
+  .admin-page-header::after { content: ""; @apply pointer-events-none absolute -right-10 -top-14 h-36 w-36 rounded-full border-[22px]; border-color: color-mix(in srgb, var(--admin-primary) 12%, transparent); }
+  .admin-page-header > * { @apply relative z-[1]; }
   .admin-kicker { @apply text-xs font-black uppercase tracking-[.18em]; color: var(--admin-accent-text); }
   .admin-page-title { @apply mt-2 text-3xl font-black tracking-tight; color: var(--admin-ink); }
   .admin-page-copy { @apply mt-2 text-sm leading-6; color: var(--admin-muted); }
-  .admin-stat-card { @apply relative overflow-hidden rounded-2xl border p-5; color: var(--admin-ink); background: var(--admin-panel); border-color: var(--admin-border); box-shadow: var(--admin-shadow); }
+  .admin-stat-card { @apply relative overflow-hidden rounded-xl border p-5; color: var(--admin-ink); background: linear-gradient(145deg, var(--admin-panel), color-mix(in srgb, var(--admin-accent-soft) 32%, var(--admin-panel))); border-color: var(--admin-border); box-shadow: var(--admin-shadow); }
+  .admin-stat-card::after { content: ""; @apply absolute -bottom-8 -right-8 h-24 w-24 rounded-full; background: color-mix(in srgb, var(--admin-primary) 10%, transparent); }
+  .admin-stat-card:hover { border-color: var(--admin-accent-border); transform: translateY(-2px); box-shadow: 0 14px 32px var(--admin-accent-soft); }
   .admin-stat-icon { @apply grid h-11 w-11 place-items-center rounded-xl; color: var(--admin-accent-text); background: var(--admin-accent-soft); }
-  .admin-table-shell { @apply overflow-hidden rounded-2xl border; background: var(--admin-panel); border-color: var(--admin-border); box-shadow: var(--admin-shadow); }
+  .admin-table-shell { @apply overflow-hidden rounded-xl border; background: var(--admin-panel); border-color: var(--admin-border); box-shadow: var(--admin-shadow); }
   .admin-table-toolbar { @apply flex flex-col gap-3 border-b p-4 sm:flex-row sm:items-center sm:justify-between; border-color: var(--admin-border); }
   .admin-table { @apply w-full border-collapse text-left; }
   .admin-table thead { background: var(--admin-panel-muted); }
-  .admin-table th { @apply whitespace-nowrap px-5 py-4 text-xs font-black uppercase tracking-wider; color: var(--admin-muted); }
+  .admin-table th { @apply whitespace-nowrap px-5 py-4 text-[11px] font-black uppercase tracking-[.12em]; color: var(--admin-muted); }
   .admin-table td { @apply px-5 py-4 text-sm; color: var(--admin-copy); }
   .admin-table tbody tr { @apply border-t transition; border-color: var(--admin-border); }
   .admin-table tbody tr:hover { background: var(--admin-panel-muted); }
-  .admin-form-card { @apply overflow-hidden rounded-2xl border; color: var(--admin-ink); background: var(--admin-panel); border-color: var(--admin-border); box-shadow: var(--admin-shadow); }
-  .admin-form-header { @apply border-b px-5 py-5 sm:px-7; border-color: var(--admin-border); }
+  .admin-form-card { @apply overflow-hidden rounded-xl border; color: var(--admin-ink); background: var(--admin-panel); border-color: var(--admin-border); box-shadow: var(--admin-shadow); }
+  .admin-form-header { @apply relative border-b px-5 py-5 sm:px-7; border-color: var(--admin-border); background: linear-gradient(90deg, var(--admin-panel), var(--admin-panel-muted)); }
+  .admin-form-header::before { content: ""; @apply absolute inset-y-0 left-0 w-1; background: var(--admin-primary); }
   .admin-form-body { @apply space-y-6 p-5 sm:p-7; }
   .admin-form-footer { @apply flex flex-col-reverse gap-3 border-t px-5 py-4 sm:flex-row sm:justify-end sm:px-7; background: var(--admin-panel-muted); border-color: var(--admin-border); }
   .admin-disclosure { @apply rounded-2xl border p-4; color: var(--admin-copy); background: var(--admin-panel-muted); border-color: var(--admin-border); }

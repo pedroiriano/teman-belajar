@@ -131,7 +131,7 @@ export function AdminShell({ children, userName, userEmail, role }: { children: 
   useCubaDisclosureRuntime();
 
   return (
-    <div id="pageWrapper" className={`page-wrapper compact-wrapper cuba-foundation min-h-screen lg:grid ${desktopSidebarOpen ? "lg:grid-cols-[276px_1fr]" : "lg:grid-cols-[1fr]"}`}>
+    <div id="pageWrapper" data-cuba-template="dashboard-03" className={`page-wrapper compact-wrapper dashboard-03-layout cuba-foundation min-h-screen lg:grid ${desktopSidebarOpen ? "lg:grid-cols-[276px_1fr]" : "lg:grid-cols-[1fr]"}`}>
       {desktopSidebarOpen && (
         <aside id="admin-sidebar" className="sidebar-wrapper admin-sidebar fixed inset-y-0 left-0 z-40 hidden w-[276px] lg:block" data-sidebar-layout="stroke-svg">
           <Sidebar pathname={pathname} desktopClose={() => setDesktopSidebarOpen(false)} />
@@ -181,7 +181,7 @@ export function AdminShell({ children, userName, userEmail, role }: { children: 
           </div>
           <div className="flex min-h-11 items-center gap-2 border-t px-4 text-xs text-slate-500 sm:px-6 lg:px-8"><Link href="/dashboard" className="font-bold text-sky-700">Admin</Link>{breadcrumbs.slice(1).map((crumb) => <span key={crumb} className="flex items-center gap-2"><span aria-hidden="true">/</span><span>{crumb}</span></span>)}</div>
         </header>
-        <main id="admin-content" className="page-body min-h-[calc(100vh-154px)] p-4 sm:p-6 lg:p-8">{children}</main>
+        <main id="admin-content" className="page-body container-fluid min-h-[calc(100vh-154px)] p-4 sm:p-6 lg:p-8">{children}</main>
         <footer className="footer admin-footer"><span>© {new Date().getFullYear()} Teman Belajar</span><span>Panel Administrasi · pengalaman perusahaan</span></footer>
       </div>
     </div>

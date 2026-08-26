@@ -105,6 +105,14 @@ Rules:
     foundation; new Admin UI must compose the Cuba foundation. Keep product
     semantic aliases thin, do not create a parallel design system, and run
     `npm run test:vendor-foundation` for the affected application.
+14. Under ADR-019, the primary route-level visual baseline is Techwind
+    `vendor/ui-templates/techwind/ORIGINAL/html/index-course.html` for Portal
+    and Cuba
+    `vendor/ui-templates/cuba/ORIGINAL/html/template/template/dashboard-03.html`
+    for Admin. Every active route must compose the matching Online Course
+    language through shared semantic primitives. Another page from the same
+    vendor tree may be used only when it is a closer component match; vendor
+    originals remain read-only and inactive `Segera` features remain inactive.
 
 ## 4. Backend Rules
 

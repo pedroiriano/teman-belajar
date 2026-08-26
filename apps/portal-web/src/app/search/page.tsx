@@ -132,7 +132,7 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
         ) : (
           <div className="mt-6 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
             {response.data?.map((document) => (
-              <article key={document.id} className="portal-card group flex min-h-64 flex-col p-6">
+              <article key={document.id} className="portal-card portal-course-card group flex min-h-64 flex-col p-6">
                 <TypeBadge type={document.content_type} />
                 <h3 className="mt-5 text-lg font-extrabold leading-7 text-slate-900"><Link href={document.url} className="transition hover:text-teal-700">{document.title}</Link></h3>
                 <p className="mt-3 line-clamp-3 text-sm leading-6 text-slate-600">{document.snippet || "Buka konten untuk melihat informasi selengkapnya."}</p>

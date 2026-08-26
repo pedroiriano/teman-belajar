@@ -40,7 +40,7 @@ export function CourseList({
             <p className="portal-eyebrow">Lanjutkan</p>
             <h2 id="continue-learning" className="mt-2 text-2xl font-black">Lanjutkan Pembelajaran</h2>
           </div>
-          <div className="mt-6 flex items-center justify-between rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="portal-card portal-course-card mt-6 flex items-center justify-between gap-5 p-6">
             <div>
               <h3 className="text-lg font-bold text-slate-800 dark:text-white">{continueCourse.full_name}</h3>
               <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
@@ -62,7 +62,7 @@ export function CourseList({
         <h2 id="my-courses" className="text-2xl font-black">Daftar Kursus Saya</h2>
         <div className="mt-6 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
           {courses.map((course) => (
-            <div key={course.id} className="portal-card flex flex-col p-6">
+            <div key={course.id} className="portal-card portal-course-card flex flex-col p-6">
               <span className={`w-fit rounded-full px-3 py-1 text-xs font-bold ${
                 course.completed 
                   ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300" 
@@ -81,15 +81,15 @@ export function CourseList({
                     <span>{Math.round(course.progress)}%</span>
                   </div>
                   <div 
-                    className="h-2 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-700"
+                    className="portal-course-progress w-full"
                     role="progressbar" 
                     aria-valuenow={Math.round(course.progress)} 
                     aria-valuemin={0} 
                     aria-valuemax={100}
                     aria-label={`Progres ${course.full_name}`}
                   >
-                    <div 
-                      className="h-full bg-teal-500 transition-all duration-500" 
+                    <span
+                      className="transition-all duration-500"
                       style={{ width: `${Math.min(100, Math.max(0, course.progress))}%` }}
                     />
                   </div>

@@ -84,3 +84,10 @@ For the full runtime UI foundations, read `TASK-026-HANDOFF.md`, ADR-018,
 for Portal and Cuba is mandatory for Admin; vendor originals remain immutable,
 cross-imports and parallel UI frameworks are forbidden, and Admin no-orange
 plus bright sky/light-blue remains authoritative.
+
+For full route-level visual harmonization, read `TASK-027-HANDOFF.md`, ADR-019,
+and `docs/design-system/FULL-ROUTE-ONLINE-COURSE-MATRIX.md`. The primary Portal
+baseline is Techwind `html/index-course.html`; the primary Admin baseline is
+Cuba `html/template/template/dashboard-03.html`. This extends TASK-026 across
+all active routes without authorizing fake `Segera` features, vendor demo
+runtime, Identity changes, or weakening the Admin no-orange contract.

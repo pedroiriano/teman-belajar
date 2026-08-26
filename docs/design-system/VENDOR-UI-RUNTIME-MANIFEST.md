@@ -1,7 +1,7 @@
 # Vendor UI Runtime Manifest
 
 **Status:** Canonical
-**Owner:** TASK-026 / ADR-018
+**Owner:** TASK-027 / ADR-019 (foundation established by TASK-026 / ADR-018)
 
 | Experience | Immutable source | Git tree baseline | Runtime entry points |
 |---|---|---|---|
@@ -15,6 +15,8 @@
 - card, button, field, section and responsive interaction conventions;
 - Remix icon visual language through the typed local SVG adapter;
 - sticky, escape/outside-click and scroll behavior through a React hook.
+- `html/index-course.html` as the primary route-level visual baseline for
+  course hero, discovery cards, progress, content sections and CTA hierarchy.
 
 ## Included from Cuba
 
@@ -23,6 +25,8 @@
 - cards, forms, controls, data tables, pagination, drawer and disclosure patterns;
 - Feather icon visual language through the typed local SVG adapter;
 - drawer focus trap, Escape/focus restoration and disclosure cleanup hooks.
+- `html/template/template/dashboard-03.html` as the primary route-level visual
+  baseline for the Online Course dashboard, widgets, cards, tables and forms.
 
 ## Deliberately excluded
 

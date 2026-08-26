@@ -29,21 +29,21 @@ export default async function Home() {
   const faqs = faqResult.data.flatMap((group) => group.items).slice(0, 4);
   return (
     <>
-      <section className="portal-hero relative overflow-hidden text-white">
-        <div className="portal-hero-orb portal-hero-orb-one" aria-hidden="true" />
-        <div className="portal-hero-orb portal-hero-orb-two" aria-hidden="true" />
-        <div className="portal-container relative grid min-h-[650px] items-center gap-14 py-20 lg:grid-cols-[1.05fr_.95fr] lg:py-24">
+      <section className="portal-course-hero" data-techwind-pattern="index-course-hero">
+        <div className="portal-course-hero-shape portal-course-hero-shape-one" aria-hidden="true" />
+        <div className="portal-course-hero-shape portal-course-hero-shape-two" aria-hidden="true" />
+        <div className="portal-container relative grid min-h-[650px] items-center gap-14 py-16 lg:grid-cols-[1.05fr_.95fr] lg:py-24">
           <div>
-            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-teal-300/25 bg-teal-300/10 px-4 py-2 text-xs font-bold uppercase tracking-[0.16em] text-teal-100"><span className="h-2 w-2 rounded-full bg-amber-400" /> Belajar. Berbagi. Bertumbuh.</div>
-            <h1 className="max-w-3xl text-4xl font-black leading-[1.08] tracking-tight sm:text-5xl lg:text-6xl">Satu ruang untuk perjalanan belajar yang <span className="text-teal-300">lebih bermakna.</span></h1>
-            <p className="mt-6 max-w-2xl text-base leading-8 text-slate-300 sm:text-lg">Temukan pembelajaran formal, pengetahuan organisasi, dan informasi penting melalui pengalaman yang sederhana, aman, dan terhubung.</p>
-            <div className="mt-9 flex flex-col gap-3 sm:flex-row"><Link href="/search" className="portal-button-primary !bg-teal-500 !text-slate-950 hover:!bg-teal-400">Jelajahi Teman Belajar <span className="ml-2" aria-hidden="true">→</span></Link><Link href="/api/auth/signin?callbackUrl=/" className="portal-button-secondary !border-white/20 !bg-white/10 !text-white hover:!border-white/50 hover:!bg-white/15">Masuk ke akun</Link></div>
-            <div className="mt-10 flex flex-wrap gap-x-8 gap-y-3 text-sm text-slate-300"><span className="flex items-center gap-2"><b className="text-teal-300">✓</b> SSO terpusat</span><span className="flex items-center gap-2"><b className="text-teal-300">✓</b> Konten terkurasi</span><span className="flex items-center gap-2"><b className="text-teal-300">✓</b> Mengutamakan perangkat seluler</span></div>
+            <div className="portal-course-hero-label"><span className="h-2 w-2 rounded-full bg-yellow-400" /> Belajar. Berbagi. Bertumbuh.</div>
+            <h1 className="portal-course-hero-title">Belajar bersama <span>ahlinya</span>, kapan pun dan di mana pun.</h1>
+            <p className="portal-course-hero-copy">Temukan pembelajaran formal, pengetahuan organisasi, dan informasi penting melalui pengalaman yang sederhana, aman, dan terhubung.</p>
+            <div className="mt-9 flex flex-col gap-3 sm:flex-row"><Link href="/search" className="portal-button-primary">Jelajahi Teman Belajar <span className="ml-2" aria-hidden="true">→</span></Link><Link href="/api/auth/signin?callbackUrl=/" className="portal-button-secondary">Masuk ke akun</Link></div>
+            <div className="portal-course-hero-trust"><span><PortalIcon name="shield" className="h-4 w-4" />SSO terpusat</span><span><PortalIcon name="book" className="h-4 w-4" />Konten terkurasi</span><span><PortalIcon name="compass" className="h-4 w-4" />Responsif</span></div>
           </div>
           <div className="relative mx-auto w-full max-w-lg" aria-label="Pratinjau pengalaman Teman Belajar">
-            <div className="absolute -inset-8 rounded-full bg-teal-400/10 blur-3xl" />
-            <div className="relative rotate-1 rounded-[2rem] border border-white/15 bg-white/10 p-4 shadow-2xl backdrop-blur-sm">
-              <div className="rounded-[1.4rem] bg-white p-5 text-slate-900 shadow-xl sm:p-7">
+            <div className="absolute -inset-8 rounded-full bg-teal-400/10 blur-3xl" aria-hidden="true" />
+            <div className="portal-course-hero-preview">
+              <div className="portal-course-hero-screen">
                 <div className="flex items-center justify-between"><div><p className="text-xs font-bold uppercase tracking-wider text-teal-700">Untuk Anda</p><h2 className="mt-1 text-xl font-extrabold">Lanjutkan perjalananmu</h2></div><span className="portal-icon-tile !rounded-full"><PortalIcon name="sparkles" className="h-5 w-5" /></span></div>
                 <div className="mt-6 rounded-2xl bg-slate-50 p-5"><div className="flex items-start gap-4"><span className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-teal-700 text-white"><PortalIcon name="graduation" className="h-6 w-6" /></span><div><p className="text-xs font-bold text-teal-700">PEMBELAJARAN TERHUBUNG</p><h3 className="mt-1 font-bold">Kelas formal dan pengetahuan dalam satu perjalanan</h3><p className="mt-2 text-sm text-slate-500">Moodle + Teman Belajar</p></div></div><div className="mt-5 h-2 overflow-hidden rounded-full bg-slate-200"><div className="h-full w-2/3 rounded-full bg-teal-600" /></div><p className="mt-2 text-right text-xs font-bold text-slate-500">Pengalaman terpadu</p></div>
                 <div className="mt-4 grid grid-cols-2 gap-3"><div className="rounded-xl border border-slate-100 p-4"><PortalIcon name="book" className="h-5 w-5 text-teal-700" /><p className="mt-3 text-sm font-bold">Pengetahuan</p><p className="mt-1 text-xs text-slate-500">Terkurasi</p></div><div className="rounded-xl border border-slate-100 p-4"><PortalIcon name="shield" className="h-5 w-5 text-amber-600" /><p className="mt-3 text-sm font-bold">Identitas</p><p className="mt-1 text-xs text-slate-500">Terpusat</p></div></div>
@@ -60,7 +60,7 @@ export default async function Home() {
       <section className="portal-section">
         <div className="portal-container">
           <div className="portal-section-heading"><p className="portal-eyebrow">Mulai dari kebutuhan Anda</p><h2 className="portal-section-title">Tiga jalur, satu pengalaman belajar</h2><p className="portal-section-copy">Pilih pembelajaran formal, cari jawaban cepat, atau telusuri seluruh sumber dari satu tempat.</p></div>
-          <div className="mt-12 grid gap-6 lg:grid-cols-3">{learningPaths.map((item) => <article key={item.title} className="portal-card group p-7 transition hover:-translate-y-1"><span className="portal-icon-tile"><PortalIcon name={item.icon} className="h-6 w-6" /></span><h3 className="mt-6 text-xl font-extrabold text-slate-900">{item.title}</h3><p className="mt-3 text-sm leading-7 text-slate-600">{item.copy}</p><Link href={item.href} className="mt-6 inline-flex items-center text-sm font-bold text-teal-700">{item.label}<span className="ml-2 transition group-hover:translate-x-1" aria-hidden="true">→</span></Link></article>)}</div>
+          <div className="mt-12 grid gap-6 lg:grid-cols-3">{learningPaths.map((item) => <article key={item.title} className="portal-card portal-course-card group p-7 transition hover:-translate-y-1"><span className="portal-icon-tile"><PortalIcon name={item.icon} className="h-6 w-6" /></span><h3 className="mt-6 text-xl font-extrabold text-slate-900">{item.title}</h3><p className="mt-3 text-sm leading-7 text-slate-600">{item.copy}</p><Link href={item.href} className="mt-6 inline-flex items-center text-sm font-bold text-teal-700">{item.label}<span className="ml-2 transition group-hover:translate-x-1" aria-hidden="true">→</span></Link></article>)}</div>
         </div>
       </section>
 
@@ -74,7 +74,7 @@ export default async function Home() {
       <section className="portal-section">
         <div className="portal-container">
           <div className="portal-section-heading"><p className="portal-eyebrow">Konten organisasi</p><h2 className="portal-section-title">Pengetahuan yang bergerak bersama Anda</h2><p className="portal-section-copy">Informasi harian dan panduan mendalam dirancang agar mudah ditemukan dan nyaman dibaca.</p></div>
-          <div className="mt-12 grid gap-6 lg:grid-cols-3">{highlights.map((feature) => <article key={feature.href} className="portal-card group flex min-h-72 flex-col p-7"><span className={`grid h-12 w-12 place-items-center rounded-xl ${feature.tone}`}><PortalIcon name={feature.icon} className="h-6 w-6" /></span><p className="mt-6 text-xs font-black uppercase tracking-[.16em] text-slate-400">{feature.label}</p><h3 className="mt-3 text-xl font-extrabold leading-7 text-slate-900">{feature.title}</h3><p className="mt-3 text-sm leading-7 text-slate-600">{feature.copy}</p><Link href={feature.href} className="mt-auto pt-6 text-sm font-bold text-teal-700">Jelajahi sekarang <span aria-hidden="true">→</span></Link></article>)}</div>
+          <div className="mt-12 grid gap-6 lg:grid-cols-3">{highlights.map((feature) => <article key={feature.href} className="portal-card portal-course-card group flex min-h-72 flex-col p-7"><span className={`grid h-12 w-12 place-items-center rounded-xl ${feature.tone}`}><PortalIcon name={feature.icon} className="h-6 w-6" /></span><p className="mt-6 text-xs font-black uppercase tracking-[.16em] text-slate-400">{feature.label}</p><h3 className="mt-3 text-xl font-extrabold leading-7 text-slate-900">{feature.title}</h3><p className="mt-3 text-sm leading-7 text-slate-600">{feature.copy}</p><Link href={feature.href} className="mt-auto pt-6 text-sm font-bold text-teal-700">Jelajahi sekarang <span aria-hidden="true">→</span></Link></article>)}</div>
         </div>
       </section>
 
