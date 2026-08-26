@@ -1,0 +1,19 @@
+{
+  "name": "Admin Teman Belajar",
+  "short_name": "Admin TB",
+  "description": "Panel administrasi Teman Belajar.",
+  "start_url": "/dashboard",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f8fafc",
+  "theme_color": "#0ea5e9",
+  "lang": "id",
+  "icons": [
+    {
+      "src": "/brand/app-icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

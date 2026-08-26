@@ -9,7 +9,18 @@ import "@/styles/cuba-foundation.css";
 import "./globals.css";
 
 const cubaFont = Rubik({ subsets: ["latin"], display: "swap", variable: "--font-cuba-rubik" });
-export const metadata: Metadata = { title: { default: "Admin Teman Belajar", template: "%s | Admin Teman Belajar" }, description: "Panel administrasi Teman Belajar untuk pengelolaan konten dan alur kerja editorial." };
+export const metadata: Metadata = {
+  metadataBase: new URL(process.env.ADMIN_PUBLIC_BASE_URL || "http://localhost:3001"),
+  applicationName: "Admin Teman Belajar",
+  title: { default: "Admin Teman Belajar", template: "%s | Admin Teman Belajar" },
+  description: "Panel administrasi Teman Belajar untuk pengelolaan konten dan alur kerja editorial.",
+  manifest: "/manifest.webmanifest",
+  icons: {
+    icon: [{ url: "/brand/favicon.png", type: "image/png", sizes: "64x64" }],
+    shortcut: "/brand/favicon.png",
+    apple: [{ url: "/brand/app-icon.png", type: "image/png", sizes: "512x512" }],
+  },
+};
 
 const themeInitializationScript = `
   (() => {

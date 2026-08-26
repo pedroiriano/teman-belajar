@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { type ReactNode } from "react";
 
+import { BrandLogo } from "@/components/brand-logo";
 import { PortalIcon } from "@/components/portal-icon";
 import { SilentSsoBridge } from "@/components/silent-sso-bridge";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -64,9 +65,7 @@ function NavigationGroupItems({ group, mobile = false }: { group: NavigationGrou
 function Brand({ inverted = false }: { inverted?: boolean }) {
   return (
     <Link href="/" className="logo group flex shrink-0 items-center gap-3" aria-label="Teman Belajar — Beranda">
-      <span className="grid h-11 w-11 place-items-center rounded-xl bg-teal-700 text-white shadow-lg shadow-teal-900/15 transition group-hover:-rotate-3">
-        <PortalIcon name="graduation" className="h-6 w-6" />
-      </span>
+      <BrandLogo className="h-12 w-12 shrink-0 object-contain drop-shadow-md transition group-hover:-rotate-3" priority={!inverted} />
       <span>
         <span className={`block text-lg font-extrabold leading-5 ${inverted ? "text-white" : "text-slate-900"}`}>Teman Belajar</span>
         <span className={`block text-[10px] font-bold uppercase tracking-[0.18em] ${inverted ? "text-teal-300" : "text-teal-700"}`}>Pengalaman Belajar</span>
