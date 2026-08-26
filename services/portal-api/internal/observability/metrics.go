@@ -92,6 +92,11 @@ var (
 		Name: "notification_actions_total",
 		Help: "Total in-app notification actions by bounded result",
 	}, []string{"action"})
+
+	TrainingAggregationsTotal = promauto.NewCounterVec(prometheus.CounterOpts{
+		Name: "training_program_aggregations_total",
+		Help: "Total training program aggregations by bounded operation and state",
+	}, []string{"operation", "state"})
 )
 
 func RecordSSOEvent(eventType, status string) {
@@ -123,4 +128,8 @@ func RecordEventProcessDuration(eventType string, durationSec float64) {
 
 func RecordNotificationAction(action string) {
 	NotificationActionsTotal.WithLabelValues(action).Inc()
+}
+
+func RecordTrainingAggregation(operation, state string) {
+	TrainingAggregationsTotal.WithLabelValues(operation, state).Inc()
 }

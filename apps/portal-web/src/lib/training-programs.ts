@@ -1,0 +1,46 @@
+import "server-only";
+
+import { getBackendAccessToken } from "@/lib/server-auth";
+
+export type TrainingCourseRef = { moodle_course_id: number; sort_order: number; required: boolean };
+export type TrainingCohort = { id: string; label: string; starts_at?: string; ends_at?: string; enrollment_opens_at?: string; enrollment_closes_at?: string; status: "scheduled" | "cancelled" | "completed"; sort_order: number };
+export type TrainingProgram = { id: string; slug: string; title: string; summary: string; description: string; audience: string; eligibility_text: string; status: string; version: number; published_at?: string; courses?: TrainingCourseRef[]; cohorts?: TrainingCohort[] };
+export type TrainingCourse = { moodle_course_id: number; short_name?: string; full_name?: string; summary?: string; category?: string; required: boolean; availability: "available" | "unavailable"; learner_state?: "enrolled" | "completed" | "not_enrolled"; progress?: number; start_url?: string };
+export type TrainingProvenance = { source: "moodle"; checked_at: string; state: "fresh" | "degraded"; detail?: string };
+export type TrainingDetail = { program: TrainingProgram; courses: TrainingCourse[]; provenance: TrainingProvenance };
+export type TrainingProgress = { program_slug: string; courses: TrainingCourse[]; completed_courses: number; enrolled_courses: number; total_courses: number; progress_percent?: number; eligibility: { status: "confirmed" | "partial" | "unverified"; message: string }; cta: { kind: "start" | "review" | "check_access" | "unavailable"; label: string; url?: string }; provenance: TrainingProvenance };
+export type TrainingList = { data: TrainingProgram[]; pagination: { page: number; page_size: number; total: number; total_pages: number }; error?: true };
+
+function apiBase() { return process.env.PORTAL_API_INTERNAL_URL; }
+
+export async function listTrainingPrograms(query: string, page: number): Promise<TrainingList> {
+  const base = apiBase();
+  if (!base) return { data: [], pagination: { page: 1, page_size: 9, total: 0, total_pages: 0 }, error: true };
+  const params = new URLSearchParams({ q: query.slice(0, 100), page: String(page), page_size: "9" });
+  try {
+    const response = await fetch(`${base}/api/v1/training-programs?${params}`, { next: { revalidate: 60 } });
+    if (!response.ok) throw new Error("training list unavailable");
+    return response.json() as Promise<TrainingList>;
+  } catch {
+    return { data: [], pagination: { page, page_size: 9, total: 0, total_pages: 0 }, error: true };
+  }
+}
+
+export async function getTrainingProgram(slug: string): Promise<TrainingDetail | null> {
+  const base = apiBase();
+  if (!base) throw new Error("training API base is unavailable");
+  const response = await fetch(`${base}/api/v1/training-programs/${encodeURIComponent(slug)}`, { next: { revalidate: 60 } });
+  if (response.status === 404) return null;
+  if (!response.ok) throw new Error("training detail unavailable");
+  return response.json() as Promise<TrainingDetail>;
+}
+
+export async function getTrainingProgress(slug: string): Promise<{ authenticated: boolean; data: TrainingProgress | null }> {
+  const [base, token] = [apiBase(), await getBackendAccessToken()];
+  if (!token) return { authenticated: false, data: null };
+  if (!base) return { authenticated: true, data: null };
+  try {
+    const response = await fetch(`${base}/api/v1/learning/me/training-programs/${encodeURIComponent(slug)}`, { headers: { Authorization: `Bearer ${token}` }, cache: "no-store" });
+    return { authenticated: true, data: response.ok ? await response.json() : null };
+  } catch { return { authenticated: true, data: null }; }
+}
