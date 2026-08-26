@@ -170,3 +170,17 @@ func TestRetentionDefaultsAndIsBounded(t *testing.T) {
 		t.Fatalf("expiry=%s want=%s", created.ExpiresAt, want)
 	}
 }
+
+func TestFAQDraftRegistryAllowsOnlyCanonicalFields(t *testing.T) {
+	categoryID := uuid.NewString()
+	input := SaveInput{DraftKey: uuid.NewString(), FormKey: "faq.create", EntityType: "faq_item", SchemaVersion: 1,
+		Payload:         json.RawMessage(`{"category_id":"` + categoryID + `","slug":"cara-memulai","question":"Bagaimana memulai?","answer":"Pilih program yang sesuai.","sort_order":"10","media_asset_id":null,"media_alt":null,"seo_title":"Cara memulai","meta_description":"Panduan memulai.","indexable":"true"}`),
+		ClientUpdatedAt: time.Now().UTC()}
+	if _, err := NewService(newMemoryRepository(), nil, 30).Save(context.Background(), uuid.NewString(), input); err != nil {
+		t.Fatalf("canonical FAQ draft rejected: %v", err)
+	}
+	input.Payload = json.RawMessage(`{"question":"FAQ","access_token":"forbidden"}`)
+	if _, err := validatePayload(input); !errors.Is(err, ErrValidation) {
+		t.Fatalf("sensitive FAQ draft accepted: %v", err)
+	}
+}

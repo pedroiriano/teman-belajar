@@ -14,7 +14,8 @@
     "test:drafts": "node scripts/verify-draft-contract.mjs",
     "test:hierarchy": "node scripts/verify-knowledge-hierarchy-contract.mjs",
     "test:seo": "node scripts/verify-seo-discovery-contract.mjs",
-    "test:user-management": "node scripts/verify-user-management-contract.mjs"
+    "test:user-management": "node scripts/verify-user-management-contract.mjs",
+    "test:faq": "node scripts/verify-faq-contract.mjs"
   },
   "dependencies": {
     "jwt-decode": "^4.0.0",

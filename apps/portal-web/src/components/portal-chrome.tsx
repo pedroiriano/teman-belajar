@@ -36,7 +36,7 @@ const navigationGroups: NavigationGroup[] = [
       { href: "/news", label: "Berita", description: "Cerita dan perkembangan organisasi." },
       { href: "/announcements", label: "Pengumuman", description: "Informasi penting dan jadwal terbaru." },
       { href: "/#media", label: "Media", description: "Galeri visual dari konten terbit." },
-      { href: "/#faq", label: "FAQ", description: "Jawaban cepat tentang Teman Belajar." },
+      { href: "/help", label: "FAQ", description: "Jawaban terkurasi dan mudah dicari." },
     ],
   },
 ];
@@ -224,7 +224,7 @@ export function PortalChrome({ authenticated, children }: { authenticated: boole
         <div className="portal-container grid gap-10 py-14 md:grid-cols-2 lg:grid-cols-[1.35fr_.8fr_.8fr_1fr]">
           <div><Brand inverted /><p className="mt-5 max-w-md text-sm leading-7 text-slate-400">Ruang belajar terpadu untuk menemukan wawasan, mengikuti pembelajaran formal, dan bertumbuh bersama organisasi.</p></div>
           <div><h2 className="text-sm font-bold text-white">Jelajahi</h2><div className="mt-4 grid gap-3 text-sm"><Link href="/my-learning">Pembelajaran Saya</Link><Link href="/knowledge">Pusat Pengetahuan</Link><Link href="/search">Pencarian</Link></div></div>
-          <div><h2 className="text-sm font-bold text-white">Informasi</h2><div className="mt-4 grid gap-3 text-sm"><Link href="/news">Berita</Link><Link href="/announcements">Pengumuman</Link><Link href="/#faq">FAQ</Link></div></div>
+          <div><h2 className="text-sm font-bold text-white">Informasi</h2><div className="mt-4 grid gap-3 text-sm"><Link href="/news">Berita</Link><Link href="/announcements">Pengumuman</Link><Link href="/help">FAQ</Link></div></div>
           <div><h2 className="text-sm font-bold text-white">Fondasi platform</h2><p className="mt-4 text-sm leading-7 text-slate-400">Composable LXP + Moodle LMS dengan identitas terpusat dan pengalaman yang aman.</p></div>
         </div>
         <div className="border-t border-white/10"><div className="portal-container flex flex-col gap-2 py-5 text-xs text-slate-500 sm:flex-row sm:items-center sm:justify-between"><span>© {new Date().getFullYear()} Teman Belajar.</span><span>Enterprise Digital Learning Experience Platform</span></div></div>

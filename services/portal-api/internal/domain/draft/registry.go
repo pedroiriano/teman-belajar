@@ -118,6 +118,26 @@ var formDefinitions = map[string]formDefinition{
 			"description": {kind: fieldString, max: 1000}, "sort_order": {kind: fieldString, max: 5},
 		},
 	},
+	"faq.create": {
+		entityType: "faq_item",
+		fields: map[string]fieldRule{
+			"category_id": {kind: fieldNullableUUID, max: 36}, "slug": {kind: fieldString, max: 160},
+			"question": {kind: fieldString, max: 300}, "answer": {kind: fieldString, max: 10000},
+			"sort_order": {kind: fieldString, max: 5}, "media_asset_id": {kind: fieldNullableUUID, max: 36},
+			"media_alt": {kind: fieldNullableString, max: 255}, "seo_title": {kind: fieldString, max: 200},
+			"meta_description": {kind: fieldString, max: 500}, "indexable": {kind: fieldString, max: 5},
+		},
+	},
+	"faq.edit": {
+		entityType: "faq_item", edit: true,
+		fields: map[string]fieldRule{
+			"category_id": {kind: fieldNullableUUID, max: 36}, "slug": {kind: fieldString, max: 160},
+			"question": {kind: fieldString, max: 300}, "answer": {kind: fieldString, max: 10000},
+			"sort_order": {kind: fieldString, max: 5}, "media_asset_id": {kind: fieldNullableUUID, max: 36},
+			"media_alt": {kind: fieldNullableString, max: 255}, "seo_title": {kind: fieldString, max: 200},
+			"meta_description": {kind: fieldString, max: 500}, "indexable": {kind: fieldString, max: 5},
+		},
+	},
 }
 
 var sensitiveKeyFragments = []string{

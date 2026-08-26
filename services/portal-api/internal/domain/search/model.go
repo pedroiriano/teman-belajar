@@ -12,6 +12,7 @@ const (
 	ContentTypeKnowledge    ContentType = "knowledge"
 	ContentTypeNews         ContentType = "news"
 	ContentTypeAnnouncement ContentType = "announcement"
+	ContentTypeFAQ          ContentType = "faq"
 )
 
 type Sort string

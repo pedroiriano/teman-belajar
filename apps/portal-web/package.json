@@ -9,7 +9,8 @@
     "lint": "eslint . --max-warnings=0",
     "typecheck": "tsc --noEmit",
     "test:hierarchy": "node scripts/verify-knowledge-explorer-contract.mjs",
-    "test:seo": "node scripts/verify-seo-discovery-contract.mjs"
+    "test:seo": "node scripts/verify-seo-discovery-contract.mjs",
+    "test:faq": "node scripts/verify-faq-contract.mjs"
   },
   "dependencies": {
     "next": "16.3.0",

@@ -63,3 +63,8 @@ For production readiness, read `TASK-012-HANDOFF.md` together with
 release-candidate baseline at `00619d68`; the merge is not production approval.
 Backup/restore, staging, access, alert delivery,
 compatibility, secret action, deployment and final GO remain human-owned.
+
+For FAQ CMS and Help Center expansion work, read `TASK-017-HANDOFF.md` together
+with `docs/runbooks/FAQ-CMS-HELP-CENTER-OPERATIONS.md`. FAQ answers are plain
+text, public visibility is publication-gated, JSON-LD must match visible
+indexable content, and Admin Auto-Save/Media/workflow rules must not be weakened.

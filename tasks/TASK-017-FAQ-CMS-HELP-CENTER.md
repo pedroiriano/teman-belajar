@@ -1,6 +1,6 @@
 # TASK-017 — FAQ CMS & Help Center
 
-**Status:** PLANNED
+**Status:** IN REVIEW — PR #23
 **Owner Agent:** Backend/Frontend/SEO/QA
 **Feature:** F-FAQ-001
 **Dependencies:** TASK-011A, TASK-011D, TASK-004E
@@ -30,13 +30,13 @@ Mengganti FAQ hard-coded dengan CMS dan Help Center yang dapat dikelola aman.
 
 ## Required Tests
 
-- [ ] domain/workflow/sort unit and DB integration
-- [ ] contract/authz/sanitization/structured-data tests
-- [ ] author-to-public E2E, keyboard/mobile/light/dark
+- [x] domain/workflow/sort unit and DB integration
+- [x] contract/authz/sanitization/structured-data tests
+- [x] author-to-public E2E, keyboard/mobile/light/dark
 
 ## Documentation Impact
 
-- [ ] OpenAPI/ERD/migration, SEO/UI blueprint, runbook/handoff
+- [x] OpenAPI/ERD/migration, SEO/UI blueprint, runbook/handoff
 
 ## Definition of Done
 
