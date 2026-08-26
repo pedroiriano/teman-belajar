@@ -2,15 +2,19 @@
 
 ## Status
 
-`IMPLEMENTED — CORRECTIVE RELEASE`
+`DONE — MERGED via PR #26`
 
 - Base and broken canonical SHA: `bb10b118c95c3432b8c51c2e2bbc5855d8153016`.
 - Working branch: `codex/task-021-task-025-regression-recovery`.
+- Final reviewed head: `2d624165a38672d87c5b30faccc11df65e2c601d`.
+- Protected checks: **PASS** — API, Admin, Portal, governance, OpenAPI,
+  SAST Go, npm SCA for both web applications, secret scan, SBOM, and Trivy.
+- Release: PR #26 was squash-merged without bypass on 2026-08-26 as
+  `0a005f9ec513c73aa6ed51960092be29ccedc17a`; verified `origin/main` matched
+  that SHA after fetch.
 - Last-known-working committed SHA: **not found**. The previous functional
   Notification Center existed only as uncommitted worktree source and a locally
   built Docker runtime; the branch ref still pointed to its base.
-- Release PR/final SHA/main SHA: GitHub release metadata is authoritative after
-  protected merge.
 
 ## Root Cause and Recovery
 
