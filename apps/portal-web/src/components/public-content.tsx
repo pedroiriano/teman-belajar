@@ -1,9 +1,31 @@
 import Link from "next/link";
+import { PortalIcon, type PortalIconName } from "@/components/portal-icon";
 
 export type PaginationData = { page: number; page_size: number; total: number; total_pages: number };
 
-export function PageHero({ eyebrow, title, description, tone = "teal" }: { eyebrow: string; title: string; description: string; tone?: "teal" | "amber" }) {
-  return <section className={`relative overflow-hidden ${tone === "amber" ? "bg-amber-50" : "bg-teal-50"}`}><div className="absolute -right-20 -top-32 h-72 w-72 rounded-full border-[48px] border-white/70" aria-hidden="true"/><div className="portal-container relative py-14 sm:py-20"><p className={`text-xs font-black uppercase tracking-[0.2em] ${tone === "amber" ? "text-amber-700" : "text-teal-700"}`}>{eyebrow}</p><h1 className="mt-3 max-w-3xl text-4xl font-black tracking-tight text-slate-900 sm:text-5xl">{title}</h1><p className="mt-5 max-w-2xl text-base leading-7 text-slate-600 sm:text-lg">{description}</p></div></section>;
+export function PageHero({ eyebrow, title, description, tone = "teal", icon = "graduation" }: { eyebrow: string; title: string; description: string; tone?: "teal" | "amber"; icon?: PortalIconName }) {
+  return (
+    <section className="portal-page-hero" data-techwind-pattern="course-inner-hero">
+      <div className="portal-page-hero-orb portal-page-hero-orb-one" aria-hidden="true" />
+      <div className="portal-page-hero-orb portal-page-hero-orb-two" aria-hidden="true" />
+      <div className="portal-container relative grid items-center gap-10 py-14 sm:py-16 lg:grid-cols-[minmax(0,1fr)_22rem] lg:py-20">
+        <div>
+          <p className={`portal-eyebrow ${tone === "amber" ? "portal-eyebrow-warm" : ""}`}>{eyebrow}</p>
+          <h1 className="portal-page-hero-title">{title}</h1>
+          <p className="portal-page-hero-copy">{description}</p>
+        </div>
+        <div className="portal-page-hero-visual" aria-hidden="true">
+          <span className="portal-page-hero-icon"><PortalIcon name={icon} className="h-9 w-9" /></span>
+          <div className="min-w-0">
+            <p className="text-[10px] font-black uppercase tracking-[.18em] text-teal-700">Teman Belajar</p>
+            <p className="mt-1 line-clamp-2 font-extrabold text-slate-900">Pengalaman belajar terhubung</p>
+            <div className="mt-4 h-2 overflow-hidden rounded-full bg-slate-100"><span className="block h-full w-3/4 rounded-full bg-teal-500" /></div>
+          </div>
+          <span className="portal-page-hero-badge"><PortalIcon name="sparkles" className="h-4 w-4" /></span>
+        </div>
+      </div>
+    </section>
+  );
 }
 
 export function EmptyState({ title, description }: { title: string; description: string }) {

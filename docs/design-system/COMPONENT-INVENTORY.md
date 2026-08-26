@@ -1,5 +1,7 @@
 # Component Inventory — Teman Belajar
 
+**Route harmonization baseline:** TASK-027 / ADR-019.
+
 Status:
 - `R` = Reference available in vendor
 - `A` = Adapt into application

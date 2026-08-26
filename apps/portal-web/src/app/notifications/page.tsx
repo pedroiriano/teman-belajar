@@ -1,2 +1,4 @@
 import { PortalNotificationCenter } from "@/components/notification-center";
-export default function NotificationsPage(){return <div className="portal-container py-12 sm:py-16"><div className="mb-8 max-w-2xl"><p className="portal-eyebrow">Akun</p><h1 className="mt-3 text-3xl font-black sm:text-4xl">Pusat Notifikasi</h1><p className="mt-4 leading-7" style={{color:"var(--portal-copy)"}}>Ikuti pengingat dan pembaruan pembelajaran yang relevan bagi Anda.</p></div><PortalNotificationCenter mode="page"/></div>}
+import { PageHero } from "@/components/public-content";
+
+export default function NotificationsPage(){return <><PageHero eyebrow="Akun" title="Pusat Notifikasi" description="Ikuti pengingat dan pembaruan pembelajaran yang relevan bagi Anda." icon="bell"/><div className="portal-container py-12 sm:py-16"><PortalNotificationCenter mode="page"/></div></>}

@@ -2,7 +2,8 @@
 
 ## Adding Portal UI
 
-1. Find the closest Techwind pattern in the immutable source and record it in
+1. Start from Techwind `html/index-course.html`; use another Techwind page only
+   when it contains a closer product pattern, then record the choice in
    `UI-SOURCE-MAPPING.md` when it creates a new family.
 2. Compose existing `techwind-*` foundation anchors and `portal-*` semantic
    primitives. Add a semantic token before adding an application color.
@@ -15,7 +16,8 @@
 
 ## Adding Admin UI
 
-1. Map the change to a Cuba shell/component pattern.
+1. Start from Cuba `html/template/template/dashboard-03.html`; use another Cuba
+   page only when it contains a closer product component.
 2. Compose `cuba-*` anchors and `admin-*` semantic primitives; preserve the
    shared data table/pagination and form conventions.
 3. Use `AdminIcon` and the fixed bright sky/light-blue tokens. Orange and amber

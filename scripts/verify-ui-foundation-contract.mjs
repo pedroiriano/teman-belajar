@@ -43,6 +43,12 @@ if (target === "all" || target === "portal") {
   contains("apps/portal-web/src/components/techwind-runtime.ts", /removeEventListener/, "adapter JS harus melepas event listener React");
   contains("apps/portal-web/src/components/techwind-runtime.ts", /cancelAnimationFrame/, "adapter JS harus membatalkan animation frame React");
   contains("apps/portal-web/src/components/portal-icon.tsx", /data-ui-icon="remix"/, "ikon Portal wajib dipetakan ke Remix");
+  contains("apps/portal-web/src/app/page.tsx", /data-techwind-pattern="index-course-hero"/, "homepage wajib memakai baseline Techwind Online Course");
+  contains("apps/portal-web/src/components/public-content.tsx", /data-techwind-pattern="course-inner-hero"/, "seluruh inner route wajib memakai hero Online Course bersama");
+  contains("apps/portal-web/src/components/learning/course-list.tsx", /portal-course-card[\s\S]*portal-course-progress/, "route pembelajaran wajib memakai pola course card dan progress Techwind");
+  contains("apps/portal-web/src/app/globals.css", /\.portal-course-hero/, "hero Online Course Portal wajib ada");
+  contains("apps/portal-web/src/app/globals.css", /\.portal-page-hero/, "hero inner-route Portal wajib ada");
+  contains("apps/portal-web/src/app/globals.css", /\.portal-learning-hero/, "dashboard pembelajaran Portal wajib ada");
   for (const file of files("apps/portal-web/src")) assert(!/cuba/i.test(read(relative(root, join(root, file)))), `${file}: cross-import/penyebutan Cuba dilarang di Portal`);
 }
 
@@ -56,6 +62,12 @@ if (target === "all" || target === "admin") {
   contains("apps/admin-web/src/components/admin-icon.tsx", /data-ui-icon="feather"/, "ikon Admin wajib dipetakan ke Feather");
   contains("apps/admin-web/src/components/admin-data-table.tsx", /cuba-data-table[\s\S]*cuba-table/, "data table Cuba wajib digunakan");
   contains("apps/admin-web/src/components/admin-pagination.tsx", /cuba-pagination/, "pagination Cuba wajib digunakan");
+  contains("apps/admin-web/src/components/admin-shell.tsx", /data-cuba-template="dashboard-03"/, "seluruh route Admin wajib berada pada baseline Cuba dashboard-03");
+  contains("apps/admin-web/src/app/dashboard/page.tsx", /data-cuba-pattern="online-course-dashboard"/, "dashboard Admin wajib memakai pola Cuba Online Course");
+  contains("apps/admin-web/src/app/globals.css", /\.cuba-course-banner/, "banner Online Course Admin wajib ada");
+  contains("apps/admin-web/src/app/globals.css", /\.admin-page-header/, "page header Cuba bersama wajib ada");
+  contains("apps/admin-web/src/app/globals.css", /\.admin-form-card/, "form card Cuba bersama wajib ada");
+  contains("apps/admin-web/src/app/globals.css", /\.admin-table-shell/, "table shell Cuba bersama wajib ada");
   for (const file of files("apps/admin-web/src")) assert(!/techwind/i.test(read(relative(root, join(root, file)))), `${file}: cross-import/penyebutan Techwind dilarang di Admin`);
 }
 

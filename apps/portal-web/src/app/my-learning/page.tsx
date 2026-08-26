@@ -3,6 +3,7 @@ import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { getBackendAccessToken } from "@/lib/server-auth";
 import { CourseList } from "@/components/learning/course-list";
+import { PortalIcon } from "@/components/portal-icon";
 import type { EnrolledCourse } from "@/lib/learning/types";
 import { EngagementDiscovery } from "@/components/engagement/engagement-discovery";
 
@@ -34,6 +35,11 @@ async function getLearningData(token: string) {
   return { me, courses: courses.data || [] };
 }
 
+function LearningHero({ firstName, total, inProgress, completed }: { firstName: string; total?: number; inProgress?: number; completed?: number }) {
+  const stats = total === undefined ? null : [[String(total), "Total Kursus"], [String(inProgress ?? 0), "Sedang Berjalan"], [String(completed ?? 0), "Selesai"]];
+  return <section className="portal-learning-hero" data-techwind-pattern="course-dashboard-hero"><div className="relative z-10 max-w-2xl"><p className="portal-eyebrow !text-teal-200">Pembelajaran Saya</p><h1 className="mt-3 text-3xl font-black sm:text-4xl">Halo, {firstName}!</h1><p className="mt-3 max-w-xl text-sm leading-7 text-slate-300">Lanjutkan kursus formal Anda dan temukan pengetahuan pendukung dalam satu pengalaman.</p>{stats && <div className="mt-7 grid grid-cols-3 gap-3">{stats.map(([value, label]) => <div key={label} className="portal-learning-stat"><strong>{value}</strong><span>{label}</span></div>)}</div>}</div><div className="portal-learning-hero-art" aria-hidden="true"><PortalIcon name="graduation" className="h-16 w-16" /><span /><span /></div></section>;
+}
+
 export default async function MyLearningDashboard() {
   const session = await getServerSession(authOptions);
   if (!session) redirect("/api/auth/signin?callbackUrl=/my-learning");
@@ -51,10 +57,7 @@ export default async function MyLearningDashboard() {
   if (data.error === "unmapped") {
     return (
       <div className="portal-container py-10 sm:py-14">
-        <div className="rounded-3xl bg-[#102a43] p-7 text-white shadow-xl sm:p-10">
-          <p className="text-sm font-bold text-teal-300">Pembelajaran Saya</p>
-          <h1 className="mt-2 text-3xl font-black sm:text-4xl">Halo, {firstName}!</h1>
-        </div>
+        <LearningHero firstName={firstName} />
         <section className="portal-card my-10 p-7 text-center" aria-labelledby="learning-account-unmapped">
           <h2 id="learning-account-unmapped" className="text-2xl font-black text-slate-900">Akun Belum Terhubung</h2>
           <p className="mx-auto mt-3 max-w-2xl text-slate-600">Akun pembelajaran formal Anda belum terhubung. Hubungi administrator untuk mengakses kursus Moodle; konten tersimpan dan rekomendasi Portal tetap tersedia di bawah ini.</p>
@@ -67,10 +70,7 @@ export default async function MyLearningDashboard() {
   if (data.error === "unavailable") {
     return (
       <div className="portal-container py-10 sm:py-14">
-        <div className="rounded-3xl bg-[#102a43] p-7 text-white shadow-xl sm:p-10">
-          <p className="text-sm font-bold text-teal-300">Pembelajaran Saya</p>
-          <h1 className="mt-2 text-3xl font-black sm:text-4xl">Halo, {firstName}!</h1>
-        </div>
+        <LearningHero firstName={firstName} />
         <section className="portal-card my-10 p-7 text-center" aria-labelledby="learning-service-unavailable">
           <h2 id="learning-service-unavailable" className="text-2xl font-black text-slate-900">Layanan Kursus Tidak Tersedia</h2>
           <p className="mx-auto mt-3 max-w-2xl text-slate-600">Data pembelajaran formal sementara tidak dapat dimuat. Konten tersimpan dan rekomendasi Portal tetap tersedia di bawah ini.</p>
@@ -92,24 +92,7 @@ export default async function MyLearningDashboard() {
 
   return (
     <div className="portal-container py-10 sm:py-14">
-      <div className="rounded-3xl bg-[#102a43] p-7 text-white shadow-xl sm:p-10">
-        <p className="text-sm font-bold text-teal-300">Pembelajaran Saya</p>
-        <h1 className="mt-2 text-3xl font-black sm:text-4xl">Halo, {firstName}!</h1>
-        <div className="mt-6 flex gap-6 text-sm font-bold">
-          <div>
-            <span className="block text-2xl font-black text-white">{courses.length}</span>
-            <span className="text-slate-400">Total Kursus</span>
-          </div>
-          <div>
-            <span className="block text-2xl font-black text-teal-300">{inProgress.length}</span>
-            <span className="text-slate-400">Sedang Berjalan</span>
-          </div>
-          <div>
-            <span className="block text-2xl font-black text-green-400">{completed.length}</span>
-            <span className="text-slate-400">Selesai</span>
-          </div>
-        </div>
-      </div>
+      <LearningHero firstName={firstName} total={courses.length} inProgress={inProgress.length} completed={completed.length} />
 
       <CourseList 
         courses={courses} 

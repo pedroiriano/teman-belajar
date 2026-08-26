@@ -1,13 +1,25 @@
 # UI Source Mapping — Teman Belajar
 
 **Status:** Canonical UI Governance  
-**Version:** 4.0 — TASK-026 / ADR-018
+**Version:** 5.0 — TASK-027 / ADR-019
 
 | Experience | Vendor Foundation | Reference Path | Implementation Path |
 |---|---|---|---|
 | Public Portal | Techwind | `vendor/ui-templates/techwind/ORIGINAL/` | `apps/portal-web/` |
 | Learner / My Learning | Techwind | `vendor/ui-templates/techwind/ORIGINAL/` | `apps/portal-web/` |
 | Admin / Backoffice | Cuba | `vendor/ui-templates/cuba/ORIGINAL/` | `apps/admin-web/` |
+
+## Primary Online Course Baselines
+
+| Experience | Primary page | Product use |
+|---|---|---|
+| Portal | `vendor/ui-templates/techwind/ORIGINAL/html/index-course.html` | homepage, inner hero, course cards/progress, discovery, content, FAQ and CTA language |
+| Admin | `vendor/ui-templates/cuba/ORIGINAL/html/template/template/dashboard-03.html` | shell, course dashboard widgets, cards, page headers, tables, forms and workflow surfaces |
+
+The complete route-family mapping is maintained in
+`FULL-ROUTE-ONLINE-COURSE-MATRIX.md`. Other pages in the same immutable vendor
+tree may supply a better matching component when the primary baseline does not
+contain the product capability.
 
 ## Public / Learner Mapping
 
