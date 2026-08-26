@@ -24,7 +24,7 @@ Task awal:
 - TASK-014 Pembelajaran Singkat / Microlearning — `PLANNED`
 - TASK-015 Webinar & Live Learning — `PLANNED`
 - TASK-016 Jalur Belajar / Learning Paths — `PLANNED`
-- TASK-017 FAQ CMS & Help Center — `IN REVIEW — PR #23`
+- TASK-017 FAQ CMS & Help Center — `DONE — MERGED via PR #23`
 - TASK-018 Integration Health Center — `PLANNED`
 - TASK-019 Audit Center — `PLANNED`
 - TASK-020 Platform Configuration & Dynamic Site Management — `PLANNED`
