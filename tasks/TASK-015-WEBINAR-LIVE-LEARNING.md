@@ -1,9 +1,9 @@
 # TASK-015 — Webinar & Live Learning
 
-**Status:** PLANNED
+**Status:** PROVIDER/POLICY APPROVED — BLOCKED_PREREQUISITES
 **Owner Agent:** Product/Backend/Frontend/Integration/Security/QA
 **Feature:** F-LXP-003
-**Dependencies:** TASK-021, approved Moodle/provider adapter
+**Dependencies:** TASK-021, recovered `mod_zoom`, approved Moodle Web Service contract
 
 ## Objective
 
@@ -12,8 +12,23 @@ recording untuk sesi live tanpa membangun video-conference engine sendiri.
 
 ## Human Decision Before Implementation
 
-Provider, cost/data-processing terms, attendance contract, cancellation policy,
-time-zone policy, dan notification channels harus disetujui manusia.
+Zoom melalui Moodle `mod_zoom` telah disetujui sebagai authoritative provider
+adapter. Recording opt-in, attendance retention 365 hari, cancellation sampai
+sesi dimulai, waitlist off untuk v1, timezone `Asia/Jakarta`, dan reminder
+in-app T-24h/T-1h juga telah disetujui.
+
+Implementasi masih menunggu recovery/verifikasi schema `mod_zoom`, konfirmasi
+tenant/plan dan biaya, DPA/data region, granular OAuth scopes, serta peak
+capacity/storage. Provider boundary tercatat dalam
+[`ADR-020`](../docs/adr/ADR-020-moodle-mod-zoom-webinar-authority.md).
+Audit read-only dan rencana backup/recovery/rollback tercatat dalam
+[`MOD-ZOOM-SCHEMA-RECOVERY.md`](../docs/runbooks/MOD-ZOOM-SCHEMA-RECOVERY.md);
+recovery belum diizinkan.
+
+Decision brief yang sudah diperbarui tersedia di
+[`docs/roadmap/TASK-015-WEBINAR-PROVIDER-DECISION-BRIEF.md`](../docs/roadmap/TASK-015-WEBINAR-PROVIDER-DECISION-BRIEF.md).
+Status ini tidak mengizinkan implementasi runtime. Setelah seluruh prerequisite
+lulus, implementasi harus dimulai pada branch baru dari `main`.
 
 ## In Scope
 
