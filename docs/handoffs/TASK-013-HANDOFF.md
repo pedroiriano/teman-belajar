@@ -2,9 +2,14 @@
 
 ## Release state
 
-**READY FOR MERGE — PR #33.** The bounded implementation, fresh authenticated
-Admin acceptance, local verification, and protected CI gates pass. Production
-deployment is not authorized or claimed by this handoff.
+**DONE — MERGED.** The bounded implementation, fresh authenticated Admin
+acceptance, local verification, and protected CI gates passed. Source PR #33
+was squash-merged at `2026-08-27T00:31:10Z`.
+
+- Source PR: `#33` — https://github.com/pedroiriano/teman-belajar/pull/33
+- Final reviewed head: `ca8b20174a838cf059b39a7e0ac8a747d38f754b`.
+- Squash merge: `5ec7893cba6ec5fff634d734d6d811d891a242cf`.
+- Production deployment remains unauthorized and unclaimed.
 
 - Migration: `019_create_training_programs.sql`.
 - Portal routes: `/training-programs` and `/training-programs/{slug}`.
@@ -67,10 +72,9 @@ deployment is not authorized or claimed by this handoff.
 | Admin authz | PASS: Portal Administrator authoring/review controls matched validated claims; reviewer mutation denial remains covered by domain/HTTP negative tests |
 | Static SAST for changed training packages | PASS; broader scan retains three pre-existing `cmd/api/main.go` G706 log warnings |
 
-Protected CI on PR #33 passed all 11 required checks at source SHA `5f6c1e7`,
-including API, both frontends, governance, OpenAPI, SAST, SCA, SBOM, secret
-scan, and Trivy. The final documentation-only evidence commit must receive the
-same protected checks before merge.
+Protected CI on PR #33 passed all 11 required checks at final reviewed head
+`ca8b201`, including API, both frontends, governance, OpenAPI, SAST, SCA,
+SBOM, secret scan, and Trivy.
 
 Browser QA used temporary local program and Moodle course fixtures. The exact
 Portal program and its cascaded cohort/course references were deleted and
@@ -103,8 +107,8 @@ was run separately; no workaround or Identity repository change was made. An
 earlier pre-refinement local `up` run had completed its built-in idempotent SSO
 client reconciliation successfully; it was not repeated on the final source.
 
-## Remaining merge gates
+## Remaining human-owned constraints
 
-- Run protected CI on the final PR #33 evidence SHA, mark the PR ready, and
-  merge only when branch protection permits it.
+- Moodle fixture course ID 19 cleanup remains `BLOCKED_HUMAN_DECISION` pending
+  an approved `mod_zoom` plugin/schema recovery plan.
 - TASK-012 `PRODUCTION HOLD` and all production decisions remain unchanged.
