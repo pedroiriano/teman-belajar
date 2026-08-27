@@ -1,6 +1,6 @@
 # TASK-014 — Pembelajaran Singkat / Microlearning
 
-**Status:** IMPLEMENTED — PR #35 CI PASS
+**Status:** DONE — MERGED via PR #35 (`ed41afbc`)
 **Owner Agent:** Product/Backend/Frontend/QA
 **Feature:** F-LXP-002
 **Dependencies:** Media, Knowledge, Unified Search, TASK-008

@@ -2,11 +2,15 @@
 
 ## Release state
 
-**IMPLEMENTED — PR #35 CI PASS.** Production deployment and merge are not
-claimed. TASK-012 `PRODUCTION HOLD` remains unchanged.
+**DONE — MERGED.** The bounded implementation, local verification, and all
+protected CI gates passed. Source PR #35 was squash-merged at
+`2026-08-27T05:23:18Z`.
 
-- Branch: `codex/task-014-microlearning`.
-- Pull request: `#35` (open; clean; awaiting human merge approval).
+- Source PR: `#35` — https://github.com/pedroiriano/teman-belajar/pull/35
+- Final reviewed head: `8f0a05f00c5c844028658e8ebb29755a2a10efa1`.
+- Squash merge: `ed41afbc28e545d1ac2b2ba517eae9095c59a6da`.
+- Production deployment remains unauthorized and unclaimed; TASK-012
+  `PRODUCTION HOLD` remains unchanged.
 - Migration: `020_create_microlearning.sql`.
 - Portal routes: `/microlearning` and `/microlearning/{slug}`.
 - Admin route: `/dashboard/microlearning`.
@@ -58,7 +62,7 @@ claimed. TASK-012 `PRODUCTION HOLD` remains unchanged.
 | Browser catalogue/filter/detail/related/SEO/sitemap/Search, mobile overflow, focusable keyboard semantics, light/dark | PASS; temporary QA content and Search documents removed |
 | Browser logo/favicon/manifest rendering on Portal and Admin | PASS — visible images loaded at 80×80; favicon/app-icon links valid; no console errors |
 | `govulncheck` and production `npm audit` (Portal/Admin) | PASS — 0 reachable / 0 production vulnerabilities |
-| Protected CI on PR #35 | PASS — all 11 required checks |
+| Protected CI on PR #35 | PASS — all 11 required checks at final reviewed head `8f0a05f` |
 | `gosec` | PASS — static list queries remove G202; 0 findings on final CI SHA |
 
 The local Search Worker Microlearning source completed with zero documents

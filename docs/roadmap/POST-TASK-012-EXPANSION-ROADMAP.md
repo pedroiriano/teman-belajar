@@ -33,7 +33,7 @@ pendukung setelah foundation release.
 | Task | Fitur | Prioritas | Rancangan inti | Dependensi | Status |
 |---|---|---|---|---|---|
 | TASK-013 | Pelatihan Penuh / Full Training Programs | P1-High | Katalog program terstruktur, detail, kumpulan course, jadwal, eligibility, CTA enrol/start, dan agregasi progres. Portal mengorkestrasi experience; Moodle memiliki course/enrolment/completion. | TASK-005, TASK-006, TASK-007 | DONE — MERGED via PR #33 |
-| TASK-014 | Pembelajaran Singkat / Microlearning | P1-High | Materi editorial 3–15 menit, video/article/quick learning, bookmark, progres ringan, dan related content. Assessment/completion formal tetap Moodle. | Media, Knowledge, Search | IMPLEMENTED — PR #35 CI PASS |
+| TASK-014 | Pembelajaran Singkat / Microlearning | P1-High | Materi editorial 3–15 menit, video/article/quick learning, bookmark, progres ringan, dan related content. Assessment/completion formal tetap Moodle. | Media, Knowledge, Search | DONE — MERGED via PR #35 |
 | TASK-015 | Webinar & Live Learning | P1-High | Daftar, detail, jadwal/zona waktu, narasumber, kuota, registrasi, reminder, attendance reference, dan rekaman; memakai provider, bukan engine konferensi buatan sendiri. | TASK-021, Moodle/provider adapter | PLANNED |
 | TASK-016 | Jalur Belajar / Learning Paths | P1-High | Path berurutan berisi course, knowledge, microlearning, webinar, prerequisite, progres, milestone, dan rekomendasi langkah berikut. | TASK-013, TASK-014, TASK-015 | PLANNED |
 | TASK-017 | FAQ CMS & Help Center | P1-High | Mengganti FAQ hard-coded dengan CMS kategori, pertanyaan, jawaban, urutan, status, SEO, structured data yang valid, Auto-Save, dan Media opsional. | TASK-011A, TASK-011D, TASK-004E | DONE — MERGED via PR #23 |
