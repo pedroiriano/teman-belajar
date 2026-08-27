@@ -144,7 +144,7 @@ func (c *Client) mapError(err *MoodleError) error {
 	case "nopermissions":
 		return learning.ErrMoodlePermission
 	case "invalidparameter", "invalidrecord":
-		return learning.ErrMoodleInvalidResponse
+		return fmt.Errorf("%w: %s", learning.ErrMoodleInvalidResponse, err.Message)
 	case "webservice_function_not_found":
 		return learning.ErrMoodleFunction
 	case "errorcoursecompletedisabled", "completionnotenabled":

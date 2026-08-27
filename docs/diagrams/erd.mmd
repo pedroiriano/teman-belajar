@@ -312,6 +312,38 @@ erDiagram
     timestamptz ends_at
     string status
   }
+  MOODLE_ZOOM_ACTIVITY {
+    int id PK
+    int course_id FK
+    int meeting_id
+    boolean webinar
+    int start_time
+    int duration_seconds
+  }
+  MOODLE_WEBINAR_POLICY {
+    int id PK
+    int course_module_id UK,FK
+    int capacity
+    int timecreated
+    int timemodified
+  }
+  MOODLE_WEBINAR_REGISTRATION {
+    int id PK
+    int course_module_id FK
+    int user_id FK
+    string status
+    string idempotency_key UK
+    int timecreated
+    int timemodified
+  }
+  MOODLE_WEBINAR_OPERATION {
+    int id PK
+    int course_module_id FK
+    int user_id FK
+    string operation
+    string idempotency_key UK
+    int timecreated
+  }
 
   CATEGORY ||--o{ NEWS : categorizes
   CATEGORY ||--o{ ANNOUNCEMENT : categorizes
@@ -340,6 +372,9 @@ erDiagram
   NOTIFICATION_PREFERENCE ||--o{ NOTIFICATION_INBOX : controls_delivery
   TRAINING_PROGRAM ||--|{ TRAINING_PROGRAM_COURSE : composes
   TRAINING_PROGRAM ||--o{ TRAINING_PROGRAM_COHORT : schedules
+  MOODLE_ZOOM_ACTIVITY ||--o| MOODLE_WEBINAR_POLICY : limits
+  MOODLE_ZOOM_ACTIVITY ||--o{ MOODLE_WEBINAR_REGISTRATION : registers
+  MOODLE_ZOOM_ACTIVITY ||--o{ MOODLE_WEBINAR_OPERATION : deduplicates
   ANALYTICS_EVENTS }o--|| ANALYTICS_PAGE_DAILY : rolls_up
   ANALYTICS_EVENTS }o--|| ANALYTICS_SEARCH_DAILY : rolls_up
   ANALYTICS_EVENTS }o--|| ANALYTICS_CONTENT_DAILY : rolls_up

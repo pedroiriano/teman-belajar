@@ -1,6 +1,6 @@
 # TASK-015 — Webinar & Live Learning
 
-**Status:** PROVIDER/POLICY APPROVED — BLOCKED_PREREQUISITES
+**Status:** IMPLEMENTED_NON_SECRET — BLOCKED_CREDENTIALS_AND_EXTERNAL_GATES
 **Owner Agent:** Product/Backend/Frontend/Integration/Security/QA
 **Feature:** F-LXP-003
 **Dependencies:** TASK-021, recovered `mod_zoom`, approved Moodle Web Service contract
@@ -17,18 +17,20 @@ adapter. Recording opt-in, attendance retention 365 hari, cancellation sampai
 sesi dimulai, waitlist off untuk v1, timezone `Asia/Jakarta`, dan reminder
 in-app T-24h/T-1h juga telah disetujui.
 
-Implementasi masih menunggu recovery/verifikasi schema `mod_zoom`, konfirmasi
-tenant/plan dan biaya, DPA/data region, granular OAuth scopes, serta peak
-capacity/storage. Provider boundary tercatat dalam
+Recovery/verifikasi schema `mod_zoom` dan seluruh implementasi yang tidak
+memerlukan secret telah selesai pada lingkungan lokal. Aktivasi tetap menunggu
+Zoom Server-to-Server OAuth, konfirmasi tenant/plan dan biaya, DPA/data region,
+granular OAuth scopes, serta peak capacity/storage. Provider boundary tercatat dalam
 [`ADR-020`](../docs/adr/ADR-020-moodle-mod-zoom-webinar-authority.md).
 Audit read-only dan rencana backup/recovery/rollback tercatat dalam
 [`MOD-ZOOM-SCHEMA-RECOVERY.md`](../docs/runbooks/MOD-ZOOM-SCHEMA-RECOVERY.md);
-recovery belum diizinkan.
+recovery telah dijalankan berdasarkan persetujuan owner dan tercatat sebagai
+PASS lokal dengan backup terverifikasi.
 
 Decision brief yang sudah diperbarui tersedia di
 [`docs/roadmap/TASK-015-WEBINAR-PROVIDER-DECISION-BRIEF.md`](../docs/roadmap/TASK-015-WEBINAR-PROVIDER-DECISION-BRIEF.md).
-Status ini tidak mengizinkan implementasi runtime. Setelah seluruh prerequisite
-lulus, implementasi harus dimulai pada branch baru dari `main`.
+Menu `Webinar` tetap `Segera` sampai credential, fixture live, dan browser E2E
+lulus. Kode non-secret bersifat fail-closed saat capacity/OAuth belum tersedia.
 
 ## In Scope
 
@@ -51,14 +53,15 @@ lulus, implementasi harus dimulai pada branch baru dari `main`.
 
 ## Required Tests
 
-- [ ] domain/concurrency/idempotency/unit
-- [ ] provider/Moodle adapter contract and outage integration
-- [ ] authorization/rate-limit/negative tests
+- [x] domain/idempotency/reminder unit
+- [ ] Moodle concurrency/idempotency integration (test committed; runtime PHPUnit unavailable locally)
+- [x] provider/Moodle adapter contract and outage integration
+- [x] authorization/rate-limit/negative tests
 - [ ] registration/reminder/cancellation E2E and accessibility
 
 ## Documentation Impact
 
-- [ ] ADR bila provider/dependency material, OpenAPI/ERD/runbook/handoff
+- [x] ADR bila provider/dependency material, OpenAPI/ERD/runbook/handoff
 
 ## Definition of Done
 

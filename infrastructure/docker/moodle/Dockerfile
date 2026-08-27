@@ -57,10 +57,19 @@ RUN mkdir -p /var/www/moodledata \
 
 # Copy the TGZ file and extract it
 COPY moodle.tgz /tmp/moodle.tgz
+# mod_zoom v5.5.0, tag commit 2f1e5a88cd1e5f1d8cc9b9300990887764801821.
+# The checksum makes the third-party Moodle dependency reproducible and
+# fails the build closed if the upstream archive changes.
+ADD --checksum=sha256:6d9d094d1b4eb8c295de2395b153d5096b718ba3a9dba4fb725fca7ff5580445 \
+    https://github.com/jrchamp/moodle-mod_zoom/archive/refs/tags/v5.5.0.tar.gz \
+    /tmp/mod_zoom-v5.5.0.tar.gz
 RUN tar -xzf /tmp/moodle.tgz -C /var/www/ \
     && rm -rf /var/www/html \
     && mv /var/www/moodle /var/www/html \
+    && mkdir -p /var/www/html/public/mod/zoom \
+    && tar -xzf /tmp/mod_zoom-v5.5.0.tar.gz -C /var/www/html/public/mod/zoom --strip-components=1 \
     && rm /tmp/moodle.tgz \
+    && rm /tmp/mod_zoom-v5.5.0.tar.gz \
     && chown -R www-data:www-data /var/www/html
 
 # Copy the entrypoint script

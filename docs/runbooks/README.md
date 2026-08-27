@@ -8,5 +8,6 @@ Operational procedures live here.
 - `BACKUP-RESTORE-DRILL.md` — isolated, encrypted backup/restore validation.
 - `ROLLBACK.md` — application rollback and forward-only database recovery.
 - `MOD-ZOOM-SCHEMA-RECOVERY.md` — read-only `mod_zoom` audit evidence and the
-  approval-gated backup, official reinstall, verification, and rollback plan
-  required before TASK-015 implementation.
+  executed local backup/reinstall evidence plus re-approval-gated rollback.
+- `WEBINAR-LIVE-LEARNING-OPERATIONS.md` — TASK-015 activation, OAuth/capacity,
+  scheduled report, retention, incident, and rollback operations.
