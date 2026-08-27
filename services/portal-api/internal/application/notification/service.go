@@ -46,7 +46,7 @@ func validEventType(value domain.EventType) bool {
 }
 
 func allowedPrefix(audience domain.Audience, path string) bool {
-	prefixes := []string{"/", "/my-learning", "/knowledge", "/news", "/announcements", "/help", "/search"}
+	prefixes := []string{"/", "/my-learning", "/knowledge", "/news", "/announcements", "/help", "/search", "/webinars"}
 	if audience == domain.AudienceAdmin {
 		prefixes = []string{"/dashboard"}
 	}
@@ -90,6 +90,24 @@ func (s *Service) Deliver(ctx context.Context, input domain.Delivery) (domain.De
 		s.audit(ctx, input.UserSubject, "NOTIFICATION_DELIVERED", string(input.Audience)+":"+input.EventID, outcome)
 	}
 	return result, err
+}
+
+// CancelPending removes only future in-app deliveries for one user. It cannot
+// retract a reminder that was already made visible to the learner.
+func (s *Service) CancelPending(ctx context.Context, subject string, audience domain.Audience, eventIDs []string) (int, error) {
+	if !validSubject(subject) || !validAudience(audience) || len(eventIDs) == 0 || len(eventIDs) > 10 {
+		return 0, domain.ErrInvalidInput
+	}
+	for _, eventID := range eventIDs {
+		if strings.TrimSpace(eventID) == "" || len(eventID) > 128 {
+			return 0, domain.ErrInvalidInput
+		}
+	}
+	count, err := s.repo.CancelPending(ctx, subject, audience, eventIDs, s.now().UTC())
+	if err == nil {
+		s.audit(ctx, subject, "NOTIFICATION_PENDING_CANCELLED", strings.Join(eventIDs, ","), "SUCCESS")
+	}
+	return count, err
 }
 
 func (s *Service) List(ctx context.Context, subject string, filter domain.ListFilter) (domain.Page, error) {

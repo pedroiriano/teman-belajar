@@ -102,6 +102,11 @@ var (
 		Name: "microlearning_actions_total",
 		Help: "Total microlearning actions by bounded operation and result",
 	}, []string{"operation", "result"})
+
+	WebinarActionsTotal = promauto.NewCounterVec(prometheus.CounterOpts{
+		Name: "webinar_actions_total",
+		Help: "Total Moodle webinar adapter actions by bounded operation and result",
+	}, []string{"operation", "result"})
 )
 
 func RecordSSOEvent(eventType, status string) {
@@ -141,4 +146,8 @@ func RecordTrainingAggregation(operation, state string) {
 
 func RecordMicrolearningAction(operation, result string) {
 	MicrolearningActionsTotal.WithLabelValues(operation, result).Inc()
+}
+
+func RecordWebinarAction(operation, result string) {
+	WebinarActionsTotal.WithLabelValues(operation, result).Inc()
 }

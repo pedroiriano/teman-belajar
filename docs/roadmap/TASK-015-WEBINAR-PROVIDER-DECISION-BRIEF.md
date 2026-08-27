@@ -1,6 +1,6 @@
 # TASK-015 Webinar Provider Decision Brief
 
-**Status:** APPROVED_PROVIDER_AND_PRODUCT_POLICY — BLOCKED_PREREQUISITES
+**Status:** IMPLEMENTED_NON_SECRET — BLOCKED_CREDENTIALS_AND_EXTERNAL_GATES
 **Tanggal:** 2026-08-27
 **Scope:** Keputusan provider, keamanan, biaya, ownership data, dan boundary
 adapter sebelum implementasi TASK-015.
@@ -30,13 +30,14 @@ Kebijakan produk juga disetujui: recording opt-in, attendance retention 365
 hari, cancellation sampai sesi dimulai, waitlist off untuk v1, timezone
 `Asia/Jakarta`, serta reminder in-app T-24h dan T-1h.
 
-Implementasi masih diblokir sampai schema `mod_zoom` pulih dan terverifikasi,
-tenant/plan dan biaya dikonfirmasi, DPA/data region diterima, serta OAuth scopes
-dan peak capacity disetujui.
+Schema `mod_zoom` sudah pulih dan implementasi non-secret telah selesai secara
+lokal. Aktivasi masih diblokir sampai tenant/plan dan biaya dikonfirmasi,
+DPA/data region diterima, OAuth credentials/scopes tersedia, serta peak
+capacity disetujui.
 
 Audit read-only dan recovery plan tersedia di
 [`MOD-ZOOM-SCHEMA-RECOVERY.md`](../runbooks/MOD-ZOOM-SCHEMA-RECOVERY.md).
-Status recovery adalah `PLAN READY — RECOVERY NOT AUTHORIZED`.
+Status recovery adalah `RECOVERY PASS — OAUTH NOT CONFIGURED`.
 
 ## 2. Opsi Provider dan Biaya
 
@@ -69,7 +70,7 @@ recovery objective, dan kebutuhan support.
 | Data/aksi | System of record | Aturan |
 |---|---|---|
 | Aktivitas, jadwal, speaker/host, meeting/webinar reference | Moodle `mod_zoom` | Setiap webinar dibuat dan diubah dari Moodle; Portal hanya memproyeksikan field allowlist |
-| Registrasi dan pembatalan | Moodle melalui narrow Web Service | Portal mengorkestrasi UX; Moodle menegakkan akses dan memproyeksikan registrasi ke Zoom secara idempotent |
+| Registrasi dan pembatalan | Moodle melalui narrow Web Service | Portal mengorkestrasi UX; Moodle menegakkan akses dan menyimpan RSVP secara atomik/idempotent. `mod_zoom` tetap menangani provider registration/join saat learner membuka aktivitas Moodle. |
 | Live room dan runtime meeting | Zoom melalui `mod_zoom` | Portal menyimpan Moodle course-module reference dan sanitized sync state, bukan credential/passcode |
 | Raw participant/session events | Zoom → Moodle `mod_zoom` | Scheduled task plugin mengambil report; Portal tidak menerima webhook Zoom langsung |
 | Derived attendance reference | Portal, bersumber dari Moodle | Minimal, berprovenance, authorized, retention tepat 365 hari |
@@ -201,7 +202,7 @@ Keputusan produk yang sudah disetujui:
 
 Implementasi masih menunggu prerequisite berikut:
 
-- [ ] persetujuan dan eksekusi recovery plan `mod_zoom` v5.5.0;
+- [x] persetujuan dan eksekusi recovery plan `mod_zoom` v5.5.0;
 - [ ] bukti tenant/lisensi yang tersedia, quotation, cost cap, dan owner biaya;
 - [ ] DPA, data residency, subprocessors, deletion/return, dan breach terms;
 - [ ] dedicated Zoom organizer/account dan approved granular OAuth scopes;
@@ -214,9 +215,10 @@ Jawaban ringkas yang direkomendasikan untuk membuka implementasi:
 > **[peserta]**, dan recording storage **[kuota/retention]**; setujui recovery
 > `mod_zoom` dengan backup serta rollback plan.
 
-Setelah keputusan lengkap, buat branch implementasi baru dari `main`; jangan
-melanjutkan implementasi pada branch decision brief ini. Provider boundary
-telah dicatat dalam ADR-020.
+Implementasi non-secret berada pada branch TASK-015 terpisah dari `main`.
+Setelah keputusan eksternal lengkap, operator mengisi secret langsung pada
+Moodle, menetapkan capacity yang sesuai lisensi, lalu menjalankan live fixture
+dan browser acceptance tanpa mengubah boundary ADR-020.
 
 ## 8. Acceptance dan Verification Strategy
 

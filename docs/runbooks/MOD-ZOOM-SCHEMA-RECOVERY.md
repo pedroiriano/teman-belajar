@@ -1,14 +1,41 @@
 # mod_zoom Schema Recovery Plan
 
-**Status:** PLAN READY — RECOVERY NOT AUTHORIZED
+**Status:** RECOVERY PASS — OAUTH NOT CONFIGURED
 **Audit date:** 2026-08-27
 **Scope:** Local Docker Moodle only; `mod_zoom` v5.5.0
 **Owner:** TASK-015 / Moodle Integration / Security / Operations
 
-> STOP: dokumen ini bukan izin menjalankan recovery. Jangan memakai `--run`,
-> menjalankan upgrade, mengubah credential, menghentikan service, membuat
-> backup operasional, atau mengubah volume sampai owner memberi persetujuan
-> terpisah atas fase eksekusi.
+Owner memberi persetujuan eksekusi recovery lokal pada 2026-08-27. Prosedur
+selesai tanpa penghapusan volume, perubahan Moodle core, atau perubahan
+Keycloak/SSO. Bagian audit awal dipertahankan sebagai baseline historis.
+
+## Execution Record — 2026-08-27
+
+- Preflight mengonfirmasi `mod_zoom` v5.5.0, disk/database version
+  `2026041600`, nol activity, dan OAuth Account ID/Client ID/Client Secret tidak
+  dikonfigurasi; nilai secret tidak dibaca atau dicetak.
+- Backup database serta dua volume Moodle dibuat di direktori lokal di luar
+  repository, dienkripsi dengan Windows EFS AES-256, memiliki checksum/size
+  manifest, dan terverifikasi melalui `pg_restore --list` serta `tar --list`.
+  Retention berakhir 2026-09-26.
+- Artifact resmi tag `v5.5.0` commit
+  `2f1e5a88cd1e5f1d8cc9b9300990887764801821` memakai SHA-256
+  `6d9d094d1b4eb8c295de2395b153d5096b718ba3a9dba4fb725fca7ff5580445`.
+- Maintenance mode aktif dan `moodle-cron` berhenti selama official
+  `uninstall_plugins.php --plugins=mod_zoom --run` serta install/upgrade.
+- Moodle schema check setelah recovery tidak lagi melaporkan salah satu dari
+  sepuluh tabel `zoom*`. Dua tabel `enrol_apply` tetap missing dan tidak disentuh.
+- Enam scheduled task `mod_zoom` enabled dengan `fail_delay=0`; targeted task
+  `send_ical_notifications` selesai dalam kondisi feature disabled.
+- Kebijakan akhir `viewrecordings=0`, `recordingoption=0`, dan
+  `allowrecordingchangeoption=1` mempertahankan recording opt-in.
+- Moodle dan `moodle-cron` kembali sehat setelah maintenance dinonaktifkan.
+- Source plugin kini dipasang reproducibly oleh Dockerfile dengan checksum
+  artifact resmi yang sama.
+
+Recovery data/schema adalah PASS. Koneksi provider dan live lifecycle masih
+`BLOCKED_CREDENTIALS` sampai OAuth Server-to-Server dan prasyarat komersial/
+compliance tersedia.
 
 ## 1. Audit Result
 
@@ -97,25 +124,22 @@ hold:
 - **Ignore schema check because container is healthy:** HTTP health does not
   exercise activity CRUD, reports, registration, or recording.
 
-## 4. Approval Gates Before Execution
+## 4. Approval Gate Outcome
 
-Recovery remains `BLOCKED_HUMAN_DECISION` until all gates are recorded:
-
-- [ ] explicit approval to execute the scoped local `mod_zoom` recovery;
-- [ ] named recovery owner and maintenance window;
-- [ ] approved backup directory outside source-controlled paths, sufficient
+- [x] explicit approval to execute the scoped local `mod_zoom` recovery;
+- [x] recovery owner and local maintenance window recorded;
+- [x] approved backup directory outside source-controlled paths, sufficient
   free space, encryption/access owner, and retention/deletion date;
-- [ ] verified backup and restore commands for exact database and volumes;
-- [ ] approved immutable v5.5.0 source artifact, upstream URL, SHA-256, license,
+- [x] verified backup and restore commands for exact database and volumes;
+- [x] approved immutable v5.5.0 source artifact, upstream URL, SHA-256, license,
   and reproducible Docker installation approach;
-- [ ] confirmation that `zoom_course_module_count` remains zero immediately
+- [x] confirmation that `zoom_course_module_count` remains zero immediately
   before uninstall;
 - [ ] Zoom tenant/plan, account owner, cost cap, data region/DPA, peak capacity,
   recording storage, and granular OAuth scopes;
-- [ ] separate decision for canonical `moodle-reconcile`, because it can repair
-  Moodle administrator/account state governed by the finalized Identity
-  boundary;
-- [ ] confirmation that unrelated `enrol_apply` drift remains excluded.
+- [x] `moodle-reconcile` explicitly excluded because it can repair Moodle
+  administrator/account state governed by the finalized Identity boundary;
+- [x] unrelated `enrol_apply` drift remained excluded.
 
 If course-module count becomes nonzero, credentials become configured, or any
 plugin table reappears before execution, stop and redesign the plan around data
@@ -146,7 +170,7 @@ Approved execution must:
 No volume deletion, prune, wildcard target, or database overwrite is part of
 backup creation.
 
-## 6. Recovery Procedure — Future, Requires Approval
+## 6. Recovery Procedure — Executed Locally; Re-approval Required for Re-run
 
 Run every Docker action through
 `infrastructure/docker/teman-belajar-docker.ps1` or its loaded
@@ -190,8 +214,8 @@ Run every Docker action through
 14. Disable maintenance mode and restart `moodle-cron` only after every gate
     passes.
 
-Do not add TASK-015 Portal APIs, migrations, or UI during this recovery. Runtime
-implementation belongs on a later branch created from updated `main`.
+Portal APIs, migrations, dan UI bukan bagian dari recovery; semuanya
+diimplementasikan kemudian pada branch TASK-015 terpisah.
 
 ## 7. Verification Gates
 
@@ -231,6 +255,8 @@ test fails:
 
 ## 9. Current Go/No-Go
 
-**NO-GO.** Recovery has not been authorized. Required backups, reproducible
-plugin source, Zoom commercial/compliance inputs, OAuth scopes, and the
-Identity-sensitive reconciliation decision are not yet approved.
+**GO untuk schema lokal; NO-GO untuk aktivasi provider.** Backup, official
+reinstall, schema, task, dan reproducible source telah lulus. OAuth credentials,
+tenant/license/capacity, cost cap, DPA/data region, serta live fixture belum
+tersedia. `moodle-reconcile` tidak dijalankan karena berada di luar scope dan
+menyentuh Identity boundary.

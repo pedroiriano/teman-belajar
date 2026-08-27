@@ -34,6 +34,7 @@ import (
 	"teman-belajar-api/internal/domain/media"
 	"teman-belajar-api/internal/domain/microlearning"
 	"teman-belajar-api/internal/domain/training"
+	"teman-belajar-api/internal/domain/webinar"
 	"teman-belajar-api/internal/observability"
 	"teman-belajar-api/internal/repository/postgres"
 	"teman-belajar-api/internal/transport/http/handler"
@@ -139,6 +140,8 @@ func main() {
 	trainingHandler := handler.NewTrainingHandler(trainingSvc)
 	microlearningHandler := handler.NewMicrolearningHandler(microlearningSvc)
 	notificationHandler := handler.NewNotificationHandler(notificationSvc)
+	webinarSvc := webinar.NewService(moodleClient, notificationSvc)
+	webinarHandler := handler.NewWebinarHandler(webinarSvc)
 
 	// Media Storage & Services
 	minioEndpoint := os.Getenv("MINIO_ENDPOINT")
@@ -284,6 +287,10 @@ func main() {
 	mux.Handle("GET /api/v1/learning/me/courses/{courseId}/completion", authMiddleware(http.HandlerFunc(learningHandler.GetMyCourseCompletion)))
 	mux.Handle("GET /api/v1/learning/me/courses/{courseId}/grades", authMiddleware(http.HandlerFunc(learningHandler.GetMyCourseGrades)))
 	mux.Handle("GET /api/v1/learning/me/training-programs/{slug}", authMiddleware(http.HandlerFunc(trainingHandler.MyProgress)))
+	mux.Handle("GET /api/v1/webinars", authMiddleware(http.HandlerFunc(webinarHandler.List)))
+	mux.Handle("GET /api/v1/webinars/{id}", authMiddleware(http.HandlerFunc(webinarHandler.Get)))
+	mux.Handle("POST /api/v1/webinars/{id}/registrations", authMiddleware(http.HandlerFunc(webinarHandler.Register)))
+	mux.Handle("DELETE /api/v1/webinars/{id}/registrations", authMiddleware(http.HandlerFunc(webinarHandler.Cancel)))
 	mux.Handle("GET /api/v1/me/microlearning/{id}/progress", authMiddleware(http.HandlerFunc(microlearningHandler.Progress)))
 	mux.Handle("PUT /api/v1/me/microlearning/{id}/progress", authMiddleware(http.HandlerFunc(microlearningHandler.Progress)))
 

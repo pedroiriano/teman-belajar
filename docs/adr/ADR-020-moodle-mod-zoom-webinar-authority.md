@@ -63,5 +63,19 @@ Zoom melalui `mod_zoom`.
 - Contract dan negative tests untuk registration, cancellation, attendance,
   recording, stale data, outage, serta revoked credential.
 
+## Implementation Status — 2026-08-27
+
+Recovery lokal `mod_zoom` v5.5.0 telah selesai melalui backup terverifikasi,
+official uninstall/reinstall, dan Moodle schema check. Sepuluh tabel plugin
+tersedia kembali; dua finding `enrol_apply` yang tidak terkait tetap di luar
+scope. Adapter, narrow Web Service, OpenAPI, migration, retention 365 hari,
+reminder TASK-021, observability, dan Portal UX yang activation-gated telah
+diimplementasikan.
+
+Status tetap `BLOCKED_CREDENTIALS_AND_EXTERNAL_GATES`: OAuth Server-to-Server,
+tenant/license/capacity, cost cap, DPA/data region, dan live Zoom/browser E2E
+belum dapat diverifikasi tanpa input eksternal. Karena itu menu Webinar tidak
+diaktifkan dan capacity default `0` menolak registrasi secara fail-closed.
+
 Dokumen keputusan rinci:
 [`TASK-015-WEBINAR-PROVIDER-DECISION-BRIEF.md`](../roadmap/TASK-015-WEBINAR-PROVIDER-DECISION-BRIEF.md).

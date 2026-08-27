@@ -59,6 +59,16 @@ func TestNotificationRepositoryIdempotencyIsolationReadAndPreference(t *testing.
 	if count, err := repo.UnreadCount(ctx, user, domain.AudiencePortal); err != nil || count != 0 {
 		t.Fatalf("unread=%d err=%v", count, err)
 	}
+	futureInput := input
+	futureInput.EventID += "-future"
+	futureInput.AvailableAt = now.Add(time.Hour)
+	futureItem := domain.Notification{ID: uuid.NewString(), Audience: item.Audience, EventType: item.EventType, Title: item.Title, Body: item.Body, DeepLink: item.DeepLink, Priority: item.Priority, AvailableAt: futureInput.AvailableAt, ExpiresAt: futureInput.AvailableAt.Add(24 * time.Hour), CreatedAt: now}
+	if delivered, err := repo.Deliver(ctx, futureInput, futureItem); err != nil || !delivered.Created {
+		t.Fatalf("future delivery=%#v err=%v", delivered, err)
+	}
+	if cancelled, err := repo.CancelPending(ctx, user, domain.AudiencePortal, []string{futureInput.EventID}, now); err != nil || cancelled != 1 {
+		t.Fatalf("cancelled=%d err=%v", cancelled, err)
+	}
 
 	if _, err := repo.SetPreference(ctx, user, domain.AudiencePortal, domain.EventSystemNotice, false); err != nil {
 		t.Fatal(err)

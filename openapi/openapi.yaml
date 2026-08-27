@@ -27,6 +27,8 @@ tags:
     description: Portal-owned program composition with Moodle-authoritative learning state
   - name: Microlearning
     description: Portal-owned editorial learning activities with lightweight non-Moodle progress
+  - name: Webinars
+    description: Moodle mod_zoom-authoritative live learning operations
   - name: Me
     description: Me operations
   - name: Engagement
@@ -2649,6 +2651,96 @@ paths:
       responses:
         '204': { description: Archived }
         '404': { $ref: '#/components/responses/NotFound' }
+  /webinars:
+    get:
+      tags: [Webinars]
+      operationId: listWebinars
+      summary: List learner-visible Moodle Zoom webinars
+      description: Moodle mod_zoom is authoritative. Responses never expose raw Zoom meeting URLs, passcodes, or OAuth credentials.
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - name: page_size
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 50, default: 12 }
+      responses:
+        '200':
+          description: Paginated webinar sessions
+          headers:
+            Cache-Control: { schema: { type: string }, description: 'Always private, no-store' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/WebinarPage' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '422': { $ref: '#/components/responses/ValidationError' }
+        '503': { $ref: '#/components/responses/ServiceUnavailableError' }
+  /webinars/{id}:
+    get:
+      tags: [Webinars]
+      operationId: getWebinar
+      summary: Get one learner-visible Moodle Zoom webinar
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Moodle course module identifier
+          schema: { type: integer, minimum: 1 }
+      responses:
+        '200':
+          description: Webinar session
+          headers:
+            Cache-Control: { schema: { type: string }, description: 'Always private, no-store' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/WebinarSession' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '422': { $ref: '#/components/responses/ValidationError' }
+        '503': { $ref: '#/components/responses/ServiceUnavailableError' }
+  /webinars/{id}/registrations:
+    post:
+      tags: [Webinars]
+      operationId: registerForWebinar
+      summary: Register for a webinar with waitlist disabled
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer, minimum: 1 }
+        - $ref: '#/components/parameters/IdempotencyKey'
+      responses:
+        '200': { description: Idempotent registration state, content: { application/json: { schema: { $ref: '#/components/schemas/WebinarSession' } } } }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/ConflictError' }
+        '422': { $ref: '#/components/responses/ValidationError' }
+        '429': { description: Too many registration mutations, headers: { Retry-After: { schema: { type: integer, minimum: 1 } } }, content: { application/problem+json: { schema: { $ref: '#/components/schemas/Problem' } } } }
+        '503': { $ref: '#/components/responses/ServiceUnavailableError' }
+    delete:
+      tags: [Webinars]
+      operationId: cancelWebinarRegistration
+      summary: Cancel registration until the webinar starts
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer, minimum: 1 }
+        - $ref: '#/components/parameters/IdempotencyKey'
+      responses:
+        '200': { description: Idempotent cancellation state, content: { application/json: { schema: { $ref: '#/components/schemas/WebinarSession' } } } }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/ConflictError' }
+        '422': { $ref: '#/components/responses/ValidationError' }
+        '429': { description: Too many registration mutations, headers: { Retry-After: { schema: { type: integer, minimum: 1 } } }, content: { application/problem+json: { schema: { $ref: '#/components/schemas/Problem' } } } }
+        '503': { $ref: '#/components/responses/ServiceUnavailableError' }
   /me/notifications:
     get:
       tags: [Notifications]
@@ -2824,6 +2916,12 @@ components:
       scheme: bearer
       bearerFormat: JWT
   parameters:
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      description: Opaque retry key retained by Moodle for exactly-once mutation semantics
+      schema: { type: string, minLength: 8, maxLength: 64, pattern: '^[A-Za-z0-9._:-]+$' }
     NotificationAudience:
       name: audience
       in: query
@@ -2934,6 +3032,42 @@ components:
           schema:
             $ref: '#/components/schemas/Problem'
   schemas:
+    WebinarSession:
+      type: object
+      additionalProperties: false
+      required: [id, course_id, title, summary, starts_at, ends_at, timezone, speakers, capacity, registered_count, registration_state, status, registered, cancellation_allowed, attendance_seconds, attendance_state, source, synced_at]
+      properties:
+        id: { type: integer, minimum: 1, description: Moodle course module identifier }
+        course_id: { type: integer, minimum: 1 }
+        title: { type: string, minLength: 1 }
+        summary: { type: string, maxLength: 500 }
+        starts_at: { type: string, format: date-time }
+        ends_at: { type: string, format: date-time }
+        timezone: { type: string, const: Asia/Jakarta }
+        speakers: { type: array, maxItems: 3, items: { type: string } }
+        capacity: { type: integer, minimum: 0, description: Zero means registration fails closed until tenant capacity is configured }
+        registered_count: { type: integer, minimum: 0 }
+        registration_state: { type: string, enum: [configuration_required, open, full, registered] }
+        status: { type: string, enum: [scheduled, live, completed, cancelled] }
+        registered: { type: boolean }
+        cancellation_allowed: { type: boolean, description: True only for a registered learner before starts_at }
+        join_url: { type: string, format: uri, description: Sanitized Moodle mod_zoom activity URL; raw Zoom URLs and passcodes are never returned }
+        recording_url: { type: string, format: uri, description: 'Sanitized Moodle recording page URL, present only for opted-in published recordings' }
+        attendance_seconds: { type: integer, minimum: 0 }
+        attendance_state: { type: string, enum: [pending, synced] }
+        source: { type: string, const: moodle_mod_zoom }
+        synced_at: { type: string, format: date-time }
+    WebinarPage:
+      type: object
+      additionalProperties: false
+      required: [data, page, page_size, total, total_pages, synced_at]
+      properties:
+        data: { type: array, items: { $ref: '#/components/schemas/WebinarSession' } }
+        page: { type: integer, minimum: 1 }
+        page_size: { type: integer, minimum: 1, maximum: 50 }
+        total: { type: integer, minimum: 0 }
+        total_pages: { type: integer, minimum: 0 }
+        synced_at: { type: string, format: date-time }
     NotificationEventType:
       type: string
       enum: [learning.reminder, learning.course_updated, learning.course_completed, content.workflow, system.notice]

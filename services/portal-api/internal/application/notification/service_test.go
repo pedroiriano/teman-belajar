@@ -34,6 +34,17 @@ func (r *repositoryStub) Deliver(_ context.Context, input domain.Delivery, item 
 	r.deliveries[key] = item
 	return domain.DeliveryResult{Notification: &item, Created: true}, nil
 }
+func (r *repositoryStub) CancelPending(_ context.Context, subject string, audience domain.Audience, eventIDs []string, _ time.Time) (int, error) {
+	count := 0
+	for _, eventID := range eventIDs {
+		key := subject + ":" + string(audience) + ":" + eventID
+		if _, found := r.deliveries[key]; found {
+			delete(r.deliveries, key)
+			count++
+		}
+	}
+	return count, nil
+}
 func (r *repositoryStub) List(context.Context, string, domain.ListFilter) (domain.Page, error) {
 	return domain.Page{}, nil
 }
@@ -119,5 +130,23 @@ func TestPreferencesExposeSafeDefaults(t *testing.T) {
 		if !item.Enabled {
 			t.Fatalf("default preference disabled: %#v", item)
 		}
+	}
+}
+
+func TestCancelPendingUsesUserPartitionAndRejectsEmptyEventSet(t *testing.T) {
+	repo := newRepositoryStub()
+	service := NewService(repo, nil, 90)
+	delivery := validDelivery()
+	delivery.EventID = "webinar:41:" + subjectA + ":t-24 jam"
+	delivery.AvailableAt = time.Now().UTC().Add(time.Hour)
+	if _, err := service.Deliver(context.Background(), delivery); err != nil {
+		t.Fatal(err)
+	}
+	count, err := service.CancelPending(context.Background(), subjectA, domain.AudiencePortal, []string{delivery.EventID})
+	if err != nil || count != 1 {
+		t.Fatalf("count=%d err=%v", count, err)
+	}
+	if _, err := service.CancelPending(context.Background(), subjectA, domain.AudiencePortal, nil); !errors.Is(err, domain.ErrInvalidInput) {
+		t.Fatalf("empty event set err=%v", err)
 	}
 }
