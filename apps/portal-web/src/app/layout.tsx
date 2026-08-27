@@ -12,8 +12,15 @@ const techwindFont = Nunito({ subsets: ["latin"], display: "swap", variable: "--
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.PORTAL_PUBLIC_BASE_URL || "http://localhost:3000"),
+  applicationName: "Teman Belajar",
   title: { default: "Teman Belajar", template: "%s | Teman Belajar" },
   description: "Platform pengalaman belajar digital perusahaan untuk belajar, berbagi pengetahuan, dan bertumbuh bersama.",
+  manifest: "/manifest.webmanifest",
+  icons: {
+    icon: [{ url: "/brand/favicon.png", type: "image/png", sizes: "64x64" }],
+    shortcut: "/brand/favicon.png",
+    apple: [{ url: "/brand/app-icon.png", type: "image/png", sizes: "512x512" }],
+  },
 };
 
 const themeInitializationScript = `
@@ -38,7 +45,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
     <html lang="id" data-scroll-behavior="smooth" suppressHydrationWarning>
       <head><script dangerouslySetInnerHTML={{ __html: themeInitializationScript }} /></head>
       <body data-ui-foundation="techwind" className={`${techwindFont.variable} font-nunito techwind-foundation portal-root min-h-screen antialiased`}>
-        <StructuredData value={{ "@context": "https://schema.org", "@graph": [{ "@type": "Organization", "@id": `${publicBase}#organization`, name: "Teman Belajar", url: publicBase }, { "@type": "WebSite", "@id": `${publicBase}#website`, name: "Teman Belajar", url: publicBase, publisher: { "@id": `${publicBase}#organization` } }] }} />
+        <StructuredData value={{ "@context": "https://schema.org", "@graph": [{ "@type": "Organization", "@id": `${publicBase}#organization`, name: "Teman Belajar", url: publicBase, logo: `${publicBase}brand/logo-main.png` }, { "@type": "WebSite", "@id": `${publicBase}#website`, name: "Teman Belajar", url: publicBase, publisher: { "@id": `${publicBase}#organization` } }] }} />
         <AnalyticsTracker />
         <PortalChrome authenticated={Boolean(session)}>{children}</PortalChrome>
       </body>

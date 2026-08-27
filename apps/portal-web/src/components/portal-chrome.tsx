@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { type ReactNode } from "react";
 
+import { BrandLogo } from "@/components/brand-logo";
 import { PortalIcon } from "@/components/portal-icon";
 import { SilentSsoBridge } from "@/components/silent-sso-bridge";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -20,7 +21,7 @@ const navigationGroups: NavigationGroup[] = [
       { href: "/my-learning", label: "Pembelajaran Saya", description: "Lanjutkan kelas dan pantau progres." },
       { href: "/search?content_type=course", label: "Cari Kelas", description: "Temukan katalog kelas Moodle." },
       { href: "/training-programs", label: "Pelatihan Penuh", description: "Program terstruktur dengan course dan cohort." },
-      { label: "Pembelajaran Singkat", description: "Materi ringkas untuk kebutuhan cepat.", comingSoon: true },
+      { href: "/microlearning", label: "Pembelajaran Singkat", description: "Materi editorial terkurasi selama 3–15 menit." },
       { label: "Webinar", description: "Sesi langsung bersama narasumber.", comingSoon: true },
       { label: "Jalur Belajar", description: "Rangkaian kompetensi yang terarah.", comingSoon: true },
     ],
@@ -64,9 +65,7 @@ function NavigationGroupItems({ group, mobile = false }: { group: NavigationGrou
 function Brand({ inverted = false }: { inverted?: boolean }) {
   return (
     <Link href="/" className="logo group flex shrink-0 items-center gap-3" aria-label="Teman Belajar — Beranda">
-      <span className="grid h-11 w-11 place-items-center rounded-xl bg-teal-700 text-white shadow-lg shadow-teal-900/15 transition group-hover:-rotate-3">
-        <PortalIcon name="graduation" className="h-6 w-6" />
-      </span>
+      <BrandLogo className="h-12 w-12 shrink-0 object-contain drop-shadow-md transition group-hover:-rotate-3" priority={!inverted} />
       <span>
         <span className={`block text-lg font-extrabold leading-5 ${inverted ? "text-white" : "text-slate-900"}`}>Teman Belajar</span>
         <span className={`block text-[10px] font-bold uppercase tracking-[0.18em] ${inverted ? "text-teal-300" : "text-teal-700"}`}>Pengalaman Belajar</span>
@@ -182,7 +181,7 @@ export function PortalChrome({ authenticated, children }: { authenticated: boole
       <footer className="techwind-footer portal-footer border-t border-slate-800 bg-[#102a43] text-slate-300">
         <div className="portal-container grid gap-10 py-14 md:grid-cols-2 lg:grid-cols-[1.35fr_.8fr_.8fr_1fr]">
           <div><Brand inverted /><p className="mt-5 max-w-md text-sm leading-7 text-slate-400">Ruang belajar terpadu untuk menemukan wawasan, mengikuti pembelajaran formal, dan bertumbuh bersama organisasi.</p></div>
-          <div><h2 className="text-sm font-bold text-white">Jelajahi</h2><div className="mt-4 grid gap-3 text-sm"><Link href="/my-learning">Pembelajaran Saya</Link><Link href="/training-programs">Pelatihan Penuh</Link><Link href="/knowledge">Pusat Pengetahuan</Link><Link href="/search">Pencarian</Link></div></div>
+          <div><h2 className="text-sm font-bold text-white">Jelajahi</h2><div className="mt-4 grid gap-3 text-sm"><Link href="/my-learning">Pembelajaran Saya</Link><Link href="/training-programs">Pelatihan Penuh</Link><Link href="/microlearning">Pembelajaran Singkat</Link><Link href="/knowledge">Pusat Pengetahuan</Link><Link href="/search">Pencarian</Link></div></div>
           <div><h2 className="text-sm font-bold text-white">Informasi</h2><div className="mt-4 grid gap-3 text-sm"><Link href="/news">Berita</Link><Link href="/announcements">Pengumuman</Link><Link href="/help">FAQ</Link></div></div>
           <div><h2 className="text-sm font-bold text-white">Fondasi platform</h2><p className="mt-4 text-sm leading-7 text-slate-400">Composable LXP + Moodle LMS dengan identitas terpusat dan pengalaman yang aman.</p></div>
         </div>

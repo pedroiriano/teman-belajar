@@ -1,6 +1,6 @@
 # TASK-014 — Pembelajaran Singkat / Microlearning
 
-**Status:** PLANNED
+**Status:** IMPLEMENTED — PR #35 CI PASS
 **Owner Agent:** Product/Backend/Frontend/QA
 **Feature:** F-LXP-002
 **Dependencies:** Media, Knowledge, Unified Search, TASK-008
@@ -32,13 +32,13 @@ article, atau quick learning, bookmark, progres ringan, dan related content.
 
 ## Required Tests
 
-- [ ] unit/domain, media/search integration, contract
-- [ ] authorization and malformed/unpublished content tests
-- [ ] E2E authoring-to-consumption, responsive, keyboard, light/dark
+- [x] unit/domain, media/search integration, contract
+- [x] authorization and malformed/unpublished content tests
+- [x] E2E authoring-to-consumption, responsive, keyboard, light/dark
 
 ## Documentation Impact
 
-- [ ] OpenAPI/ERD/migration, canonical feature/UI/navigation, runbook, handoff
+- [x] OpenAPI/ERD/migration, canonical feature/UI/navigation, runbook, handoff
 
 ## Definition of Done
 

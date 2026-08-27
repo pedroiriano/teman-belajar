@@ -97,6 +97,11 @@ var (
 		Name: "training_program_aggregations_total",
 		Help: "Total training program aggregations by bounded operation and state",
 	}, []string{"operation", "state"})
+
+	MicrolearningActionsTotal = promauto.NewCounterVec(prometheus.CounterOpts{
+		Name: "microlearning_actions_total",
+		Help: "Total microlearning actions by bounded operation and result",
+	}, []string{"operation", "result"})
 )
 
 func RecordSSOEvent(eventType, status string) {
@@ -132,4 +137,8 @@ func RecordNotificationAction(action string) {
 
 func RecordTrainingAggregation(operation, state string) {
 	TrainingAggregationsTotal.WithLabelValues(operation, state).Inc()
+}
+
+func RecordMicrolearningAction(operation, result string) {
+	MicrolearningActionsTotal.WithLabelValues(operation, result).Inc()
 }

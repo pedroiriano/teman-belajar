@@ -8,11 +8,12 @@ import (
 type ContentType string
 
 const (
-	ContentTypeCourse       ContentType = "course"
-	ContentTypeKnowledge    ContentType = "knowledge"
-	ContentTypeNews         ContentType = "news"
-	ContentTypeAnnouncement ContentType = "announcement"
-	ContentTypeFAQ          ContentType = "faq"
+	ContentTypeCourse        ContentType = "course"
+	ContentTypeKnowledge     ContentType = "knowledge"
+	ContentTypeNews          ContentType = "news"
+	ContentTypeAnnouncement  ContentType = "announcement"
+	ContentTypeFAQ           ContentType = "faq"
+	ContentTypeMicrolearning ContentType = "microlearning"
 )
 
 type Sort string
