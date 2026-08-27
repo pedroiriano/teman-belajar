@@ -120,6 +120,7 @@ func (r *MediaRepository) CheckIsPubliclyEligible(ctx context.Context, assetID s
 			LEFT JOIN knowledge_revisions kr ON mu.entity_type = 'knowledge_revision' AND mu.entity_id = kr.id::text
 			LEFT JOIN knowledge_articles ka ON kr.article_id = ka.id
 			LEFT JOIN faq_items fi ON mu.entity_type = 'faq_item' AND mu.entity_id = fi.id::text
+			LEFT JOIN microlearning_items mi ON mu.entity_type = 'microlearning' AND mu.entity_id = mi.id::text
 			WHERE mu.media_id = $1
 			AND (
 				(mu.entity_type = 'news' AND n.status = 'published')
@@ -129,6 +130,8 @@ func (r *MediaRepository) CheckIsPubliclyEligible(ctx context.Context, assetID s
 				(mu.entity_type = 'knowledge_revision' AND ka.status = 'published' AND ka.published_revision_no = kr.revision_no)
 				OR
 				(mu.entity_type = 'faq_item' AND fi.status = 'published' AND fi.published_at <= NOW())
+				OR
+				(mu.entity_type = 'microlearning' AND mi.status = 'published' AND mi.published_at <= NOW())
 			)
 		) OR EXISTS (
 			SELECT 1 FROM seo_profiles seo
@@ -161,6 +164,7 @@ func (r *MediaRepository) UsageEntityExists(ctx context.Context, entityType, ent
 		WHEN 'announcement' THEN EXISTS(SELECT 1 FROM announcements WHERE id::text = $2)
 		WHEN 'knowledge_revision' THEN EXISTS(SELECT 1 FROM knowledge_revisions WHERE id::text = $2)
 		WHEN 'faq_item' THEN EXISTS(SELECT 1 FROM faq_items WHERE id::text = $2)
+		WHEN 'microlearning' THEN EXISTS(SELECT 1 FROM microlearning_items WHERE id::text = $2)
 		ELSE FALSE END`
 	var exists bool
 	err := r.db.QueryRowContext(ctx, query, entityType, entityID).Scan(&exists)

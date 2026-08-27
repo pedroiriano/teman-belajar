@@ -32,6 +32,7 @@ import (
 	"teman-belajar-api/internal/domain/knowledge"
 	"teman-belajar-api/internal/domain/learning"
 	"teman-belajar-api/internal/domain/media"
+	"teman-belajar-api/internal/domain/microlearning"
 	"teman-belajar-api/internal/domain/training"
 	"teman-belajar-api/internal/observability"
 	"teman-belajar-api/internal/repository/postgres"
@@ -87,7 +88,9 @@ func main() {
 	draftRepo := postgres.NewDraftRepository(db)
 	draftSvc := draft.NewService(draftRepo, auditRepo, draftRetentionDays)
 	engagementRepo := postgres.NewEngagementRepository(db)
-	engagementResolver := engagementapplication.NewKnowledgeTargetResolver(knowledgeRepo)
+	microlearningRepo := postgres.NewMicrolearningRepository(db)
+	microlearningSvc := microlearning.NewService(microlearningRepo, auditRepo)
+	engagementResolver := engagementapplication.NewTargetResolver(knowledgeRepo, microlearningRepo)
 	discoveryRepo := postgres.NewDiscoverabilityRepository(db)
 	discoverySvc := discoverability.NewService(discoveryRepo, auditRepo)
 	faqRepo := postgres.NewFAQRepository(db)
@@ -134,6 +137,7 @@ func main() {
 	draftHandler := handler.NewDraftHandler(draftSvc)
 	learningHandler := handler.NewLearningHandler(learningSvc)
 	trainingHandler := handler.NewTrainingHandler(trainingSvc)
+	microlearningHandler := handler.NewMicrolearningHandler(microlearningSvc)
 	notificationHandler := handler.NewNotificationHandler(notificationSvc)
 
 	// Media Storage & Services
@@ -245,6 +249,8 @@ func main() {
 	mux.HandleFunc("GET /api/v1/faqs", faqHandler.PublicList)
 	mux.HandleFunc("GET /api/v1/training-programs", trainingHandler.PublicList)
 	mux.HandleFunc("GET /api/v1/training-programs/{slug}", trainingHandler.PublicDetail)
+	mux.HandleFunc("GET /api/v1/microlearning", microlearningHandler.PublicList)
+	mux.HandleFunc("GET /api/v1/microlearning/{slug}", microlearningHandler.PublicDetail)
 	mux.HandleFunc("GET /api/v1/discovery/sitemap", discoveryHandler.Sitemap)
 	mux.HandleFunc("GET /api/v1/discovery/{kind}/{slug}", discoveryHandler.Landing)
 
@@ -278,6 +284,8 @@ func main() {
 	mux.Handle("GET /api/v1/learning/me/courses/{courseId}/completion", authMiddleware(http.HandlerFunc(learningHandler.GetMyCourseCompletion)))
 	mux.Handle("GET /api/v1/learning/me/courses/{courseId}/grades", authMiddleware(http.HandlerFunc(learningHandler.GetMyCourseGrades)))
 	mux.Handle("GET /api/v1/learning/me/training-programs/{slug}", authMiddleware(http.HandlerFunc(trainingHandler.MyProgress)))
+	mux.Handle("GET /api/v1/me/microlearning/{id}/progress", authMiddleware(http.HandlerFunc(microlearningHandler.Progress)))
+	mux.Handle("PUT /api/v1/me/microlearning/{id}/progress", authMiddleware(http.HandlerFunc(microlearningHandler.Progress)))
 
 	// Admin CMS Endpoints
 	mux.Handle("/api/v1/admin/news", adminAuthMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -317,6 +325,11 @@ func main() {
 	mux.Handle("GET /api/v1/admin/training-programs/{id}", adminAuthMiddleware(http.HandlerFunc(trainingHandler.AdminGet)))
 	mux.Handle("PATCH /api/v1/admin/training-programs/{id}", adminAuthMiddleware(http.HandlerFunc(trainingHandler.AdminUpdate)))
 	mux.Handle("POST /api/v1/admin/training-programs/{id}/transition", adminAuthMiddleware(http.HandlerFunc(trainingHandler.AdminTransition)))
+	mux.Handle("GET /api/v1/admin/microlearning", adminAuthMiddleware(http.HandlerFunc(microlearningHandler.AdminList)))
+	mux.Handle("POST /api/v1/admin/microlearning", adminAuthMiddleware(http.HandlerFunc(microlearningHandler.AdminCreate)))
+	mux.Handle("GET /api/v1/admin/microlearning/{id}", adminAuthMiddleware(http.HandlerFunc(microlearningHandler.AdminGet)))
+	mux.Handle("PATCH /api/v1/admin/microlearning/{id}", adminAuthMiddleware(http.HandlerFunc(microlearningHandler.AdminUpdate)))
+	mux.Handle("POST /api/v1/admin/microlearning/{id}/transition", adminAuthMiddleware(http.HandlerFunc(microlearningHandler.AdminTransition)))
 
 	mux.HandleFunc("GET /api/v1/knowledge", knowledgeHandler.ListPublicArticles)
 	mux.HandleFunc("GET /api/v1/knowledge/tree", hierarchyHandler.PublicTree)

@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { BrandLogo } from "@/components/brand-logo";
 import { PortalIcon, type PortalIconName } from "@/components/portal-icon";
 import { getPublicFAQs } from "@/lib/faqs";
 
@@ -34,6 +35,7 @@ export default async function Home() {
         <div className="portal-course-hero-shape portal-course-hero-shape-two" aria-hidden="true" />
         <div className="portal-container relative grid min-h-[650px] items-center gap-14 py-16 lg:grid-cols-[1.05fr_.95fr] lg:py-24">
           <div>
+            <BrandLogo variant="main" decorative={false} priority className="mb-6 h-20 w-20 object-contain drop-shadow-xl sm:h-24 sm:w-24" />
             <div className="portal-course-hero-label"><span className="h-2 w-2 rounded-full bg-yellow-400" /> Belajar. Berbagi. Bertumbuh.</div>
             <h1 className="portal-course-hero-title">Belajar bersama <span>ahlinya</span>, kapan pun dan di mana pun.</h1>
             <p className="portal-course-hero-copy">Temukan pembelajaran formal, pengetahuan organisasi, dan informasi penting melalui pengalaman yang sederhana, aman, dan terhubung.</p>

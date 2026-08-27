@@ -9,7 +9,7 @@ function problem(status: number, title: string, detail: string) {
 }
 
 export function engagementTargetPath(targetType: string, targetId: string) {
-  if (targetType !== "knowledge" || !targetIdPattern.test(targetId)) return null;
+  if ((targetType !== "knowledge" && targetType !== "microlearning") || !targetIdPattern.test(targetId)) return null;
   return `${targetType}/${targetId.toLowerCase()}`;
 }
 

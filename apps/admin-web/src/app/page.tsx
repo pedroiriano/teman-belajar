@@ -2,6 +2,7 @@ import { getServerSession } from "next-auth/next";
 import { redirect } from "next/navigation";
 
 import { AdminSignIn } from "@/components/admin-sign-in";
+import { BrandLogo } from "@/components/brand-logo";
 import { authOptions } from "@/lib/auth";
 
 export default async function Home() {
@@ -16,7 +17,7 @@ export default async function Home() {
           aria-hidden="true"
         />
         <div className="relative flex items-center gap-3">
-          <span className="grid h-11 w-11 place-items-center rounded-xl bg-sky-400 font-black text-sky-950">TB</span>
+          <BrandLogo variant="main" decorative={false} priority className="h-16 w-16 object-contain drop-shadow-xl" />
           <div>
             <p className="font-extrabold">Teman Belajar</p>
             <p className="text-xs uppercase tracking-[.18em] text-slate-400">Panel Administrasi</p>
@@ -36,7 +37,7 @@ export default async function Home() {
 
       <section className="flex items-center justify-center bg-slate-50 p-6">
         <div className="admin-card w-full max-w-md p-7 sm:p-9">
-          <span className="grid h-12 w-12 place-items-center rounded-2xl bg-sky-100 font-black text-sky-700 lg:hidden">TB</span>
+          <BrandLogo variant="main" decorative={false} priority className="h-16 w-16 object-contain drop-shadow-lg lg:hidden" />
           <p className="mt-6 text-xs font-black uppercase tracking-[.18em] text-sky-600">Akses terproteksi</p>
           <h2 className="mt-3 text-3xl font-black text-slate-900">Masuk ke Panel Administrasi</h2>
           <p className="mt-3 text-sm leading-6 text-slate-500">

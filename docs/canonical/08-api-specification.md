@@ -80,6 +80,8 @@ Public:
 - `/videos`
 - `/courses`
 - `/search`
+- `GET /microlearning`
+- `GET /microlearning/{slug}`
 
 Authenticated:
 - `/me`
@@ -96,11 +98,12 @@ Authenticated:
 - `PATCH /me/notifications/{id}/read`
 - `POST /me/notifications/read-all`
 - `GET|PUT /me/notification-preferences[/{eventType}]`
+- `GET|PUT /me/microlearning/{id}/progress`
 
 Public aggregate:
 - `GET /ratings/{targetType}/{targetId}`
 
-Engagement identity always comes from validated access-token `sub`; the API accepts no user selector. TASK-008 accepts `targetType=knowledge` only. Canonical wire details and problem responses remain authoritative in `openapi/openapi.yaml`.
+Engagement identity always comes from validated access-token `sub`; the API accepts no user selector. Ratings, recent views, and recommendation 1.0 remain `targetType=knowledge`; bookmarks additionally accept `microlearning` under TASK-014. Canonical wire details and problem responses remain authoritative in `openapi/openapi.yaml`.
 
 Notification identity also comes exclusively from validated access-token `sub`.
 The trusted Portal/Admin BFF fixes `audience`; the API rechecks Admin roles,
@@ -115,6 +118,12 @@ Admin:
 - `/admin/media`
 - `/admin/form-drafts`
 - `/admin/configuration`
+- `/admin/microlearning`
+
+Microlearning authoring requires Content Editor/Administrator for draft writes
+and Reviewer/Administrator for approval/publication. Learner progress is an
+idempotent Portal resume state with `formal_completion=false`; unpublished
+items are unavailable to both engagement and progress endpoints.
 
 Admin form drafts are owned exclusively by validated access-token `sub`, require
 Content Editor or Portal Administrator, use optimistic `expected_revision`, and

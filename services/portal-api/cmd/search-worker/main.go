@@ -42,6 +42,7 @@ func main() {
 		searchindex.NewKnowledgeSource(db),
 		searchindex.NewAnnouncementSource(db),
 		searchindex.NewFAQSource(db),
+		searchindex.NewMicrolearningSource(db),
 		searchindex.NewCourseSource(moodleClient),
 	)
 

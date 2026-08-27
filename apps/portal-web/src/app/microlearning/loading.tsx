@@ -1,0 +1,1 @@
+export default function LoadingMicrolearning() { return <div className="portal-container py-14" role="status" aria-label="Memuat Pembelajaran Singkat"><div className="h-56 animate-pulse rounded-3xl bg-slate-200"/><div className="mt-8 grid gap-6 md:grid-cols-3">{[1,2,3].map((item)=><div key={item} className="h-72 animate-pulse rounded-2xl bg-slate-100"/>)}</div></div>; }

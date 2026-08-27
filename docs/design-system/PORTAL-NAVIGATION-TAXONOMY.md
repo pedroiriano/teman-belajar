@@ -18,7 +18,7 @@ pertama dibatasi menjadi `Beranda`, `Pembelajaran`, `Pengetahuan`, dan
 | Pembelajaran | Pembelajaran Saya | `/my-learning` | Aktif, perlu login |
 | Pembelajaran | Cari Kelas | `/search?content_type=course` | Aktif |
 | Pembelajaran | Pelatihan Penuh | `/training-programs` | Aktif; katalog/detail publik dan progres perlu login |
-| Pembelajaran | Pembelajaran Singkat | TASK-014 | `Segera` / PLANNED |
+| Pembelajaran | Pembelajaran Singkat | `/microlearning` | Aktif; katalog/detail publik, bookmark dan resume perlu login |
 | Pembelajaran | Webinar | TASK-015 (setelah TASK-021) | `Segera` / PLANNED |
 | Pembelajaran | Jalur Belajar | TASK-016 (setelah TASK-013–015) | `Segera` / PLANNED |
 | Pengetahuan | Pusat Pengetahuan | `/knowledge` | Aktif |
@@ -35,8 +35,8 @@ Status dan urutan dependency mengikuti
 
 ## 3. Rekomendasi Tahap Berikutnya
 
-1. Pelatihan Penuh telah diaktifkan melalui TASK-013. Jalankan TASK-014 untuk
-   Pembelajaran Singkat dengan format, ownership, route, dan state yang berbeda.
+1. Pelatihan Penuh dan Pembelajaran Singkat telah memiliki route, ownership,
+   dan state yang berbeda. Pertahankan batas completion formal di Moodle.
 2. Jalankan TASK-021 sebelum TASK-015 agar reminder Webinar memakai kontrak
    Notification Center, lalu selesaikan provider/time-zone/capacity policy.
 3. Jalankan TASK-016 setelah TASK-013–015 agar composition dan progress path

@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useCallback, useMemo, useRef, useState, type ReactNode } from "react";
 
 import { AdminIcon, type AdminIconName } from "@/components/admin-icon";
+import { BrandLogo } from "@/components/brand-logo";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { AdminNotificationCenter } from "@/components/notification-center";
 import { useCubaDisclosureRuntime, useCubaDrawerRuntime } from "@/components/cuba-runtime";
@@ -15,6 +16,7 @@ const navigationGroups: Array<{ label: string; items: NavigationItem[] }> = [
   { label: "Ruang Kerja", items: [{ href: "/dashboard", label: "Ringkasan", icon: "dashboard" }, { href: "/dashboard/statistics", label: "Statistik", icon: "dashboard" }] },
   { label: "Konten", items: [
     { href: "/dashboard/training-programs", label: "Program Pelatihan", icon: "knowledge" },
+    { href: "/dashboard/microlearning", label: "Pembelajaran Singkat", icon: "knowledge" },
     { href: "/dashboard/knowledge", label: "Pusat Pengetahuan", icon: "knowledge" },
     { href: "/dashboard/knowledge-hierarchy", label: "Struktur Pengetahuan", icon: "folder" },
     { href: "/dashboard/news", label: "Berita", icon: "news" },
@@ -43,6 +45,7 @@ const titleBySegment: Record<string, string> = {
   faqs: "FAQ",
   users: "Pengguna & Profil",
   "training-programs": "Program Pelatihan",
+  microlearning: "Pembelajaran Singkat",
   notifications: "Pusat Notifikasi",
   create: "Buat baru",
 };
@@ -51,10 +54,10 @@ function Brand({ desktopClose }: { desktopClose?: () => void }) {
   return (
     <div className="flex h-[76px] items-center gap-2 border-b admin-sidebar-border px-4">
       <Link href="/dashboard" className="flex min-w-0 flex-1 items-center gap-3">
-        <span className="admin-brand-mark grid h-11 w-11 shrink-0 place-items-center rounded-xl font-black shadow-lg shadow-sky-500/20">TB</span>
+        <BrandLogo className="h-12 w-12 shrink-0 object-contain drop-shadow-md" priority />
         <span className="min-w-0">
           <span className="block truncate font-extrabold admin-sidebar-title">Teman Belajar</span>
-          <span className="block truncate text-[10px] font-bold uppercase tracking-[.18em] text-slate-400">Panel Administrasi</span>
+          <span className="block whitespace-nowrap text-[9px] font-bold uppercase tracking-[.12em] text-slate-400">Panel Administrasi</span>
         </span>
       </Link>
       {desktopClose && (
@@ -184,7 +187,7 @@ export function AdminShell({ children, userName, userEmail, role }: { children: 
           <div className="flex min-h-11 items-center gap-2 border-t px-4 text-xs text-slate-500 sm:px-6 lg:px-8"><Link href="/dashboard" className="font-bold text-sky-700">Admin</Link>{breadcrumbs.slice(1).map((crumb) => <span key={crumb} className="flex items-center gap-2"><span aria-hidden="true">/</span><span>{crumb}</span></span>)}</div>
         </header>
         <main id="admin-content" className="page-body container-fluid min-h-[calc(100vh-154px)] p-4 sm:p-6 lg:p-8">{children}</main>
-        <footer className="footer admin-footer"><span>© {new Date().getFullYear()} Teman Belajar</span><span>Panel Administrasi · pengalaman perusahaan</span></footer>
+        <footer className="footer admin-footer"><span className="flex items-center gap-2"><BrandLogo className="h-7 w-7 shrink-0 object-contain" />© {new Date().getFullYear()} Teman Belajar</span><span>Panel Administrasi · pengalaman perusahaan</span></footer>
       </div>
     </div>
   );

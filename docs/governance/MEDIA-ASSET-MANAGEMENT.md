@@ -42,7 +42,7 @@ Request-wide multipart maximum is 33,554,432 bytes. SVG, executable, archive, un
 - Reviewer: list/view/select only.
 - UI hiding is not authorization. Portal API denies Reviewer mutations.
 - Allowed entity types: `news`, `announcement`, `knowledge_revision`,
-  `faq_item`. FAQ uses curated images only; the FAQ item stores the selected
+  `faq_item`, `microlearning`. FAQ and Microlearning use curated images only; the FAQ item stores the selected
   Media Asset UUID and its required non-empty alternative text.
 - Allowed roles: `inline`, `featured`, `attachment`.
 - Attach only after entity ID exists. Usage identity is `(media_id, entity_type, entity_id, usage_role)` and attach is idempotent.

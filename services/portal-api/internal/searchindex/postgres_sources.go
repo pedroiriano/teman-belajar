@@ -19,16 +19,38 @@ type NewsSource struct{ db queryer }
 type KnowledgeSource struct{ db queryer }
 type AnnouncementSource struct{ db queryer }
 type FAQSource struct{ db queryer }
+type MicrolearningSource struct{ db queryer }
 
-func NewNewsSource(db queryer) *NewsSource                 { return &NewsSource{db: db} }
-func NewKnowledgeSource(db queryer) *KnowledgeSource       { return &KnowledgeSource{db: db} }
-func NewAnnouncementSource(db queryer) *AnnouncementSource { return &AnnouncementSource{db: db} }
-func NewFAQSource(db queryer) *FAQSource                   { return &FAQSource{db: db} }
+func NewNewsSource(db queryer) *NewsSource                   { return &NewsSource{db: db} }
+func NewKnowledgeSource(db queryer) *KnowledgeSource         { return &KnowledgeSource{db: db} }
+func NewAnnouncementSource(db queryer) *AnnouncementSource   { return &AnnouncementSource{db: db} }
+func NewFAQSource(db queryer) *FAQSource                     { return &FAQSource{db: db} }
+func NewMicrolearningSource(db queryer) *MicrolearningSource { return &MicrolearningSource{db: db} }
 
-func (*NewsSource) Type() string         { return string(domainsearch.ContentTypeNews) }
-func (*KnowledgeSource) Type() string    { return string(domainsearch.ContentTypeKnowledge) }
-func (*AnnouncementSource) Type() string { return string(domainsearch.ContentTypeAnnouncement) }
-func (*FAQSource) Type() string          { return string(domainsearch.ContentTypeFAQ) }
+func (*NewsSource) Type() string          { return string(domainsearch.ContentTypeNews) }
+func (*KnowledgeSource) Type() string     { return string(domainsearch.ContentTypeKnowledge) }
+func (*AnnouncementSource) Type() string  { return string(domainsearch.ContentTypeAnnouncement) }
+func (*FAQSource) Type() string           { return string(domainsearch.ContentTypeFAQ) }
+func (*MicrolearningSource) Type() string { return string(domainsearch.ContentTypeMicrolearning) }
+
+func (s *MicrolearningSource) Fetch(ctx context.Context) ([]domainsearch.IndexDocument, error) {
+	rows, err := s.db.QueryContext(ctx, `SELECT id::text,title,summary,body,slug,format,duration_minutes,published_at,updated_at FROM microlearning_items WHERE status='published' AND published_at IS NOT NULL AND published_at<=NOW() AND indexable ORDER BY id`)
+	if err != nil {
+		return nil, fmt.Errorf("fetch published microlearning: %w", err)
+	}
+	defer rows.Close()
+	documents := make([]domainsearch.IndexDocument, 0)
+	for rows.Next() {
+		var id, title, summary, body, slug, format string
+		var duration int
+		var publishedAt, updatedAt time.Time
+		if err := rows.Scan(&id, &title, &summary, &body, &slug, &format, &duration, &publishedAt, &updatedAt); err != nil {
+			return nil, fmt.Errorf("scan published microlearning: %w", err)
+		}
+		documents = append(documents, domainsearch.IndexDocument{DocumentID: "microlearning_" + id, SourceType: s.Type(), SourceID: id, Title: plainText(title), Summary: plainText(summary), BodyText: plainText(body), Tags: []string{format, fmt.Sprintf("%d menit", duration)}, URL: "/microlearning/" + slug, PublishedAt: &publishedAt, UpdatedAt: updatedAt})
+	}
+	return documents, rows.Err()
+}
 
 func (s *NewsSource) Fetch(ctx context.Context) ([]domainsearch.IndexDocument, error) {
 	const query = `

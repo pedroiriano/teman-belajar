@@ -25,6 +25,8 @@ tags:
     description: Learning operations
   - name: Training Programs
     description: Portal-owned program composition with Moodle-authoritative learning state
+  - name: Microlearning
+    description: Portal-owned editorial learning activities with lightweight non-Moodle progress
   - name: Me
     description: Me operations
   - name: Engagement
@@ -405,6 +407,146 @@ paths:
         '409': { $ref: '#/components/responses/ConflictError' }
         '422': { $ref: '#/components/responses/ValidationError' }
         '503': { $ref: '#/components/responses/DependencyUnavailable' }
+  /microlearning:
+    get:
+      tags: [Microlearning]
+      operationId: listMicrolearning
+      summary: List published Portal-owned microlearning
+      security: []
+      parameters:
+        - { name: q, in: query, schema: { type: string, maxLength: 100 } }
+        - { name: format, in: query, schema: { $ref: '#/components/schemas/MicrolearningFormat' } }
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+      responses:
+        '200': { description: Published microlearning catalogue, content: { application/json: { schema: { $ref: '#/components/schemas/MicrolearningList' } } } }
+        '422': { $ref: '#/components/responses/ValidationError' }
+  /microlearning/{slug}:
+    get:
+      tags: [Microlearning]
+      operationId: getMicrolearning
+      summary: Get one published editorial microlearning item and published related content
+      security: []
+      parameters:
+        - { name: slug, in: path, required: true, schema: { type: string, pattern: '^[a-z0-9]+(?:-[a-z0-9]+)*$' } }
+      responses:
+        '200': { description: Published microlearning detail, content: { application/json: { schema: { $ref: '#/components/schemas/MicrolearningItem' } } } }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '422': { $ref: '#/components/responses/ValidationError' }
+  /me/microlearning/{id}/progress:
+    parameters:
+      - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+    get:
+      tags: [Me, Microlearning]
+      operationId: getMyMicrolearningProgress
+      summary: Get lightweight Portal activity progress; never Moodle completion
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: Learner-owned Portal activity state, content: { application/json: { schema: { $ref: '#/components/schemas/MicrolearningProgress' } } } }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    put:
+      tags: [Me, Microlearning]
+      operationId: putMyMicrolearningProgress
+      summary: Idempotently save lightweight resume state
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/MicrolearningProgressWrite' }
+      responses:
+        '200': { description: Current resume state, content: { application/json: { schema: { $ref: '#/components/schemas/MicrolearningProgress' } } } }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '422': { $ref: '#/components/responses/ValidationError' }
+  /admin/microlearning:
+    get:
+      tags: [Admin, Microlearning]
+      operationId: listAdminMicrolearning
+      summary: List microlearning across editorial workflow states
+      security: [{ oidc: [content:read] }]
+      parameters:
+        - { name: q, in: query, schema: { type: string, maxLength: 100 } }
+        - { name: format, in: query, schema: { $ref: '#/components/schemas/MicrolearningFormat' } }
+        - { name: status, in: query, schema: { type: string, enum: [all, draft, in_review, approved, published, archived] } }
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+      responses:
+        '200': { description: Admin microlearning list, content: { application/json: { schema: { $ref: '#/components/schemas/MicrolearningList' } } } }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '422': { $ref: '#/components/responses/ValidationError' }
+    post:
+      tags: [Admin, Microlearning]
+      operationId: createMicrolearning
+      summary: Create a draft with validated media and related references
+      security: [{ oidc: [content:write] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/MicrolearningWrite' }
+      responses:
+        '201': { description: Draft created, content: { application/json: { schema: { $ref: '#/components/schemas/MicrolearningItem' } } } }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409': { $ref: '#/components/responses/ConflictError' }
+        '422': { $ref: '#/components/responses/ValidationError' }
+  /admin/microlearning/{id}:
+    parameters:
+      - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+    get:
+      tags: [Admin, Microlearning]
+      operationId: getAdminMicrolearning
+      summary: Get one microlearning item for editorial review
+      security: [{ oidc: [content:read] }]
+      responses:
+        '200': { description: Microlearning detail, content: { application/json: { schema: { $ref: '#/components/schemas/MicrolearningItem' } } } }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    patch:
+      tags: [Admin, Microlearning]
+      operationId: updateMicrolearning
+      summary: Update an editable draft with optimistic versioning
+      security: [{ oidc: [content:write] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/MicrolearningWrite' }
+      responses:
+        '200': { description: Updated draft, content: { application/json: { schema: { $ref: '#/components/schemas/MicrolearningItem' } } } }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/ConflictError' }
+        '422': { $ref: '#/components/responses/ValidationError' }
+  /admin/microlearning/{id}/transition:
+    post:
+      tags: [Admin, Microlearning]
+      operationId: transitionMicrolearning
+      summary: Apply a role-gated editorial workflow transition
+      security: [{ oidc: [content:write] }]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [status]
+              properties: { status: { $ref: '#/components/schemas/MicrolearningStatus' } }
+      responses:
+        '200': { description: Transitioned item, content: { application/json: { schema: { $ref: '#/components/schemas/MicrolearningItem' } } } }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/ConflictError' }
+        '422': { $ref: '#/components/responses/ValidationError' }
   /admin/faqs/categories:
     get:
       tags: [Admin, FAQ]
@@ -693,7 +835,7 @@ paths:
       summary: list My Bookmarks
   /me/bookmarks/{targetType}/{targetId}:
     parameters:
-      - $ref: '#/components/parameters/EngagementTargetType'
+      - $ref: '#/components/parameters/BookmarkTargetType'
       - $ref: '#/components/parameters/EngagementTargetId'
     put:
       tags:
@@ -1856,7 +1998,7 @@ paths:
               properties:
                 entity_type:
                   type: string
-                  enum: [news, announcement, knowledge_revision, faq_item]
+                  enum: [news, announcement, knowledge_revision, faq_item, microlearning]
                 entity_id:
                   type: string
                 usage_role:
@@ -2248,7 +2390,7 @@ paths:
       tags:
         - Search
       summary: Search published public content
-      description: Searches the derived public index for visible Moodle courses, published knowledge revisions, published news, active announcements, and published indexable FAQs. Raw engine filters are never accepted.
+      description: Searches the derived public index for visible Moodle courses, published microlearning, published knowledge revisions, published news, active announcements, and published indexable FAQs. Raw engine filters are never accepted.
       security: []
       parameters:
         - name: q
@@ -2271,6 +2413,7 @@ paths:
               - news
               - announcement
               - faq
+              - microlearning
         - name: category_id
           in: query
           description: Filter by canonical category UUID
@@ -2345,6 +2488,7 @@ paths:
                             - news
                             - announcement
                             - faq
+                            - microlearning
                         title:
                           type: string
                         snippet:
@@ -2718,6 +2862,13 @@ components:
       schema:
         type: string
         enum: [knowledge]
+    BookmarkTargetType:
+      name: targetType
+      in: path
+      required: true
+      schema:
+        type: string
+        enum: [knowledge, microlearning]
     EngagementTargetId:
       name: targetId
       in: path
@@ -3327,7 +3478,7 @@ components:
       properties:
         target_type:
           type: string
-          enum: [knowledge]
+          enum: [knowledge, microlearning]
         target_id:
           type: string
           format: uuid
@@ -3635,7 +3786,7 @@ components:
       required: [form_key, entity_type, entity_id, schema_version, payload, base_entity_version, expected_revision, client_updated_at]
       properties:
         form_key: { $ref: '#/components/schemas/FormDraftKey' }
-        entity_type: { type: string, enum: [news, announcement, knowledge, knowledge_node, faq_item] }
+        entity_type: { type: string, enum: [news, announcement, knowledge, knowledge_node, faq_item, microlearning] }
         entity_id: { type: [string, 'null'], format: uuid }
         schema_version: { type: integer, const: 1 }
         payload: { $ref: '#/components/schemas/FormDraftPayload' }
@@ -3649,7 +3800,7 @@ components:
         id: { type: string, format: uuid }
         draft_key: { type: string, format: uuid }
         form_key: { $ref: '#/components/schemas/FormDraftKey' }
-        entity_type: { type: string, enum: [news, announcement, knowledge, knowledge_node, faq_item] }
+        entity_type: { type: string, enum: [news, announcement, knowledge, knowledge_node, faq_item, microlearning] }
         entity_id: { type: string, format: uuid }
         schema_version: { type: integer, const: 1 }
         payload: { $ref: '#/components/schemas/FormDraftPayload' }
@@ -3930,6 +4081,87 @@ components:
             label: { type: string }
             url: { type: string, format: uri }
         provenance: { $ref: '#/components/schemas/TrainingProvenance' }
+    MicrolearningStatus:
+      type: string
+      enum: [draft, in_review, approved, published, archived]
+    MicrolearningFormat:
+      type: string
+      enum: [article, video, quick]
+    MicrolearningRelated:
+      type: object
+      required: [id, slug, title, summary, format, duration_minutes]
+      properties:
+        id: { type: string, format: uuid }
+        slug: { type: string }
+        title: { type: string }
+        summary: { type: string }
+        format: { $ref: '#/components/schemas/MicrolearningFormat' }
+        duration_minutes: { type: integer, minimum: 3, maximum: 15 }
+    MicrolearningItem:
+      type: object
+      required: [id, slug, title, summary, body, format, duration_minutes, status, version, indexable, created_at, updated_at, related]
+      properties:
+        id: { type: string, format: uuid }
+        slug: { type: string, pattern: '^[a-z0-9]+(?:-[a-z0-9]+)*$' }
+        title: { type: string, minLength: 3, maxLength: 200 }
+        summary: { type: string, minLength: 10, maxLength: 500 }
+        body: { type: string, minLength: 20, maxLength: 20000 }
+        format: { $ref: '#/components/schemas/MicrolearningFormat' }
+        duration_minutes: { type: integer, minimum: 3, maximum: 15 }
+        video_url: { type: string, format: uri, pattern: '^https://' }
+        featured_media_id: { type: string, format: uuid, description: Active image Media Asset ID; storage internals are never returned }
+        featured_media_url: { type: string, pattern: '^/media/' }
+        status: { $ref: '#/components/schemas/MicrolearningStatus' }
+        version: { type: integer, minimum: 1 }
+        seo_title: { type: string, maxLength: 70 }
+        seo_description: { type: string, maxLength: 160 }
+        indexable: { type: boolean }
+        published_at: { type: [string, 'null'], format: date-time }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+        related: { type: array, maxItems: 8, items: { $ref: '#/components/schemas/MicrolearningRelated' } }
+    MicrolearningWrite:
+      type: object
+      additionalProperties: false
+      required: [slug, title, summary, body, format, duration_minutes, video_url, featured_media_id, related_ids, seo_title, seo_description, indexable]
+      properties:
+        slug: { type: string, pattern: '^[a-z0-9]+(?:-[a-z0-9]+)*$', maxLength: 160 }
+        title: { type: string, minLength: 3, maxLength: 200 }
+        summary: { type: string, minLength: 10, maxLength: 500 }
+        body: { type: string, minLength: 20, maxLength: 20000 }
+        format: { $ref: '#/components/schemas/MicrolearningFormat' }
+        duration_minutes: { type: integer, minimum: 3, maximum: 15 }
+        video_url: { type: string, maxLength: 2048, description: Required HTTPS URL for video format; empty otherwise }
+        featured_media_id: { type: string, description: Empty or active image Media Asset UUID }
+        related_ids: { type: array, maxItems: 8, uniqueItems: true, items: { type: string, format: uuid } }
+        seo_title: { type: string, maxLength: 70 }
+        seo_description: { type: string, maxLength: 160 }
+        indexable: { type: boolean }
+        expected_version: { type: integer, minimum: 1 }
+    MicrolearningList:
+      type: object
+      required: [data, pagination]
+      properties:
+        data: { type: array, items: { $ref: '#/components/schemas/MicrolearningItem' } }
+        pagination: { $ref: '#/components/schemas/Pagination' }
+    MicrolearningProgressWrite:
+      type: object
+      additionalProperties: false
+      required: [progress_percent, position_seconds]
+      properties:
+        progress_percent: { type: number, minimum: 0, maximum: 100 }
+        position_seconds: { type: integer, minimum: 0 }
+    MicrolearningProgress:
+      type: object
+      required: [item_id, progress_percent, position_seconds, updated_at, source, state, formal_completion]
+      properties:
+        item_id: { type: string, format: uuid }
+        progress_percent: { type: number, minimum: 0, maximum: 100 }
+        position_seconds: { type: integer, minimum: 0 }
+        updated_at: { type: string, format: date-time }
+        source: { type: string, enum: [portal] }
+        state: { type: string, enum: [editorial_activity] }
+        formal_completion: { type: boolean, const: false, description: "Explicitly not Moodle completion, grading, or certification" }
     LearningUser:
       type: object
       properties:
