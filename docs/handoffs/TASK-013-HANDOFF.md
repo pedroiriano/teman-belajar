@@ -2,9 +2,9 @@
 
 ## Release state
 
-**IMPLEMENTED — LOCAL VERIFICATION.** The bounded implementation and local
-verification gates pass. No branch, commit, pull request, merge, or production
-deployment is claimed by this handoff.
+**READY FOR MERGE — PR #33.** The bounded implementation, fresh authenticated
+Admin acceptance, local verification, and protected CI gates pass. Production
+deployment is not authorized or claimed by this handoff.
 
 - Migration: `019_create_training_programs.sql`.
 - Portal routes: `/training-programs` and `/training-programs/{slug}`.
@@ -61,15 +61,32 @@ deployment is claimed by this handoff.
 | Final API/migrator and Portal/Admin production images | PASS through safe official wrapper actions; runtime services remain healthy |
 | Migration 019 | PASS: 19 applied, 19 checksummed, latest `019` |
 | Portal browser catalogue/detail, keyboard, theme, empty and degraded states | PASS |
-| Admin browser loading/error/empty shell | PASS; authenticated editor journey was unavailable because the pre-existing browser session token was stale |
+| Admin authenticated browser create/edit, one-course composition, cohort, and draft → review → approved → published → archived workflow | PASS with a fresh Portal Administrator session |
+| Admin responsive Light/Dark and accessibility semantics | PASS at 390×844 with no horizontal overflow; mobile navigation, labelled native controls, focusable actions, and skip-link semantics verified |
+| Admin error/degraded behavior | PASS before dependency recovery: the Moodle catalogue failed closed and composition remained locked |
+| Admin authz | PASS: Portal Administrator authoring/review controls matched validated claims; reviewer mutation denial remains covered by domain/HTTP negative tests |
 | Static SAST for changed training packages | PASS; broader scan retains three pre-existing `cmd/api/main.go` G706 log warnings |
 
-Browser QA used temporary local program and Moodle course fixtures. The Portal
-program and cohort/course references were deleted. Moodle course deletion hit
+Protected CI on PR #33 passed all 11 required checks at source SHA `5f6c1e7`,
+including API, both frontends, governance, OpenAPI, SAST, SCA, SBOM, secret
+scan, and Trivy. The final documentation-only evidence commit must receive the
+same protected checks before merge.
+
+Browser QA used temporary local program and Moodle course fixtures. The exact
+Portal program and its cascaded cohort/course references were deleted and
+verified absent. The temporary Moodle integration-user enrolment was removed,
+and course ID 19 was restored to hidden. Moodle course deletion hit
 the existing local `mdl_zoom` schema drift, so the exact temporary course
 `TASK013-QA-TEMP` (ID 19) was made hidden and is not discoverable to learners.
-This residual local-only record contains no user, enrolment, credential, or
+This residual local-only record contains no QA enrolment, credential, or
 production data.
+
+The local Moodle web-service token had also drifted. A replacement token was
+issued through Moodle's official token API for the existing restricted
+integration user, persisted only in ignored `infrastructure/docker/.env`, and
+injected into the API/search/analytics containers. No role, capability,
+Keycloak, SSO, account-management, source-controlled secret, or production
+configuration was changed.
 
 Read-only Moodle diagnostics confirmed `mod_zoom` v5.5.0 is marked `uptodate`
 at database/disk version `2026041600`, while its declared `zoom` and
@@ -86,10 +103,8 @@ was run separately; no workaround or Identity repository change was made. An
 earlier pre-refinement local `up` run had completed its built-in idempotent SSO
 client reconciliation successfully; it was not repeated on the final source.
 
-## Remaining human-owned gates
+## Remaining merge gates
 
-- Review the scoped diff, create the TASK-013 branch/commit/PR, and run
-  protected CI on the final SHA.
-- Perform authenticated Admin browser acceptance with a fresh local session if
-  interactive form-level evidence is required before merge.
+- Run protected CI on the final PR #33 evidence SHA, mark the PR ready, and
+  merge only when branch protection permits it.
 - TASK-012 `PRODUCTION HOLD` and all production decisions remain unchanged.
