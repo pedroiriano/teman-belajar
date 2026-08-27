@@ -21,7 +21,7 @@ Task awal:
 - TASK-011D SEO, Taxonomy & Public Discoverability Platform
 - TASK-012 Production Readiness
 - TASK-013 Pelatihan Penuh / Full Training Programs — `DONE — MERGED via PR #33`
-- TASK-014 Pembelajaran Singkat / Microlearning — `PLANNED`
+- TASK-014 Pembelajaran Singkat / Microlearning — `DONE — MERGED via PR #35`
 - TASK-015 Webinar & Live Learning — `PLANNED`
 - TASK-016 Jalur Belajar / Learning Paths — `PLANNED`
 - TASK-017 FAQ CMS & Help Center — `DONE — MERGED via PR #23`
