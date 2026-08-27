@@ -18,6 +18,11 @@ ENV NEXT_TELEMETRY_DISABLED=1
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
+# Enforce the fixed OpenSSL runtime packages for CVE-2026-14456.
+RUN apk add --no-cache --upgrade \
+    'libcrypto3>=3.5.8-r0' \
+    'libssl3>=3.5.8-r0'
+
 # npm is required only in build stages. The runtime executes node server.js;
 # removing npm/npx eliminates unused package-manager attack surface.
 RUN rm -rf /usr/local/lib/node_modules/npm /usr/local/bin/npm /usr/local/bin/npx
