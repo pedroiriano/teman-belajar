@@ -2,10 +2,11 @@
 
 ## Release state
 
-**IMPLEMENTED — VERIFIED LOCAL.** Production deployment and merge are not
+**IMPLEMENTED — PR #35 CI PASS.** Production deployment and merge are not
 claimed. TASK-012 `PRODUCTION HOLD` remains unchanged.
 
 - Branch: `codex/task-014-microlearning`.
+- Pull request: `#35` (open; clean; awaiting human merge approval).
 - Migration: `020_create_microlearning.sql`.
 - Portal routes: `/microlearning` and `/microlearning/{slug}`.
 - Admin route: `/dashboard/microlearning`.
@@ -57,7 +58,8 @@ claimed. TASK-012 `PRODUCTION HOLD` remains unchanged.
 | Browser catalogue/filter/detail/related/SEO/sitemap/Search, mobile overflow, focusable keyboard semantics, light/dark | PASS; temporary QA content and Search documents removed |
 | Browser logo/favicon/manifest rendering on Portal and Admin | PASS — visible images loaded at 80×80; favicon/app-icon links valid; no console errors |
 | `govulncheck` and production `npm audit` (Portal/Admin) | PASS — 0 reachable / 0 production vulnerabilities |
-| `gosec` | TASK-014 delta PASS; three unchanged low-severity G706 log-sanitization findings remain in pre-existing startup logs |
+| Protected CI on PR #35 | PASS — all 11 required checks |
+| `gosec` | PASS — static list queries remove G202; 0 findings on final CI SHA |
 
 The local Search Worker Microlearning source completed with zero documents
 after QA cleanup. Its separate pre-existing Moodle course source still reports
