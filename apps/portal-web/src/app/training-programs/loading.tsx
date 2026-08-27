@@ -1,0 +1,1 @@
+export default function TrainingProgramsLoading(){return <div className="portal-container py-20" role="status"><div className="grid animate-pulse gap-5 md:grid-cols-3">{[1,2,3].map(item=><div key={item} className="portal-card h-64 bg-slate-100"/>)}</div><span className="sr-only">Memuat program pelatihan…</span></div>}

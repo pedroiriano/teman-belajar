@@ -93,3 +93,9 @@ all active routes without authorizing fake `Segera` features, vendor demo
 runtime, Identity changes, or weakening the Admin no-orange contract. TASK-027
 is `DONE — MERGED via PR #30` through squash commit
 `f6fc598ee231d2c879d7b5aca7ab13158fbaa3e8`.
+
+For Full Training Programs, read `TASK-013-HANDOFF.md` together with
+`docs/runbooks/FULL-TRAINING-PROGRAMS-OPERATIONS.md`. Portal owns editorial
+program/cohort composition while Moodle remains authoritative for course,
+enrolment, completion, and progress. CTA access claims require Moodle
+confirmation; degraded reads must retain explicit provenance.

@@ -19,7 +19,7 @@ const navigationGroups: NavigationGroup[] = [
     items: [
       { href: "/my-learning", label: "Pembelajaran Saya", description: "Lanjutkan kelas dan pantau progres." },
       { href: "/search?content_type=course", label: "Cari Kelas", description: "Temukan katalog kelas Moodle." },
-      { label: "Pelatihan Penuh", description: "Program terstruktur dengan pendampingan.", comingSoon: true },
+      { href: "/training-programs", label: "Pelatihan Penuh", description: "Program terstruktur dengan course dan cohort." },
       { label: "Pembelajaran Singkat", description: "Materi ringkas untuk kebutuhan cepat.", comingSoon: true },
       { label: "Webinar", description: "Sesi langsung bersama narasumber.", comingSoon: true },
       { label: "Jalur Belajar", description: "Rangkaian kompetensi yang terarah.", comingSoon: true },
@@ -182,7 +182,7 @@ export function PortalChrome({ authenticated, children }: { authenticated: boole
       <footer className="techwind-footer portal-footer border-t border-slate-800 bg-[#102a43] text-slate-300">
         <div className="portal-container grid gap-10 py-14 md:grid-cols-2 lg:grid-cols-[1.35fr_.8fr_.8fr_1fr]">
           <div><Brand inverted /><p className="mt-5 max-w-md text-sm leading-7 text-slate-400">Ruang belajar terpadu untuk menemukan wawasan, mengikuti pembelajaran formal, dan bertumbuh bersama organisasi.</p></div>
-          <div><h2 className="text-sm font-bold text-white">Jelajahi</h2><div className="mt-4 grid gap-3 text-sm"><Link href="/my-learning">Pembelajaran Saya</Link><Link href="/knowledge">Pusat Pengetahuan</Link><Link href="/search">Pencarian</Link></div></div>
+          <div><h2 className="text-sm font-bold text-white">Jelajahi</h2><div className="mt-4 grid gap-3 text-sm"><Link href="/my-learning">Pembelajaran Saya</Link><Link href="/training-programs">Pelatihan Penuh</Link><Link href="/knowledge">Pusat Pengetahuan</Link><Link href="/search">Pencarian</Link></div></div>
           <div><h2 className="text-sm font-bold text-white">Informasi</h2><div className="mt-4 grid gap-3 text-sm"><Link href="/news">Berita</Link><Link href="/announcements">Pengumuman</Link><Link href="/help">FAQ</Link></div></div>
           <div><h2 className="text-sm font-bold text-white">Fondasi platform</h2><p className="mt-4 text-sm leading-7 text-slate-400">Composable LXP + Moodle LMS dengan identitas terpusat dan pengalaman yang aman.</p></div>
         </div>

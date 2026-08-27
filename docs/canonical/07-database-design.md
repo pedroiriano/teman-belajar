@@ -206,6 +206,22 @@ Index berdasarkan query nyata:
 - Migration 018 is additive and forward-only. Rollback removes application
   consumers while leaving the schema applied.
 
+## Full Training Programs (Migration 019)
+
+- `training_programs` owns Portal editorial metadata and publication workflow;
+  it never stores authoritative Moodle enrolment, completion, grade, or learning
+  state.
+- `training_program_courses` stores only ordered Moodle course IDs plus the
+  Portal composition flag `required`. Course names and availability are resolved
+  through the Moodle adapter and reported with freshness/provenance.
+- `training_program_cohorts` owns schedule presentation. It does not create a
+  second registration or attendance engine.
+- Public queries isolate `published` rows with an effective `published_at`.
+  Optimistic versions protect draft edits and publication revalidates visible
+  Moodle course IDs.
+- Migration 019 is additive and forward-only. Rollback removes application
+  consumers while retaining schema and authored program data.
+
 ## 9. Audit
 
 Audit log bukan pengganti application logs.

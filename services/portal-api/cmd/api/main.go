@@ -32,6 +32,7 @@ import (
 	"teman-belajar-api/internal/domain/knowledge"
 	"teman-belajar-api/internal/domain/learning"
 	"teman-belajar-api/internal/domain/media"
+	"teman-belajar-api/internal/domain/training"
 	"teman-belajar-api/internal/observability"
 	"teman-belajar-api/internal/repository/postgres"
 	"teman-belajar-api/internal/transport/http/handler"
@@ -121,6 +122,8 @@ func main() {
 		Timeout:       10 * time.Second,
 	})
 	learningSvc := learning.NewService(moodleClient)
+	trainingRepo := postgres.NewTrainingRepository(db)
+	trainingSvc := training.NewService(trainingRepo, moodleClient, auditRepo, moodlePublicBaseURL)
 
 	// Handlers
 	cmsHandler := handler.NewCMSHandler(cmsSvc, discoverySvc)
@@ -130,6 +133,7 @@ func main() {
 	faqHandler := handler.NewFAQHandler(faqSvc)
 	draftHandler := handler.NewDraftHandler(draftSvc)
 	learningHandler := handler.NewLearningHandler(learningSvc)
+	trainingHandler := handler.NewTrainingHandler(trainingSvc)
 	notificationHandler := handler.NewNotificationHandler(notificationSvc)
 
 	// Media Storage & Services
@@ -239,6 +243,8 @@ func main() {
 	mux.HandleFunc("/api/v1/announcements", cmsHandler.ListActiveAnnouncements)
 	mux.HandleFunc("GET /api/v1/announcements/{slug}", cmsHandler.GetPublicAnnouncement)
 	mux.HandleFunc("GET /api/v1/faqs", faqHandler.PublicList)
+	mux.HandleFunc("GET /api/v1/training-programs", trainingHandler.PublicList)
+	mux.HandleFunc("GET /api/v1/training-programs/{slug}", trainingHandler.PublicDetail)
 	mux.HandleFunc("GET /api/v1/discovery/sitemap", discoveryHandler.Sitemap)
 	mux.HandleFunc("GET /api/v1/discovery/{kind}/{slug}", discoveryHandler.Landing)
 
@@ -271,6 +277,7 @@ func main() {
 	mux.Handle("GET /api/v1/learning/me/courses", authMiddleware(http.HandlerFunc(learningHandler.ListMyCourses)))
 	mux.Handle("GET /api/v1/learning/me/courses/{courseId}/completion", authMiddleware(http.HandlerFunc(learningHandler.GetMyCourseCompletion)))
 	mux.Handle("GET /api/v1/learning/me/courses/{courseId}/grades", authMiddleware(http.HandlerFunc(learningHandler.GetMyCourseGrades)))
+	mux.Handle("GET /api/v1/learning/me/training-programs/{slug}", authMiddleware(http.HandlerFunc(trainingHandler.MyProgress)))
 
 	// Admin CMS Endpoints
 	mux.Handle("/api/v1/admin/news", adminAuthMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -304,6 +311,12 @@ func main() {
 	mux.Handle("GET /api/v1/admin/faqs/items/{id}", adminAuthMiddleware(http.HandlerFunc(faqHandler.GetItem)))
 	mux.Handle("PATCH /api/v1/admin/faqs/items/{id}", adminAuthMiddleware(http.HandlerFunc(faqHandler.UpdateItem)))
 	mux.Handle("POST /api/v1/admin/faqs/items/{id}/transition", adminAuthMiddleware(http.HandlerFunc(faqHandler.Transition)))
+	mux.Handle("GET /api/v1/admin/training-programs", adminAuthMiddleware(http.HandlerFunc(trainingHandler.AdminList)))
+	mux.Handle("POST /api/v1/admin/training-programs", adminAuthMiddleware(http.HandlerFunc(trainingHandler.AdminCreate)))
+	mux.Handle("GET /api/v1/admin/training-programs/course-options", adminAuthMiddleware(http.HandlerFunc(trainingHandler.CourseOptions)))
+	mux.Handle("GET /api/v1/admin/training-programs/{id}", adminAuthMiddleware(http.HandlerFunc(trainingHandler.AdminGet)))
+	mux.Handle("PATCH /api/v1/admin/training-programs/{id}", adminAuthMiddleware(http.HandlerFunc(trainingHandler.AdminUpdate)))
+	mux.Handle("POST /api/v1/admin/training-programs/{id}/transition", adminAuthMiddleware(http.HandlerFunc(trainingHandler.AdminTransition)))
 
 	mux.HandleFunc("GET /api/v1/knowledge", knowledgeHandler.ListPublicArticles)
 	mux.HandleFunc("GET /api/v1/knowledge/tree", hierarchyHandler.PublicTree)

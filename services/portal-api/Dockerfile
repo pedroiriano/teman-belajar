@@ -20,8 +20,11 @@ FROM alpine:3.22
 
 WORKDIR /app
 
-# Add non-root user
-RUN apk add --no-cache tzdata
+# Add runtime dependencies and enforce the fixed OpenSSL packages.
+RUN apk add --no-cache --upgrade \
+    'libcrypto3>=3.5.8-r0' \
+    'libssl3>=3.5.8-r0' \
+    tzdata
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 RUN chown -R appuser:appgroup /app
 

@@ -23,6 +23,8 @@ tags:
     description: FAQ operations
   - name: Learning
     description: Learning operations
+  - name: Training Programs
+    description: Portal-owned program composition with Moodle-authoritative learning state
   - name: Me
     description: Me operations
   - name: Engagement
@@ -236,6 +238,173 @@ paths:
         '422': { $ref: '#/components/responses/ValidationError' }
       security: []
       summary: List active categories and published FAQ items only
+  /training-programs:
+    get:
+      tags: [Training Programs]
+      operationId: listTrainingPrograms
+      summary: List published training programs
+      security: []
+      parameters:
+        - { name: q, in: query, schema: { type: string, maxLength: 100 } }
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: Paginated published training programs
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TrainingProgramList' }
+        '422': { $ref: '#/components/responses/ValidationError' }
+  /training-programs/{slug}:
+    get:
+      tags: [Training Programs]
+      operationId: getTrainingProgram
+      summary: Get a published program with live Moodle course composition
+      security: []
+      parameters:
+        - { name: slug, in: path, required: true, schema: { type: string, pattern: '^[a-z0-9]+(?:-[a-z0-9]+)*$' } }
+      responses:
+        '200':
+          description: Program detail; provenance reports any partial Moodle degradation
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TrainingProgramDetail' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '422': { $ref: '#/components/responses/ValidationError' }
+  /learning/me/training-programs/{slug}:
+    get:
+      tags: [Learning, Training Programs]
+      operationId: getMyTrainingProgramProgress
+      summary: Aggregate current learner progress from Moodle without assuming access
+      security:
+        - bearerAuth: []
+      parameters:
+        - { name: slug, in: path, required: true, schema: { type: string } }
+      responses:
+        '200':
+          description: Moodle-provenanced learner progress or a safe degraded state
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TrainingProgramProgress' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /admin/training-programs:
+    get:
+      tags: [Admin, Training Programs]
+      operationId: listAdminTrainingPrograms
+      summary: List training programs across workflow states
+      security:
+        - oidc: [content:read]
+      parameters:
+        - { name: q, in: query, schema: { type: string, maxLength: 100 } }
+        - { name: status, in: query, schema: { type: string, enum: [all, draft, in_review, approved, published, archived] } }
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+      responses:
+        '200': { description: Admin program list, content: { application/json: { schema: { $ref: '#/components/schemas/TrainingProgramList' } } } }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '422': { $ref: '#/components/responses/ValidationError' }
+    post:
+      tags: [Admin, Training Programs]
+      operationId: createTrainingProgram
+      summary: Create a draft from validated visible Moodle course IDs
+      security:
+        - oidc: [content:write]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/TrainingProgramWrite' }
+      responses:
+        '201': { description: Draft created, content: { application/json: { schema: { $ref: '#/components/schemas/TrainingProgram' } } } }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '422': { $ref: '#/components/responses/ValidationError' }
+        '503': { $ref: '#/components/responses/DependencyUnavailable' }
+  /admin/training-programs/course-options:
+    get:
+      tags: [Admin, Training Programs]
+      operationId: listTrainingProgramCourseOptions
+      summary: List visible Moodle courses available for composition
+      security:
+        - oidc: [content:read]
+      responses:
+        '200':
+          description: Live Moodle course options
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data, provenance]
+                properties:
+                  data: { type: array, items: { $ref: '#/components/schemas/LearningCourse' } }
+                  provenance: { $ref: '#/components/schemas/TrainingProvenance' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '503': { $ref: '#/components/responses/DependencyUnavailable' }
+  /admin/training-programs/{id}:
+    get:
+      tags: [Admin, Training Programs]
+      operationId: getAdminTrainingProgram
+      summary: Get one training program for composition review
+      security:
+        - oidc: [content:read]
+      parameters:
+        - $ref: '#/components/parameters/EntityId'
+      responses:
+        '200': { description: Program detail, content: { application/json: { schema: { $ref: '#/components/schemas/TrainingProgram' } } } }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    patch:
+      tags: [Admin, Training Programs]
+      operationId: updateTrainingProgram
+      summary: Update an editable draft with optimistic locking
+      security:
+        - oidc: [content:write]
+      parameters:
+        - $ref: '#/components/parameters/EntityId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/TrainingProgramWrite' }
+      responses:
+        '200': { description: Program updated, content: { application/json: { schema: { $ref: '#/components/schemas/TrainingProgram' } } } }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/ConflictError' }
+        '422': { $ref: '#/components/responses/ValidationError' }
+        '503': { $ref: '#/components/responses/DependencyUnavailable' }
+  /admin/training-programs/{id}/transition:
+    post:
+      tags: [Admin, Training Programs]
+      operationId: transitionTrainingProgram
+      summary: Apply a role-gated workflow transition and revalidate Moodle on publish
+      security:
+        - oidc: [content:write]
+      parameters:
+        - $ref: '#/components/parameters/EntityId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [status]
+              properties:
+                status: { $ref: '#/components/schemas/TrainingProgramStatus' }
+      responses:
+        '200': { description: Program transitioned, content: { application/json: { schema: { $ref: '#/components/schemas/TrainingProgram' } } } }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/ConflictError' }
+        '422': { $ref: '#/components/responses/ValidationError' }
+        '503': { $ref: '#/components/responses/DependencyUnavailable' }
   /admin/faqs/categories:
     get:
       tags: [Admin, FAQ]
@@ -3646,6 +3815,121 @@ components:
           type: integer
         visible:
           type: boolean
+    TrainingProgramStatus:
+      type: string
+      enum: [draft, in_review, approved, published, archived]
+    TrainingCourseRef:
+      type: object
+      additionalProperties: false
+      required: [moodle_course_id, required]
+      properties:
+        moodle_course_id: { type: integer, minimum: 2 }
+        sort_order: { type: integer, minimum: 0, maximum: 10000 }
+        required: { type: boolean }
+    TrainingCohort:
+      type: object
+      additionalProperties: false
+      required: [label, status]
+      properties:
+        id: { type: string, format: uuid }
+        label: { type: string, minLength: 2, maxLength: 160 }
+        starts_at: { type: [string, 'null'], format: date-time }
+        ends_at: { type: [string, 'null'], format: date-time }
+        enrollment_opens_at: { type: [string, 'null'], format: date-time }
+        enrollment_closes_at: { type: [string, 'null'], format: date-time }
+        status: { type: string, enum: [scheduled, cancelled, completed] }
+        sort_order: { type: integer, minimum: 0, maximum: 10000 }
+    TrainingProgram:
+      type: object
+      required: [id, slug, title, summary, description, status, version, courses, cohorts]
+      properties:
+        id: { type: string, format: uuid }
+        slug: { type: string, maxLength: 160 }
+        title: { type: string, maxLength: 200 }
+        summary: { type: string, maxLength: 500 }
+        description: { type: string, maxLength: 20000 }
+        audience: { type: string, maxLength: 500 }
+        eligibility_text: { type: string, maxLength: 1000 }
+        status: { $ref: '#/components/schemas/TrainingProgramStatus' }
+        version: { type: integer, minimum: 1 }
+        published_at: { type: [string, 'null'], format: date-time }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+        courses: { type: array, minItems: 1, maxItems: 50, items: { $ref: '#/components/schemas/TrainingCourseRef' } }
+        cohorts: { type: array, maxItems: 20, items: { $ref: '#/components/schemas/TrainingCohort' } }
+    TrainingProgramWrite:
+      type: object
+      additionalProperties: false
+      required: [slug, title, summary, description, courses, cohorts]
+      properties:
+        slug: { type: string, minLength: 2, maxLength: 160, pattern: '^[a-z0-9]+(?:-[a-z0-9]+)*$' }
+        title: { type: string, minLength: 3, maxLength: 200 }
+        summary: { type: string, minLength: 10, maxLength: 500 }
+        description: { type: string, minLength: 20, maxLength: 20000 }
+        audience: { type: string, maxLength: 500 }
+        eligibility_text: { type: string, maxLength: 1000 }
+        courses: { type: array, minItems: 1, maxItems: 50, items: { $ref: '#/components/schemas/TrainingCourseRef' } }
+        cohorts: { type: array, maxItems: 20, items: { $ref: '#/components/schemas/TrainingCohort' } }
+        expected_version: { type: integer, minimum: 1 }
+    TrainingProgramList:
+      type: object
+      required: [data, pagination]
+      properties:
+        data: { type: array, items: { $ref: '#/components/schemas/TrainingProgram' } }
+        pagination: { $ref: '#/components/schemas/Pagination' }
+    TrainingProvenance:
+      type: object
+      required: [source, checked_at, state]
+      properties:
+        source: { type: string, const: moodle }
+        checked_at: { type: string, format: date-time }
+        state: { type: string, enum: [fresh, degraded] }
+        detail: { type: string, enum: [course_catalogue_unavailable, one_or_more_courses_unavailable, learner_mapping_unavailable, learner_progress_unavailable] }
+    ComposedTrainingCourse:
+      allOf:
+        - $ref: '#/components/schemas/TrainingCourseRef'
+        - type: object
+          required: [availability]
+          properties:
+            short_name: { type: string }
+            full_name: { type: string }
+            summary: { type: string }
+            category: { type: string }
+            availability: { type: string, enum: [available, unavailable] }
+            learner_state: { type: string, enum: [enrolled, completed, not_enrolled] }
+            progress: { type: number, minimum: 0, maximum: 100 }
+            start_url: { type: string, format: uri }
+    TrainingProgramDetail:
+      type: object
+      required: [program, courses, provenance]
+      properties:
+        program: { $ref: '#/components/schemas/TrainingProgram' }
+        courses: { type: array, items: { $ref: '#/components/schemas/ComposedTrainingCourse' } }
+        provenance: { $ref: '#/components/schemas/TrainingProvenance' }
+    TrainingProgramProgress:
+      type: object
+      required: [program_slug, courses, completed_courses, enrolled_courses, total_courses, eligibility, cta, provenance]
+      properties:
+        program_slug: { type: string }
+        courses: { type: array, items: { $ref: '#/components/schemas/ComposedTrainingCourse' } }
+        completed_courses: { type: integer, minimum: 0 }
+        enrolled_courses: { type: integer, minimum: 0 }
+        total_courses: { type: integer, minimum: 1 }
+        progress_percent: { type: number, minimum: 0, maximum: 100 }
+        eligibility:
+          type: object
+          required: [status, message]
+          properties:
+            status: { type: string, enum: [confirmed, partial, unverified] }
+            message: { type: string }
+        cta:
+          type: object
+          required: [kind, label]
+          properties:
+            kind: { type: string, enum: [start, review, check_access, unavailable] }
+            label: { type: string }
+            url: { type: string, format: uri }
+        provenance: { $ref: '#/components/schemas/TrainingProvenance' }
     LearningUser:
       type: object
       properties:

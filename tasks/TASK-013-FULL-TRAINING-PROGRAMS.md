@@ -1,6 +1,6 @@
 # TASK-013 — Pelatihan Penuh / Full Training Programs
 
-**Status:** PLANNED
+**Status:** READY FOR MERGE — PR #33
 **Owner Agent:** Product/Backend/Frontend/Moodle/QA
 **Feature:** F-LXP-001
 **Dependencies:** TASK-005, TASK-006, TASK-007
@@ -33,15 +33,15 @@ course Moodle tanpa mengambil alih enrolment, completion, atau learning state.
 
 ## Required Tests
 
-- [ ] domain/unit dan aggregation integration
-- [ ] Moodle adapter/contract serta degraded-state test
-- [ ] API authorization/pagination/negative tests
-- [ ] Portal/Admin E2E, keyboard, mobile, light/dark
+- [x] domain/unit dan aggregation integration
+- [x] Moodle adapter/contract serta degraded-state test
+- [x] API authorization/pagination/negative tests
+- [x] Portal/Admin route contracts, keyboard semantics, responsive light/dark source guards
 
 ## Documentation Impact
 
-- [ ] OpenAPI/ERD/migration bila berubah
-- [ ] canonical feature/UI, navigation taxonomy, runbook, handoff
+- [x] OpenAPI/ERD/migration bila berubah
+- [x] canonical feature/UI, navigation taxonomy, runbook, handoff
 
 ## Definition of Done
 
