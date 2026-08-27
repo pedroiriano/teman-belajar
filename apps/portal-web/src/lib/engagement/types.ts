@@ -1,4 +1,4 @@
-export type EngagementTargetType = "knowledge";
+export type EngagementTargetType = "knowledge" | "microlearning";
 
 export type EngagementItem = {
   target_type: EngagementTargetType;

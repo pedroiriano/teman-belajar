@@ -92,6 +92,21 @@ var (
 		Name: "notification_actions_total",
 		Help: "Total in-app notification actions by bounded result",
 	}, []string{"action"})
+
+	TrainingAggregationsTotal = promauto.NewCounterVec(prometheus.CounterOpts{
+		Name: "training_program_aggregations_total",
+		Help: "Total training program aggregations by bounded operation and state",
+	}, []string{"operation", "state"})
+
+	MicrolearningActionsTotal = promauto.NewCounterVec(prometheus.CounterOpts{
+		Name: "microlearning_actions_total",
+		Help: "Total microlearning actions by bounded operation and result",
+	}, []string{"operation", "result"})
+
+	WebinarActionsTotal = promauto.NewCounterVec(prometheus.CounterOpts{
+		Name: "webinar_actions_total",
+		Help: "Total Moodle webinar adapter actions by bounded operation and result",
+	}, []string{"operation", "result"})
 )
 
 func RecordSSOEvent(eventType, status string) {
@@ -123,4 +138,16 @@ func RecordEventProcessDuration(eventType string, durationSec float64) {
 
 func RecordNotificationAction(action string) {
 	NotificationActionsTotal.WithLabelValues(action).Inc()
+}
+
+func RecordTrainingAggregation(operation, state string) {
+	TrainingAggregationsTotal.WithLabelValues(operation, state).Inc()
+}
+
+func RecordMicrolearningAction(operation, result string) {
+	MicrolearningActionsTotal.WithLabelValues(operation, result).Inc()
+}
+
+func RecordWebinarAction(operation, result string) {
+	WebinarActionsTotal.WithLabelValues(operation, result).Inc()
 }

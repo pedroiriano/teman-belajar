@@ -47,7 +47,11 @@ func TestPostgresSourcesPublicationAndRevisionIsolation(t *testing.T) {
 		`INSERT INTO faq_items (id,category_id,slug,question,answer,sort_order,status,indexable,version,published_at) VALUES
 		 ('74100000-0000-0000-0000-000000000001','74000000-0000-0000-0000-000000000001','search-public-faq','SEARCH_PUBLIC_FAQ_TOKEN','public answer',10,'published',true,1,NOW()),
 		 ('74100000-0000-0000-0000-000000000002','74000000-0000-0000-0000-000000000001','search-draft-faq','SEARCH_DRAFT_FAQ_SECRET_TOKEN','draft answer',20,'draft',true,1,NULL),
-		 ('74100000-0000-0000-0000-000000000003','74000000-0000-0000-0000-000000000001','search-noindex-faq','SEARCH_NOINDEX_FAQ_SECRET_TOKEN','noindex answer',30,'published',false,1,NOW())`,
+			 ('74100000-0000-0000-0000-000000000003','74000000-0000-0000-0000-000000000001','search-noindex-faq','SEARCH_NOINDEX_FAQ_SECRET_TOKEN','noindex answer',30,'published',false,1,NOW())`,
+		`INSERT INTO microlearning_items (id,slug,title,summary,body,format,duration_minutes,status,indexable,published_at) VALUES
+		 ('75000000-0000-0000-0000-000000000001','search-public-microlearning','SEARCH_PUBLIC_MICROLEARNING_TOKEN','public summary','public body','quick',5,'published',true,NOW()),
+		 ('75000000-0000-0000-0000-000000000002','search-draft-microlearning','SEARCH_DRAFT_MICROLEARNING_SECRET_TOKEN','draft summary','draft body','article',8,'draft',true,NULL),
+		 ('75000000-0000-0000-0000-000000000003','search-noindex-microlearning','SEARCH_NOINDEX_MICROLEARNING_SECRET_TOKEN','noindex summary','noindex body','quick',3,'published',false,NOW())`,
 	}
 	for _, statement := range statements {
 		if _, err := tx.ExecContext(ctx, statement); err != nil {
@@ -68,6 +72,10 @@ func TestPostgresSourcesPublicationAndRevisionIsolation(t *testing.T) {
 		t.Fatal(err)
 	}
 	faqs, err := NewFAQSource(tx).Fetch(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	microlearning, err := NewMicrolearningSource(tx).Fetch(ctx)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -93,6 +101,10 @@ func TestPostgresSourcesPublicationAndRevisionIsolation(t *testing.T) {
 	assertToken("published FAQ", "SEARCH_PUBLIC_FAQ_TOKEN", true, faqValues)
 	assertToken("draft FAQ", "SEARCH_DRAFT_FAQ_SECRET_TOKEN", false, faqValues)
 	assertToken("noindex FAQ", "SEARCH_NOINDEX_FAQ_SECRET_TOKEN", false, faqValues)
+	microlearningValues := documentText(microlearning)
+	assertToken("published microlearning", "SEARCH_PUBLIC_MICROLEARNING_TOKEN", true, microlearningValues)
+	assertToken("draft microlearning", "SEARCH_DRAFT_MICROLEARNING_SECRET_TOKEN", false, microlearningValues)
+	assertToken("noindex microlearning", "SEARCH_NOINDEX_MICROLEARNING_SECRET_TOKEN", false, microlearningValues)
 }
 
 func documentText(documents []domainsearch.IndexDocument) []string {

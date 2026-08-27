@@ -13,6 +13,9 @@
     "test:faq": "node scripts/verify-faq-contract.mjs",
     "test:language": "node ../../scripts/verify-ui-language-contract.mjs",
     "test:notifications": "node ../../scripts/verify-notification-contract.mjs",
+    "test:training-programs": "node ../../scripts/verify-training-program-contract.mjs",
+    "test:microlearning": "node ../../scripts/verify-microlearning-contract.mjs",
+    "test:webinars": "node ../../scripts/verify-webinar-contract.mjs",
     "test:vendor-foundation": "node ../../scripts/verify-ui-foundation-contract.mjs portal"
   },
   "dependencies": {

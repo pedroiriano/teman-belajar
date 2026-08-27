@@ -11,6 +11,8 @@
 | `/` | course hero, trust row, learning paths, topic cards, content cards, FAQ, CTA | `portal-course-hero`, `portal-course-card` |
 | `/search` | inner course hero, course-style filters/results/pagination | `PageHero`, Portal controls/cards |
 | `/my-learning` | learner course dashboard, metrics, continue card, course cards/progress | `portal-learning-hero`, `CourseList` |
+| `/training-programs`, `/training-programs/*` | inner course hero, searchable program cards, cohort schedule, Moodle course composition, progress/provenance and truthful CTA | `PageHero`, Portal course/state/progress primitives |
+| `/microlearning`, `/microlearning/*` | inner course hero, format/duration cards, editorial reading/video surface, bookmark, lightweight resume, related content and Portal provenance | `PageHero`, Portal course/card/state primitives |
 | `/knowledge`, `/knowledge/topics/*` | inner course hero, hierarchy explorer, course-style article cards | `PageHero`, Portal tree/card/state primitives |
 | `/knowledge/*` detail | editorial course-detail header, three-pane reading surface, related cards | explicit Techwind detail composition |
 | `/news`, `/announcements` and detail | inner course hero, content cards, metadata and detail surface | `PageHero`, Portal card/badge/pagination |
@@ -34,6 +36,8 @@ Online Course visual layer.
 | create/edit routes | page header, sectioned form cards, visible labels, footer actions, Auto-Save/Media/SEO |
 | hierarchy | page header, tree/workspace cards, selection and confirmation states |
 | media | page header, upload/library/detail cards, policy and modal states |
+| training programs | page header, discovery sidebar, composition editor, cohort schedule, Moodle course selector, workflow and degraded states |
+| microlearning | page header, discovery sidebar, editorial form, Media Picker, related content, SEO, workflow and states |
 | taxonomy/FAQ | page header, tabs/disclosures, progressive forms, list/filter/pagination |
 | users | page header, data table, profile/role forms and server-authorized actions |
 | notifications | page header, Cuba inbox, preferences and degraded states |

@@ -162,7 +162,7 @@ func NormalizeListFilter(filter ListFilter) (ListFilter, error) {
 }
 
 func ValidateUsage(entityType, entityID, usageRole string, sortOrder int) error {
-	if entityType != "news" && entityType != "announcement" && entityType != "knowledge_revision" && entityType != "faq_item" {
+	if entityType != "news" && entityType != "announcement" && entityType != "knowledge_revision" && entityType != "faq_item" && entityType != "microlearning" {
 		return ErrInvalidUsage
 	}
 	if usageRole != "inline" && usageRole != "featured" && usageRole != "attachment" {

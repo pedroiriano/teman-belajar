@@ -15,7 +15,10 @@ var (
 
 type TargetType string
 
-const TargetKnowledge TargetType = "knowledge"
+const (
+	TargetKnowledge     TargetType = "knowledge"
+	TargetMicrolearning TargetType = "microlearning"
+)
 
 type Target struct {
 	Type TargetType

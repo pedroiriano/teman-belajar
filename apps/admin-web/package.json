@@ -19,6 +19,8 @@
     "test:language": "node ../../scripts/verify-ui-language-contract.mjs",
     "test:data-presentation": "node ../../scripts/verify-admin-data-presentation-contract.mjs",
     "test:notifications": "node ../../scripts/verify-notification-contract.mjs",
+    "test:training-programs": "node ../../scripts/verify-training-program-contract.mjs",
+    "test:microlearning": "node ../../scripts/verify-microlearning-contract.mjs",
     "test:vendor-foundation": "node ../../scripts/verify-ui-foundation-contract.mjs admin"
   },
   "dependencies": {

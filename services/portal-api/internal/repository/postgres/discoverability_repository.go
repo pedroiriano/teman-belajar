@@ -368,8 +368,9 @@ func (r *DiscoverabilityRepository) ListSitemap(ctx context.Context) ([]discover
 		UNION ALL SELECT 'announcement',a.id,a.category_id,a.slug,a.updated_at FROM announcements a LEFT JOIN seo_profiles s ON s.content_type='announcement' AND s.content_id=a.id WHERE a.status='published' AND a.published_at<=NOW() AND (a.start_at IS NULL OR a.start_at<=NOW()) AND (a.end_at IS NULL OR a.end_at>NOW()) AND COALESCE(s.indexable,true)
 		UNION ALL SELECT 'knowledge',k.id,k.category_id,k.slug,k.updated_at FROM knowledge_articles k LEFT JOIN seo_profiles s ON s.content_type='knowledge' AND s.content_id=k.id WHERE k.published_revision_no IS NOT NULL AND COALESCE(s.indexable,true)
 		AND NOT EXISTS(WITH RECURSIVE ancestors AS (SELECT pn.id,pn.parent_id,pn.status FROM knowledge_article_nodes pan JOIN knowledge_nodes pn ON pn.id=pan.node_id WHERE pan.article_id=k.id UNION ALL SELECT parent.id,parent.parent_id,parent.status FROM knowledge_nodes parent JOIN ancestors child ON parent.id=child.parent_id) SELECT 1 FROM ancestors WHERE status<>'active')
+		UNION ALL SELECT 'microlearning',m.id,NULL::uuid,m.slug,m.updated_at FROM microlearning_items m WHERE m.status='published' AND m.published_at<=NOW() AND m.indexable
 	), published AS (
-		SELECT CASE content_type WHEN 'news' THEN '/news/' WHEN 'announcement' THEN '/announcements/' ELSE '/knowledge/' END||slug url,updated_at FROM eligible
+		SELECT CASE content_type WHEN 'news' THEN '/news/' WHEN 'announcement' THEN '/announcements/' WHEN 'microlearning' THEN '/microlearning/' ELSE '/knowledge/' END||slug url,updated_at FROM eligible
 	), category_pages AS (
 		SELECT '/categories/'||c.slug url,MAX(x.updated_at) updated_at FROM categories c JOIN eligible x ON x.category_id=c.id WHERE c.status='active' GROUP BY c.id HAVING COUNT(*)>=2
 	), tag_pages AS (

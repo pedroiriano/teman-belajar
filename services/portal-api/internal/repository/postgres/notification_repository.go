@@ -6,6 +6,8 @@ import (
 	"errors"
 	"time"
 
+	"github.com/lib/pq"
+
 	domain "teman-belajar-api/internal/domain/notification"
 )
 
@@ -66,6 +68,17 @@ func (r *NotificationRepository) Deliver(ctx context.Context, input domain.Deliv
 		return domain.DeliveryResult{}, err
 	}
 	return domain.DeliveryResult{Suppressed: true}, nil
+}
+
+func (r *NotificationRepository) CancelPending(ctx context.Context, subject string, audience domain.Audience, eventIDs []string, now time.Time) (int, error) {
+	result, err := r.db.ExecContext(ctx, `DELETE FROM notification.inbox
+		WHERE user_subject=$1 AND audience=$2 AND event_id=ANY($3) AND available_at>$4`,
+		subject, audience, pq.Array(eventIDs), now)
+	if err != nil {
+		return 0, err
+	}
+	count, err := result.RowsAffected()
+	return int(count), err
 }
 
 func (r *NotificationRepository) List(ctx context.Context, subject string, filter domain.ListFilter) (domain.Page, error) {

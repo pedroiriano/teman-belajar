@@ -1,0 +1,2 @@
+"use client";
+export default function ErrorPage({ reset }: { reset: () => void }) { return <div className="portal-container py-16"><div role="alert" className="portal-card p-8 text-center"><h2 className="text-xl font-black text-slate-900">Webinar belum dapat dimuat</h2><p className="mt-2 text-sm text-slate-600">Coba lagi setelah koneksi Moodle pulih.</p><button type="button" onClick={reset} className="portal-button-secondary mt-5">Coba lagi</button></div></div>; }

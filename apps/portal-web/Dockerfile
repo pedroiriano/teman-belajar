@@ -15,6 +15,11 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 
+# Enforce the patched Alpine OpenSSL runtime packages used by Node.
+RUN apk add --no-cache --upgrade \
+    'libcrypto3>=3.5.8-r0' \
+    'libssl3>=3.5.8-r0'
+
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 

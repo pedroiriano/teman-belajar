@@ -15,6 +15,8 @@ type NavigationItem = { href?: string; label: string; icon: AdminIconName; disab
 const navigationGroups: Array<{ label: string; items: NavigationItem[] }> = [
   { label: "Ruang Kerja", items: [{ href: "/dashboard", label: "Ringkasan", icon: "dashboard" }, { href: "/dashboard/statistics", label: "Statistik", icon: "dashboard" }] },
   { label: "Konten", items: [
+    { href: "/dashboard/training-programs", label: "Program Pelatihan", icon: "knowledge" },
+    { href: "/dashboard/microlearning", label: "Pembelajaran Singkat", icon: "knowledge" },
     { href: "/dashboard/knowledge", label: "Pusat Pengetahuan", icon: "knowledge" },
     { href: "/dashboard/knowledge-hierarchy", label: "Struktur Pengetahuan", icon: "folder" },
     { href: "/dashboard/news", label: "Berita", icon: "news" },
@@ -42,6 +44,8 @@ const titleBySegment: Record<string, string> = {
   taxonomy: "Taksonomi & SEO",
   faqs: "FAQ",
   users: "Pengguna & Profil",
+  "training-programs": "Program Pelatihan",
+  microlearning: "Pembelajaran Singkat",
   notifications: "Pusat Notifikasi",
   create: "Buat baru",
 };

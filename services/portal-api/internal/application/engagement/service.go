@@ -32,7 +32,7 @@ func NewService(repo domain.Repository, resolver domain.TargetResolver, discover
 
 func ParseTarget(targetType, targetID string) (domain.Target, error) {
 	target := domain.Target{Type: domain.TargetType(strings.TrimSpace(targetType)), ID: strings.TrimSpace(targetID)}
-	if target.Type != domain.TargetKnowledge {
+	if target.Type != domain.TargetKnowledge && target.Type != domain.TargetMicrolearning {
 		return domain.Target{}, domain.ErrInvalidTarget
 	}
 	parsed, err := uuid.Parse(target.ID)
@@ -108,6 +108,9 @@ func (s *Service) ListBookmarks(ctx context.Context, userKey string) ([]domain.I
 }
 
 func (s *Service) PutRating(ctx context.Context, userKey string, target domain.Target, value int) (domain.Item, domain.RatingSummary, error) {
+	if target.Type != domain.TargetKnowledge {
+		return domain.Item{}, domain.RatingSummary{}, domain.ErrInvalidTarget
+	}
 	userKey, err := actor(userKey)
 	if err != nil {
 		return domain.Item{}, domain.RatingSummary{}, err
@@ -131,6 +134,9 @@ func (s *Service) PutRating(ctx context.Context, userKey string, target domain.T
 }
 
 func (s *Service) DeleteRating(ctx context.Context, userKey string, target domain.Target) error {
+	if target.Type != domain.TargetKnowledge {
+		return domain.ErrInvalidTarget
+	}
 	userKey, err := actor(userKey)
 	if err != nil {
 		return err
@@ -139,6 +145,9 @@ func (s *Service) DeleteRating(ctx context.Context, userKey string, target domai
 }
 
 func (s *Service) GetMyRating(ctx context.Context, userKey string, target domain.Target) (*domain.Rating, domain.RatingSummary, error) {
+	if target.Type != domain.TargetKnowledge {
+		return nil, domain.RatingSummary{}, domain.ErrInvalidTarget
+	}
 	userKey, err := actor(userKey)
 	if err != nil {
 		return nil, domain.RatingSummary{}, err
@@ -155,6 +164,9 @@ func (s *Service) GetMyRating(ctx context.Context, userKey string, target domain
 }
 
 func (s *Service) GetRatingSummary(ctx context.Context, target domain.Target) (domain.RatingSummary, error) {
+	if target.Type != domain.TargetKnowledge {
+		return domain.RatingSummary{}, domain.ErrInvalidTarget
+	}
 	if _, err := s.resolve(ctx, target); err != nil {
 		return domain.RatingSummary{}, err
 	}
@@ -162,6 +174,9 @@ func (s *Service) GetRatingSummary(ctx context.Context, target domain.Target) (d
 }
 
 func (s *Service) RecordView(ctx context.Context, userKey string, target domain.Target) (domain.Item, error) {
+	if target.Type != domain.TargetKnowledge {
+		return domain.Item{}, domain.ErrInvalidTarget
+	}
 	userKey, err := actor(userKey)
 	if err != nil {
 		return domain.Item{}, err
@@ -237,6 +252,9 @@ func (s *Service) Recommendations(ctx context.Context, userKey string, limit int
 	signals := make([]recommendationSignal, 0, len(bookmarks)+len(recent)+len(ratings))
 	for _, bookmark := range bookmarks {
 		seedIDs[bookmark.Target] = struct{}{}
+		if bookmark.Target.Type != domain.TargetKnowledge {
+			continue
+		}
 		if resolved, resolveErr := s.resolve(ctx, bookmark.Target); resolveErr == nil {
 			signals = append(signals, recommendationSignal{target: resolved, weight: 40, reason: domain.ReasonSameCategory})
 		}

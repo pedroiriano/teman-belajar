@@ -11,6 +11,7 @@ const contentTypes = [
   { value: "news", label: "Berita" },
   { value: "announcement", label: "Pengumuman" },
   { value: "faq", label: "FAQ" },
+  { value: "microlearning", label: "Pembelajaran Singkat" },
 ] as const;
 
 type SearchDocument = {
@@ -65,7 +66,7 @@ function searchHref(parameters: { q: string; contentType?: string; page?: number
 }
 
 function TypeBadge({ type }: { type: string }) {
-  const labels: Record<string, string> = { course: "Kelas", knowledge: "Pengetahuan", news: "Berita", announcement: "Pengumuman", faq: "FAQ" };
+  const labels: Record<string, string> = { course: "Kelas", knowledge: "Pengetahuan", news: "Berita", announcement: "Pengumuman", faq: "FAQ", microlearning: "Pembelajaran Singkat" };
   return <span className="portal-badge">{labels[type] ?? "Konten"}</span>;
 }
 
@@ -82,7 +83,7 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
       <PageHero
         eyebrow="Pencarian terpadu"
         title={q ? `Hasil pencarian untuk “${q}”` : "Temukan materi yang Anda perlukan"}
-        description="Cari kelas Moodle yang terlihat, pengetahuan terbit, berita, dan pengumuman aktif dari satu tempat."
+        description="Cari kelas Moodle, Pembelajaran Singkat, pengetahuan terbit, berita, FAQ, dan pengumuman aktif dari satu tempat."
       />
 
       <section className="portal-container py-10 sm:py-14" aria-labelledby="search-results-heading">

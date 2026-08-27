@@ -26,6 +26,7 @@ Status:
 | Toast | R | R | S selectively |
 | Status Badge | R | R | S |
 | Progress | R | R | S semantic model |
+| Microlearning Card / Resume | R/Adapt | R/Adapt | Techwind discovery/detail + Cuba authoring, TASK-014 |
 | Empty State | Adapt | Adapt | S visual variants |
 | Error State | N/Adapt | N/Adapt | S |
 | Loading/Skeleton | R | R | S |
