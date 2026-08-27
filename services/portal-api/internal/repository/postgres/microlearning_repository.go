@@ -143,31 +143,31 @@ func (r *MicrolearningRepository) GetPublishedBySlug(ctx context.Context, slug s
 }
 
 func (r *MicrolearningRepository) list(ctx context.Context, f microlearning.ListFilter, public bool) ([]microlearning.Item, int, error) {
+	const publicCountQuery = `SELECT count(*) FROM microlearning_items WHERE ($1='' OR title ILIKE $2 OR summary ILIKE $2) AND ($3='' OR format=$3) AND status='published' AND published_at IS NOT NULL AND published_at<=NOW()`
+	const publicListQuery = `SELECT id,slug,title,summary,body,format,duration_minutes,COALESCE(video_url,''),COALESCE(featured_media_id::text,''),status,version,seo_title,seo_description,indexable,published_at,created_at,updated_at FROM microlearning_items WHERE ($1='' OR title ILIKE $2 OR summary ILIKE $2) AND ($3='' OR format=$3) AND status='published' AND published_at IS NOT NULL AND published_at<=NOW() ORDER BY published_at DESC,title LIMIT $4 OFFSET $5`
+	const adminCountQuery = `SELECT count(*) FROM microlearning_items WHERE ($1='' OR title ILIKE $2 OR summary ILIKE $2) AND ($3='' OR format=$3) AND ($4='' OR status=$4)`
+	const adminListQuery = `SELECT id,slug,title,summary,body,format,duration_minutes,COALESCE(video_url,''),COALESCE(featured_media_id::text,''),status,version,seo_title,seo_description,indexable,published_at,created_at,updated_at FROM microlearning_items WHERE ($1='' OR title ILIKE $2 OR summary ILIKE $2) AND ($3='' OR format=$3) AND ($4='' OR status=$4) ORDER BY updated_at DESC LIMIT $5 OFFSET $6`
+
 	status := f.Status
 	if status == "all" {
 		status = ""
 	}
 	like := "%" + f.Query + "%"
+	offset := (f.Page - 1) * f.PageSize
 	var total int
-	base := ` FROM microlearning_items WHERE ($1='' OR title ILIKE $2 OR summary ILIKE $2) AND ($3='' OR format=$3)`
-	args := []any{f.Query, like, f.Format}
+	var rows *sql.Rows
+	var err error
 	if public {
-		base += ` AND status='published' AND published_at IS NOT NULL AND published_at<=NOW()`
+		if err = r.db.QueryRowContext(ctx, publicCountQuery, f.Query, like, f.Format).Scan(&total); err != nil {
+			return nil, 0, err
+		}
+		rows, err = r.db.QueryContext(ctx, publicListQuery, f.Query, like, f.Format, f.PageSize, offset)
 	} else {
-		base += ` AND ($4='' OR status=$4)`
-		args = append(args, status)
+		if err = r.db.QueryRowContext(ctx, adminCountQuery, f.Query, like, f.Format, status).Scan(&total); err != nil {
+			return nil, 0, err
+		}
+		rows, err = r.db.QueryContext(ctx, adminListQuery, f.Query, like, f.Format, status, f.PageSize, offset)
 	}
-	if err := r.db.QueryRowContext(ctx, `SELECT count(*)`+base, args...).Scan(&total); err != nil {
-		return nil, 0, err
-	}
-	query := `SELECT ` + microlearningColumns + base + ` ORDER BY `
-	if public {
-		query += `published_at DESC,title LIMIT $4 OFFSET $5`
-	} else {
-		query += `updated_at DESC LIMIT $5 OFFSET $6`
-	}
-	args = append(args, f.PageSize, (f.Page-1)*f.PageSize)
-	rows, err := r.db.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, 0, err
 	}
