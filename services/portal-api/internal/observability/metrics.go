@@ -119,6 +119,11 @@ var (
 		Name: "audit_center_operations_total",
 		Help: "Total bounded Audit Center operations by result",
 	}, []string{"operation", "result"})
+
+	PlatformConfigOperationsTotal = promauto.NewCounterVec(prometheus.CounterOpts{
+		Name: "platform_configuration_operations_total",
+		Help: "Total bounded platform configuration operations by result",
+	}, []string{"operation", "result"})
 )
 
 func RecordSSOEvent(eventType, status string) {
@@ -184,4 +189,8 @@ func RecordIntegrationHealth(snapshot integrationhealth.Snapshot) {
 
 func RecordAuditCenter(operation, result string) {
 	AuditCenterOperationsTotal.WithLabelValues(operation, result).Inc()
+}
+
+func RecordPlatformConfig(operation, result string) {
+	PlatformConfigOperationsTotal.WithLabelValues(operation, result).Inc()
 }

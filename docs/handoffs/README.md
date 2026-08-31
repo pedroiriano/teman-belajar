@@ -110,3 +110,8 @@ threat model, and `docs/runbooks/AUDIT-CENTER-OPERATIONS.md`. Its local source i
 `IMPLEMENTED_LOCAL_UNVERIFIED`; it is not `DONE` until the deferred QA gate
 passes. Never weaken exact Portal Administrator authorization, redaction,
 export bounds, IP masking, or retention controls.
+
+For Platform Configuration, read `TASK-020-HANDOFF.md`, its governance record,
+threat model, and operations runbook. It governs presentation-only values; the
+product name, authorization, active route set, identity, and secrets are outside
+the schema.

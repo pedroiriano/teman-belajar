@@ -259,3 +259,11 @@ draft payload must not appear in operational logs or audit event details.
 ## 11. ERD
 
 ERD source terdapat di `docs/diagrams/erd.mmd`.
+
+## 12. Platform Configuration Versions
+
+`platform_config_versions` stores immutable typed JSON revisions. Partial unique
+indexes allow at most one current draft and one published revision. Publish and
+rollback are serialized transactionally; rollback inserts a new published
+version linked by `based_on_version`. No secret or operational configuration is
+permitted in this table.

@@ -13,6 +13,8 @@ tags:
     description: System operations
   - name: Integration Health
     description: Portal Administrator-only read-only dependency health aggregation
+  - name: Platform Configuration
+    description: Typed non-secret presentation configuration and version lifecycle
   - name: News
     description: News operations
   - name: Announcements
@@ -2997,6 +2999,77 @@ paths:
         '200': { description: Saved profile, content: { application/json: { schema: { $ref: '#/components/schemas/SEOProfile' } } } }
         '409': { $ref: '#/components/responses/ConflictError' }
         '422': { $ref: '#/components/responses/ValidationError' }
+  /platform-configuration:
+    get:
+      tags: [Platform Configuration]
+      operationId: getPublicPlatformConfiguration
+      summary: Get the published non-secret presentation configuration or safe compiled fallback
+      security: []
+      responses:
+        '200': { description: Public presentation configuration, content: { application/json: { schema: { $ref: '#/components/schemas/PlatformConfigurationSnapshot' } } } }
+        '400': { $ref: '#/components/responses/ValidationError' }
+  /admin/platform-configuration:
+    get:
+      tags: [Admin, Platform Configuration]
+      operationId: getAdminPlatformConfiguration
+      summary: Get draft, published revision, and immutable version history
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: Configuration state, content: { application/json: { schema: { $ref: '#/components/schemas/PlatformConfigurationState' } } } }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '503': { $ref: '#/components/responses/ServiceUnavailableError' }
+  /admin/platform-configuration/preview:
+    get:
+      tags: [Admin, Platform Configuration]
+      operationId: previewAdminPlatformConfiguration
+      summary: Preview the current draft through an Admin-only no-store response
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: Private draft preview, content: { application/json: { schema: { $ref: '#/components/schemas/PlatformConfigurationSnapshot' } } } }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+  /admin/platform-configuration/draft:
+    put:
+      tags: [Admin, Platform Configuration]
+      operationId: saveAdminPlatformConfigurationDraft
+      summary: Save a validated draft with optimistic versioning
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content: { application/json: { schema: { type: object, additionalProperties: false, required: [expected_version, config], properties: { expected_version: { type: integer, minimum: 0 }, config: { $ref: '#/components/schemas/PlatformConfiguration' } } } } }
+      responses:
+        '201': { description: New immutable draft revision, content: { application/json: { schema: { $ref: '#/components/schemas/PlatformConfigurationRevision' } } } }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409': { $ref: '#/components/responses/ConflictError' }
+        '422': { $ref: '#/components/responses/ValidationError' }
+  /admin/platform-configuration/publish:
+    post:
+      tags: [Admin, Platform Configuration]
+      operationId: publishAdminPlatformConfiguration
+      summary: Atomically publish the current draft and invalidate the compiled cache
+      security: [{ bearerAuth: [] }]
+      requestBody: { required: true, content: { application/json: { schema: { type: object, additionalProperties: false, required: [version], properties: { version: { type: integer, minimum: 1 } } } } } }
+      responses:
+        '200': { description: Published revision, content: { application/json: { schema: { $ref: '#/components/schemas/PlatformConfigurationRevision' } } } }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/ConflictError' }
+  /admin/platform-configuration/rollback:
+    post:
+      tags: [Admin, Platform Configuration]
+      operationId: rollbackAdminPlatformConfiguration
+      summary: Publish a historical configuration as a new immutable version
+      security: [{ bearerAuth: [] }]
+      requestBody: { required: true, content: { application/json: { schema: { type: object, additionalProperties: false, required: [source_version, expected_version], properties: { source_version: { type: integer, minimum: 1 }, expected_version: { type: integer, minimum: 1 } } } } } }
+      responses:
+        '200': { description: New rollback revision, content: { application/json: { schema: { $ref: '#/components/schemas/PlatformConfigurationRevision' } } } }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/ConflictError' }
 components:
   securitySchemes:
     oidc:
@@ -3123,6 +3196,95 @@ components:
           schema:
             $ref: '#/components/schemas/Problem'
   schemas:
+    PlatformNavigationItem:
+      type: object
+      additionalProperties: false
+      required: [label, href, visible]
+      properties:
+        label: { type: string, minLength: 1, maxLength: 80 }
+        description: { type: string, maxLength: 180 }
+        href: { type: string, minLength: 1, maxLength: 500, description: Internal path or HTTPS URL on the server-side host allowlist }
+        visible: { type: boolean }
+    PlatformConfiguration:
+      type: object
+      additionalProperties: false
+      required: [identity, homepage, navigation, banner, footer, contact, seo, features]
+      properties:
+        identity:
+          type: object
+          additionalProperties: false
+          required: [tagline]
+          properties: { tagline: { type: string, maxLength: 120 }, logo_media_id: { type: string, format: uuid } }
+        homepage:
+          type: object
+          additionalProperties: false
+          required: [sections]
+          properties:
+            sections:
+              type: array
+              minItems: 1
+              maxItems: 9
+              items:
+                type: object
+                additionalProperties: false
+                required: [key, visible, order]
+                properties: { key: { type: string, enum: [hero, trust, learning_paths, topics, knowledge, media, stats, faq, cta] }, visible: { type: boolean }, order: { type: integer, minimum: 1, maximum: 9 } }
+        navigation: { type: array, maxItems: 20, items: { $ref: '#/components/schemas/PlatformNavigationItem' } }
+        banner:
+          type: object
+          additionalProperties: false
+          required: [enabled, title, body]
+          properties: { enabled: { type: boolean }, title: { type: string, maxLength: 120 }, body: { type: string, maxLength: 400 }, href: { type: string, maxLength: 500 }, media_id: { type: string, format: uuid } }
+        footer:
+          type: object
+          additionalProperties: false
+          required: [summary, links]
+          properties: { summary: { type: string, minLength: 1, maxLength: 400 }, links: { type: array, maxItems: 12, items: { $ref: '#/components/schemas/PlatformNavigationItem' } } }
+        contact:
+          type: object
+          additionalProperties: false
+          required: [help_label, help_href]
+          properties: { help_label: { type: string, minLength: 1, maxLength: 80 }, help_href: { type: string, maxLength: 500 }, email: { type: string, format: email, maxLength: 254 } }
+        seo:
+          type: object
+          additionalProperties: false
+          required: [default_title, default_description]
+          properties: { default_title: { type: string, minLength: 1, maxLength: 70 }, default_description: { type: string, minLength: 1, maxLength: 180 }, social_media_id: { type: string, format: uuid } }
+        features:
+          type: array
+          maxItems: 7
+          items:
+            type: object
+            additionalProperties: false
+            required: [key, label, visible]
+            properties: { key: { type: string, enum: [training_programs, microlearning, knowledge, news, announcements, faq, search] }, label: { type: string, minLength: 1, maxLength: 80 }, visible: { type: boolean } }
+    PlatformConfigurationRevision:
+      type: object
+      additionalProperties: false
+      required: [id, version, status, config, created_at]
+      properties:
+        id: { type: string, format: uuid }
+        version: { type: integer, minimum: 1 }
+        status: { type: string, enum: [draft, published, superseded] }
+        config: { $ref: '#/components/schemas/PlatformConfiguration' }
+        based_on_version: { type: integer, minimum: 1 }
+        created_by: { type: string }
+        created_at: { type: string, format: date-time }
+        published_at: { type: string, format: date-time }
+    PlatformConfigurationSnapshot:
+      type: object
+      additionalProperties: false
+      required: [version, source, config]
+      properties: { version: { type: integer, minimum: 0 }, source: { type: string, enum: [published, draft, fallback] }, config: { $ref: '#/components/schemas/PlatformConfiguration' } }
+    PlatformConfigurationState:
+      type: object
+      additionalProperties: false
+      required: [head_version]
+      properties:
+        head_version: { type: integer, minimum: 0 }
+        draft: { $ref: '#/components/schemas/PlatformConfigurationRevision' }
+        published: { $ref: '#/components/schemas/PlatformConfigurationRevision' }
+        versions: { type: array, maxItems: 50, items: { $ref: '#/components/schemas/PlatformConfigurationRevision' } }
     WebinarSession:
       type: object
       additionalProperties: false

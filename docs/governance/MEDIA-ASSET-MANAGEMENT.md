@@ -44,6 +44,10 @@ Request-wide multipart maximum is 33,554,432 bytes. SVG, executable, archive, un
 - Allowed entity types: `news`, `announcement`, `knowledge_revision`,
   `faq_item`, `microlearning`. FAQ and Microlearning use curated images only; the FAQ item stores the selected
   Media Asset UUID and its required non-empty alternative text.
+- Platform Configuration may reference an active image UUID for logo, banner,
+  or SEO presentation. These typed references are validated on draft save and
+  become publicly eligible only while their configuration version is published;
+  they do not expose or mutate storage metadata.
 - Allowed roles: `inline`, `featured`, `attachment`.
 - Attach only after entity ID exists. Usage identity is `(media_id, entity_type, entity_id, usage_role)` and attach is idempotent.
 - Archive is denied while any usage exists. Public delivery additionally requires an eligible published owner.
