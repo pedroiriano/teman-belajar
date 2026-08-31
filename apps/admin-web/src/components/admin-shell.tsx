@@ -28,7 +28,7 @@ const navigationGroups: Array<{ label: string; items: NavigationItem[] }> = [
     { href: "/dashboard/faqs", label: "FAQ", icon: "folder" },
     { href: "/dashboard/users", label: "Pengguna & Profil", icon: "users" },
     { href: "/dashboard/integration-health", label: "Kesehatan Integrasi", icon: "health", requiredRole: "Portal Administrator" },
-    { label: "Audit", icon: "audit", disabled: true },
+    { href: "/dashboard/audit", label: "Audit", icon: "audit", requiredRole: "Portal Administrator" },
     { label: "Konfigurasi", icon: "settings", disabled: true },
   ] },
 ];
@@ -37,6 +37,7 @@ const titleBySegment: Record<string, string> = {
   dashboard: "Dasbor",
   statistics: "Statistik",
   "integration-health": "Kesehatan Integrasi",
+  audit: "Audit",
   knowledge: "Pusat Pengetahuan",
   "knowledge-hierarchy": "Struktur Pengetahuan",
   news: "Berita",

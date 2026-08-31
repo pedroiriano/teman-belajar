@@ -13,3 +13,5 @@ Operational procedures live here.
   scheduled report, retention, incident, and rollback operations.
 - `INTEGRATION-HEALTH-CENTER-OPERATIONS.md` — allowlisted read-only health
   aggregation, degraded-state triage, audit, and safe local verification.
+- `AUDIT-CENTER-OPERATIONS.md` — bounded audit search/export, privacy
+  redaction, masked IP, 365-day retention, and safe incident investigation.

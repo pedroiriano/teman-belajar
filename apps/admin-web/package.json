@@ -22,6 +22,7 @@
     "test:training-programs": "node ../../scripts/verify-training-program-contract.mjs",
     "test:microlearning": "node ../../scripts/verify-microlearning-contract.mjs",
     "test:integration-health": "node ../../scripts/verify-integration-health-contract.mjs",
+    "test:audit-center": "node ../../scripts/verify-audit-center-contract.mjs",
     "test:vendor-foundation": "node ../../scripts/verify-ui-foundation-contract.mjs admin"
   },
   "dependencies": {

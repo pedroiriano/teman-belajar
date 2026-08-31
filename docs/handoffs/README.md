@@ -104,3 +104,9 @@ For Webinar & Live Learning, read `TASK-015-HANDOFF.md`, ADR-020, the webinar
 operations runbook, and its threat model. Moodle `mod_zoom` is authoritative;
 the Portal menu stays `Segera` and capacity stays fail-closed until OAuth,
 commercial/compliance inputs, live fixture, and browser acceptance all pass.
+
+For Audit Center, read `TASK-019-HANDOFF.md`, the TASK-019 decision record,
+threat model, and `docs/runbooks/AUDIT-CENTER-OPERATIONS.md`. Its local source is
+`IMPLEMENTED_LOCAL_UNVERIFIED`; it is not `DONE` until the deferred QA gate
+passes. Never weaken exact Portal Administrator authorization, redaction,
+export bounds, IP masking, or retention controls.

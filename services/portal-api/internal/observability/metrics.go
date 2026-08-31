@@ -114,6 +114,11 @@ var (
 		Name: "integration_health_dependency_status",
 		Help: "Current allowlisted dependency state: healthy=1, all other states=0",
 	}, []string{"dependency", "status"})
+
+	AuditCenterOperationsTotal = promauto.NewCounterVec(prometheus.CounterOpts{
+		Name: "audit_center_operations_total",
+		Help: "Total bounded Audit Center operations by result",
+	}, []string{"operation", "result"})
 )
 
 func RecordSSOEvent(eventType, status string) {
@@ -175,4 +180,8 @@ func RecordIntegrationHealth(snapshot integrationhealth.Snapshot) {
 			IntegrationHealthStatus.WithLabelValues(dependency.Key, string(status)).Set(value)
 		}
 	}
+}
+
+func RecordAuditCenter(operation, result string) {
+	AuditCenterOperationsTotal.WithLabelValues(operation, result).Inc()
 }

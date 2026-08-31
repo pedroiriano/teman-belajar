@@ -140,6 +140,12 @@ Minimum:
   log actor, action, target, result, and trace context, never article body or
   draft payload.
 
+Audit Center applies the approved TASK-019 policy: 365-day retention, actor
+subject UUID only, IPv4 `/24` or IPv6 `/48` masking, allowlisted minimum
+metadata, Portal Administrator-only read/export, required bounded export range,
+and server-side redaction. It exposes no event mutation, raw payload, raw URL,
+secret, stack trace, identity change, or SIEM/automated-enforcement capability.
+
 Knowledge hierarchy authorization is enforced in the Portal API. Hiding Cuba
 Admin controls is not authorization. Public responses exclude archived branches
 and use database-derived ancestry so a forged client breadcrumb, parent, actor,
