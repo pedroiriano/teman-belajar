@@ -1,6 +1,6 @@
 # TASK-020 Handoff — Platform Configuration
 
-**Status:** IMPLEMENTED_PENDING_FINAL_QA
+**Status:** DONE
 
 ## Delivered
 
@@ -21,4 +21,20 @@ No Keycloak/SSO/RBAC, Moodle, production, secret, arbitrary HTML/CSS/script,
 route activation, destructive migration, or new service was introduced. Four
 root logo PNG files remain outside task scope.
 
-Final QA and Git evidence are appended only after gates pass.
+## Verification
+
+- Go unit/security/repository tests and vet passed for affected packages.
+- Admin and Portal lint, typecheck, contract, vendor-foundation, no-orange, and
+  reproducible Docker production builds passed.
+- OpenAPI validation and protected CI passed, including fresh migrations
+  001-022 and disposable repository publish-to-public-to-rollback coverage.
+- Desktop and 390px browser checks passed for responsive safe fallback and
+  sanitized degraded behavior; no unsafe link, overflow, secret, or console
+  error was observed.
+
+## Data and residual environment note
+
+Migration 022 is forward-only and additive. No persistent local data, volume,
+or non-disposable fixture was changed. The pre-existing local migration 020
+checksum drift was not repaired or adopted; fresh protected CI is the database
+migration authority for this delivery.

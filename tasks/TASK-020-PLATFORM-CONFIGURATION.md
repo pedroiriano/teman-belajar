@@ -1,6 +1,6 @@
 # TASK-020 — Platform Configuration & Dynamic Site Management
 
-**Status:** PLANNED
+**Status:** DONE
 **Owner Agent:** Product/Backend/Frontend/Security/QA
 **Feature:** F-ADM-005
 **Dependencies:** CMS, Media, TASK-011D
@@ -31,13 +31,13 @@ preview, audit, dan rollback yang aman.
 
 ## Required Tests
 
-- [ ] schema/version/cache unit and DB integration
-- [ ] authz/injection/unsafe URL/secret-key negative tests
-- [ ] Admin publish-to-Portal E2E and rollback test
+- [x] schema/version/cache unit and DB integration
+- [x] authz/injection/unsafe URL/secret-key negative tests
+- [x] Admin publish-to-Portal E2E and rollback test
 
 ## Documentation Impact
 
-- [ ] OpenAPI/ERD/migration/config governance/runbook/handoff
+- [x] OpenAPI/ERD/migration/config governance/runbook/handoff
 
 ## Definition of Done
 

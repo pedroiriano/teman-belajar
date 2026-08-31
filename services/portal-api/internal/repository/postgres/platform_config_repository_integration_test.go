@@ -9,6 +9,7 @@ import (
 
 	_ "github.com/lib/pq"
 
+	application "teman-belajar-api/internal/application/platformconfig"
 	domain "teman-belajar-api/internal/domain/platformconfig"
 )
 
@@ -26,26 +27,30 @@ func TestPlatformConfigRepositoryVersionPublishRollback(t *testing.T) {
 	actor := "TASK020-QA-FIXTURE"
 	defer db.ExecContext(context.Background(), `DELETE FROM platform_config_versions WHERE created_by=$1`, actor) // #nosec G104 -- best-effort disposable fixture cleanup
 	repository := NewPlatformConfigRepository(db)
+	service := application.NewService(repository, nil, nil)
 	state, err := repository.GetState(ctx, false)
 	if err != nil {
 		t.Fatal(err)
 	}
-	draft, err := repository.SaveDraft(ctx, state.HeadVersion, domain.Default(), actor)
+	draft, err := service.SaveDraft(ctx, state.HeadVersion, domain.Default(), actor)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if _, err := repository.SaveDraft(ctx, state.HeadVersion, domain.Default(), actor); !errors.Is(err, domain.ErrVersionConflict) {
 		t.Fatalf("conflict=%v", err)
 	}
-	published, err := repository.Publish(ctx, draft.Version, actor)
+	published, err := service.Publish(ctx, draft.Version, actor)
 	if err != nil || published.Status != "published" {
 		t.Fatalf("publish=%#v err=%v", published, err)
 	}
-	second, err := repository.SaveDraft(ctx, published.Version, domain.Default(), actor)
+	if snapshot := service.Public(ctx); snapshot.Source != "published" || snapshot.Version != published.Version {
+		t.Fatalf("public after publish=%#v", snapshot)
+	}
+	second, err := service.SaveDraft(ctx, published.Version, domain.Default(), actor)
 	if err != nil {
 		t.Fatal(err)
 	}
-	rolledBack, err := repository.Rollback(ctx, published.Version, second.Version, actor)
+	rolledBack, err := service.Rollback(ctx, published.Version, second.Version, actor)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -55,5 +60,8 @@ func TestPlatformConfigRepositoryVersionPublishRollback(t *testing.T) {
 	current, err := repository.GetPublished(ctx)
 	if err != nil || current.Version != rolledBack.Version {
 		t.Fatalf("current=%#v err=%v", current, err)
+	}
+	if snapshot := service.Public(ctx); snapshot.Source != "published" || snapshot.Version != rolledBack.Version {
+		t.Fatalf("public after rollback=%#v", snapshot)
 	}
 }

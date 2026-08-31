@@ -29,7 +29,7 @@ const navigationGroups: Array<{ label: string; items: NavigationItem[] }> = [
     { href: "/dashboard/users", label: "Pengguna & Profil", icon: "users" },
     { href: "/dashboard/integration-health", label: "Kesehatan Integrasi", icon: "health", requiredRole: "Portal Administrator" },
     { href: "/dashboard/audit", label: "Audit", icon: "audit", requiredRole: "Portal Administrator" },
-    { label: "Konfigurasi", icon: "settings", disabled: true },
+    { href: "/dashboard/platform-configuration", label: "Konfigurasi", icon: "settings", requiredRole: "Portal Administrator" },
   ] },
 ];
 
@@ -38,6 +38,7 @@ const titleBySegment: Record<string, string> = {
   statistics: "Statistik",
   "integration-health": "Kesehatan Integrasi",
   audit: "Audit",
+  "platform-configuration": "Konfigurasi Platform",
   knowledge: "Pusat Pengetahuan",
   "knowledge-hierarchy": "Struktur Pengetahuan",
   news: "Berita",

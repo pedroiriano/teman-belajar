@@ -114,4 +114,5 @@ export bounds, IP masking, or retention controls.
 For Platform Configuration, read `TASK-020-HANDOFF.md`, its governance record,
 threat model, and operations runbook. It governs presentation-only values; the
 product name, authorization, active route set, identity, and secrets are outside
-the schema.
+the schema. TASK-020 is `DONE`; the Admin route is active only for the existing
+Portal Administrator role.
