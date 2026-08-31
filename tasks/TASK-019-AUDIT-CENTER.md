@@ -1,6 +1,6 @@
 # TASK-019 — Audit Center
 
-**Status:** PLANNED
+**Status:** DONE
 **Owner Agent:** Backend/Frontend/Security/Privacy/QA
 **Feature:** F-ADM-003
 **Dependencies:** Existing audit events, TASK-010
@@ -14,6 +14,12 @@ kebijakan retention/privacy.
 
 Setujui retention, perlakuan IP/personal data, export roles/format/limit,
 redaction, legal/audit access, dan incident-use policy.
+
+**Approved locally:** 365-day retention; masked IP only; allowlisted minimum
+metadata; server-side sensitive-field redaction; Portal Administrator-only CSV
+export with required date range and a 10,000-row limit; existing role only; v1
+is read-only investigation rather than SIEM or automated enforcement. See the
+TASK-019 decision record.
 
 ## In Scope
 
@@ -46,3 +52,10 @@ redaction, legal/audit access, dan incident-use policy.
 ## Definition of Done
 
 Keputusan manusia tercatat dan seluruh AC/security/privacy evidence lulus.
+
+## Local implementation note
+
+Source, additive migration, Admin UI, OpenAPI, observability, privacy/security
+documentation, runbook, and handoff are complete. Targeted automation,
+disposable migration/repository integration, authorized/non-admin browser,
+desktop/mobile, responsive, accessibility, no-orange, and CSV gates passed.

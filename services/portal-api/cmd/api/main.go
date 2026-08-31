@@ -20,6 +20,7 @@ import (
 	"teman-belajar-api/internal/adapters/minio"
 	"teman-belajar-api/internal/adapters/moodle"
 	searchadapter "teman-belajar-api/internal/adapters/search"
+	auditcenterapplication "teman-belajar-api/internal/application/auditcenter"
 	engagementapplication "teman-belajar-api/internal/application/engagement"
 	integrationapplication "teman-belajar-api/internal/application/integration"
 	notificationapplication "teman-belajar-api/internal/application/notification"
@@ -73,6 +74,7 @@ func main() {
 	// Repositories & Services
 	cmsRepo := postgres.NewCMSRepository(db)
 	auditRepo := postgres.NewAuditRepository(db)
+	auditCenterSvc := auditcenterapplication.NewService(auditRepo)
 	cmsSvc := cms.NewService(cmsRepo, auditRepo)
 
 	knowledgeRepo := postgres.NewKnowledgeRepository(db)
@@ -241,9 +243,13 @@ func main() {
 		AnalyticsWorkerURL: envOrDefault("ANALYTICS_WORKER_HEALTH_URL", "http://analytics-worker:8081"),
 	})
 	integrationHealthHandler := handler.NewIntegrationHealthHandler(integrationHealthSvc, auditRepo)
+	auditCenterHandler := handler.NewAuditCenterHandler(auditCenterSvc, auditRepo)
 
 	mux.HandleFunc("/api/v1/health", handler.HealthCheck)
 	mux.Handle("GET /api/v1/admin/integration-health", authMiddleware(http.HandlerFunc(integrationHealthHandler.Summary)))
+	mux.Handle("GET /api/v1/admin/audit-events", authMiddleware(http.HandlerFunc(auditCenterHandler.List)))
+	mux.Handle("GET /api/v1/admin/audit-events/export", authMiddleware(http.HandlerFunc(auditCenterHandler.Export)))
+	mux.Handle("GET /api/v1/admin/audit-events/{id}", authMiddleware(http.HandlerFunc(auditCenterHandler.Detail)))
 	// Analytics endpoints
 	mux.Handle("POST /api/v1/analytics/events", http.HandlerFunc(analyticsHandler.HandlePublicIngest))
 	mux.Handle("POST /api/v1/internal/analytics/events", http.HandlerFunc(analyticsHandler.HandleInternalIngest))
@@ -410,6 +416,11 @@ func main() {
 	go func() {
 		defer processorWg.Done()
 		processor.Run(processorCtx)
+	}()
+	processorWg.Add(1)
+	go func() {
+		defer processorWg.Done()
+		runAuditRetention(processorCtx, auditCenterSvc)
 	}()
 
 	port := os.Getenv("PORT")

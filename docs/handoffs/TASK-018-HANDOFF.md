@@ -2,7 +2,7 @@
 
 ## State
 
-`DONE`. Implementation and authorized browser QA are complete. The Portal
+`DONE — MERGED` via PR #40 at merge commit `a402427`. Implementation and authorized browser QA are complete. The Portal
 Administrator-only navigation is active. No migration or persistent data
 mutation is part of this delivery.
 

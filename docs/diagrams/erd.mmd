@@ -159,10 +159,13 @@ erDiagram
     uuid id PK
     uuid actor_user_id
     string action
+	string module
     string target_type
     string target_id
     string result
     string trace_id
+	string ip_masked
+	jsonb metadata
     timestamptz occurred_at
   }
   ANALYTICS_EVENTS {
