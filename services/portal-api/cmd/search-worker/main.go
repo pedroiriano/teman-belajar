@@ -14,6 +14,7 @@ import (
 
 	"teman-belajar-api/internal/adapters/moodle"
 	"teman-belajar-api/internal/searchindex"
+	"teman-belajar-api/internal/workerhealth"
 )
 
 func main() {
@@ -48,6 +49,12 @@ func main() {
 
 	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer cancel()
+	healthRecorder := workerhealth.NewRecorder(3 * interval)
+	go func() {
+		if err := workerhealth.Serve(ctx, ":8081", healthRecorder); err != nil {
+			log.Printf("search worker health endpoint stopped: %v", err)
+		}
+	}()
 	configureCtx, configureCancel := context.WithTimeout(ctx, 30*time.Second)
 	if err := syncer.Configure(configureCtx); err != nil {
 		configureCancel()
@@ -58,13 +65,16 @@ func main() {
 	run := func() {
 		cycleCtx, cycleCancel := context.WithTimeout(ctx, 45*time.Second)
 		defer cycleCancel()
+		succeeded := true
 		for sourceType, report := range syncer.Sync(cycleCtx) {
 			if report.Error != nil {
 				log.Printf("search sync source=%s status=failed error=%v", sourceType, report.Error)
+				succeeded = false
 				continue
 			}
 			log.Printf("search sync source=%s status=succeeded documents=%d", sourceType, report.Count)
 		}
+		healthRecorder.Record(succeeded)
 	}
 	run()
 	ticker := time.NewTicker(interval)

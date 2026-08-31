@@ -11,3 +11,5 @@ Operational procedures live here.
   executed local backup/reinstall evidence plus re-approval-gated rollback.
 - `WEBINAR-LIVE-LEARNING-OPERATIONS.md` — TASK-015 activation, OAuth/capacity,
   scheduled report, retention, incident, and rollback operations.
+- `INTEGRATION-HEALTH-CENTER-OPERATIONS.md` — allowlisted read-only health
+  aggregation, degraded-state triage, audit, and safe local verification.

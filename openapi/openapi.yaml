@@ -11,6 +11,8 @@ servers:
 tags:
   - name: System
     description: System operations
+  - name: Integration Health
+    description: Portal Administrator-only read-only dependency health aggregation
   - name: News
     description: News operations
   - name: Announcements
@@ -242,6 +244,29 @@ paths:
         '422': { $ref: '#/components/responses/ValidationError' }
       security: []
       summary: List active categories and published FAQ items only
+  /admin/integration-health:
+    get:
+      tags: [Admin, Integration Health]
+      operationId: getIntegrationHealth
+      summary: Read one sanitized snapshot of fixed allowlisted dependencies
+      description: Portal Administrator only. Probe targets are server-configured; query parameters and operational controls are rejected.
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Sanitized integration health snapshot
+          headers:
+            X-Request-ID:
+              description: Sanitized or generated correlation identifier
+              schema: { type: string, maxLength: 64 }
+            Cache-Control:
+              schema: { type: string, enum: [no-store] }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/IntegrationHealthSnapshot' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '422': { $ref: '#/components/responses/ValidationError' }
   /training-programs:
     get:
       tags: [Training Programs]
@@ -3213,6 +3238,39 @@ components:
           type: string
           enum:
             - ok
+    IntegrationHealthStatus:
+      type: string
+      enum: [healthy, degraded, down, unknown]
+    IntegrationHealthDependency:
+      type: object
+      additionalProperties: false
+      required: [key, name, group, status, checked_at]
+      properties:
+        key: { type: string, pattern: '^[a-z0-9-]+$' }
+        name: { type: string, maxLength: 80 }
+        group: { type: string, enum: [platform, database, learning, identity, search, cache, storage, workers, observability] }
+        status: { $ref: '#/components/schemas/IntegrationHealthStatus' }
+        checked_at: { type: string, format: date-time }
+        last_success_at: { type: string, format: date-time }
+        freshness_seconds: { type: integer, format: int64, minimum: 0 }
+        error_class:
+          type: string
+          enum: [circuit_open, connection_failed, never_reported, probe_misconfigured, stale, timeout, unhealthy_response, worker_failed]
+        correlation_path:
+          type: string
+          enum: [/dashboard/statistics#api]
+    IntegrationHealthSnapshot:
+      type: object
+      additionalProperties: false
+      required: [status, checked_at, correlation_id, dependencies]
+      properties:
+        status: { $ref: '#/components/schemas/IntegrationHealthStatus' }
+        checked_at: { type: string, format: date-time }
+        correlation_id: { type: string, minLength: 1, maxLength: 64 }
+        dependencies:
+          type: array
+          minItems: 1
+          items: { $ref: '#/components/schemas/IntegrationHealthDependency' }
     Pagination:
       type: object
       required:

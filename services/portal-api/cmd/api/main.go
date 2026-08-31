@@ -229,8 +229,21 @@ func main() {
 			"Reviewer",
 		},
 	})
+	integrationHealthSvc := buildIntegrationHealthService(db, integrationHealthConfig{
+		MoodleURL: moodleBaseURL, KeycloakIssuerURL: issuerURL, MeilisearchURL: meiliURL,
+		RedisURL: os.Getenv("REDIS_URL"), MinioEndpoint: minioEndpoint, MinioUseSSL: minioUseSSL,
+		PrometheusURL:      envOrDefault("PROMETHEUS_INTERNAL_URL", "http://prometheus:9090"),
+		GrafanaURL:         envOrDefault("GRAFANA_INTERNAL_URL", "http://grafana:3000"),
+		OTelCollectorURL:   envOrDefault("OTEL_HEALTH_INTERNAL_URL", "http://otel-collector:13133"),
+		LokiURL:            envOrDefault("LOKI_INTERNAL_URL", "http://loki:3100"),
+		TempoURL:           envOrDefault("TEMPO_INTERNAL_URL", "http://tempo:3200"),
+		SearchWorkerURL:    envOrDefault("SEARCH_WORKER_HEALTH_URL", "http://search-worker:8081"),
+		AnalyticsWorkerURL: envOrDefault("ANALYTICS_WORKER_HEALTH_URL", "http://analytics-worker:8081"),
+	})
+	integrationHealthHandler := handler.NewIntegrationHealthHandler(integrationHealthSvc, auditRepo)
 
 	mux.HandleFunc("/api/v1/health", handler.HealthCheck)
+	mux.Handle("GET /api/v1/admin/integration-health", authMiddleware(http.HandlerFunc(integrationHealthHandler.Summary)))
 	// Analytics endpoints
 	mux.Handle("POST /api/v1/analytics/events", http.HandlerFunc(analyticsHandler.HandlePublicIngest))
 	mux.Handle("POST /api/v1/internal/analytics/events", http.HandlerFunc(analyticsHandler.HandleInternalIngest))
@@ -432,4 +445,11 @@ func main() {
 		log.Fatalf("Server failed: %v", err)
 	}
 	log.Println("Server stopped gracefully")
+}
+
+func envOrDefault(name, fallback string) string {
+	if value := strings.TrimSpace(os.Getenv(name)); value != "" {
+		return value
+	}
+	return fallback
 }

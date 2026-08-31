@@ -10,7 +10,7 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { AdminNotificationCenter } from "@/components/notification-center";
 import { useCubaDisclosureRuntime, useCubaDrawerRuntime } from "@/components/cuba-runtime";
 
-type NavigationItem = { href?: string; label: string; icon: AdminIconName; disabled?: boolean };
+type NavigationItem = { href?: string; label: string; icon: AdminIconName; disabled?: boolean; requiredRole?: string };
 
 const navigationGroups: Array<{ label: string; items: NavigationItem[] }> = [
   { label: "Ruang Kerja", items: [{ href: "/dashboard", label: "Ringkasan", icon: "dashboard" }, { href: "/dashboard/statistics", label: "Statistik", icon: "dashboard" }] },
@@ -27,7 +27,7 @@ const navigationGroups: Array<{ label: string; items: NavigationItem[] }> = [
   { label: "Platform", items: [
     { href: "/dashboard/faqs", label: "FAQ", icon: "folder" },
     { href: "/dashboard/users", label: "Pengguna & Profil", icon: "users" },
-    { label: "Kesehatan Integrasi", icon: "health", disabled: true },
+    { href: "/dashboard/integration-health", label: "Kesehatan Integrasi", icon: "health", requiredRole: "Portal Administrator" },
     { label: "Audit", icon: "audit", disabled: true },
     { label: "Konfigurasi", icon: "settings", disabled: true },
   ] },
@@ -36,6 +36,7 @@ const navigationGroups: Array<{ label: string; items: NavigationItem[] }> = [
 const titleBySegment: Record<string, string> = {
   dashboard: "Dasbor",
   statistics: "Statistik",
+  "integration-health": "Kesehatan Integrasi",
   knowledge: "Pusat Pengetahuan",
   "knowledge-hierarchy": "Struktur Pengetahuan",
   news: "Berita",
@@ -76,7 +77,7 @@ function Brand({ desktopClose }: { desktopClose?: () => void }) {
   );
 }
 
-function Sidebar({ pathname, close, desktopClose }: { pathname: string; close?: () => void; desktopClose?: () => void }) {
+function Sidebar({ pathname, role, close, desktopClose }: { pathname: string; role: string; close?: () => void; desktopClose?: () => void }) {
   const isActive = (href?: string) => href ? href === "/dashboard" ? pathname === href : pathname.startsWith(href) : false;
   return (
     <div className="flex h-full flex-col">
@@ -86,7 +87,7 @@ function Sidebar({ pathname, close, desktopClose }: { pathname: string; close?: 
           <div key={group.label} className="mb-5">
             <p className="px-3 pb-2 text-[10px] font-black uppercase tracking-[.2em] admin-sidebar-section-title">{group.label}</p>
             <div className="grid gap-1">
-              {group.items.map((item) => item.disabled ? (
+              {group.items.filter((item) => !item.requiredRole || item.requiredRole === role).map((item) => item.disabled ? (
                 <span key={item.label} className="admin-sidebar-link cursor-not-allowed opacity-50" aria-disabled="true">
                   <AdminIcon name={item.icon} className="h-5 w-5" />
                   <span>{item.label}</span>
@@ -127,8 +128,8 @@ export function AdminShell({ children, userName, userEmail, role }: { children: 
   const initials = (userName || userEmail || "TB").slice(0, 2).toUpperCase();
   const breadcrumbs = pathname.split("/").filter(Boolean).map((segment) => titleBySegment[segment] || segment);
   const searchResults = useMemo(
-    () => query.trim().length < 2 ? [] : navigationGroups.flatMap((group) => group.items).filter((item) => item.href && item.label.toLowerCase().includes(query.toLowerCase())),
-    [query],
+    () => query.trim().length < 2 ? [] : navigationGroups.flatMap((group) => group.items).filter((item) => item.href && !item.disabled && (!item.requiredRole || item.requiredRole === role) && item.label.toLowerCase().includes(query.toLowerCase())),
+    [query, role],
   );
 
   const closeMobileSidebar = useCallback(() => setMobileSidebarOpen(false), []);
@@ -139,7 +140,7 @@ export function AdminShell({ children, userName, userEmail, role }: { children: 
     <div id="pageWrapper" data-cuba-template="dashboard-03" className={`page-wrapper compact-wrapper dashboard-03-layout cuba-foundation min-h-screen lg:grid ${desktopSidebarOpen ? "lg:grid-cols-[276px_1fr]" : "lg:grid-cols-[1fr]"}`}>
       {desktopSidebarOpen && (
         <aside id="admin-sidebar" className="sidebar-wrapper admin-sidebar fixed inset-y-0 left-0 z-40 hidden w-[276px] lg:block" data-sidebar-layout="stroke-svg">
-          <Sidebar pathname={pathname} desktopClose={() => setDesktopSidebarOpen(false)} />
+          <Sidebar pathname={pathname} role={role} desktopClose={() => setDesktopSidebarOpen(false)} />
         </aside>
       )}
       {mobileSidebarOpen && (
@@ -149,7 +150,7 @@ export function AdminShell({ children, userName, userEmail, role }: { children: 
             <button type="button" className="absolute right-3 top-4 z-10 grid h-10 w-10 place-items-center rounded-lg border admin-sidebar-border admin-sidebar-copy" aria-label="Tutup navigasi admin" aria-controls="admin-mobile-sidebar" aria-expanded="true" onClick={() => setMobileSidebarOpen(false)}>
               <AdminIcon name="close" className="h-5 w-5" />
             </button>
-            <Sidebar pathname={pathname} close={() => setMobileSidebarOpen(false)} />
+            <Sidebar pathname={pathname} role={role} close={() => setMobileSidebarOpen(false)} />
           </aside>
         </div>
       )}

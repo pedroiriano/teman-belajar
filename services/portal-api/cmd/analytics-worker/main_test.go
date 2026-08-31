@@ -48,7 +48,9 @@ func (f fakeLearningSource) GetLearningAnalytics(context.Context, string, string
 func TestReconcileDayDoesNotAdvanceFailedJobs(t *testing.T) {
 	repo := &fakeWorkerRepository{rollupError: errors.New("rollup failed")}
 	source := fakeLearningSource{err: errors.New("moodle failed")}
-	reconcileDay(context.Background(), repo, source, time.UTC, time.Now())
+	if reconcileDay(context.Background(), repo, source, time.UTC, time.Now()) {
+		t.Fatal("failed reconciliation reported success")
+	}
 	if len(repo.marks) != 0 {
 		t.Fatalf("failed jobs advanced worker state: %v", repo.marks)
 	}
@@ -57,7 +59,9 @@ func TestReconcileDayDoesNotAdvanceFailedJobs(t *testing.T) {
 func TestReconcileDayAdvancesOnlySuccessfulJobs(t *testing.T) {
 	repo := &fakeWorkerRepository{}
 	source := fakeLearningSource{result: &analytics.PeriodLearningStats{EligibleEnrolments: 10, Completions: 4, CompletionRate: 40}}
-	reconcileDay(context.Background(), repo, source, time.UTC, time.Now())
+	if !reconcileDay(context.Background(), repo, source, time.UTC, time.Now()) {
+		t.Fatal("successful reconciliation reported failure")
+	}
 	if len(repo.marks) != 2 || repo.marks[0] != analytics.WorkerStateRollup || repo.marks[1] != analytics.WorkerStateMoodleSync {
 		t.Fatalf("unexpected worker state marks: %v", repo.marks)
 	}

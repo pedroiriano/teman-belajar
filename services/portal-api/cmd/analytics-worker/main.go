@@ -15,6 +15,7 @@ import (
 	"teman-belajar-api/internal/adapters/moodle"
 	"teman-belajar-api/internal/domain/analytics"
 	"teman-belajar-api/internal/observability"
+	"teman-belajar-api/internal/workerhealth"
 )
 
 type workerRepository interface {
@@ -27,7 +28,7 @@ type workerRepository interface {
 	MarkWorkerSuccess(context.Context, analytics.WorkerStateKey, time.Time) error
 }
 
-func reconcileDay(ctx context.Context, repo workerRepository, moodleClient analytics.LearningAnalyticsSource, loc *time.Location, t time.Time) {
+func reconcileDay(ctx context.Context, repo workerRepository, moodleClient analytics.LearningAnalyticsSource, loc *time.Location, t time.Time) bool {
 	// Truncate to midnight in the target timezone
 	midnightLocal := time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, loc)
 	nextMidnightLocal := midnightLocal.AddDate(0, 0, 1)
@@ -61,12 +62,14 @@ func reconcileDay(ctx context.Context, repo workerRepository, moodleClient analy
 	if rollupSucceeded {
 		if err := repo.MarkWorkerSuccess(ctx, analytics.WorkerStateRollup, time.Now().UTC()); err != nil {
 			log.Printf("Error recording successful analytics rollup for %v: %v", reportingDate, err)
+			rollupSucceeded = false
 		}
 	}
 
 	// Moodle analytics
 	dateStr := reportingDate
 	learningRes, err := moodleClient.GetLearningAnalytics(ctx, reportingDate, reportingDate)
+	moodleSucceeded := false
 	if err != nil {
 		log.Printf("Error fetching learning analytics from Moodle for %s: %v", dateStr, err)
 	} else {
@@ -86,9 +89,12 @@ func reconcileDay(ctx context.Context, repo workerRepository, moodleClient analy
 			log.Printf("Saved learning analytics for %s: %d active, %d starts, %d completions", dateStr, learningRes.ActiveLearners, learningRes.LearningStarts, learningRes.Completions)
 			if err := repo.MarkWorkerSuccess(ctx, analytics.WorkerStateMoodleSync, time.Now().UTC()); err != nil {
 				log.Printf("Error recording successful Moodle analytics sync for %v: %v", reportingDate, err)
+			} else {
+				moodleSucceeded = true
 			}
 		}
 	}
+	return rollupSucceeded && moodleSucceeded
 }
 
 func main() {
@@ -118,6 +124,12 @@ func main() {
 	}
 
 	repo := analytics.NewPostgresRepository(db)
+	healthRecorder := workerhealth.NewRecorder(15 * time.Minute)
+	go func() {
+		if err := workerhealth.Serve(ctx, ":8081", healthRecorder); err != nil {
+			log.Printf("analytics worker health endpoint stopped: %v", err)
+		}
+	}()
 
 	moodleToken := os.Getenv("TB_MOODLE_WEBSERVICE_TOKEN")
 	moodleBaseURL := os.Getenv("MOODLE_INTERNAL_BASE_URL")
@@ -155,8 +167,8 @@ func main() {
 	// Initial Run
 	log.Println("Analytics Worker started. Running initial reconciliation...")
 	now := time.Now().In(loc)
-	reconcileDay(ctx, repo, moodleClient, loc, now.AddDate(0, 0, -1)) // Yesterday
-	reconcileDay(ctx, repo, moodleClient, loc, now)                   // Today
+	reconcileDay(ctx, repo, moodleClient, loc, now.AddDate(0, 0, -1))      // Yesterday
+	healthRecorder.Record(reconcileDay(ctx, repo, moodleClient, loc, now)) // Today
 
 	// Cleanup
 	cutoffUTC := now.UTC().AddDate(0, 0, -retentionDays)
@@ -185,7 +197,7 @@ func main() {
 			return
 		case <-ticker.C:
 			current := time.Now().In(loc)
-			reconcileDay(ctx, repo, moodleClient, loc, current)
+			healthRecorder.Record(reconcileDay(ctx, repo, moodleClient, loc, current))
 		case <-cleanupTicker.C:
 			curr := time.Now().UTC()
 			cutoffUTC := curr.AddDate(0, 0, -retentionDays)
