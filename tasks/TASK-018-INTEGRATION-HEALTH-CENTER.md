@@ -1,6 +1,6 @@
 # TASK-018 — Integration Health Center
 
-**Status:** PLANNED
+**Status:** DONE
 **Owner Agent:** Backend/Frontend/DevOps/Security/QA
 **Feature:** F-ADM-004
 **Dependencies:** TASK-009, TASK-011, TASK-012
@@ -32,13 +32,13 @@ integrasi tanpa membocorkan secret atau memberi kontrol operasional berbahaya.
 
 ## Required Tests
 
-- [ ] health aggregation/timeouts unit and integration
-- [ ] authorization/data-leak/SSRF-like negative tests
-- [ ] stale/degraded/outage E2E and accessibility
+- [x] health aggregation/timeouts unit and integration
+- [x] authorization/data-leak/SSRF-like negative tests
+- [x] stale/degraded/outage E2E and accessibility
 
 ## Documentation Impact
 
-- [ ] OpenAPI/runbook/observability/security/handoff
+- [x] OpenAPI/runbook/observability/security/handoff
 
 ## Definition of Done
 

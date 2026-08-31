@@ -276,6 +276,13 @@ services:
       SEARCH_CAPTURE_RAW_QUERY: ${TB_SEARCH_CAPTURE_RAW_QUERY:?Set TB_SEARCH_CAPTURE_RAW_QUERY in infrastructure/docker/.env}
       FORM_DRAFT_RETENTION_DAYS: ${TB_FORM_DRAFT_RETENTION_DAYS:?Set TB_FORM_DRAFT_RETENTION_DAYS in infrastructure/docker/.env}
       OTEL_EXPORTER_OTLP_ENDPOINT: otel-collector:4317
+      PROMETHEUS_INTERNAL_URL: http://prometheus:9090
+      GRAFANA_INTERNAL_URL: http://grafana:3000
+      OTEL_HEALTH_INTERNAL_URL: http://otel-collector:13133
+      LOKI_INTERNAL_URL: http://loki:3100
+      TEMPO_INTERNAL_URL: http://tempo:3200
+      SEARCH_WORKER_HEALTH_URL: http://search-worker:8081
+      ANALYTICS_WORKER_HEALTH_URL: http://analytics-worker:8081
       PORTAL_INTERNAL_SECRET: ${TB_PORTAL_INTERNAL_SECRET:?Set TB_PORTAL_INTERNAL_SECRET in infrastructure/docker/.env}
       TB_MOODLE_EVENT_INGEST_SECRET: ${TB_MOODLE_EVENT_INGEST_SECRET:?Set TB_MOODLE_EVENT_INGEST_SECRET in infrastructure/docker/.env}
     extra_hosts:
@@ -515,7 +522,6 @@ volumes:
     name: teman-belajar-loki-data
   tempo-data:
     name: teman-belajar-tempo-data
-
 
 
 

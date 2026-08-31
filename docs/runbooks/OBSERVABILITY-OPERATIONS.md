@@ -15,6 +15,12 @@ The product Statistics API distinguishes:
 `observed_at` comes from the Prometheus sample timestamp and remains null when
 there is no valid sample. Never replace missing evidence with `time.Now()`.
 
+Integration Health Center exports
+`integration_health_dependency_status{dependency,status}`. Dependency and
+status labels are bounded by source allowlists; never attach URLs, errors,
+subjects, correlation IDs, or credentials as metric labels. Operational triage
+uses `INTEGRATION-HEALTH-CENTER-OPERATIONS.md`.
+
 ## Grafana
 Grafana visualizes Prometheus data.
 - Dashboards: `infrastructure/observability/grafana/dashboards`

@@ -7,6 +7,8 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
+
+	"teman-belajar-api/internal/domain/integrationhealth"
 )
 
 var (
@@ -107,6 +109,11 @@ var (
 		Name: "webinar_actions_total",
 		Help: "Total Moodle webinar adapter actions by bounded operation and result",
 	}, []string{"operation", "result"})
+
+	IntegrationHealthStatus = promauto.NewGaugeVec(prometheus.GaugeOpts{
+		Name: "integration_health_dependency_status",
+		Help: "Current allowlisted dependency state: healthy=1, all other states=0",
+	}, []string{"dependency", "status"})
 )
 
 func RecordSSOEvent(eventType, status string) {
@@ -150,4 +157,22 @@ func RecordMicrolearningAction(operation, result string) {
 
 func RecordWebinarAction(operation, result string) {
 	WebinarActionsTotal.WithLabelValues(operation, result).Inc()
+}
+
+func RecordIntegrationHealth(snapshot integrationhealth.Snapshot) {
+	statuses := []integrationhealth.Status{
+		integrationhealth.StatusHealthy,
+		integrationhealth.StatusDegraded,
+		integrationhealth.StatusDown,
+		integrationhealth.StatusUnknown,
+	}
+	for _, dependency := range snapshot.Dependencies {
+		for _, status := range statuses {
+			value := 0.0
+			if dependency.Status == status {
+				value = 1
+			}
+			IntegrationHealthStatus.WithLabelValues(dependency.Key, string(status)).Set(value)
+		}
+	}
 }
