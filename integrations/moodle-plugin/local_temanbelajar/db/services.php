@@ -26,6 +26,14 @@ $functions = array(
         'ajax'        => true,
         'services'    => array('teman_belajar_integration'),
     ),
+    'local_temanbelajar_list_visible_courses' => array(
+        'classname' => 'local_temanbelajar\external\list_visible_courses',
+        'methodname' => 'execute',
+        'description' => 'Lists visible Moodle courses through a least-privilege allowlisted contract.',
+        'type' => 'read',
+        'ajax' => false,
+        'services' => array('teman_belajar_integration'),
+    ),
     'local_temanbelajar_list_webinars' => array(
         'classname' => 'local_temanbelajar\external\list_webinars',
         'methodname' => 'execute',
@@ -63,7 +71,7 @@ $functions = array(
 $services = array(
     'Teman Belajar Integration' => array(
         'functions' => array(
-            'core_course_get_courses',
+            'local_temanbelajar_list_visible_courses',
             'core_enrol_get_users_courses',
             'core_completion_get_course_completion_status',
             'gradereport_user_get_grade_items',

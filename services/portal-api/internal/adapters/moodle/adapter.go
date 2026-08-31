@@ -10,10 +10,8 @@ import (
 	"teman-belajar-api/internal/domain/learning"
 )
 
-// ListCourses calls core_course_get_courses
+// ListCourses calls the least-privilege visible-course contract exposed by local_temanbelajar.
 func (c *Client) ListCourses(ctx context.Context, filter learning.CourseFilter) ([]learning.LearningCourse, error) {
-	// If public, we might just pass empty options.
-	// We rely on Moodle capability `moodle/course:viewhiddencourses` to filter hidden courses.
 	var response []struct {
 		ID        int    `json:"id"`
 		ShortName string `json:"shortname"`
@@ -25,7 +23,7 @@ func (c *Client) ListCourses(ctx context.Context, filter learning.CourseFilter) 
 		Visible   int    `json:"visible"`
 	}
 
-	err := c.callWS(ctx, "core_course_get_courses", nil, &response)
+	err := c.callWS(ctx, "local_temanbelajar_list_visible_courses", nil, &response)
 	if err != nil {
 		return nil, err
 	}

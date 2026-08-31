@@ -29,7 +29,9 @@ export async function listTrainingPrograms(query: string, page: number): Promise
 export async function getTrainingProgram(slug: string): Promise<TrainingDetail | null> {
   const base = apiBase();
   if (!base) throw new Error("training API base is unavailable");
-  const response = await fetch(`${base}/api/v1/training-programs/${encodeURIComponent(slug)}`, { next: { revalidate: 60 } });
+  // Detail must reflect publish/archive transitions immediately. A stale cached
+  // response can otherwise keep an archived program publicly readable.
+  const response = await fetch(`${base}/api/v1/training-programs/${encodeURIComponent(slug)}`, { cache: "no-store" });
   if (response.status === 404) return null;
   if (!response.ok) throw new Error("training detail unavailable");
   return response.json() as Promise<TrainingDetail>;

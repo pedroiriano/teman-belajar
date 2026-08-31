@@ -7,6 +7,10 @@
 - Moodle remains authoritative for course visibility, enrolment, completion,
   progress, and formal learning. Never query the Moodle database or copy those
   states into migration 019.
+- Course composition reads use
+  `local_temanbelajar_list_visible_courses`, an allowlisted Moodle plugin
+  contract that returns only visible courses in visible categories and skips
+  invalid contexts. Do not replace it with broad `viewhiddencourses` access.
 - Admin renders the Cuba workspace at `/dashboard/training-programs`. Portal
   renders the Techwind catalogue/detail at `/training-programs`.
 - Migration `019_create_training_programs.sql` is additive and forward-only.

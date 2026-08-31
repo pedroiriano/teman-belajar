@@ -134,5 +134,11 @@ function xmldb_local_temanbelajar_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2026082701, 'local', 'temanbelajar');
     }
 
+    if ($oldversion < 2026083100) {
+        // Refresh external-service definitions for the least-privilege visible
+        // course catalogue. No schema or capability change is required.
+        upgrade_plugin_savepoint(true, 2026083100, 'local', 'temanbelajar');
+    }
+
     return true;
 }
