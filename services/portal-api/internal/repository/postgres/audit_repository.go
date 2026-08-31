@@ -4,8 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
-	"fmt"
-	"strings"
 	"time"
 
 	"teman-belajar-api/internal/domain/audit"
@@ -46,54 +44,37 @@ func (r *AuditRepository) CreateEvent(ctx context.Context, event *audit.AuditEve
 }
 
 func (r *AuditRepository) ListEvents(ctx context.Context, query audit.Query) ([]audit.AuditEvent, error) {
-	clauses := []string{"TRUE"}
-	arguments := make([]any, 0, 12)
-	add := func(clause string, value any) {
-		arguments = append(arguments, value)
-		clauses = append(clauses, fmt.Sprintf(clause, len(arguments)))
+	nullString := func(value string) any {
+		if value == "" {
+			return nil
+		}
+		return value
 	}
-	if query.ActorUserID != "" {
-		add("actor_user_id = $%d::uuid", query.ActorUserID)
+	nullTime := func(value time.Time) any {
+		if value.IsZero() {
+			return nil
+		}
+		return value.UTC()
 	}
-	if query.Action != "" {
-		add("action = $%d", query.Action)
-	}
-	if query.Module != "" {
-		add("COALESCE(NULLIF(module, ''), target_type) = $%d", query.Module)
-	}
-	if query.TargetType != "" {
-		add("target_type = $%d", query.TargetType)
-	}
-	if query.TargetID != "" {
-		add("target_id = $%d", query.TargetID)
-	}
-	if query.Result != "" {
-		add("result = $%d", query.Result)
-	}
-	if query.TraceID != "" {
-		add("trace_id = $%d", query.TraceID)
-	}
-	if !query.OccurredFrom.IsZero() {
-		add("occurred_at >= $%d", query.OccurredFrom.UTC())
-	}
-	if !query.OccurredTo.IsZero() {
-		add("occurred_at < $%d", query.OccurredTo.UTC())
-	}
-	if !query.BeforeOccurred.IsZero() {
-		arguments = append(arguments, query.BeforeOccurred.UTC())
-		timePosition := len(arguments)
-		arguments = append(arguments, query.BeforeID)
-		idPosition := len(arguments)
-		clauses = append(clauses, fmt.Sprintf("(occurred_at < $%d OR (occurred_at = $%d AND id < $%d::uuid))", timePosition, timePosition, idPosition))
-	}
-	arguments = append(arguments, query.Limit)
-	statement := fmt.Sprintf(`
+	rows, err := r.db.QueryContext(ctx, `
 		SELECT id, actor_user_id, action, COALESCE(NULLIF(module, ''), target_type), target_type, target_id, result,
 		       trace_id, ip_masked, metadata, occurred_at
-		FROM audit_events WHERE %s
-		ORDER BY occurred_at DESC, id DESC LIMIT $%d
-	`, strings.Join(clauses, " AND "), len(arguments))
-	rows, err := r.db.QueryContext(ctx, statement, arguments...)
+		FROM audit_events
+		WHERE ($1::uuid IS NULL OR actor_user_id = $1::uuid)
+		  AND ($2::text IS NULL OR action = $2)
+		  AND ($3::text IS NULL OR COALESCE(NULLIF(module, ''), target_type) = $3)
+		  AND ($4::text IS NULL OR target_type = $4)
+		  AND ($5::text IS NULL OR target_id = $5)
+		  AND ($6::text IS NULL OR result = $6)
+		  AND ($7::text IS NULL OR trace_id = $7)
+		  AND ($8::timestamptz IS NULL OR occurred_at >= $8)
+		  AND ($9::timestamptz IS NULL OR occurred_at < $9)
+		  AND ($10::timestamptz IS NULL OR occurred_at < $10 OR (occurred_at = $10 AND id < $11::uuid))
+		ORDER BY occurred_at DESC, id DESC LIMIT $12
+	`, nullString(query.ActorUserID), nullString(query.Action), nullString(query.Module),
+		nullString(query.TargetType), nullString(query.TargetID), nullString(query.Result),
+		nullString(query.TraceID), nullTime(query.OccurredFrom), nullTime(query.OccurredTo),
+		nullTime(query.BeforeOccurred), nullString(query.BeforeID), query.Limit)
 	if err != nil {
 		return nil, err
 	}
