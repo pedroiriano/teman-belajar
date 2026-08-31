@@ -144,3 +144,52 @@ func TestCreateRejectsUnknownMoodleCourse(t *testing.T) {
 		t.Fatalf("unknown course should be rejected, got %v", err)
 	}
 }
+
+func TestDisposableProgramFullWorkflowAndLearnerProjection(t *testing.T) {
+	progress := 100.0
+	repo := &fakeRepository{}
+	provider := &fakeLearning{
+		courses:  []learning.LearningCourse{{ID: 20, ShortName: "TASK013-VISIBLE", FullName: "TASK-013 Visible Course", Visible: true}},
+		enrolled: []learning.EnrolledCourse{{ID: 20, Progress: &progress, Completed: true}},
+	}
+	svc := NewService(repo, provider, nil, "http://localhost:8082")
+	input := ProgramInput{
+		Slug:            "task-013-disposable",
+		Title:           "Program Pelatihan TASK-013",
+		Summary:         "Program disposable untuk regression test TASK-013.",
+		Description:     "Program hanya disimpan oleh repository in-memory selama pengujian berlangsung.",
+		Audience:        "Learner lokal non-production",
+		EligibilityText: "Enrolment harus dikonfirmasi Moodle.",
+		Courses:         []CourseInput{{MoodleCourseID: 20, Required: true}},
+	}
+
+	item, err := svc.Create(context.Background(), input, []string{"Content Editor"}, "local-qa")
+	if err != nil || item.Status != StatusDraft {
+		t.Fatalf("draft failed: item=%#v err=%v", item, err)
+	}
+	for _, transition := range []struct {
+		status Status
+		roles  []string
+	}{{StatusInReview, []string{"Content Editor"}}, {StatusApproved, []string{"Reviewer"}}, {StatusPublished, []string{"Reviewer"}}} {
+		item, err = svc.Transition(context.Background(), item.ID, transition.status, transition.roles, "local-qa")
+		if err != nil || item.Status != transition.status {
+			t.Fatalf("transition %s failed: item=%#v err=%v", transition.status, item, err)
+		}
+	}
+
+	list, err := svc.ListPublic(context.Background(), ListFilter{Page: 1, PageSize: 12})
+	if err != nil || list.Pagination.Total != 1 || len(list.Data) != 1 {
+		t.Fatalf("public catalogue failed: list=%#v err=%v", list, err)
+	}
+	detail, err := svc.GetPublic(context.Background(), item.Slug)
+	if err != nil || detail.Provenance.State != "fresh" || detail.Courses[0].Availability != "available" {
+		t.Fatalf("public detail failed: detail=%#v err=%v", detail, err)
+	}
+	learner, err := svc.GetProgress(context.Background(), item.Slug, learning.FederatedIdentity{Subject: "sanitized-subject"})
+	if err != nil || learner.ProgressPercent == nil || *learner.ProgressPercent != 100 || learner.CompletedCourses != 1 || learner.CTA.Kind != "review" || learner.CTA.URL != "http://localhost:8082/course/view.php?id=20" {
+		t.Fatalf("learner projection failed: learner=%#v err=%v", learner, err)
+	}
+	if _, err := svc.Create(context.Background(), input, []string{"Reviewer"}, "local-qa"); !errors.Is(err, ErrForbidden) {
+		t.Fatalf("reviewer create must fail closed: %v", err)
+	}
+}

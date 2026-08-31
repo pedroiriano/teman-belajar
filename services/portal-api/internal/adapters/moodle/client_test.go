@@ -174,6 +174,12 @@ func TestResolveCurrentUser_Ambiguous(t *testing.T) {
 
 func TestListCourses_Filters(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if err := r.ParseForm(); err != nil {
+			t.Fatalf("ParseForm: %v", err)
+		}
+		if got := r.Form.Get("wsfunction"); got != "local_temanbelajar_list_visible_courses" {
+			t.Fatalf("wsfunction = %q", got)
+		}
 		w.WriteHeader(http.StatusOK)
 		_, _ = w.Write([]byte(`[
 			{"id": 1, "shortname": "site", "visible": 1},

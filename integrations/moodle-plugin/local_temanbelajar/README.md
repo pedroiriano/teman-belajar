@@ -9,6 +9,9 @@ This is the `local_temanbelajar` plugin. It provides a dedicated external servic
 
 ## Features
 - Dedicated External Service definition.
+- Least-privilege visible-course catalogue that skips hidden categories,
+  hidden courses, and invalid course contexts without granting broad Moodle
+  course-view capabilities to the integration account.
 - Stable federated-user resolution for Portal integration.
 - Automatic OAuth2 login through the `teman-belajar-moodle` Keycloak client.
 - Moodle-initiated RP logout and Keycloak front-channel logout reception,

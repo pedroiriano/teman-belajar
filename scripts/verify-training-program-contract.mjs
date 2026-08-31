@@ -26,6 +26,7 @@ contains("openapi/openapi.yaml", /\/training-programs:[\s\S]*\/learning\/me\/tra
 contains("apps/portal-web/src/components/portal-chrome.tsx", /href: "\/training-programs", label: "Pelatihan Penuh"/, "menu Pelatihan Penuh wajib aktif pada route nyata");
 contains("apps/portal-web/src/app/training-programs/[slug]/page.tsx", /learner\.authenticated[\s\S]*Masuk untuk memeriksa akses[\s\S]*provenance\.state === "degraded"/, "detail wajib menangani unauthorized dan degraded state");
 contains("apps/portal-web/src/app/training-programs/[slug]/page.tsx", /role="progressbar"[\s\S]*aria-valuenow/, "progres wajib aksesibel");
+contains("apps/portal-web/src/lib/training-programs.ts", /getTrainingProgram[\s\S]*cache: "no-store"/, "detail publik wajib segera mengikuti transisi publish/archive tanpa cache stale");
 contains("apps/admin-web/src/app/dashboard/training-programs/page.tsx", /Komposisi course[\s\S]*Cohort dan jadwal[\s\S]*Alur publikasi/, "workspace Admin wajib mencakup composition, cohort, dan workflow");
 
 const migration = read("services/portal-api/migrations/019_create_training_programs.sql");
