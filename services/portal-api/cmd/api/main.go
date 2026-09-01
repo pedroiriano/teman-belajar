@@ -23,6 +23,7 @@ import (
 	auditcenterapplication "teman-belajar-api/internal/application/auditcenter"
 	engagementapplication "teman-belajar-api/internal/application/engagement"
 	integrationapplication "teman-belajar-api/internal/application/integration"
+	learningpathapplication "teman-belajar-api/internal/application/learningpath"
 	notificationapplication "teman-belajar-api/internal/application/notification"
 	platformconfigapplication "teman-belajar-api/internal/application/platformconfig"
 	searchapplication "teman-belajar-api/internal/application/search"
@@ -33,6 +34,7 @@ import (
 	"teman-belajar-api/internal/domain/faq"
 	"teman-belajar-api/internal/domain/knowledge"
 	"teman-belajar-api/internal/domain/learning"
+	"teman-belajar-api/internal/domain/learningpath"
 	"teman-belajar-api/internal/domain/media"
 	"teman-belajar-api/internal/domain/mediagallery"
 	"teman-belajar-api/internal/domain/microlearning"
@@ -151,6 +153,10 @@ func main() {
 	notificationHandler := handler.NewNotificationHandler(notificationSvc)
 	webinarSvc := webinar.NewService(moodleClient, notificationSvc)
 	webinarHandler := handler.NewWebinarHandler(webinarSvc)
+	learningPathRepo := postgres.NewLearningPathRepository(db)
+	learningPathSources := learningpathapplication.NewSourceAdapter(moodleClient, knowledgeRepo, microlearningRepo, webinarSvc, engagementRepo, moodlePublicBaseURL)
+	learningPathSvc := learningpath.NewService(learningPathRepo, learningPathSources, auditRepo)
+	learningPathHandler := handler.NewLearningPathHandler(learningPathSvc)
 
 	// Media Storage & Services
 	minioEndpoint := os.Getenv("MINIO_ENDPOINT")
@@ -292,6 +298,8 @@ func main() {
 	mux.HandleFunc("GET /api/v1/faqs", faqHandler.PublicList)
 	mux.HandleFunc("GET /api/v1/training-programs", trainingHandler.PublicList)
 	mux.HandleFunc("GET /api/v1/training-programs/{slug}", trainingHandler.PublicDetail)
+	mux.HandleFunc("GET /api/v1/learning-paths", learningPathHandler.PublicList)
+	mux.HandleFunc("GET /api/v1/learning-paths/{slug}", learningPathHandler.PublicDetail)
 	mux.HandleFunc("GET /api/v1/microlearning", microlearningHandler.PublicList)
 	mux.HandleFunc("GET /api/v1/microlearning/{slug}", microlearningHandler.PublicDetail)
 	mux.HandleFunc("GET /api/v1/discovery/sitemap", discoveryHandler.Sitemap)
@@ -327,6 +335,7 @@ func main() {
 	mux.Handle("GET /api/v1/learning/me/courses/{courseId}/completion", authMiddleware(http.HandlerFunc(learningHandler.GetMyCourseCompletion)))
 	mux.Handle("GET /api/v1/learning/me/courses/{courseId}/grades", authMiddleware(http.HandlerFunc(learningHandler.GetMyCourseGrades)))
 	mux.Handle("GET /api/v1/learning/me/training-programs/{slug}", authMiddleware(http.HandlerFunc(trainingHandler.MyProgress)))
+	mux.Handle("GET /api/v1/learning/me/learning-paths/{slug}", authMiddleware(http.HandlerFunc(learningPathHandler.Progress)))
 	mux.Handle("GET /api/v1/webinars", authMiddleware(http.HandlerFunc(webinarHandler.List)))
 	mux.Handle("GET /api/v1/webinars/{id}", authMiddleware(http.HandlerFunc(webinarHandler.Get)))
 	mux.Handle("POST /api/v1/webinars/{id}/registrations", authMiddleware(http.HandlerFunc(webinarHandler.Register)))
@@ -372,6 +381,13 @@ func main() {
 	mux.Handle("GET /api/v1/admin/training-programs/{id}", adminAuthMiddleware(http.HandlerFunc(trainingHandler.AdminGet)))
 	mux.Handle("PATCH /api/v1/admin/training-programs/{id}", adminAuthMiddleware(http.HandlerFunc(trainingHandler.AdminUpdate)))
 	mux.Handle("POST /api/v1/admin/training-programs/{id}/transition", adminAuthMiddleware(http.HandlerFunc(trainingHandler.AdminTransition)))
+	mux.Handle("GET /api/v1/admin/learning-paths", adminAuthMiddleware(http.HandlerFunc(learningPathHandler.AdminList)))
+	mux.Handle("POST /api/v1/admin/learning-paths", adminAuthMiddleware(http.HandlerFunc(learningPathHandler.AdminCreate)))
+	mux.Handle("GET /api/v1/admin/learning-paths/options", adminAuthMiddleware(http.HandlerFunc(learningPathHandler.AdminOptions)))
+	mux.Handle("GET /api/v1/admin/learning-paths/{id}", adminAuthMiddleware(http.HandlerFunc(learningPathHandler.AdminGet)))
+	mux.Handle("PATCH /api/v1/admin/learning-paths/{id}", adminAuthMiddleware(http.HandlerFunc(learningPathHandler.AdminUpdate)))
+	mux.Handle("POST /api/v1/admin/learning-paths/{id}/transition", adminAuthMiddleware(http.HandlerFunc(learningPathHandler.AdminTransition)))
+	mux.Handle("POST /api/v1/admin/learning-paths/{id}/revisions", adminAuthMiddleware(http.HandlerFunc(learningPathHandler.AdminRevision)))
 	mux.Handle("GET /api/v1/admin/microlearning", adminAuthMiddleware(http.HandlerFunc(microlearningHandler.AdminList)))
 	mux.Handle("POST /api/v1/admin/microlearning", adminAuthMiddleware(http.HandlerFunc(microlearningHandler.AdminCreate)))
 	mux.Handle("GET /api/v1/admin/microlearning/{id}", adminAuthMiddleware(http.HandlerFunc(microlearningHandler.AdminGet)))

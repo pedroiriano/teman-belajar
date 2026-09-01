@@ -17,3 +17,5 @@ Operational procedures live here.
   redaction, masked IP, 365-day retention, and safe incident investigation.
 - `PLATFORM-CONFIGURATION-OPERATIONS.md` — typed presentation configuration,
   private preview, atomic publish, versioned rollback, fallback, and cache checks.
+- `LEARNING-PATHS-OPERATIONS.md` — versioned composition, source validation,
+  learner binding, degraded-source response, revision, and safe fixture cleanup.

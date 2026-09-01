@@ -25,6 +25,7 @@
     "test:audit-center": "node ../../scripts/verify-audit-center-contract.mjs",
     "test:platform-configuration": "node ../../scripts/verify-platform-configuration-contract.mjs",
     "test:media-gallery": "node ../../scripts/verify-media-gallery-contract.mjs",
+    "test:learning-paths": "node ../../scripts/verify-learning-path-contract.mjs",
     "test:vendor-foundation": "node ../../scripts/verify-ui-foundation-contract.mjs admin"
   },
   "dependencies": {

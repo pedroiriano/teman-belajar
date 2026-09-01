@@ -23,13 +23,13 @@ Task awal:
 - TASK-013 Pelatihan Penuh / Full Training Programs — `DONE — MERGED via PR #33`
 - TASK-014 Pembelajaran Singkat / Microlearning — `DONE — MERGED via PR #35`
 - TASK-015 Webinar & Live Learning — `PROVIDER/POLICY APPROVED — BLOCKED_PREREQUISITES`
-- TASK-016 Jalur Belajar / Learning Paths — `PLANNED`
+- TASK-016 Jalur Belajar / Learning Paths — `IMPLEMENTED_BLOCKED_TASK015`
 - TASK-017 FAQ CMS & Help Center — `DONE — MERGED via PR #23`
 - TASK-018 Integration Health Center — `PLANNED`
 - TASK-019 Audit Center — `PLANNED`
 - TASK-020 Platform Configuration & Dynamic Site Management — `PLANNED`
 - TASK-021 Notification Center — `IMPLEMENTED — CORRECTIVE RELEASE`
-- TASK-022 Media Gallery & Video Hub — `PLANNED`
+- TASK-022 Media Gallery & Video Hub — `DONE — MERGED via PR #43 (1c5ab6f)`
 - TASK-023 Experience Personalization & Recommendation 2.0 — `PLANNED`
 - TASK-024 Post-Expansion Release Gate — `PLANNED`
 - TASK-025 Indonesian UI Language Harmonization, Cuba Data Tables & Pagination — `IMPLEMENTED — CORRECTIVE RELEASE`

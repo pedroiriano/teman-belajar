@@ -82,6 +82,8 @@ Public:
 - `/search`
 - `GET /microlearning`
 - `GET /microlearning/{slug}`
+- `GET /learning-paths`
+- `GET /learning-paths/{slug}`
 
 Authenticated:
 - `/me`
@@ -99,6 +101,7 @@ Authenticated:
 - `POST /me/notifications/read-all`
 - `GET|PUT /me/notification-preferences[/{eventType}]`
 - `GET|PUT /me/microlearning/{id}/progress`
+- `GET /learning/me/learning-paths/{slug}`
 
 Public aggregate:
 - `GET /ratings/{targetType}/{targetId}`
@@ -119,6 +122,7 @@ Admin:
 - `/admin/form-drafts`
 - `/admin/configuration`
 - `/admin/microlearning`
+- `/admin/learning-paths`
 
 Microlearning authoring requires Content Editor/Administrator for draft writes
 and Reviewer/Administrator for approval/publication. Learner progress is an

@@ -31,6 +31,8 @@ tags:
     description: Portal-owned program composition with Moodle-authoritative learning state
   - name: Microlearning
     description: Portal-owned editorial learning activities with lightweight non-Moodle progress
+  - name: Learning Paths
+    description: Versioned Portal composition with source-owned progress and provenance
   - name: Webinars
     description: Moodle mod_zoom-authoritative live learning operations
   - name: Me
@@ -502,6 +504,135 @@ paths:
         '409': { $ref: '#/components/responses/ConflictError' }
         '422': { $ref: '#/components/responses/ValidationError' }
         '503': { $ref: '#/components/responses/DependencyUnavailable' }
+  /learning-paths:
+    get:
+      tags: [Learning Paths]
+      operationId: listLearningPaths
+      summary: List published learning path versions
+      security: []
+      parameters:
+        - { name: q, in: query, schema: { type: string, maxLength: 100 } }
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+      responses:
+        '200': { description: Published learning path catalogue, content: { application/json: { schema: { $ref: '#/components/schemas/LearningPathList' } } } }
+        '422': { $ref: '#/components/responses/ValidationError' }
+  /learning-paths/{slug}:
+    get:
+      tags: [Learning Paths]
+      operationId: getLearningPath
+      summary: Get the immutable currently published learning path version
+      security: []
+      parameters:
+        - { name: slug, in: path, required: true, schema: { type: string, pattern: '^[a-z0-9]+(?:-[a-z0-9]+)*$' } }
+      responses:
+        '200': { description: Published learning path, content: { application/json: { schema: { $ref: '#/components/schemas/LearningPath' } } } }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '422': { $ref: '#/components/responses/ValidationError' }
+  /learning/me/learning-paths/{slug}:
+    get:
+      tags: [Learning, Learning Paths]
+      operationId: getMyLearningPathProgress
+      summary: Bind the learner to a stable published version and aggregate source-owned progress
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: slug, in: path, required: true, schema: { type: string } }
+      responses:
+        '200': { description: Provenance-aware learner journey, content: { application/json: { schema: { $ref: '#/components/schemas/LearningPathProgress' } } } }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /admin/learning-paths:
+    get:
+      tags: [Admin, Learning Paths]
+      operationId: listAdminLearningPaths
+      summary: List latest learning path versions across workflow states
+      security: [{ oidc: [content:read] }]
+      parameters:
+        - { name: q, in: query, schema: { type: string, maxLength: 100 } }
+        - { name: status, in: query, schema: { type: string, enum: [all, draft, in_review, approved, published, archived] } }
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+      responses:
+        '200': { description: Admin learning path list, content: { application/json: { schema: { $ref: '#/components/schemas/LearningPathList' } } } }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '422': { $ref: '#/components/responses/ValidationError' }
+    post:
+      tags: [Admin, Learning Paths]
+      operationId: createLearningPath
+      summary: Create a validated draft learning path
+      security: [{ oidc: [content:write] }]
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/LearningPathWrite' } } } }
+      responses:
+        '201': { description: Draft created, content: { application/json: { schema: { $ref: '#/components/schemas/LearningPath' } } } }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '422': { $ref: '#/components/responses/ValidationError' }
+  /admin/learning-paths/options:
+    get:
+      tags: [Admin, Learning Paths]
+      operationId: listLearningPathOptions
+      summary: List allowlisted published sources and bounded provenance
+      security: [{ oidc: [content:read] }]
+      responses:
+        '200': { description: Composition options, content: { application/json: { schema: { $ref: '#/components/schemas/LearningPathOptions' } } } }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+  /admin/learning-paths/{id}:
+    parameters:
+      - $ref: '#/components/parameters/EntityId'
+    get:
+      tags: [Admin, Learning Paths]
+      operationId: getAdminLearningPath
+      summary: Get the latest Admin learning path version
+      security: [{ oidc: [content:read] }]
+      responses:
+        '200': { description: Latest editable or published version, content: { application/json: { schema: { $ref: '#/components/schemas/LearningPath' } } } }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    patch:
+      tags: [Admin, Learning Paths]
+      operationId: updateLearningPath
+      summary: Update only the latest draft using optimistic locking
+      security: [{ oidc: [content:write] }]
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/LearningPathWrite' } } } }
+      responses:
+        '200': { description: Draft updated, content: { application/json: { schema: { $ref: '#/components/schemas/LearningPath' } } } }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/ConflictError' }
+        '422': { $ref: '#/components/responses/ValidationError' }
+  /admin/learning-paths/{id}/transition:
+    post:
+      tags: [Admin, Learning Paths]
+      operationId: transitionLearningPath
+      summary: Apply a role-gated transition and revalidate required sources on publish
+      security: [{ oidc: [content:write] }]
+      parameters: [{ $ref: '#/components/parameters/EntityId' }]
+      requestBody: { required: true, content: { application/json: { schema: { type: object, additionalProperties: false, required: [status], properties: { status: { $ref: '#/components/schemas/LearningPathStatus' } } } } } }
+      responses:
+        '200': { description: Version transitioned, content: { application/json: { schema: { $ref: '#/components/schemas/LearningPath' } } } }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/ConflictError' }
+        '503': { $ref: '#/components/responses/DependencyUnavailable' }
+  /admin/learning-paths/{id}/revisions:
+    post:
+      tags: [Admin, Learning Paths]
+      operationId: createLearningPathRevision
+      summary: Create a new draft while preserving the immutable published version
+      security: [{ oidc: [content:write] }]
+      parameters: [{ $ref: '#/components/parameters/EntityId' }]
+      requestBody: { required: true, content: { application/json: { schema: { type: object, additionalProperties: false, required: [expected_row_version], properties: { expected_row_version: { type: integer, format: int64, minimum: 1 } } } } } }
+      responses:
+        '201': { description: New draft version, content: { application/json: { schema: { $ref: '#/components/schemas/LearningPath' } } } }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/ConflictError' }
   /microlearning:
     get:
       tags: [Microlearning]
@@ -4769,6 +4900,119 @@ components:
             label: { type: string }
             url: { type: string, format: uri }
         provenance: { $ref: '#/components/schemas/TrainingProvenance' }
+    LearningPathStatus:
+      type: string
+      enum: [draft, in_review, approved, published, archived]
+    LearningPathKind:
+      type: string
+      enum: [course, knowledge, microlearning, webinar]
+    LearningPathSourceState:
+      type: string
+      enum: [available, degraded, unavailable]
+    LearningPathItemWrite:
+      type: object
+      additionalProperties: false
+      required: [key, kind, source_ref, label, summary, required, milestone, prerequisite_keys]
+      properties:
+        key: { type: string, maxLength: 80, pattern: '^[a-z0-9]+(?:-[a-z0-9]+)*$' }
+        kind: { $ref: '#/components/schemas/LearningPathKind' }
+        source_ref: { type: string, maxLength: 160, description: Moodle integer ID for course/webinar; UUID for Portal content }
+        label: { type: string, minLength: 2, maxLength: 200 }
+        summary: { type: string, maxLength: 1000 }
+        required: { type: boolean }
+        milestone: { type: boolean }
+        prerequisite_keys: { type: array, maxItems: 49, uniqueItems: true, items: { type: string, maxLength: 80 } }
+    LearningPathWrite:
+      type: object
+      additionalProperties: false
+      required: [slug, title, summary, description, items]
+      properties:
+        slug: { type: string, maxLength: 160, pattern: '^[a-z0-9]+(?:-[a-z0-9]+)*$' }
+        title: { type: string, minLength: 3, maxLength: 200 }
+        summary: { type: string, minLength: 10, maxLength: 1000 }
+        description: { type: string, minLength: 20, maxLength: 20000 }
+        items: { type: array, minItems: 1, maxItems: 50, items: { $ref: '#/components/schemas/LearningPathItemWrite' } }
+        expected_row_version: { type: integer, format: int64, minimum: 1 }
+    LearningPathItem:
+      allOf:
+        - $ref: '#/components/schemas/LearningPathItemWrite'
+        - type: object
+          required: [id, source_state, source_checked_at, sort_order]
+          properties:
+            id: { type: string, format: uuid }
+            url: { type: string, pattern: '^(/|https://)' }
+            source_state: { $ref: '#/components/schemas/LearningPathSourceState' }
+            source_checked_at: { type: string, format: date-time }
+            sort_order: { type: integer, minimum: 1, maximum: 1000 }
+    LearningPathVersion:
+      type: object
+      required: [id, number, title, summary, description, status, created_at, updated_at, items]
+      properties:
+        id: { type: string, format: uuid }
+        number: { type: integer, minimum: 1 }
+        title: { type: string }
+        summary: { type: string }
+        description: { type: string }
+        status: { $ref: '#/components/schemas/LearningPathStatus' }
+        published_at: { type: string, format: date-time }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+        items: { type: array, items: { $ref: '#/components/schemas/LearningPathItem' } }
+    LearningPath:
+      type: object
+      required: [id, slug, row_version, created_at, updated_at, version]
+      properties:
+        id: { type: string, format: uuid }
+        slug: { type: string }
+        row_version: { type: integer, format: int64, minimum: 1 }
+        published_version_number: { type: integer, minimum: 1 }
+        archived_at: { type: string, format: date-time }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+        version: { $ref: '#/components/schemas/LearningPathVersion' }
+    LearningPathList:
+      type: object
+      required: [data, pagination]
+      properties:
+        data: { type: array, items: { $ref: '#/components/schemas/LearningPath' } }
+        pagination: { $ref: '#/components/schemas/Pagination' }
+    LearningPathOption:
+      type: object
+      required: [kind, source_ref, label, state]
+      properties:
+        kind: { $ref: '#/components/schemas/LearningPathKind' }
+        source_ref: { type: string }
+        label: { type: string }
+        summary: { type: string }
+        state: { $ref: '#/components/schemas/LearningPathSourceState' }
+    LearningPathOptions:
+      type: object
+      required: [data, provenance]
+      properties:
+        data: { type: array, items: { $ref: '#/components/schemas/LearningPathOption' } }
+        provenance: { type: object, additionalProperties: { type: string, enum: [fresh, degraded, blocked_task015] } }
+    LearningPathItemProgress:
+      type: object
+      required: [item_id, key, state, progress, locked]
+      properties:
+        item_id: { type: string, format: uuid }
+        key: { type: string }
+        state: { type: string, enum: [not_started, available, in_progress, completed, locked, unavailable] }
+        progress: { type: number, minimum: 0, maximum: 100 }
+        locked: { type: boolean }
+        detail: { type: string, enum: [moodle_progress_unavailable, knowledge_activity_unavailable, microlearning_progress_unavailable, webinar_unavailable, source_unavailable] }
+    LearningPathProgress:
+      type: object
+      required: [path, bound_version, items, progress_percent, completed_items, total_items, provenance]
+      properties:
+        path: { $ref: '#/components/schemas/LearningPath' }
+        bound_version: { type: integer, minimum: 1 }
+        items: { type: array, items: { $ref: '#/components/schemas/LearningPathItemProgress' } }
+        progress_percent: { type: number, minimum: 0, maximum: 100 }
+        completed_items: { type: integer, minimum: 0 }
+        total_items: { type: integer, minimum: 1 }
+        next_step: { $ref: '#/components/schemas/LearningPathItem' }
+        provenance: { type: object, additionalProperties: { type: string, enum: [fresh, degraded, blocked_task015] } }
     MicrolearningStatus:
       type: string
       enum: [draft, in_review, approved, published, archived]

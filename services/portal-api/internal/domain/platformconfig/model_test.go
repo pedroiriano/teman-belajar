@@ -61,13 +61,33 @@ func TestApplyCurrentDefaultsAddsMediaGalleryWithoutOverridingExplicitVisibility
 	legacy.Navigation = legacy.Navigation[:2]
 	legacy.Features = legacy.Features[:2]
 	current := ApplyCurrentDefaults(legacy)
-	if current.Navigation[len(current.Navigation)-1].Href != "/media-gallery" || current.Features[len(current.Features)-1].Key != "media_gallery" {
+	findNavigation := func(config Config, href string) *NavigationItem {
+		for i := range config.Navigation {
+			if config.Navigation[i].Href == href {
+				return &config.Navigation[i]
+			}
+		}
+		return nil
+	}
+	findFeature := func(config Config, key string) *FeaturePresentation {
+		for i := range config.Features {
+			if config.Features[i].Key == key {
+				return &config.Features[i]
+			}
+		}
+		return nil
+	}
+	galleryNavigation, pathNavigation := findNavigation(current, "/media-gallery"), findNavigation(current, "/learning-paths")
+	galleryFeature, pathFeature := findFeature(current, "media_gallery"), findFeature(current, "learning_paths")
+	if galleryNavigation == nil || galleryFeature == nil || pathNavigation == nil || pathFeature == nil {
 		t.Fatal("legacy configuration was not extended")
 	}
-	current.Navigation[len(current.Navigation)-1].Visible = false
-	current.Features[len(current.Features)-1].Visible = false
+	galleryNavigation.Visible = false
+	pathNavigation.Visible = false
+	galleryFeature.Visible = false
+	pathFeature.Visible = false
 	explicit := ApplyCurrentDefaults(current)
-	if explicit.Navigation[len(explicit.Navigation)-1].Visible || explicit.Features[len(explicit.Features)-1].Visible {
+	if findNavigation(explicit, "/media-gallery").Visible || findNavigation(explicit, "/learning-paths").Visible || findFeature(explicit, "media_gallery").Visible || findFeature(explicit, "learning_paths").Visible {
 		t.Fatal("explicit hidden presentation was overridden")
 	}
 }

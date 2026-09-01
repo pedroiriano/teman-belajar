@@ -1,0 +1,2 @@
+"use client";
+export default function ErrorPage({reset}:{reset:()=>void}){return <div className="portal-container py-16"><div role="alert" className="portal-card p-8"><h1 className="text-2xl font-black text-slate-900">Jalur Belajar belum dapat dimuat</h1><p className="mt-3 text-slate-600">Coba kembali tanpa kehilangan navigasi lain.</p><button type="button" onClick={reset} className="portal-button-primary mt-6">Coba lagi</button></div></div>}

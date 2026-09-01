@@ -1,6 +1,6 @@
 # TASK-016 — Jalur Belajar / Learning Paths
 
-**Status:** PLANNED
+**Status:** IMPLEMENTED_BLOCKED_TASK015
 **Owner Agent:** Product/Backend/Frontend/Moodle/QA
 **Feature:** F-LXP-004
 **Dependencies:** TASK-013, TASK-014, TASK-015
@@ -31,15 +31,18 @@ dengan prerequisite, milestone, progres, dan rekomendasi next step.
 
 ## Required Tests
 
-- [ ] graph/order/version/progress unit tests
-- [ ] source adapter/contract/integration tests
-- [ ] cycle/authz/stale/degraded negative tests
-- [ ] Admin composer and learner journey E2E/accessibility
+- [x] graph/order/version/progress unit tests
+- [x] source adapter/contract/integration tests
+- [x] cycle/authz/stale/degraded negative tests
+- [x] Admin composer and learner journey E2E/accessibility
 
 ## Documentation Impact
 
-- [ ] OpenAPI/ERD/migration, canonical UI/feature/navigation, runbook/handoff
+- [x] OpenAPI/ERD/migration, canonical UI/feature/navigation, runbook/handoff
 
 ## Definition of Done
 
-Semua AC dan regression TASK-013–015 lulus dengan ownership/provenance jelas.
+Semua AC yang tidak memerlukan aktivasi komersial Zoom lulus dengan
+ownership/provenance jelas. Webinar tetap optional `unavailable/degraded`,
+capacity 0, dan status task tetap `IMPLEMENTED_BLOCKED_TASK015` sampai TASK-015
+memenuhi prasyarat eksternalnya.

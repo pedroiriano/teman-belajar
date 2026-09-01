@@ -21,6 +21,7 @@ export const defaultPlatformConfiguration: PlatformConfiguration = {
   navigation: [
     { label: "Pelatihan Penuh", description: "Program terstruktur melalui Moodle.", href: "/training-programs", visible: true },
     { label: "Pembelajaran Singkat", description: "Materi editorial 3–15 menit.", href: "/microlearning", visible: true },
+    { label: "Jalur Belajar", description: "Rangkaian kompetensi yang terarah.", href: "/learning-paths", visible: true },
     { label: "Pusat Pengetahuan", description: "Panduan terkurasi.", href: "/knowledge", visible: true },
   ],
   banner: { enabled: false, title: "", body: "", href: "" },
@@ -30,6 +31,7 @@ export const defaultPlatformConfiguration: PlatformConfiguration = {
   features: [
     { key: "training_programs", label: "Pelatihan Penuh", visible: true },
     { key: "microlearning", label: "Pembelajaran Singkat", visible: true },
+    { key: "learning_paths", label: "Jalur Belajar", visible: true },
     { key: "knowledge", label: "Pusat Pengetahuan", visible: true },
     { key: "faq", label: "FAQ", visible: true },
   ],
