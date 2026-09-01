@@ -368,6 +368,39 @@ erDiagram
     string idempotency_key UK
     int timecreated
   }
+  LEARNING_PATH {
+    uuid id PK
+    string slug UK
+    bigint row_version
+    int latest_version_number
+    int published_version_number
+    timestamptz archived_at
+  }
+  LEARNING_PATH_VERSION {
+    uuid id PK
+    uuid path_id FK
+    int version_number UK
+    string status
+    timestamptz published_at
+  }
+  LEARNING_PATH_ITEM {
+    uuid id PK
+    uuid path_version_id FK
+    string item_key UK
+    string item_kind
+    string source_ref
+    int sort_order
+  }
+  LEARNING_PATH_PREREQUISITE {
+    uuid item_id PK,FK
+    uuid prerequisite_item_id PK,FK
+  }
+  LEARNING_PATH_ENROLLMENT {
+    uuid id PK
+    uuid path_id FK
+    uuid path_version_id FK
+    string user_subject UK
+  }
   PLATFORM_CONFIG_VERSION {
     uuid id PK
     bigint version UK
@@ -412,6 +445,12 @@ erDiagram
   MOODLE_ZOOM_ACTIVITY ||--o| MOODLE_WEBINAR_POLICY : limits
   MOODLE_ZOOM_ACTIVITY ||--o{ MOODLE_WEBINAR_REGISTRATION : registers
   MOODLE_ZOOM_ACTIVITY ||--o{ MOODLE_WEBINAR_OPERATION : deduplicates
+  LEARNING_PATH ||--|{ LEARNING_PATH_VERSION : versions
+  LEARNING_PATH_VERSION ||--|{ LEARNING_PATH_ITEM : composes
+  LEARNING_PATH_ITEM ||--o{ LEARNING_PATH_PREREQUISITE : depends_on
+  LEARNING_PATH_ITEM ||--o{ LEARNING_PATH_PREREQUISITE : prerequisite
+  LEARNING_PATH ||--o{ LEARNING_PATH_ENROLLMENT : binds
+  LEARNING_PATH_VERSION ||--o{ LEARNING_PATH_ENROLLMENT : preserves_progress
   PLATFORM_CONFIG_VERSION ||--o{ PLATFORM_CONFIG_VERSION : based_on
   ANALYTICS_EVENTS }o--|| ANALYTICS_PAGE_DAILY : rolls_up
   ANALYTICS_EVENTS }o--|| ANALYTICS_SEARCH_DAILY : rolls_up

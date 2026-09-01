@@ -122,3 +122,8 @@ threat model, and operations runbook. It governs presentation-only values; the
 product name, authorization, active route set, identity, and secrets are outside
 the schema. TASK-020 is `DONE`; the Admin route is active only for the existing
 Portal Administrator role.
+
+For Learning Paths, read `TASK-016-HANDOFF.md`, migration 024, its threat model,
+and operations runbook. Published versions and learner bindings are stable;
+source-owned progress retains provenance. TASK-015 Webinar remains optional and
+degraded at capacity 0, so TASK-016 is `IMPLEMENTED_BLOCKED_TASK015`.

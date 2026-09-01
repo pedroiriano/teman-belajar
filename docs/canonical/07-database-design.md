@@ -237,6 +237,19 @@ Index berdasarkan query nyata:
 - Migration 020 is additive and forward-only. Rollback removes consumers while
   retaining authored content and learner resume data.
 
+## Learning Paths (Migration 024)
+
+- `learning_paths` menyimpan identity, optimistic row version, pointer versi
+  terbaru, dan pointer versi publik.
+- `learning_path_versions` dan item/prerequisite-nya immutable setelah publish;
+  revisi dibuat sebagai versi draft baru.
+- `learning_path_enrollments` mengikat learner ke versi publik pertama sehingga
+  revisi editorial tidak mengubah progres historis.
+- Progress formal course tetap berasal dari Moodle; state editorial dari Portal.
+  Webinar TASK-015 dengan capacity 0 disajikan optional dan degraded.
+- Migration 024 additive dan forward-only. Rollback melepas consumer aplikasi
+  tanpa menghapus schema atau binding learner.
+
 ## 9. Audit
 
 Audit log bukan pengganti application logs.

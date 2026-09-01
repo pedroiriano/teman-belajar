@@ -190,7 +190,7 @@ func Validate(config Config, externalHosts []string) error {
 	if config.Contact.Email != "" && (len(config.Contact.Email) > 254 || !emailPattern.MatchString(config.Contact.Email)) {
 		return ErrInvalidConfig
 	}
-	allowedFeatures := map[string]bool{"training_programs": true, "microlearning": true, "media_gallery": true, "knowledge": true, "news": true, "announcements": true, "faq": true, "search": true}
+	allowedFeatures := map[string]bool{"training_programs": true, "microlearning": true, "learning_paths": true, "media_gallery": true, "knowledge": true, "news": true, "announcements": true, "faq": true, "search": true}
 	seenFeatures := map[string]bool{}
 	for _, feature := range config.Features {
 		if !allowedFeatures[feature.Key] || seenFeatures[feature.Key] || !validText(feature.Label, 80, false) {
@@ -239,7 +239,7 @@ func validateHref(raw string, hosts map[string]bool) bool {
 	if parsed.Scheme != "" || parsed.Host != "" || !strings.HasPrefix(parsed.Path, "/") || strings.Contains(parsed.Path, "..") || strings.Contains(strings.ToLower(raw), "%2e") {
 		return false
 	}
-	allowed := []string{"/", "/my-learning", "/training-programs", "/microlearning", "/media-gallery", "/knowledge", "/search", "/news", "/announcements", "/help", "/categories", "/tags"}
+	allowed := []string{"/", "/my-learning", "/training-programs", "/microlearning", "/learning-paths", "/media-gallery", "/knowledge", "/search", "/news", "/announcements", "/help", "/categories", "/tags"}
 	for _, prefix := range allowed {
 		if parsed.Path == prefix || (prefix != "/" && strings.HasPrefix(parsed.Path, prefix+"/")) {
 			return true
@@ -256,10 +256,10 @@ func Default() Config {
 	}
 	return Config{
 		Identity: IdentityConfig{Tagline: "Pengalaman Belajar"}, Homepage: HomepageConfig{Sections: home},
-		Navigation: []NavigationItem{{Label: "Pelatihan Penuh", Description: "Program terstruktur melalui Moodle.", Href: "/training-programs", Visible: true}, {Label: "Pembelajaran Singkat", Description: "Materi editorial 3–15 menit.", Href: "/microlearning", Visible: true}, {Label: "Galeri Media", Description: "Foto dan video terkurasi.", Href: "/media-gallery", Visible: true}, {Label: "Pusat Pengetahuan", Description: "Panduan terkurasi.", Href: "/knowledge", Visible: true}},
+		Navigation: []NavigationItem{{Label: "Pelatihan Penuh", Description: "Program terstruktur melalui Moodle.", Href: "/training-programs", Visible: true}, {Label: "Pembelajaran Singkat", Description: "Materi editorial 3–15 menit.", Href: "/microlearning", Visible: true}, {Label: "Jalur Belajar", Description: "Rangkaian kompetensi yang terarah.", Href: "/learning-paths", Visible: true}, {Label: "Galeri Media", Description: "Foto dan video terkurasi.", Href: "/media-gallery", Visible: true}, {Label: "Pusat Pengetahuan", Description: "Panduan terkurasi.", Href: "/knowledge", Visible: true}},
 		Banner:     BannerConfig{}, Footer: FooterConfig{Summary: "Ruang belajar terpadu untuk menemukan wawasan, mengikuti pembelajaran formal, dan bertumbuh bersama organisasi.", Links: []NavigationItem{{Label: "Pusat Pengetahuan", Href: "/knowledge", Visible: true}, {Label: "FAQ", Href: "/help", Visible: true}}},
 		Contact: ContactConfig{HelpLabel: "Pusat Bantuan", HelpHref: "/help"}, SEO: SEOConfig{DefaultTitle: "Teman Belajar", DefaultDescription: "Platform pengalaman belajar digital perusahaan untuk belajar, berbagi pengetahuan, dan bertumbuh bersama."},
-		Features: []FeaturePresentation{{Key: "training_programs", Label: "Pelatihan Penuh", Visible: true}, {Key: "microlearning", Label: "Pembelajaran Singkat", Visible: true}, {Key: "media_gallery", Label: "Galeri Media", Visible: true}, {Key: "knowledge", Label: "Pusat Pengetahuan", Visible: true}, {Key: "faq", Label: "FAQ", Visible: true}},
+		Features: []FeaturePresentation{{Key: "training_programs", Label: "Pelatihan Penuh", Visible: true}, {Key: "microlearning", Label: "Pembelajaran Singkat", Visible: true}, {Key: "learning_paths", Label: "Jalur Belajar", Visible: true}, {Key: "media_gallery", Label: "Galeri Media", Visible: true}, {Key: "knowledge", Label: "Pusat Pengetahuan", Visible: true}, {Key: "faq", Label: "FAQ", Visible: true}},
 	}
 }
 
@@ -286,6 +286,26 @@ func ApplyCurrentDefaults(config Config) Config {
 	}
 	if !hasNavigation {
 		config.Navigation = append(config.Navigation, NavigationItem{Label: "Galeri Media", Description: "Foto dan video terkurasi.", Href: "/media-gallery", Visible: true})
+	}
+	hasLearningPathFeature := false
+	for _, feature := range config.Features {
+		if feature.Key == "learning_paths" {
+			hasLearningPathFeature = true
+			break
+		}
+	}
+	if !hasLearningPathFeature {
+		config.Features = append(config.Features, FeaturePresentation{Key: "learning_paths", Label: "Jalur Belajar", Visible: true})
+	}
+	hasLearningPathNavigation := false
+	for _, item := range config.Navigation {
+		if item.Href == "/learning-paths" {
+			hasLearningPathNavigation = true
+			break
+		}
+	}
+	if !hasLearningPathNavigation {
+		config.Navigation = append(config.Navigation, NavigationItem{Label: "Jalur Belajar", Description: "Rangkaian kompetensi yang terarah.", Href: "/learning-paths", Visible: true})
 	}
 	return config
 }

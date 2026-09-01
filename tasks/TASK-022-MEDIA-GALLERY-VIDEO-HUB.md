@@ -1,6 +1,6 @@
 # TASK-022 — Media Gallery & Video Hub
 
-**Status:** DONE
+**Status:** DONE — MERGED via PR #43 (`1c5ab6f`)
 **Owner Agent:** Backend/Frontend/Media/SEO/QA
 **Feature:** F-MED-002, F-MED-003
 **Dependencies:** TASK-004E, TASK-011D

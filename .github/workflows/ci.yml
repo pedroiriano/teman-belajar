@@ -101,11 +101,11 @@ jobs:
       - name: Admin UI contract tests
         if: matrix.app == 'apps/admin-web'
         working-directory: apps/admin-web
-        run: npm run test:theme && npm run test:no-orange && npm run test:media && npm run test:drafts && npm run test:hierarchy && npm run test:faq && npm run test:language && npm run test:data-presentation && npm run test:notifications && npm run test:platform-configuration && npm run test:media-gallery && npm run test:vendor-foundation
+        run: npm run test:theme && npm run test:no-orange && npm run test:media && npm run test:drafts && npm run test:hierarchy && npm run test:faq && npm run test:language && npm run test:data-presentation && npm run test:notifications && npm run test:platform-configuration && npm run test:media-gallery && npm run test:learning-paths && npm run test:vendor-foundation
       - name: Portal Knowledge explorer contract test
         if: matrix.app == 'apps/portal-web'
         working-directory: apps/portal-web
-        run: npm run test:hierarchy && npm run test:faq && npm run test:language && npm run test:notifications && npm run test:platform-configuration && npm run test:media-gallery && npm run test:vendor-foundation
+        run: npm run test:hierarchy && npm run test:faq && npm run test:language && npm run test:notifications && npm run test:platform-configuration && npm run test:media-gallery && npm run test:learning-paths && npm run test:vendor-foundation
       - name: Build
         working-directory: ${{ matrix.app }}
         run: npm run build

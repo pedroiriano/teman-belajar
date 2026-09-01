@@ -17,6 +17,7 @@ const navigationGroups: Array<{ label: string; items: NavigationItem[] }> = [
   { label: "Konten", items: [
     { href: "/dashboard/training-programs", label: "Program Pelatihan", icon: "knowledge" },
     { href: "/dashboard/microlearning", label: "Pembelajaran Singkat", icon: "knowledge" },
+    { href: "/dashboard/learning-paths", label: "Jalur Belajar", icon: "knowledge" },
     { href: "/dashboard/knowledge", label: "Pusat Pengetahuan", icon: "knowledge" },
     { href: "/dashboard/knowledge-hierarchy", label: "Struktur Pengetahuan", icon: "folder" },
     { href: "/dashboard/news", label: "Berita", icon: "news" },
@@ -51,6 +52,7 @@ const titleBySegment: Record<string, string> = {
   users: "Pengguna & Profil",
   "training-programs": "Program Pelatihan",
   microlearning: "Pembelajaran Singkat",
+  "learning-paths": "Jalur Belajar",
   notifications: "Pusat Notifikasi",
   create: "Buat baru",
 };

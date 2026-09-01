@@ -129,6 +129,11 @@ var (
 		Name: "media_gallery_operations_total",
 		Help: "Total bounded Media Gallery operations by result",
 	}, []string{"operation", "result"})
+
+	LearningPathOperationsTotal = promauto.NewCounterVec(prometheus.CounterOpts{
+		Name: "learning_path_operations_total",
+		Help: "Total bounded learning path operations by operation and result",
+	}, []string{"operation", "result"})
 )
 
 func RecordSSOEvent(eventType, status string) {
@@ -202,4 +207,8 @@ func RecordPlatformConfig(operation, result string) {
 
 func RecordMediaGallery(operation, result string) {
 	MediaGalleryOperationsTotal.WithLabelValues(operation, result).Inc()
+}
+
+func RecordLearningPath(operation, result string) {
+	LearningPathOperationsTotal.WithLabelValues(operation, result).Inc()
 }

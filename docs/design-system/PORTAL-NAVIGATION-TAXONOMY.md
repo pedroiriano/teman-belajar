@@ -20,7 +20,7 @@ pertama dibatasi menjadi `Beranda`, `Pembelajaran`, `Pengetahuan`, dan
 | Pembelajaran | Pelatihan Penuh | `/training-programs` | Aktif; katalog/detail publik dan progres perlu login |
 | Pembelajaran | Pembelajaran Singkat | `/microlearning` | Aktif; katalog/detail publik, bookmark dan resume perlu login |
 | Pembelajaran | Webinar | TASK-015 (setelah TASK-021) | `Segera` / PLANNED |
-| Pembelajaran | Jalur Belajar | TASK-016 (setelah TASK-013–015) | `Segera` / PLANNED |
+| Pembelajaran | Jalur Belajar | `/learning-paths` | Aktif; webinar optional tetap degraded sampai TASK-015 aktif |
 | Pengetahuan | Pusat Pengetahuan | `/knowledge` | Aktif |
 | Pengetahuan | Cari Pengetahuan | `/search?content_type=knowledge` | Aktif |
 | Informasi | Berita | `/news` | Aktif |
