@@ -188,7 +188,9 @@ func (r *LearningPathRepository) loadItems(ctx context.Context, p *learningpath.
 		for pre.Next() {
 			var key string
 			if e = pre.Scan(&key); e != nil {
-				pre.Close()
+				if closeErr := pre.Close(); closeErr != nil {
+					return errors.Join(e, closeErr)
+				}
 				return e
 			}
 			p.Version.Items[i].PrerequisiteKeys = append(p.Version.Items[i].PrerequisiteKeys, key)
