@@ -1,0 +1,7 @@
+"use client";
+
+/* eslint-disable @next/next/no-img-element -- runtime Media endpoint is validated and access-controlled */
+import { useState } from "react";
+import type { MediaCollectionItem } from "@/lib/media-gallery";
+
+export function PublicMediaItem({item,kind}:{item:MediaCollectionItem;kind:"image_gallery"|"video_hub"}){const[failed,setFailed]=useState(false);if(failed)return <div className="flex aspect-video items-center justify-center rounded-2xl bg-slate-100 p-6 text-center text-sm font-bold text-slate-500" role="status">Media tidak lagi tersedia.</div>;const src=`/media/${encodeURIComponent(item.media_id)}`;return <figure className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">{kind==="image_gallery"?<img src={src} alt={item.decorative?"":item.alt_text||""} className="aspect-[4/3] w-full object-cover" onError={()=>setFailed(true)}/>:<video controls preload="metadata" className="aspect-video w-full bg-slate-950" onError={()=>setFailed(true)} aria-label={item.caption||item.display_filename}><source src={src} type={item.mime_type}/></video>}{item.caption?<figcaption className="px-5 py-4 text-sm leading-6 text-slate-600">{item.caption}</figcaption>:null}{kind==="video_hub"&&item.transcript?<details className="border-t border-slate-100 px-5 py-4"><summary className="cursor-pointer font-extrabold text-teal-700">Baca transkrip</summary><p className="mt-3 whitespace-pre-wrap text-sm leading-7 text-slate-600">{item.transcript}</p></details>:null}</figure>}

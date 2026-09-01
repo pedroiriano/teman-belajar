@@ -16,10 +16,11 @@ The Go media domain is the source of truth. Admin Web must fetch `/api/v1/admin/
 
 | Kind | Extensions | Magic MIME | Final maximum |
 |---|---|---|---:|
-| Image | `.jpg`, `.jpeg`, `.png`, `.webp` | JPEG, PNG, WEBP | 2,621,440 bytes |
+| Image | `.jpg`, `.jpeg`, `.png`, `.webp` | JPEG, PNG, WEBP | 2,621,440 bytes after compression; 20,971,520-byte source ceiling |
 | Document | `.pdf` | PDF | 20,971,520 bytes |
+| Video | `.mp4`, `.webm` | ISO BMFF `ftyp`, EBML WebM | 52,428,800 bytes |
 
-Request-wide multipart maximum is 33,554,432 bytes. SVG, executable, archive, unknown, empty, path-like, control-character, mismatched extension/MIME, and oversized input must be rejected. Browser MIME is advisory. Server magic detection and actual stored length are authoritative.
+Request-wide multipart maximum is 67,108,864 bytes. SVG, executable, archive, unknown, empty, path-like, control-character, mismatched extension/MIME, and oversized input must be rejected. Browser MIME is advisory. Server magic detection and actual stored length are authoritative. Video support is bounded object delivery only; it does not introduce transcoding, streaming, or adaptive bitrate infrastructure.
 
 ## 3. Compression
 
@@ -42,7 +43,8 @@ Request-wide multipart maximum is 33,554,432 bytes. SVG, executable, archive, un
 - Reviewer: list/view/select only.
 - UI hiding is not authorization. Portal API denies Reviewer mutations.
 - Allowed entity types: `news`, `announcement`, `knowledge_revision`,
-  `faq_item`, `microlearning`. FAQ and Microlearning use curated images only; the FAQ item stores the selected
+  `faq_item`, `microlearning`. Curated gallery membership is represented by
+  `media_collection_items`, not by a browser-supplied generic usage type. FAQ and Microlearning use curated images only; the FAQ item stores the selected
   Media Asset UUID and its required non-empty alternative text.
 - Platform Configuration may reference an active image UUID for logo, banner,
   or SEO presentation. These typed references are validated on draft save and
@@ -51,6 +53,9 @@ Request-wide multipart maximum is 33,554,432 bytes. SVG, executable, archive, un
 - Allowed roles: `inline`, `featured`, `attachment`.
 - Attach only after entity ID exists. Usage identity is `(media_id, entity_type, entity_id, usage_role)` and attach is idempotent.
 - Archive is denied while any usage exists. Public delivery additionally requires an eligible published owner.
+- Gallery/video media becomes publicly eligible only while its collection is
+  `published`; collection APIs return presentation metadata and media IDs, never
+  bucket, storage key, checksum, or private object URLs.
 
 ## 6. Editor Contract
 

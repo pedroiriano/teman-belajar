@@ -124,6 +124,11 @@ var (
 		Name: "platform_configuration_operations_total",
 		Help: "Total bounded platform configuration operations by result",
 	}, []string{"operation", "result"})
+
+	MediaGalleryOperationsTotal = promauto.NewCounterVec(prometheus.CounterOpts{
+		Name: "media_gallery_operations_total",
+		Help: "Total bounded Media Gallery operations by result",
+	}, []string{"operation", "result"})
 )
 
 func RecordSSOEvent(eventType, status string) {
@@ -193,4 +198,8 @@ func RecordAuditCenter(operation, result string) {
 
 func RecordPlatformConfig(operation, result string) {
 	PlatformConfigOperationsTotal.WithLabelValues(operation, result).Inc()
+}
+
+func RecordMediaGallery(operation, result string) {
+	MediaGalleryOperationsTotal.WithLabelValues(operation, result).Inc()
 }

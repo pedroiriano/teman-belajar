@@ -33,7 +33,14 @@ func NewService(repository domain.Repository, mediaRepository mediaReader, exter
 }
 
 func (service *Service) State(ctx context.Context) (domain.State, error) {
-	return service.repository.GetState(ctx, true)
+	state, err := service.repository.GetState(ctx, true)
+	if state.Draft != nil {
+		state.Draft.Config = domain.ApplyCurrentDefaults(state.Draft.Config)
+	}
+	if state.Published != nil {
+		state.Published.Config = domain.ApplyCurrentDefaults(state.Published.Config)
+	}
+	return state, err
 }
 
 func (service *Service) Preview(ctx context.Context) (domain.PublicSnapshot, error) {
@@ -42,10 +49,10 @@ func (service *Service) Preview(ctx context.Context) (domain.PublicSnapshot, err
 		return domain.PublicSnapshot{}, err
 	}
 	if state.Draft != nil {
-		return domain.PublicSnapshot{Version: state.Draft.Version, Source: "draft", Config: state.Draft.Config}, nil
+		return domain.PublicSnapshot{Version: state.Draft.Version, Source: "draft", Config: domain.ApplyCurrentDefaults(state.Draft.Config)}, nil
 	}
 	if state.Published != nil {
-		return domain.PublicSnapshot{Version: state.Published.Version, Source: "published", Config: state.Published.Config}, nil
+		return domain.PublicSnapshot{Version: state.Published.Version, Source: "published", Config: domain.ApplyCurrentDefaults(state.Published.Config)}, nil
 	}
 	return domain.PublicSnapshot{Source: "fallback", Config: domain.Default()}, nil
 }
@@ -63,7 +70,7 @@ func (service *Service) Public(ctx context.Context) domain.PublicSnapshot {
 	snapshot := domain.PublicSnapshot{Source: "fallback", Config: domain.Default()}
 	revision, err := service.repository.GetPublished(ctx)
 	if err == nil && revision != nil {
-		snapshot = domain.PublicSnapshot{Version: revision.Version, Source: "published", Config: revision.Config}
+		snapshot = domain.PublicSnapshot{Version: revision.Version, Source: "published", Config: domain.ApplyCurrentDefaults(revision.Config)}
 	}
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		snapshot.Source = "fallback"

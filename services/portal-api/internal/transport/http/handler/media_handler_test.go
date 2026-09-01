@@ -48,7 +48,7 @@ func TestMediaPolicyIsExact(t *testing.T) {
 		t.Fatalf("got %d", response.Code)
 	}
 	body := response.Body.String()
-	for _, expected := range []string{"2621440", "20971520", "33554432", ".webp", "application/pdf"} {
+	for _, expected := range []string{"2621440", "20971520", "52428800", "67108864", ".webp", ".mp4", ".webm", "video/mp4", "application/pdf"} {
 		if !strings.Contains(body, expected) {
 			t.Fatalf("policy missing %s: %s", expected, body)
 		}

@@ -17,6 +17,7 @@
     "test:microlearning": "node ../../scripts/verify-microlearning-contract.mjs",
     "test:webinars": "node ../../scripts/verify-webinar-contract.mjs",
     "test:platform-configuration": "node ../../scripts/verify-platform-configuration-contract.mjs",
+    "test:media-gallery": "node ../../scripts/verify-media-gallery-contract.mjs",
     "test:vendor-foundation": "node ../../scripts/verify-ui-foundation-contract.mjs portal"
   },
   "dependencies": {

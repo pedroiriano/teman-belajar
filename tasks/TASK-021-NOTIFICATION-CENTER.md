@@ -1,6 +1,6 @@
 # TASK-021 — Notification Center
 
-**Status:** IMPLEMENTED — CORRECTIVE RELEASE
+**Status:** DONE — MERGED via PR #26 (`0a005f9`)
 **Owner Agent:** Backend/Frontend/Security/QA
 **Feature:** F-NOT-001, F-NOT-002
 **Dependencies:** Event and audit infrastructure
@@ -34,7 +34,7 @@ kanal email hanya ditambahkan melalui adapter dan keputusan manusia.
 
 - [x] event/idempotency/preference unit tests
 - [x] cross-user/authz/deep-link/rate-limit negative tests
-- [ ] Admin/Portal bell and inbox browser acceptance, keyboard/mobile/light/dark (final verification pending)
+- [x] Admin/Portal bell and inbox browser acceptance, keyboard/mobile/light/dark
 
 ## Documentation Impact
 

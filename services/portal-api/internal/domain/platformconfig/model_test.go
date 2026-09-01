@@ -55,3 +55,19 @@ func TestValidateAllowsHTTPSOnServerAllowlist(t *testing.T) {
 		t.Fatalf("allowlisted URL rejected: %v", err)
 	}
 }
+
+func TestApplyCurrentDefaultsAddsMediaGalleryWithoutOverridingExplicitVisibility(t *testing.T) {
+	legacy := Default()
+	legacy.Navigation = legacy.Navigation[:2]
+	legacy.Features = legacy.Features[:2]
+	current := ApplyCurrentDefaults(legacy)
+	if current.Navigation[len(current.Navigation)-1].Href != "/media-gallery" || current.Features[len(current.Features)-1].Key != "media_gallery" {
+		t.Fatal("legacy configuration was not extended")
+	}
+	current.Navigation[len(current.Navigation)-1].Visible = false
+	current.Features[len(current.Features)-1].Visible = false
+	explicit := ApplyCurrentDefaults(current)
+	if explicit.Navigation[len(explicit.Navigation)-1].Visible || explicit.Features[len(explicit.Features)-1].Visible {
+		t.Fatal("explicit hidden presentation was overridden")
+	}
+}

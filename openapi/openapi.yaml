@@ -2175,6 +2175,143 @@ paths:
           $ref: '#/components/responses/NotFound'
       summary: Get Media Content
       security: []
+  /media-collections:
+    get:
+      tags: [Media Gallery]
+      summary: List published media collections
+      operationId: listPublicMediaCollections
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+        - { name: q, in: query, schema: { type: string, maxLength: 100 } }
+        - { name: kind, in: query, schema: { $ref: '#/components/schemas/MediaCollectionKind' } }
+      responses:
+        '200':
+          description: Published collections with active, allowlisted media metadata
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/MediaCollectionPage' }
+        '422': { $ref: '#/components/responses/ValidationError' }
+  /media-collections/{slug}:
+    get:
+      tags: [Media Gallery]
+      summary: Get a published media collection
+      operationId: getPublicMediaCollection
+      security: []
+      parameters:
+        - { name: slug, in: path, required: true, schema: { type: string, maxLength: 160 } }
+      responses:
+        '200':
+          description: Published collection detail
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/MediaCollectionResponse' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /admin/media-collections:
+    get:
+      tags: [Admin, Media Gallery]
+      summary: List media collections for curation
+      operationId: listAdminMediaCollections
+      security: [{ oidc: [content:read] }]
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+        - { name: q, in: query, schema: { type: string, maxLength: 100 } }
+        - { name: kind, in: query, schema: { $ref: '#/components/schemas/MediaCollectionKind' } }
+        - { name: status, in: query, schema: { $ref: '#/components/schemas/MediaCollectionStatus' } }
+      responses:
+        '200':
+          description: Authorized collection page
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/MediaCollectionPage' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '422': { $ref: '#/components/responses/ValidationError' }
+    post:
+      tags: [Admin, Media Gallery]
+      summary: Create a draft media collection
+      operationId: createMediaCollection
+      security: [{ oidc: [content:write] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/MediaCollectionWrite' }
+      responses:
+        '201':
+          description: Draft collection created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/MediaCollectionResponse' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '422': { $ref: '#/components/responses/ValidationError' }
+  /admin/media-collections/{id}:
+    get:
+      tags: [Admin, Media Gallery]
+      summary: Get a media collection for curation
+      operationId: getAdminMediaCollection
+      security: [{ oidc: [content:read] }]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200':
+          description: Authorized collection detail
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/MediaCollectionResponse' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    patch:
+      tags: [Admin, Media Gallery]
+      summary: Update a draft media collection with optimistic locking
+      operationId: updateMediaCollection
+      security: [{ oidc: [content:write] }]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/MediaCollectionUpdate' }
+      responses:
+        '200':
+          description: Collection updated
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/MediaCollectionResponse' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { description: Optimistic version conflict }
+        '422': { $ref: '#/components/responses/ValidationError' }
+  /admin/media-collections/{id}/transition:
+    post:
+      tags: [Admin, Media Gallery]
+      summary: Transition a media collection lifecycle
+      operationId: transitionMediaCollection
+      security: [{ oidc: [content:write] }]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/MediaCollectionTransition' }
+      responses:
+        '200':
+          description: Collection transitioned
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/MediaCollectionResponse' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { description: Optimistic version conflict }
+        '422': { $ref: '#/components/responses/ValidationError' }
   /api/v1/learning/courses:
     get:
       tags:
@@ -4376,13 +4513,13 @@ components:
           maxLength: 2000
     MediaUploadPolicy:
       type: object
-      required: [allowed_extensions, allowed_mime_types, extension_mime_types, max_image_bytes, max_object_bytes, max_multipart_bytes]
+      required: [allowed_extensions, allowed_mime_types, extension_mime_types, max_image_bytes, max_image_source_bytes, max_document_bytes, max_video_bytes, max_object_bytes, max_multipart_bytes]
       properties:
         allowed_extensions:
           type: array
           items:
             type: string
-          example: [.jpg, .jpeg, .png, .webp, .pdf]
+          example: [.jpg, .jpeg, .png, .webp, .pdf, .mp4, .webm]
         allowed_mime_types:
           type: array
           items:
@@ -4394,12 +4531,110 @@ components:
         max_image_bytes:
           type: integer
           example: 2621440
-        max_object_bytes:
+        max_image_source_bytes:
           type: integer
           example: 20971520
+        max_document_bytes:
+          type: integer
+          example: 20971520
+        max_video_bytes:
+          type: integer
+          example: 52428800
+        max_object_bytes:
+          type: integer
+          example: 52428800
         max_multipart_bytes:
           type: integer
-          example: 33554432
+          example: 67108864
+    MediaCollectionKind:
+      type: string
+      enum: [image_gallery, video_hub]
+    MediaCollectionStatus:
+      type: string
+      enum: [draft, in_review, approved, published, archived]
+    MediaCollectionItemWrite:
+      type: object
+      additionalProperties: false
+      required: [media_id, sort_order, featured, decorative]
+      properties:
+        media_id: { type: string, format: uuid }
+        sort_order: { type: integer, minimum: 0, maximum: 10000 }
+        featured: { type: boolean }
+        caption: { type: [string, 'null'], maxLength: 2000 }
+        alt_text: { type: [string, 'null'], maxLength: 255 }
+        decorative: { type: boolean }
+        transcript: { type: [string, 'null'], maxLength: 20000 }
+    MediaCollectionItem:
+      allOf:
+        - $ref: '#/components/schemas/MediaCollectionItemWrite'
+        - type: object
+          required: [id, mime_type, display_filename]
+          properties:
+            id: { type: string, format: uuid }
+            mime_type: { type: string }
+            display_filename: { type: string, maxLength: 255 }
+    MediaCollectionWrite:
+      type: object
+      additionalProperties: false
+      required: [slug, title, summary, kind, featured, indexable, items]
+      properties:
+        slug: { type: string, minLength: 3, maxLength: 160, pattern: '^[a-z0-9]+(?:-[a-z0-9]+)*$' }
+        title: { type: string, minLength: 3, maxLength: 200 }
+        summary: { type: string, minLength: 10, maxLength: 1000 }
+        kind: { $ref: '#/components/schemas/MediaCollectionKind' }
+        featured: { type: boolean }
+        seo_title: { type: [string, 'null'], maxLength: 70 }
+        seo_description: { type: [string, 'null'], maxLength: 160 }
+        indexable: { type: boolean }
+        items:
+          type: array
+          maxItems: 100
+          items: { $ref: '#/components/schemas/MediaCollectionItemWrite' }
+    MediaCollection:
+      allOf:
+        - $ref: '#/components/schemas/MediaCollectionWrite'
+        - type: object
+          required: [id, status, version, updated_at]
+          properties:
+            id: { type: string, format: uuid }
+            status: { $ref: '#/components/schemas/MediaCollectionStatus' }
+            version: { type: integer, format: int64, minimum: 1 }
+            published_at: { type: [string, 'null'], format: date-time }
+            updated_at: { type: string, format: date-time }
+            items:
+              type: array
+              maxItems: 100
+              items: { $ref: '#/components/schemas/MediaCollectionItem' }
+    MediaCollectionResponse:
+      type: object
+      required: [data]
+      properties:
+        data: { $ref: '#/components/schemas/MediaCollection' }
+    MediaCollectionPage:
+      type: object
+      required: [data, page, page_size, total, total_pages]
+      properties:
+        data:
+          type: array
+          items: { $ref: '#/components/schemas/MediaCollection' }
+        page: { type: integer, minimum: 1 }
+        page_size: { type: integer, minimum: 1, maximum: 50 }
+        total: { type: integer, minimum: 0 }
+        total_pages: { type: integer, minimum: 0 }
+    MediaCollectionUpdate:
+      type: object
+      additionalProperties: false
+      required: [expected_version, collection]
+      properties:
+        expected_version: { type: integer, format: int64, minimum: 1 }
+        collection: { $ref: '#/components/schemas/MediaCollectionWrite' }
+    MediaCollectionTransition:
+      type: object
+      additionalProperties: false
+      required: [expected_version, status]
+      properties:
+        expected_version: { type: integer, format: int64, minimum: 1 }
+        status: { $ref: '#/components/schemas/MediaCollectionStatus' }
     LearningCourse:
       type: object
       properties:

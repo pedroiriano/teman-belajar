@@ -16,6 +16,9 @@ export type MediaPolicy = {
   allowed_mime_types: string[];
   extension_mime_types: Record<string, string>;
   max_image_bytes: number;
+  max_image_source_bytes: number;
+  max_document_bytes: number;
+  max_video_bytes: number;
   max_object_bytes: number;
   max_multipart_bytes: number;
 };

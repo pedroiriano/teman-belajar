@@ -136,7 +136,7 @@ func TestUploadPolicyValidation(t *testing.T) {
 		{"svg denied", "ikon.svg", []byte("<svg></svg>"), 11, ErrInvalidFilename},
 		{"path denied", "../kelas.jpg", jpeg(800), 800, ErrInvalidFilename},
 		{"image compression required", "besar.jpg", jpeg(800), MaxImageBytes + 1, ErrImageCompressionRequired},
-		{"pdf too large", "besar.pdf", pdf(800), MaxObjectBytes + 1, ErrPayloadTooLarge},
+		{"pdf too large", "besar.pdf", pdf(800), MaxDocumentBytes + 1, ErrPayloadTooLarge},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -210,7 +210,7 @@ func TestRenamePreservesStorageIdentity(t *testing.T) {
 
 func TestPolicyConstantsAndUsageValidation(t *testing.T) {
 	policy := Policy()
-	if policy.MaxImageBytes != 2_621_440 || policy.MaxObjectBytes != 20_971_520 || policy.MaxMultipartBytes != 33_554_432 {
+	if policy.MaxImageBytes != 2_621_440 || policy.MaxImageSourceBytes != 20_971_520 || policy.MaxDocumentBytes != 20_971_520 || policy.MaxVideoBytes != 52_428_800 || policy.MaxObjectBytes != 52_428_800 || policy.MaxMultipartBytes != 67_108_864 {
 		t.Fatalf("unexpected policy: %#v", policy)
 	}
 	if err := ValidateUsage("unknown", "id", "inline", 0); !errors.Is(err, ErrInvalidUsage) {
@@ -225,6 +225,13 @@ func TestPolicyConstantsAndUsageValidation(t *testing.T) {
 	filter, err := NormalizeListFilter(ListFilter{Page: 1, PageSize: 20, Kind: "image"})
 	if err != nil || filter.Kind != "image" {
 		t.Fatalf("unexpected filter: %#v %v", filter, err)
+	}
+	if DetectMIME(append([]byte{0, 0, 0, 24}, []byte("ftypmp42video")...)) != "video/mp4" {
+		t.Fatal("MP4 magic was not detected")
+	}
+	webm := append([]byte{0x1a, 0x45, 0xdf, 0xa3, 0x42, 0x82, 0x84, 0x77}, []byte("ebm")...)
+	if DetectMIME(webm) != "video/webm" {
+		t.Fatal("WEBM magic was not detected")
 	}
 }
 
