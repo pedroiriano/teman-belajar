@@ -10,7 +10,8 @@ export function validateClientFile(file: File, policy: MediaPolicy): string | nu
   const expectedMime = policy.extension_mime_types[extension];
   if (!expectedMime || !policy.allowed_extensions.includes(extension)) return "Ekstensi berkas tidak diizinkan.";
   if (!policy.allowed_mime_types.includes(file.type) || file.type !== expectedMime) return "Jenis berkas browser tidak cocok dengan ekstensi.";
-  if (file.size < 1 || file.size > policy.max_object_bytes) return "Ukuran berkas melewati batas absolut 20 MiB.";
+  const typeLimit = file.type.startsWith("image/") ? policy.max_image_source_bytes : file.type.startsWith("video/") ? policy.max_video_bytes : policy.max_document_bytes;
+  if (file.size < 1 || file.size > typeLimit || file.size > policy.max_object_bytes) return "Ukuran berkas melewati batas policy server untuk jenis ini.";
   return null;
 }
 

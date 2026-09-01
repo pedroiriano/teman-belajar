@@ -62,7 +62,7 @@ export default async function AdminMediaPage({ searchParams }: { searchParams: P
 
   const params = await searchParams;
   const query = (params.q ?? "").slice(0, 100);
-  const kind = ["all", "image", "document"].includes(params.kind ?? "") ? params.kind! : "all";
+  const kind = ["all", "image", "document", "video"].includes(params.kind ?? "") ? params.kind! : "all";
   const page = Math.max(1, Number.parseInt(params.page ?? "1", 10) || 1);
   const requestedPageSize = Number.parseInt(params.page_size || "20", 10);
   const pageSize = [10, 20, 50].includes(requestedPageSize) ? requestedPageSize : 20;
@@ -77,13 +77,13 @@ export default async function AdminMediaPage({ searchParams }: { searchParams: P
       <div>
         <div className="admin-page-header">
           <div>
-            <p className="admin-kicker">Manajemen aset</p><h1 className="admin-page-title">Pustaka Media</h1><p className="admin-page-copy">Kelola gambar dan dokumen yang digunakan dalam konten Teman Belajar.</p>
+            <p className="admin-kicker">Manajemen aset</p><h1 className="admin-page-title">Pustaka Media</h1><p className="admin-page-copy">Kelola gambar, video, dan dokumen yang digunakan dalam konten Teman Belajar.</p>
           </div>
         </div>
 
         {canUpload && <MediaUploader />}
 
-        <form className="admin-card mb-7 grid gap-3 p-5 sm:grid-cols-[1fr_200px_auto]" method="get"><div><label htmlFor="media-search" className="sr-only">Cari media</label><input id="media-search" name="q" defaultValue={query} className="admin-input" placeholder="Cari nama tampilan, nama asli, atau judul…" /></div><div><label htmlFor="media-kind" className="sr-only">Jenis media</label><select id="media-kind" name="kind" defaultValue={kind} className="admin-input"><option value="all">Semua jenis</option><option value="image">Gambar</option><option value="document">Dokumen PDF</option></select></div><button type="submit" className="admin-button">Terapkan filter</button></form>
+        <form className="admin-card mb-7 grid gap-3 p-5 sm:grid-cols-[1fr_200px_auto]" method="get"><div><label htmlFor="media-search" className="sr-only">Cari media</label><input id="media-search" name="q" defaultValue={query} className="admin-input" placeholder="Cari nama tampilan, nama asli, atau judul…" /></div><div><label htmlFor="media-kind" className="sr-only">Jenis media</label><select id="media-kind" name="kind" defaultValue={kind} className="admin-input"><option value="all">Semua jenis</option><option value="image">Gambar</option><option value="video">Video</option><option value="document">Dokumen PDF</option></select></div><button type="submit" className="admin-button">Terapkan filter</button></form>
 
         {mediaAssets.some((asset) => asset.detected_mime_type.startsWith("image/")) && <section className="mb-7" aria-labelledby="media-gallery-title"><div className="mb-4 flex items-end justify-between"><div><p className="text-xs font-black uppercase tracking-wider text-slate-400">Pratinjau visual</p><h2 id="media-gallery-title" className="mt-1 text-xl font-black text-slate-900">Galeri aset</h2></div><span className="admin-status bg-slate-100 text-slate-600">{total} aset</span></div><div className="grid grid-cols-2 gap-4 md:grid-cols-4 xl:grid-cols-6">{mediaAssets.filter((asset) => asset.detected_mime_type.startsWith("image/")).slice(0, 6).map((asset) => <Link key={asset.id} href={`/dashboard/media/${asset.id}`} className="admin-card group overflow-hidden"><span className="block aspect-square overflow-hidden bg-slate-100"><MediaPreviewImage src={`/api/bff/media/${asset.id}/content`} alt={asset.alt_text || asset.display_filename || asset.original_filename || "Pratinjau media"} className="h-full w-full object-cover transition duration-300 group-hover:scale-105" /></span><span className="block truncate p-3 text-xs font-bold text-slate-700">{asset.display_filename || asset.original_filename}</span></Link>)}</div></section>}
 

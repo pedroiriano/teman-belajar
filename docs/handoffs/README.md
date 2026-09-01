@@ -78,6 +78,12 @@ and TASK-025 corrective release status must be taken from their latest factual
 handoffs; neither authorizes Identity/SSO/RBAC, external notification channels,
 or production deployment.
 
+For Media Gallery & Video Hub, read `TASK-022-HANDOFF.md` together with
+`docs/governance/MEDIA-GALLERY-VIDEO-HUB.md`, the Media Asset governance,
+TASK-022 threat model, and operations runbook. Collections may expose only
+published allowlisted presentation metadata; private storage fields and
+unpublished assets remain prohibited.
+
 For the full runtime UI foundations, read `TASK-026-HANDOFF.md`, ADR-018,
 `docs/design-system/VENDOR-UI-RUNTIME-MANIFEST.md`, and
 `docs/design-system/UI-FOUNDATION-INTEGRATION-GUIDE.md`. Techwind is mandatory

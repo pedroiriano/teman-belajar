@@ -41,7 +41,7 @@ const navigationGroups: NavigationGroup[] = [
     items: [
       { href: "/news", label: "Berita", description: "Cerita dan perkembangan organisasi." },
       { href: "/announcements", label: "Pengumuman", description: "Informasi penting dan jadwal terbaru." },
-      { href: "/#media", label: "Media", description: "Galeri visual dari konten terbit." },
+      { href: "/media-gallery", label: "Media", description: "Galeri foto dan video terkurasi." },
       { href: "/help", label: "FAQ", description: "Jawaban terkurasi dan mudah dicari." },
     ],
   },
@@ -82,7 +82,7 @@ export function PortalChrome({ authenticated, configuration, children }: { authe
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const { menuOpen, navSticky, showBackToTop, toggleMenu, scrollToTop } = useTechwindRuntime(`${pathname}?${searchParams}`);
-  const featureForHref = (href: string) => { const key = href.startsWith("/training-programs") ? "training_programs" : href.startsWith("/microlearning") ? "microlearning" : href.startsWith("/knowledge") ? "knowledge" : href.startsWith("/news") ? "news" : href.startsWith("/announcements") ? "announcements" : href.startsWith("/help") ? "faq" : href.startsWith("/search") ? "search" : ""; return configuration.features.find((feature) => feature.key === key); };
+  const featureForHref = (href: string) => { const key = href.startsWith("/training-programs") ? "training_programs" : href.startsWith("/microlearning") ? "microlearning" : href.startsWith("/media-gallery") ? "media_gallery" : href.startsWith("/knowledge") ? "knowledge" : href.startsWith("/news") ? "news" : href.startsWith("/announcements") ? "announcements" : href.startsWith("/help") ? "faq" : href.startsWith("/search") ? "search" : ""; return configuration.features.find((feature) => feature.key === key); };
   const configuredItems = configuration.navigation.map((item) => ({ item, feature: featureForHref(item.href) })).filter(({ item, feature }) => item.visible && feature?.visible !== false).map(({ item, feature }) => ({ href: item.href, label: feature?.label || item.label, description: item.description || feature?.label || item.label }));
   const effectiveNavigationGroups: NavigationGroup[] = configuredItems.length ? [{ label: "Jelajahi", items: configuredItems }, { label: "Selanjutnya", items: [{ label: "Webinar", description: "Sesi langsung bersama narasumber.", comingSoon: true }, { label: "Jalur Belajar", description: "Rangkaian kompetensi yang terarah.", comingSoon: true }] }] : navigationGroups;
 

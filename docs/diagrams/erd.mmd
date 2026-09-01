@@ -97,6 +97,27 @@ erDiagram
     string usage_role
     int sort_order
   }
+  MEDIA_COLLECTION {
+    uuid id PK
+    string slug UK
+    string kind
+    string status
+    string title
+    boolean featured
+    bigint version
+    timestamptz published_at
+  }
+  MEDIA_COLLECTION_ITEM {
+    uuid id PK
+    uuid collection_id FK
+    uuid media_id FK
+    int sort_order
+    boolean featured
+    string caption
+    string alt_text
+    boolean decorative
+    text transcript
+  }
   FAQ_CATEGORY {
     uuid id PK
     string slug UK
@@ -378,6 +399,8 @@ erDiagram
   KNOWLEDGE_NODE ||--o{ KNOWLEDGE_ARTICLE_NODE : classifies
   KNOWLEDGE_ARTICLE ||--o| KNOWLEDGE_ARTICLE_NODE : has_primary_placement
   MEDIA_ASSET ||--o{ MEDIA_USAGES : used_in
+  MEDIA_COLLECTION ||--o{ MEDIA_COLLECTION_ITEM : orders
+  MEDIA_ASSET ||--o{ MEDIA_COLLECTION_ITEM : curates
   FAQ_CATEGORY ||--o{ FAQ_ITEM : groups
   MEDIA_ASSET ||--o{ FAQ_ITEM : illustrates
   USER_PROFILE ||--o| MOODLE_USER_MAPPING : maps_to

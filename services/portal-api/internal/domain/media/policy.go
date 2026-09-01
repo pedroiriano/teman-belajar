@@ -1,6 +1,7 @@
 package media
 
 import (
+	"bytes"
 	"errors"
 	"path/filepath"
 	"strings"
@@ -8,11 +9,14 @@ import (
 )
 
 const (
-	MaxImageBytes     int64 = 2_621_440
-	MaxObjectBytes    int64 = 20_971_520
-	MaxMultipartBytes int64 = 33_554_432
-	MaxFilenameRunes        = 255
-	MaxMetadataRunes        = 2_000
+	MaxImageBytes       int64 = 2_621_440
+	MaxImageSourceBytes int64 = 20_971_520
+	MaxDocumentBytes    int64 = 20_971_520
+	MaxVideoBytes       int64 = 52_428_800
+	MaxObjectBytes      int64 = MaxVideoBytes
+	MaxMultipartBytes   int64 = 67_108_864
+	MaxFilenameRunes          = 255
+	MaxMetadataRunes          = 2_000
 )
 
 var (
@@ -31,25 +35,30 @@ var extensionToMIME = map[string]string{
 	".png":  "image/png",
 	".webp": "image/webp",
 	".pdf":  "application/pdf",
+	".mp4":  "video/mp4",
+	".webm": "video/webm",
 }
 
 type UploadPolicy struct {
-	AllowedExtensions  []string          `json:"allowed_extensions"`
-	AllowedMIMETypes   []string          `json:"allowed_mime_types"`
-	ExtensionMIMETypes map[string]string `json:"extension_mime_types"`
-	MaxImageBytes      int64             `json:"max_image_bytes"`
-	MaxObjectBytes     int64             `json:"max_object_bytes"`
-	MaxMultipartBytes  int64             `json:"max_multipart_bytes"`
+	AllowedExtensions   []string          `json:"allowed_extensions"`
+	AllowedMIMETypes    []string          `json:"allowed_mime_types"`
+	ExtensionMIMETypes  map[string]string `json:"extension_mime_types"`
+	MaxImageBytes       int64             `json:"max_image_bytes"`
+	MaxImageSourceBytes int64             `json:"max_image_source_bytes"`
+	MaxDocumentBytes    int64             `json:"max_document_bytes"`
+	MaxVideoBytes       int64             `json:"max_video_bytes"`
+	MaxObjectBytes      int64             `json:"max_object_bytes"`
+	MaxMultipartBytes   int64             `json:"max_multipart_bytes"`
 }
 
 func Policy() UploadPolicy {
 	return UploadPolicy{
-		AllowedExtensions: []string{".jpg", ".jpeg", ".png", ".webp", ".pdf"},
-		AllowedMIMETypes:  []string{"image/jpeg", "image/png", "image/webp", "application/pdf"},
+		AllowedExtensions: []string{".jpg", ".jpeg", ".png", ".webp", ".pdf", ".mp4", ".webm"},
+		AllowedMIMETypes:  []string{"image/jpeg", "image/png", "image/webp", "application/pdf", "video/mp4", "video/webm"},
 		ExtensionMIMETypes: map[string]string{
-			".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".png": "image/png", ".webp": "image/webp", ".pdf": "application/pdf",
+			".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".png": "image/png", ".webp": "image/webp", ".pdf": "application/pdf", ".mp4": "video/mp4", ".webm": "video/webm",
 		},
-		MaxImageBytes: MaxImageBytes, MaxObjectBytes: MaxObjectBytes, MaxMultipartBytes: MaxMultipartBytes,
+		MaxImageBytes: MaxImageBytes, MaxImageSourceBytes: MaxImageSourceBytes, MaxDocumentBytes: MaxDocumentBytes, MaxVideoBytes: MaxVideoBytes, MaxObjectBytes: MaxObjectBytes, MaxMultipartBytes: MaxMultipartBytes,
 	}
 }
 
@@ -88,7 +97,10 @@ func LimitForMIME(mimeType string) int64 {
 	if strings.HasPrefix(mimeType, "image/") {
 		return MaxImageBytes
 	}
-	return MaxObjectBytes
+	if strings.HasPrefix(mimeType, "video/") {
+		return MaxVideoBytes
+	}
+	return MaxDocumentBytes
 }
 
 func DetectMIME(data []byte) string {
@@ -103,6 +115,12 @@ func DetectMIME(data []byte) string {
 	}
 	if len(data) >= 5 && string(data[:5]) == "%PDF-" {
 		return "application/pdf"
+	}
+	if len(data) >= 12 && string(data[4:8]) == "ftyp" {
+		return "video/mp4"
+	}
+	if len(data) >= 8 && bytes.Equal(data[:4], []byte{0x1a, 0x45, 0xdf, 0xa3}) && bytes.Contains(bytes.ToLower(data), []byte("webm")) {
+		return "video/webm"
 	}
 	return "application/octet-stream"
 }
@@ -155,7 +173,7 @@ func NormalizeListFilter(filter ListFilter) (ListFilter, error) {
 	if filter.Kind == "" {
 		filter.Kind = "all"
 	}
-	if filter.Kind != "all" && filter.Kind != "image" && filter.Kind != "document" {
+	if filter.Kind != "all" && filter.Kind != "image" && filter.Kind != "document" && filter.Kind != "video" {
 		return filter, ErrInvalidFilter
 	}
 	return filter, nil

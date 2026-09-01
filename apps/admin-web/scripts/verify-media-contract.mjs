@@ -11,6 +11,7 @@ const [picker, uploader, insertion, news, knowledge, announcement, revision, pol
 
 assert.match(picker, /Pustaka Media/); assert.match(picker, /Unggah Baru/); assert.match(picker, /role="dialog"/); assert.match(picker, /aria-modal="true"/);
 assert.match(uploader, /compressImage/); assert.match(uploader, /Setuju dan kompres/); assert.match(uploader, /requireInsertionAlt/);
+assert.match(uploader, /policy server/); assert.match(await read("src/components/media/client-policy.ts"), /max_image_source_bytes.*max_video_bytes.*max_document_bytes/);
 assert.match(insertion, /detected_mime_type === "application\/pdf"/); assert.match(insertion, /Teks alternatif wajib/); assert.doesNotMatch(insertion, /!\[Media\]/);
 for (const editor of [news, knowledge, announcement, revision]) { assert.match(editor, /<MediaPicker/); assert.match(editor, /mediaMarkdown/); }
 for (const createEditor of [news, knowledge, announcement]) assert.match(createEditor, /mediaUsagesFromMarkdown/);

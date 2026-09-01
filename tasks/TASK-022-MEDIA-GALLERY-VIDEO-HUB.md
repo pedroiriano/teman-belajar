@@ -1,6 +1,6 @@
 # TASK-022 — Media Gallery & Video Hub
 
-**Status:** PLANNED
+**Status:** DONE
 **Owner Agent:** Backend/Frontend/Media/SEO/QA
 **Feature:** F-MED-002, F-MED-003
 **Dependencies:** TASK-004E, TASK-011D
@@ -31,13 +31,23 @@ tanpa mengekspos bucket atau seluruh storage.
 
 ## Required Tests
 
-- [ ] collection/order/visibility unit and integration
-- [ ] unauthorized/raw-key/unpublished/media-policy negative tests
-- [ ] Admin-to-public gallery/video E2E and accessibility
+- [x] collection/order/visibility unit and isolated PostgreSQL integration tests
+- [x] unauthorized/raw-key/unpublished/media-policy negative tests
+- [x] Admin-to-public persisted E2E, transcript validation, degraded/accessibility/responsive states, and fixture archive cleanup
 
 ## Documentation Impact
 
-- [ ] OpenAPI/ERD/migration/media/SEO/UI/runbook/handoff
+- [x] OpenAPI/ERD/migration/media/SEO/UI/runbook/handoff
+
+## Local Recovery Evidence
+
+On 2026-09-01, migration 020 source history and the actual 27-column,
+20-constraint, 7-index schema were proven equivalent. After a validated local
+backup, its ledger checksum was reconciled with a transactional compare-and-swap
+and an audit event; migration source remained unchanged. Migrations 021–023 then
+applied with a 23/23 verified ledger. The disposable collection completed
+`draft → in_review → approved → published → archived` through official APIs and
+was absent from the public list/detail after cleanup.
 
 ## Definition of Done
 

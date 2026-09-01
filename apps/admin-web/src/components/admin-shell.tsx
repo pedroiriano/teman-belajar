@@ -22,6 +22,7 @@ const navigationGroups: Array<{ label: string; items: NavigationItem[] }> = [
     { href: "/dashboard/news", label: "Berita", icon: "news" },
     { href: "/dashboard/announcements", label: "Pengumuman", icon: "announcement" },
     { href: "/dashboard/media", label: "Pustaka Media", icon: "media" },
+    { href: "/dashboard/media-gallery", label: "Galeri Media", icon: "media" },
     { href: "/dashboard/taxonomy", label: "Taksonomi & SEO", icon: "folder" },
   ] },
   { label: "Platform", items: [
@@ -44,6 +45,7 @@ const titleBySegment: Record<string, string> = {
   news: "Berita",
   announcements: "Pengumuman",
   media: "Pustaka Media",
+  "media-gallery": "Galeri Media & Video Hub",
   taxonomy: "Taksonomi & SEO",
   faqs: "FAQ",
   users: "Pengguna & Profil",

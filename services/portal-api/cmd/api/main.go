@@ -34,6 +34,7 @@ import (
 	"teman-belajar-api/internal/domain/knowledge"
 	"teman-belajar-api/internal/domain/learning"
 	"teman-belajar-api/internal/domain/media"
+	"teman-belajar-api/internal/domain/mediagallery"
 	"teman-belajar-api/internal/domain/microlearning"
 	"teman-belajar-api/internal/domain/training"
 	"teman-belajar-api/internal/domain/webinar"
@@ -77,6 +78,8 @@ func main() {
 	auditRepo := postgres.NewAuditRepository(db)
 	auditCenterSvc := auditcenterapplication.NewService(auditRepo)
 	mediaRepo := postgres.NewMediaRepository(db)
+	mediaGalleryRepo := postgres.NewMediaGalleryRepository(db)
+	mediaGallerySvc := mediagallery.NewService(mediaGalleryRepo, mediaRepo, auditRepo)
 	platformConfigRepo := postgres.NewPlatformConfigRepository(db)
 	platformConfigSvc := platformconfigapplication.NewService(platformConfigRepo, mediaRepo, strings.Split(os.Getenv("PLATFORM_CONFIG_EXTERNAL_HOST_ALLOWLIST"), ","))
 	cmsSvc := cms.NewService(cmsRepo, auditRepo)
@@ -167,7 +170,7 @@ func main() {
 			log.Fatalf("Failed to ensure MinIO bucket %s: %v", minioBucket, err)
 		}
 
-		mediaSvc = media.NewService(mediaRepo, minioStorage, auditRepo, minioBucket, 20*1024*1024)
+		mediaSvc = media.NewService(mediaRepo, minioStorage, auditRepo, minioBucket, media.MaxObjectBytes)
 	}
 
 	var mediaHandler *handler.MediaHandler
@@ -248,6 +251,7 @@ func main() {
 	integrationHealthHandler := handler.NewIntegrationHealthHandler(integrationHealthSvc, auditRepo)
 	auditCenterHandler := handler.NewAuditCenterHandler(auditCenterSvc, auditRepo)
 	platformConfigHandler := handler.NewPlatformConfigHandler(platformConfigSvc, auditRepo)
+	mediaGalleryHandler := handler.NewMediaGalleryHandler(mediaGallerySvc, auditRepo)
 
 	mux.HandleFunc("/api/v1/health", handler.HealthCheck)
 	mux.Handle("GET /api/v1/platform-configuration", http.HandlerFunc(platformConfigHandler.Public))
@@ -260,6 +264,13 @@ func main() {
 	mux.Handle("PUT /api/v1/admin/platform-configuration/draft", authMiddleware(http.HandlerFunc(platformConfigHandler.SaveDraft)))
 	mux.Handle("POST /api/v1/admin/platform-configuration/publish", authMiddleware(http.HandlerFunc(platformConfigHandler.Publish)))
 	mux.Handle("POST /api/v1/admin/platform-configuration/rollback", authMiddleware(http.HandlerFunc(platformConfigHandler.Rollback)))
+	mux.HandleFunc("GET /api/v1/media-collections", mediaGalleryHandler.PublicList)
+	mux.HandleFunc("GET /api/v1/media-collections/{slug}", mediaGalleryHandler.PublicDetail)
+	mux.Handle("GET /api/v1/admin/media-collections", adminAuthMiddleware(http.HandlerFunc(mediaGalleryHandler.AdminList)))
+	mux.Handle("POST /api/v1/admin/media-collections", adminAuthMiddleware(http.HandlerFunc(mediaGalleryHandler.Create)))
+	mux.Handle("GET /api/v1/admin/media-collections/{id}", adminAuthMiddleware(http.HandlerFunc(mediaGalleryHandler.AdminGet)))
+	mux.Handle("PATCH /api/v1/admin/media-collections/{id}", adminAuthMiddleware(http.HandlerFunc(mediaGalleryHandler.Update)))
+	mux.Handle("POST /api/v1/admin/media-collections/{id}/transition", adminAuthMiddleware(http.HandlerFunc(mediaGalleryHandler.Transition)))
 	// Analytics endpoints
 	mux.Handle("POST /api/v1/analytics/events", http.HandlerFunc(analyticsHandler.HandlePublicIngest))
 	mux.Handle("POST /api/v1/internal/analytics/events", http.HandlerFunc(analyticsHandler.HandleInternalIngest))

@@ -14,10 +14,10 @@ export type PublicPlatformConfiguration = {
 const keys = ["hero", "trust", "learning_paths", "topics", "knowledge", "media", "stats", "faq", "cta"];
 export const safePlatformFallback: PublicPlatformConfiguration = {
   identity: { tagline: "Pengalaman Belajar" }, homepage: { sections: keys.map((key, index) => ({ key, visible: true, order: index + 1 })) },
-  navigation: [{ label: "Pelatihan Penuh", description: "Program terstruktur melalui Moodle.", href: "/training-programs", visible: true }, { label: "Pembelajaran Singkat", description: "Materi editorial 3–15 menit.", href: "/microlearning", visible: true }, { label: "Pusat Pengetahuan", description: "Panduan terkurasi.", href: "/knowledge", visible: true }],
+  navigation: [{ label: "Pelatihan Penuh", description: "Program terstruktur melalui Moodle.", href: "/training-programs", visible: true }, { label: "Pembelajaran Singkat", description: "Materi editorial 3–15 menit.", href: "/microlearning", visible: true }, { label: "Galeri Media", description: "Foto dan video terkurasi.", href: "/media-gallery", visible: true }, { label: "Pusat Pengetahuan", description: "Panduan terkurasi.", href: "/knowledge", visible: true }],
   banner: { enabled: false, title: "", body: "" }, footer: { summary: "Ruang belajar terpadu untuk menemukan wawasan, mengikuti pembelajaran formal, dan bertumbuh bersama organisasi.", links: [{ label: "Pusat Pengetahuan", href: "/knowledge", visible: true }, { label: "FAQ", href: "/help", visible: true }] },
   contact: { help_label: "Pusat Bantuan", help_href: "/help" }, seo: { default_title: "Teman Belajar", default_description: "Platform pengalaman belajar digital perusahaan untuk belajar, berbagi pengetahuan, dan bertumbuh bersama." },
-  features: [{ key: "training_programs", label: "Pelatihan Penuh", visible: true }, { key: "microlearning", label: "Pembelajaran Singkat", visible: true }, { key: "knowledge", label: "Pusat Pengetahuan", visible: true }, { key: "faq", label: "FAQ", visible: true }],
+  features: [{ key: "training_programs", label: "Pelatihan Penuh", visible: true }, { key: "microlearning", label: "Pembelajaran Singkat", visible: true }, { key: "media_gallery", label: "Galeri Media", visible: true }, { key: "knowledge", label: "Pusat Pengetahuan", visible: true }, { key: "faq", label: "FAQ", visible: true }],
 };
 
 export async function getPublicPlatformConfiguration(): Promise<PublicPlatformConfiguration> {

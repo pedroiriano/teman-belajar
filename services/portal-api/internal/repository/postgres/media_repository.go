@@ -70,7 +70,7 @@ func (r *MediaRepository) ListAdminAssets(ctx context.Context, filter media.List
 	offset := (filter.Page - 1) * filter.PageSize
 	const countQuery = `SELECT count(*) FROM media_assets
 		WHERE ($1 = '' OR strpos(lower(COALESCE(display_filename, '')), lower($1)) > 0 OR strpos(lower(COALESCE(original_filename, '')), lower($1)) > 0 OR strpos(lower(COALESCE(title, '')), lower($1)) > 0)
-		AND ($2 = 'all' OR ($2 = 'image' AND detected_mime_type LIKE 'image/%') OR ($2 = 'document' AND detected_mime_type = 'application/pdf'))`
+		AND ($2 = 'all' OR ($2 = 'image' AND detected_mime_type LIKE 'image/%') OR ($2 = 'document' AND detected_mime_type = 'application/pdf') OR ($2 = 'video' AND detected_mime_type LIKE 'video/%'))`
 
 	var total int
 	err := r.db.QueryRowContext(ctx, countQuery, filter.Query, filter.Kind).Scan(&total)
@@ -81,7 +81,7 @@ func (r *MediaRepository) ListAdminAssets(ctx context.Context, filter media.List
 	const query = `SELECT id, storage_key, bucket, original_filename, display_filename, detected_mime_type, size_bytes, checksum_sha256, title, alt_text, caption, status, created_at, created_by, updated_at, updated_by, archived_at
 		FROM media_assets
 		WHERE ($1 = '' OR strpos(lower(COALESCE(display_filename, '')), lower($1)) > 0 OR strpos(lower(COALESCE(original_filename, '')), lower($1)) > 0 OR strpos(lower(COALESCE(title, '')), lower($1)) > 0)
-		AND ($2 = 'all' OR ($2 = 'image' AND detected_mime_type LIKE 'image/%') OR ($2 = 'document' AND detected_mime_type = 'application/pdf'))
+		AND ($2 = 'all' OR ($2 = 'image' AND detected_mime_type LIKE 'image/%') OR ($2 = 'document' AND detected_mime_type = 'application/pdf') OR ($2 = 'video' AND detected_mime_type LIKE 'video/%'))
 		ORDER BY created_at DESC, id DESC LIMIT $3 OFFSET $4`
 
 	rows, err := r.db.QueryContext(ctx, query, filter.Query, filter.Kind, filter.PageSize, offset)
@@ -121,7 +121,7 @@ func (r *MediaRepository) CheckIsPubliclyEligible(ctx context.Context, assetID s
 			LEFT JOIN knowledge_articles ka ON kr.article_id = ka.id
 			LEFT JOIN faq_items fi ON mu.entity_type = 'faq_item' AND mu.entity_id = fi.id::text
 			LEFT JOIN microlearning_items mi ON mu.entity_type = 'microlearning' AND mu.entity_id = mi.id::text
-			WHERE mu.media_id = $1
+			WHERE mu.media_id = $1::uuid
 			AND (
 				(mu.entity_type = 'news' AND n.status = 'published')
 				OR
@@ -138,15 +138,19 @@ func (r *MediaRepository) CheckIsPubliclyEligible(ctx context.Context, assetID s
 			LEFT JOIN news sn ON seo.content_type='news' AND seo.content_id=sn.id
 			LEFT JOIN announcements sa ON seo.content_type='announcement' AND seo.content_id=sa.id
 			LEFT JOIN knowledge_articles sk ON seo.content_type='knowledge' AND seo.content_id=sk.id
-			WHERE seo.social_media_id=$1 AND seo.indexable
+			WHERE seo.social_media_id=$1::uuid AND seo.indexable
 			AND (
 				(seo.content_type='news' AND sn.status='published' AND sn.published_at<=NOW()) OR
 				(seo.content_type='announcement' AND sa.status='published' AND sa.published_at<=NOW() AND (sa.start_at IS NULL OR sa.start_at<=NOW()) AND (sa.end_at IS NULL OR sa.end_at>NOW())) OR
 				(seo.content_type='knowledge' AND sk.status='published' AND sk.published_revision_no IS NOT NULL)
 			)
 		) OR EXISTS (
+			SELECT 1 FROM media_collection_items gallery_item
+			JOIN media_collections gallery ON gallery.id=gallery_item.collection_id
+			WHERE gallery_item.media_id=$1::uuid AND gallery.status='published' AND gallery.published_at<=NOW()
+		) OR EXISTS (
 			SELECT 1 FROM platform_config_versions configuration
-			WHERE configuration.status='published' AND $1 IN (
+			WHERE configuration.status='published' AND $1::text IN (
 				configuration.config->'identity'->>'logo_media_id',
 				configuration.config->'banner'->>'media_id',
 				configuration.config->'seo'->>'social_media_id'
@@ -159,8 +163,13 @@ func (r *MediaRepository) CheckIsPubliclyEligible(ctx context.Context, assetID s
 }
 
 func (r *MediaRepository) HasActiveUsages(ctx context.Context, assetID string) (bool, error) {
-	query := `SELECT EXISTS(SELECT 1 FROM media_usages WHERE media_id = $1)
-		OR EXISTS(SELECT 1 FROM platform_config_versions configuration WHERE configuration.status IN ('draft','published') AND $1 IN (
+	query := `SELECT EXISTS(SELECT 1 FROM media_usages WHERE media_id = $1::uuid)
+		OR EXISTS(
+			SELECT 1 FROM media_collection_items gallery_item
+			JOIN media_collections gallery ON gallery.id=gallery_item.collection_id
+			WHERE gallery_item.media_id=$1::uuid AND gallery.status<>'archived'
+		)
+		OR EXISTS(SELECT 1 FROM platform_config_versions configuration WHERE configuration.status IN ('draft','published') AND $1::text IN (
 			configuration.config->'identity'->>'logo_media_id', configuration.config->'banner'->>'media_id', configuration.config->'seo'->>'social_media_id'))`
 	var exists bool
 	err := r.db.QueryRowContext(ctx, query, assetID).Scan(&exists)
