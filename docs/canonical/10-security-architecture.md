@@ -197,3 +197,11 @@ Exception harus documented, owner jelas, expiry jelas.
 - DAST staging;
 - penetration test sebelum major launch bila risk warrants;
 - periodic access review.
+
+## 13. Dynamic Presentation Configuration
+
+TASK-020 configuration is deny-by-default and presentation-only. Unknown keys,
+secret patterns, arbitrary markup, unsafe URLs, unapproved external hosts,
+inactive feature keys, and invalid Media references are rejected server-side.
+Preview is Admin-only/no-store; public failure uses a compiled safe fallback.
+Every privileged view/mutation is audited without raw URLs or sensitive payloads.

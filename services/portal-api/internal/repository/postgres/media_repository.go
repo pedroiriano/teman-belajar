@@ -144,6 +144,13 @@ func (r *MediaRepository) CheckIsPubliclyEligible(ctx context.Context, assetID s
 				(seo.content_type='announcement' AND sa.status='published' AND sa.published_at<=NOW() AND (sa.start_at IS NULL OR sa.start_at<=NOW()) AND (sa.end_at IS NULL OR sa.end_at>NOW())) OR
 				(seo.content_type='knowledge' AND sk.status='published' AND sk.published_revision_no IS NOT NULL)
 			)
+		) OR EXISTS (
+			SELECT 1 FROM platform_config_versions configuration
+			WHERE configuration.status='published' AND $1 IN (
+				configuration.config->'identity'->>'logo_media_id',
+				configuration.config->'banner'->>'media_id',
+				configuration.config->'seo'->>'social_media_id'
+			)
 		)
 	`
 	var isEligible bool
@@ -152,7 +159,9 @@ func (r *MediaRepository) CheckIsPubliclyEligible(ctx context.Context, assetID s
 }
 
 func (r *MediaRepository) HasActiveUsages(ctx context.Context, assetID string) (bool, error) {
-	query := `SELECT EXISTS(SELECT 1 FROM media_usages WHERE media_id = $1)`
+	query := `SELECT EXISTS(SELECT 1 FROM media_usages WHERE media_id = $1)
+		OR EXISTS(SELECT 1 FROM platform_config_versions configuration WHERE configuration.status IN ('draft','published') AND $1 IN (
+			configuration.config->'identity'->>'logo_media_id', configuration.config->'banner'->>'media_id', configuration.config->'seo'->>'social_media_id'))`
 	var exists bool
 	err := r.db.QueryRowContext(ctx, query, assetID).Scan(&exists)
 	return exists, err

@@ -5,23 +5,17 @@ import { PortalChrome } from "@/components/portal-chrome";
 import { AnalyticsTracker } from "@/components/analytics-tracker";
 import { StructuredData } from "@/components/structured-data";
 import { authOptions } from "@/lib/auth";
+import { getPublicPlatformConfiguration, publicMediaPath } from "@/lib/platform-configuration";
 import "@/styles/techwind-foundation.css";
 import "./globals.css";
 
 const techwindFont = Nunito({ subsets: ["latin"], display: "swap", variable: "--font-techwind-nunito" });
 
-export const metadata: Metadata = {
-  metadataBase: new URL(process.env.PORTAL_PUBLIC_BASE_URL || "http://localhost:3000"),
-  applicationName: "Teman Belajar",
-  title: { default: "Teman Belajar", template: "%s | Teman Belajar" },
-  description: "Platform pengalaman belajar digital perusahaan untuk belajar, berbagi pengetahuan, dan bertumbuh bersama.",
-  manifest: "/manifest.webmanifest",
-  icons: {
-    icon: [{ url: "/brand/favicon.png", type: "image/png", sizes: "64x64" }],
-    shortcut: "/brand/favicon.png",
-    apple: [{ url: "/brand/app-icon.png", type: "image/png", sizes: "512x512" }],
-  },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const configuration = await getPublicPlatformConfiguration();
+  const social = publicMediaPath(configuration.seo.social_media_id);
+  return { metadataBase: new URL(process.env.PORTAL_PUBLIC_BASE_URL || "http://localhost:3000"), applicationName: "Teman Belajar", title: { default: configuration.seo.default_title, template: "%s | Teman Belajar" }, description: configuration.seo.default_description, manifest: "/manifest.webmanifest", icons: { icon: [{ url: "/brand/favicon.png", type: "image/png", sizes: "64x64" }], shortcut: "/brand/favicon.png", apple: [{ url: "/brand/app-icon.png", type: "image/png", sizes: "512x512" }] }, ...(social ? { openGraph: { images: [social] } } : {}) };
+}
 
 const themeInitializationScript = `
   (() => {
@@ -40,14 +34,16 @@ const themeInitializationScript = `
 
 export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   const session = await getServerSession(authOptions);
+  const configuration = await getPublicPlatformConfiguration();
   const publicBase = new URL(process.env.PORTAL_PUBLIC_BASE_URL || "http://localhost:3000").toString();
+  const configuredLogo = publicMediaPath(configuration.identity.logo_media_id);
   return (
     <html lang="id" data-scroll-behavior="smooth" suppressHydrationWarning>
       <head><script dangerouslySetInnerHTML={{ __html: themeInitializationScript }} /></head>
       <body data-ui-foundation="techwind" className={`${techwindFont.variable} font-nunito techwind-foundation portal-root min-h-screen antialiased`}>
-        <StructuredData value={{ "@context": "https://schema.org", "@graph": [{ "@type": "Organization", "@id": `${publicBase}#organization`, name: "Teman Belajar", url: publicBase, logo: `${publicBase}brand/logo-main.png` }, { "@type": "WebSite", "@id": `${publicBase}#website`, name: "Teman Belajar", url: publicBase, publisher: { "@id": `${publicBase}#organization` } }] }} />
+        <StructuredData value={{ "@context": "https://schema.org", "@graph": [{ "@type": "Organization", "@id": `${publicBase}#organization`, name: "Teman Belajar", url: publicBase, logo: configuredLogo ? new URL(configuredLogo, publicBase).toString() : `${publicBase}brand/logo-main.png` }, { "@type": "WebSite", "@id": `${publicBase}#website`, name: "Teman Belajar", url: publicBase, publisher: { "@id": `${publicBase}#organization` } }] }} />
         <AnalyticsTracker />
-        <PortalChrome authenticated={Boolean(session)}>{children}</PortalChrome>
+        <PortalChrome authenticated={Boolean(session)} configuration={configuration}>{children}</PortalChrome>
       </body>
     </html>
   );

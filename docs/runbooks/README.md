@@ -15,3 +15,5 @@ Operational procedures live here.
   aggregation, degraded-state triage, audit, and safe local verification.
 - `AUDIT-CENTER-OPERATIONS.md` — bounded audit search/export, privacy
   redaction, masked IP, 365-day retention, and safe incident investigation.
+- `PLATFORM-CONFIGURATION-OPERATIONS.md` — typed presentation configuration,
+  private preview, atomic publish, versioned rollback, fallback, and cache checks.

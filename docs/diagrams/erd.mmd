@@ -347,6 +347,17 @@ erDiagram
     string idempotency_key UK
     int timecreated
   }
+  PLATFORM_CONFIG_VERSION {
+    uuid id PK
+    bigint version UK
+    string status
+    jsonb config
+    bigint based_on_version FK
+    string created_by
+    string published_by
+    timestamptz created_at
+    timestamptz published_at
+  }
 
   CATEGORY ||--o{ NEWS : categorizes
   CATEGORY ||--o{ ANNOUNCEMENT : categorizes
@@ -378,6 +389,7 @@ erDiagram
   MOODLE_ZOOM_ACTIVITY ||--o| MOODLE_WEBINAR_POLICY : limits
   MOODLE_ZOOM_ACTIVITY ||--o{ MOODLE_WEBINAR_REGISTRATION : registers
   MOODLE_ZOOM_ACTIVITY ||--o{ MOODLE_WEBINAR_OPERATION : deduplicates
+  PLATFORM_CONFIG_VERSION ||--o{ PLATFORM_CONFIG_VERSION : based_on
   ANALYTICS_EVENTS }o--|| ANALYTICS_PAGE_DAILY : rolls_up
   ANALYTICS_EVENTS }o--|| ANALYTICS_SEARCH_DAILY : rolls_up
   ANALYTICS_EVENTS }o--|| ANALYTICS_CONTENT_DAILY : rolls_up

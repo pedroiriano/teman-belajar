@@ -187,3 +187,11 @@ CI wajib:
 ## 9. Moodle Adapter
 
 Moodle-specific response tidak boleh bocor langsung menjadi public API contract. Adapter menerjemahkan external model → canonical learning DTO.
+
+## 10. Platform Configuration
+
+`GET /api/v1/platform-configuration` returns only a published typed
+presentation schema or safe fallback. `/api/v1/admin/platform-configuration*`
+requires exact Portal Administrator authorization and provides state, private
+preview, optimistic draft save, atomic publish, and versioned rollback. The
+canonical request/response definitions are in `openapi/openapi.yaml`.
