@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 
+import { PortalIcon } from "@/components/portal-icon";
+
 type Theme = "light" | "dark";
 
 const STORAGE_KEY = "teman-belajar-theme";
@@ -68,11 +70,7 @@ export function ThemeToggle() {
       title={isDark ? "Gunakan tema terang" : "Gunakan tema gelap"}
     >
       <span className="portal-theme-toggle__icon" aria-hidden="true">
-        {isDark ? (
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.66 6.34l1.41-1.41"/></svg>
-        ) : (
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M20.4 15.6A8.5 8.5 0 0 1 8.4 3.6 8.5 8.5 0 1 0 20.4 15.6Z"/></svg>
-        )}
+        <PortalIcon name={isDark ? "sun" : "moon"} />
       </span>
       <span className="portal-theme-toggle__label">{mounted ? (isDark ? "Terang" : "Gelap") : "Tema"}</span>
     </button>

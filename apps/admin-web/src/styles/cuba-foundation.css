@@ -63,6 +63,73 @@
   font-family: inherit;
 }
 
+/* Cuba DataTables mobile card transformation for <= 540px */
+@media (max-width: 540px) {
+  .cuba-table-responsive-cards {
+    min-width: 0 !important;
+    border-collapse: separate !important;
+    border-spacing: 0 10px !important;
+  }
+  .cuba-table-responsive-cards thead {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    overflow: hidden !important;
+    clip: rect(0 0 0 0) !important;
+    white-space: nowrap !important;
+  }
+  .cuba-table-responsive-cards tbody {
+    display: grid !important;
+    gap: 8px !important;
+  }
+  .cuba-table-responsive-cards tbody tr {
+    padding: 14px !important;
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) auto !important;
+    gap: 8px 12px !important;
+    border: 1px solid var(--admin-border) !important;
+    border-radius: 12px !important;
+    background: var(--admin-panel) !important;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04) !important;
+  }
+  .cuba-table-responsive-cards td {
+    display: grid !important;
+    padding: 0 !important;
+    border: 0 !important;
+    text-align: left !important;
+    font-size: 12px !important;
+    gap: 2px !important;
+  }
+  .cuba-table-responsive-cards td::before {
+    content: attr(data-label);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--admin-muted);
+  }
+  .cuba-table-responsive-cards td:first-child {
+    grid-column: 1 / -1;
+    padding-bottom: 8px !important;
+    border-bottom: 1px solid var(--admin-border) !important;
+  }
+  .cuba-table-responsive-cards td:first-child::before {
+    display: none !important;
+  }
+  .cuba-table-responsive-cards td:last-child {
+    position: relative !important;
+    grid-column: 1 / -1;
+    padding-top: 8px !important;
+    border-top: 1px dashed var(--admin-border) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-end !important;
+  }
+  .cuba-table-responsive-cards td:last-child::before {
+    display: none !important;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .cuba-foundation *,
   .cuba-foundation *::before,

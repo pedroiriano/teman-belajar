@@ -11,7 +11,7 @@ const backend = [
   "services/portal-api/migrations/024_create_learning_paths.sql",
 ].map(read).join("\n");
 const admin = read("apps/admin-web/src/app/dashboard/learning-paths/page.tsx") + read("apps/admin-web/src/components/admin-shell.tsx");
-const portal = read("apps/portal-web/src/app/learning-paths/[slug]/page.tsx") + read("apps/portal-web/src/components/portal-chrome.tsx");
+const portal = read("apps/portal-web/src/app/learning-paths/[slug]/page.tsx") + read("apps/portal-web/src/components/portal-chrome.tsx") + read("apps/portal-web/src/components/techwind/index.tsx");
 const portalClient = read("apps/portal-web/src/lib/learning-paths.ts");
 const openapi = read("openapi/openapi.yaml");
 

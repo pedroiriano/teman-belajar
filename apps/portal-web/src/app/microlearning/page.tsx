@@ -1,19 +1,177 @@
 import type { Metadata } from "next";
-/* eslint-disable @next/next/no-img-element -- public media route is access-controlled and not compatible with the image optimizer */
 import Link from "next/link";
 
-import { EmptyState, ErrorState, PageHero } from "@/components/public-content";
-import { listMicrolearning, type MicrolearningFormat } from "@/lib/microlearning";
+import {
+  EmptyState,
+  ErrorState,
+  FilterBar,
+  FullScreenHero,
+  MicrolearningCard,
+  Pagination,
+  SearchField,
+  TabFilters,
+} from "@/components/techwind";
+import {
+  listMicrolearning,
+  type MicrolearningFormat,
+} from "@/lib/microlearning";
 
-export const metadata: Metadata = { title: "Pembelajaran Singkat", description: "Materi editorial terkurasi selama 3–15 menit di Teman Belajar.", alternates: { canonical: "/microlearning" } };
-const labels: Record<MicrolearningFormat, string> = { article: "Artikel", video: "Video", quick: "Quick learning" };
-function href(q: string, format: string, page: number) { const p = new URLSearchParams(); if (q) p.set("q", q); if (format) p.set("format", format); if (page > 1) p.set("page", String(page)); return `/microlearning${p.size ? `?${p}` : ""}`; }
+export const metadata: Metadata = {
+  title: "Pembelajaran Singkat",
+  description:
+    "Materi editorial terkurasi selama 3–15 menit di Teman Belajar.",
+  alternates: { canonical: "/microlearning" },
+};
 
-export default async function MicrolearningPage({ searchParams }: { searchParams: Promise<{ q?: string; format?: string; page?: string }> }) {
-  const raw = await searchParams; const query = (raw.q || "").trim().slice(0, 100); const format = ["article", "video", "quick"].includes(raw.format || "") ? raw.format || "" : ""; const page = Math.max(1, Number.parseInt(raw.page || "1", 10) || 1); const result = await listMicrolearning(query, format, page);
-  return <div><PageHero eyebrow="Pembelajaran Singkat" title="Wawasan praktis dalam 3–15 menit" description="Pilih artikel, video, atau quick learning editorial. Aktivitas ini milik Portal dan tidak menggantikan course, completion, atau penilaian Moodle." />
-    <section className="portal-container py-10 sm:py-14">
-      <form role="search" action="/microlearning" className="portal-card grid gap-4 p-5 sm:grid-cols-[minmax(0,1fr)_12rem_auto] sm:items-end"><div><label htmlFor="microlearning-search" className="portal-label">Cari materi</label><input id="microlearning-search" name="q" type="search" maxLength={100} defaultValue={query} className="portal-search-input mt-2 w-full" placeholder="Topik atau judul" /></div><div><label htmlFor="microlearning-format" className="portal-label">Format</label><select id="microlearning-format" name="format" defaultValue={format} className="portal-control mt-2 w-full"><option value="">Semua format</option><option value="quick">Quick learning</option><option value="article">Artikel</option><option value="video">Video</option></select></div><button className="portal-button-primary">Terapkan</button></form>
-      {result.error ? <div className="mt-8"><ErrorState title="Pembelajaran Singkat belum dapat dimuat" /></div> : result.data.length === 0 ? <div className="mt-8"><EmptyState title={query || format ? "Materi tidak ditemukan" : "Belum ada materi terbit"} description="Materi yang telah ditinjau dan diterbitkan akan tampil di sini." /></div> : <><div className="mb-6 mt-10 flex items-end justify-between"><div><p className="portal-eyebrow">Katalog editorial</p><h2 className="mt-2 text-2xl font-black text-slate-900">Materi siap dipelajari</h2></div><p className="text-sm font-semibold text-slate-500">{result.pagination.total} materi</p></div><div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">{result.data.map((item) => <article key={item.id} className="portal-card portal-course-card overflow-hidden"><div className="aspect-[16/9] bg-gradient-to-br from-teal-700 to-sky-700">{item.featured_media_id ? <img src={`/media/${item.featured_media_id}`} alt="" className="h-full w-full object-cover" /> : <div className="flex h-full items-center justify-center text-4xl font-black text-white/80">{item.duration_minutes}</div>}</div><div className="flex flex-1 flex-col p-6"><div className="flex gap-2"><span className="portal-badge">{labels[item.format]}</span><span className="portal-badge">{item.duration_minutes} menit</span></div><h3 className="mt-5 text-xl font-black text-slate-900"><Link href={`/microlearning/${item.slug}`} className="hover:text-teal-700">{item.title}</Link></h3><p className="mt-3 line-clamp-3 text-sm leading-6 text-slate-600">{item.summary}</p><Link href={`/microlearning/${item.slug}`} className="mt-auto border-t border-slate-100 pt-5 font-extrabold text-teal-700">Mulai materi →</Link></div></article>)}</div>{result.pagination.total_pages > 1 ? <nav className="mt-10 flex items-center justify-between" aria-label="Paginasi materi"><Link aria-disabled={page <= 1} tabIndex={page <= 1 ? -1 : undefined} href={href(query, format, Math.max(1, page - 1))} className={`portal-button-secondary ${page <= 1 ? "pointer-events-none opacity-40" : ""}`}>← Sebelumnya</Link><span className="text-sm font-bold text-slate-500">Halaman {page} dari {result.pagination.total_pages}</span><Link aria-disabled={page >= result.pagination.total_pages} tabIndex={page >= result.pagination.total_pages ? -1 : undefined} href={href(query, format, Math.min(result.pagination.total_pages, page + 1))} className={`portal-button-secondary ${page >= result.pagination.total_pages ? "pointer-events-none opacity-40" : ""}`}>Berikutnya →</Link></nav> : null}</>}
-    </section></div>;
+const formatFilterOptions = [
+  { value: "", label: "Semua Format" },
+  { value: "quick", label: "Quick Learning" },
+  { value: "article", label: "Artikel" },
+  { value: "video", label: "Video" },
+];
+
+const labels: Record<MicrolearningFormat, string> = {
+  article: "Artikel",
+  video: "Video",
+  quick: "Quick learning",
+};
+
+function href(query: string, format: string, page: number) {
+  const params = new URLSearchParams();
+  if (query) params.set("q", query);
+  if (format) params.set("format", format);
+  if (page > 1) params.set("page", String(page));
+  return `/microlearning${params.size ? `?${params}` : ""}`;
+}
+
+export default async function MicrolearningPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string; format?: string; page?: string }>;
+}) {
+  const raw = await searchParams;
+  const query = (raw.q || "").trim().slice(0, 100);
+  const format = ["article", "video", "quick"].includes(raw.format || "")
+    ? raw.format || ""
+    : "";
+  const page = Math.max(1, Number.parseInt(raw.page || "1", 10) || 1);
+  const result = await listMicrolearning(query, format, page);
+
+  const breadcrumbs = [
+    { href: "/", label: "Beranda" },
+    { label: "Pembelajaran Singkat" },
+  ];
+
+  return (
+    <div>
+      <FullScreenHero
+        title="Pembelajaran Singkat"
+        description="Akses materi ringkas, video tutorial, dan rangkuman praktis yang dapat dipelajari secara fleksibel kapan saja."
+        backgroundImage="/techwind-hero/blog.jpg"
+        align="center"
+        variant="listing"
+        breadcrumbs={breadcrumbs}
+      >
+        <Link
+          href="#catalog"
+          className="py-2.5 px-6 inline-block font-semibold tracking-wide border align-middle duration-500 text-sm sm:text-base text-center bg-primary hover:bg-primary-700 border-primary hover:border-primary-700 text-white rounded-md shadow-md"
+        >
+          Lihat Pembelajaran Singkat
+        </Link>
+      </FullScreenHero>
+
+      <section id="catalog" className="portal-container py-10 sm:py-14">
+        <FilterBar
+          role="search"
+          action="/microlearning"
+          method="GET"
+          className="mb-6 flex flex-col gap-3 p-4 sm:flex-row"
+        >
+          <SearchField
+            id="microlearning-search"
+            name="q"
+            label="Cari materi"
+            placeholder="Cari topik atau judul materi"
+            maxLength={100}
+            defaultValue={query}
+            required={false}
+            inputClassName="min-h-11 !rounded-xl !pl-12"
+            className="flex-1"
+          />
+          {format ? <input type="hidden" name="format" value={format} /> : null}
+          <button type="submit" className="portal-button-primary min-h-11">
+            Cari materi
+          </button>
+          {query || format ? (
+            <Link
+              href="/microlearning"
+              className="portal-button-secondary min-h-11"
+            >
+              Hapus filter
+            </Link>
+          ) : null}
+        </FilterBar>
+
+        {/* Tab Filters for Format */}
+        <div className="mb-8">
+          <TabFilters options={formatFilterOptions} paramName="format" basePath="/microlearning" />
+        </div>
+
+        {result.error ? (
+          <div className="mt-8">
+            <ErrorState title="Pembelajaran Singkat belum dapat dimuat" />
+          </div>
+        ) : result.data.length === 0 ? (
+          <div className="mt-8">
+            <EmptyState
+              title={
+                query || format
+                  ? "Materi tidak ditemukan"
+                  : "Belum ada materi terbit"
+              }
+              description={
+                query || format
+                  ? "Coba gunakan kata kunci atau filter format lain."
+                  : "Materi yang telah ditinjau dan diterbitkan akan tampil di sini."
+              }
+            />
+          </div>
+        ) : (
+          <>
+            <div className="mb-6 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+              <div>
+                <p className="portal-eyebrow">Katalog Editorial</p>
+                <h2 className="mt-1 text-2xl font-bold text-slate-900 dark:text-white">
+                  {query ? `Hasil untuk “${query}”` : "Materi siap dipelajari"}
+                </h2>
+                <p className="mt-1.5 text-sm text-slate-500 dark:text-slate-400">
+                  Menampilkan {result.data.length} dari {result.pagination.total} materi pembelajaran singkat tersedia
+                </p>
+              </div>
+            </div>
+
+            <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+              {result.data.map((item) => (
+                <MicrolearningCard
+                  key={item.id}
+                  href={`/microlearning/${item.slug}`}
+                  title={item.title}
+                  summary={item.summary}
+                  formatLabel={labels[item.format]}
+                  durationMinutes={item.duration_minutes}
+                  featuredMediaId={item.featured_media_id}
+                />
+              ))}
+            </div>
+
+            <Pagination
+              pagination={result.pagination}
+              path="/microlearning"
+              getHref={(nextPage) => href(query, format, nextPage)}
+            />
+          </>
+        )}
+      </section>
+    </div>
+  );
 }

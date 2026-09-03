@@ -1,2 +1,7 @@
 "use client";
-export default function MicrolearningError({ reset }: { reset: () => void }) { return <div className="portal-container py-16 text-center" role="alert"><h1 className="text-2xl font-black text-slate-900">Materi belum dapat dimuat</h1><p className="mt-3 text-slate-600">Coba kembali beberapa saat lagi.</p><button type="button" onClick={reset} className="portal-button-primary mt-6">Coba lagi</button></div>; }
+
+import { ErrorState } from "@/components/techwind";
+
+export default function MicrolearningError({ reset }: { reset: () => void }) {
+  return <div className="portal-container py-16"><ErrorState title="Pembelajaran Singkat belum dapat dimuat" /><button type="button" onClick={reset} className="portal-button-primary mt-6">Coba lagi</button></div>;
+}

@@ -1,8 +1,95 @@
-import type {Metadata} from "next";
-import {notFound} from "next/navigation";
-import {PublicMediaItem} from "@/components/public-media-item";
-import {StructuredData} from "@/components/structured-data";
-import {getMediaCollection} from "@/lib/media-gallery";
+import type { Metadata } from "next";
+import { notFound } from "next/navigation";
+import { FullScreenHero } from "@/components/techwind";
+import { MediaGalleryDetailView } from "@/components/media-gallery-detail-view";
+import { StructuredData } from "@/components/structured-data";
+import { getMediaCollection } from "@/lib/media-gallery";
 
-export async function generateMetadata({params}:{params:Promise<{slug:string}>}):Promise<Metadata>{const{slug}=await params;const collection=await getMediaCollection(slug);if(!collection)return{title:"Koleksi tidak ditemukan",robots:{index:false,follow:false}};return{title:collection.seo_title||collection.title,description:collection.seo_description||collection.summary,alternates:{canonical:`/media-gallery/${collection.slug}`},robots:{index:collection.indexable,follow:collection.indexable}}}
-export default async function MediaGalleryDetail({params}:{params:Promise<{slug:string}>}){const{slug}=await params;const collection=await getMediaCollection(slug);if(!collection)notFound();const publicBase=process.env.PORTAL_PUBLIC_BASE_URL||"http://localhost:3000";return <article><StructuredData value={{"@context":"https://schema.org","@type":collection.kind==="image_gallery"?"ImageGallery":"CollectionPage",name:collection.title,description:collection.summary,url:`${publicBase}/media-gallery/${collection.slug}`,numberOfItems:collection.items.length}}/><header className="portal-page-hero"><div className="portal-container py-14 sm:py-20"><p className="portal-eyebrow">{collection.kind==="image_gallery"?"Galeri foto":"Video Hub"}</p><h1 className="portal-page-hero-title">{collection.title}</h1><p className="portal-page-hero-copy">{collection.summary}</p></div></header><section className="portal-container py-10 sm:py-14">{collection.items.length===0?<div className="portal-card p-12 text-center"><h2 className="text-xl font-black text-slate-900">Media tidak lagi tersedia</h2><p className="mt-2 text-sm text-slate-600">Koleksi tetap tercatat, tetapi seluruh referensinya telah dinonaktifkan.</p></div>:<div className={collection.kind==="image_gallery"?"grid gap-6 md:grid-cols-2 xl:grid-cols-3":"grid gap-8 lg:grid-cols-2"}>{collection.items.map(item=><PublicMediaItem key={item.id} item={item} kind={collection.kind}/>)}</div>}</section></article>}
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}): Promise<Metadata> {
+  const { slug } = await params;
+  const collection = await getMediaCollection(slug);
+  if (!collection)
+    return {
+      title: "Koleksi tidak ditemukan",
+      robots: { index:false, follow: false },
+    };
+  return {
+    title: collection.seo_title || collection.title,
+    description: collection.seo_description || collection.summary,
+    alternates: { canonical: `/media-gallery/${collection.slug}` },
+    robots: { index: collection.indexable, follow: collection.indexable },
+  };
+}
+
+export default async function MediaGalleryDetail({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}) {
+  const { slug } = await params;
+  const collection = await getMediaCollection(slug);
+  if (!collection) notFound();
+  const publicBase =
+    process.env.PORTAL_PUBLIC_BASE_URL || "http://localhost:3000";
+
+  const featuredItem =
+    collection.items.find((item) => item.featured) || collection.items[0];
+  const backgroundImage = featuredItem
+    ? `/media/${encodeURIComponent(featuredItem.media_id)}`
+    : "/techwind-hero/portfolio/bg-inner.jpg";
+
+  const breadcrumbs = [
+    { href: "/", label: "Beranda" },
+    { href: "/media-gallery", label: "Galeri Media" },
+    { label: collection.title },
+  ];
+
+  return (
+    <article>
+      <StructuredData
+        value={{
+          "@context": "https://schema.org",
+          "@type":
+            collection.kind === "image_gallery"
+              ? "ImageGallery"
+              : "CollectionPage",
+          name: collection.title,
+          description: collection.summary,
+          url: `${publicBase}/media-gallery/${collection.slug}`,
+          numberOfItems: collection.items.length,
+        }}
+      />
+      <FullScreenHero
+        title={collection.title}
+        description={collection.summary}
+        backgroundImage={backgroundImage}
+        align="center"
+        variant="listing"
+        breadcrumbs={breadcrumbs}
+      >
+        <div className="flex items-center justify-center gap-3">
+          <span className="px-4 py-1.5 text-xs font-bold uppercase tracking-wider text-white bg-teal-700 rounded-full">
+            {collection.kind === "image_gallery" ? "Galeri Foto" : "Video Hub"}
+          </span>
+          {collection.published_at && (
+            <span className="text-white/80 text-sm font-medium">
+              {new Date(collection.published_at).toLocaleDateString("id-ID", {
+                day: "numeric",
+                month: "long",
+                year: "numeric",
+              })}
+            </span>
+          )}
+        </div>
+      </FullScreenHero>
+
+      <section className="portal-container py-12 sm:py-16">
+        <MediaGalleryDetailView collection={collection} />
+      </section>
+    </article>
+  );
+}

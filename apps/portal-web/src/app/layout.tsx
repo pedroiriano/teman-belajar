@@ -39,7 +39,9 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
   const configuredLogo = publicMediaPath(configuration.identity.logo_media_id);
   return (
     <html lang="id" data-scroll-behavior="smooth" suppressHydrationWarning>
-      <head><script dangerouslySetInnerHTML={{ __html: themeInitializationScript }} /></head>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeInitializationScript }} />
+      </head>
       <body data-ui-foundation="techwind" className={`${techwindFont.variable} font-nunito techwind-foundation portal-root min-h-screen antialiased`}>
         <StructuredData value={{ "@context": "https://schema.org", "@graph": [{ "@type": "Organization", "@id": `${publicBase}#organization`, name: "Teman Belajar", url: publicBase, logo: configuredLogo ? new URL(configuredLogo, publicBase).toString() : `${publicBase}brand/logo-main.png` }, { "@type": "WebSite", "@id": `${publicBase}#website`, name: "Teman Belajar", url: publicBase, publisher: { "@id": `${publicBase}#organization` } }] }} />
         <AnalyticsTracker />

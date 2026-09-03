@@ -36,8 +36,61 @@ async function getLearningData(token: string) {
 }
 
 function LearningHero({ firstName, total, inProgress, completed }: { firstName: string; total?: number; inProgress?: number; completed?: number }) {
-  const stats = total === undefined ? null : [[String(total), "Total Kursus"], [String(inProgress ?? 0), "Sedang Berjalan"], [String(completed ?? 0), "Selesai"]];
-  return <section className="portal-learning-hero" data-techwind-pattern="course-dashboard-hero"><div className="relative z-10 max-w-2xl"><p className="portal-eyebrow !text-teal-200">Pembelajaran Saya</p><h1 className="mt-3 text-3xl font-black sm:text-4xl">Halo, {firstName}!</h1><p className="mt-3 max-w-xl text-sm leading-7 text-slate-300">Lanjutkan kursus formal Anda dan temukan pengetahuan pendukung dalam satu pengalaman.</p>{stats && <div className="mt-7 grid grid-cols-3 gap-3">{stats.map(([value, label]) => <div key={label} className="portal-learning-stat"><strong>{value}</strong><span>{label}</span></div>)}</div>}</div><div className="portal-learning-hero-art" aria-hidden="true"><PortalIcon name="graduation" className="h-16 w-16" /><span /><span /></div></section>;
+  const stats = total === undefined ? null : [
+    [String(total), "Total Kursus"],
+    [String(inProgress ?? 0), "Sedang Berjalan"],
+    [String(completed ?? 0), "Selesai"],
+  ];
+  return (
+    <section className="portal-learning-hero rounded-2xl mb-8" data-techwind-pattern="course-dashboard-hero">
+      <div className="relative z-10 max-w-2xl">
+        <p className="portal-eyebrow !text-teal-200">Dasbor Pembelajar</p>
+        <h1 className="mt-2 text-3xl font-extrabold sm:text-4xl text-white">
+          Halo, {firstName}!
+        </h1>
+        <p className="mt-3 max-w-xl text-sm leading-relaxed text-slate-300">
+          Lanjutkan kursus formal Anda dari Moodle dan temukan wawasan pendukung yang relevan untuk mempercepat kompetensi Anda.
+        </p>
+        {stats && (
+          <div className="mt-7 grid grid-cols-3 gap-3 sm:gap-4">
+            {stats.map(([value, label]) => (
+              <div key={label} className="portal-learning-stat rounded-xl p-3 bg-white/10 backdrop-blur-sm border border-white/10 text-center">
+                <strong className="block text-2xl sm:text-3xl font-extrabold text-white">{value}</strong>
+                <span className="text-xs font-semibold text-teal-200">{label}</span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+      <div className="portal-learning-hero-art" aria-hidden="true">
+        <PortalIcon name="graduation" className="h-16 w-16" />
+        <span />
+        <span />
+      </div>
+    </section>
+  );
+}
+
+function CertificateCard({ title, issuedAt, validUntil }: { title: string; issuedAt: string; validUntil?: string }) {
+  return (
+    <div className="portal-card p-6 rounded-xl border border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-md transition-shadow flex items-start gap-4">
+      <div className="h-12 w-12 rounded-xl bg-amber-50 dark:bg-amber-950/40 text-amber-600 flex items-center justify-center shrink-0">
+        <PortalIcon name="star" className="h-6 w-6" />
+      </div>
+      <div className="min-w-0 flex-1">
+        <span className="text-xs font-bold uppercase tracking-wider text-amber-600">Sertifikat Kelulusan</span>
+        <h3 className="mt-1 font-bold text-slate-900 dark:text-white leading-snug line-clamp-2">{title}</h3>
+        <p className="mt-1.5 text-xs text-slate-500 dark:text-slate-400">
+          Diterbitkan: {new Date(issuedAt).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })}
+        </p>
+        {validUntil && (
+          <p className="text-xs text-slate-400">
+            Berlaku hingga: {new Date(validUntil).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })}
+          </p>
+        )}
+      </div>
+    </div>
+  );
 }
 
 export default async function MyLearningDashboard() {
@@ -99,6 +152,22 @@ export default async function MyLearningDashboard() {
         continueCourse={continueCourse} 
         moodleBaseUrl={moodleBaseUrl}
       />
+      
+      {completed.length > 0 && (
+        <section className="mt-12">
+          <h2 className="portal-section-title">Sertifikat Anda</h2>
+          <div className="mt-6 grid gap-4 lg:grid-cols-2">
+            {completed.slice(0, 4).map((course) => (
+              <CertificateCard 
+                key={course.id} 
+                title={course.full_name || course.short_name} 
+                issuedAt={course.enrolled_at ? new Date(course.enrolled_at).toISOString() : "Belum ditentukan"} 
+              />
+            ))}
+          </div>
+        </section>
+      )}
+      
       <EngagementDiscovery />
     </div>
   );

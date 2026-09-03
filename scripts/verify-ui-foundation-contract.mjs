@@ -67,8 +67,10 @@ if (target === "all" || target === "portal") {
   contains("apps/portal-web/src/components/techwind-runtime.ts", /removeEventListener/, "adapter JS harus melepas event listener React");
   contains("apps/portal-web/src/components/techwind-runtime.ts", /cancelAnimationFrame/, "adapter JS harus membatalkan animation frame React");
   contains("apps/portal-web/src/components/portal-icon.tsx", /data-ui-icon="remix"/, "ikon Portal wajib dipetakan ke Remix");
+  contains("apps/portal-web/src/components/techwind/index.tsx", /export function PageHero[\s\S]*export function EmptyState[\s\S]*export function ErrorState[\s\S]*export function ComingSoonState[\s\S]*export function Pagination/, "Portal visual primitives wajib terpusat di Techwind foundation");
+  contains("apps/portal-web/src/components/public-content.tsx", /@\/components\/techwind/, "public-content hanya boleh menjadi facade ke Techwind foundation");
   contains("apps/portal-web/src/app/page.tsx", /data-techwind-pattern="index-course-hero"/, "homepage wajib memakai baseline Techwind Online Course");
-  contains("apps/portal-web/src/components/public-content.tsx", /data-techwind-pattern="course-inner-hero"/, "seluruh inner route wajib memakai hero Online Course bersama");
+  contains("apps/portal-web/src/components/techwind/index.tsx", /data-techwind-pattern="course-inner-hero"/, "seluruh inner route wajib memakai hero Online Course bersama");
   contains("apps/portal-web/src/components/learning/course-list.tsx", /portal-course-card[\s\S]*portal-course-progress/, "route pembelajaran wajib memakai pola course card dan progress Techwind");
   contains("apps/portal-web/src/app/globals.css", /\.portal-course-hero/, "hero Online Course Portal wajib ada");
   contains("apps/portal-web/src/app/globals.css", /\.portal-page-hero/, "hero inner-route Portal wajib ada");

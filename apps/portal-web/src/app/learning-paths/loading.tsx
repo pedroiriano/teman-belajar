@@ -1,1 +1,5 @@
-export default function Loading(){return <div className="portal-container py-16" role="status"><div className="portal-card animate-pulse p-8"><div className="h-5 w-36 rounded bg-slate-200"/><div className="mt-4 h-10 max-w-xl rounded bg-slate-200"/><div className="mt-8 h-40 rounded bg-slate-100"/></div><span className="sr-only">Memuat Jalur Belajar</span></div>}
+import { LoadingState } from "@/components/techwind";
+
+export default function LoadingLearningPaths() {
+  return <div className="portal-container py-16"><LoadingState label="Memuat Jalur Belajar" /></div>;
+}

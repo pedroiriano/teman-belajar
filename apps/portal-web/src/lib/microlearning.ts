@@ -12,6 +12,15 @@ export type MicrolearningList = { data: MicrolearningItem[]; pagination: { page:
 
 const apiBase = () => process.env.PORTAL_API_INTERNAL_URL;
 
+export function isMicrolearningSlug(value: string) {
+  return value.length <= 100 && /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(value);
+}
+
+export function isAllowedMicrolearningVideoUrl(value?: string) {
+  if (!value) return false;
+  try { return new URL(value).protocol === "https:"; } catch { return false; }
+}
+
 export async function listMicrolearning(query: string, format: string, page: number): Promise<MicrolearningList> {
   const base = apiBase(); if (!base) return { data: [], pagination: { page, page_size: 9, total: 0, total_pages: 0 }, error: true };
   const params = new URLSearchParams({ q: query.slice(0, 100), page: String(page), page_size: "9" }); if (format) params.set("format", format);
@@ -20,6 +29,7 @@ export async function listMicrolearning(query: string, format: string, page: num
 }
 
 export async function getMicrolearning(slug: string): Promise<MicrolearningItem | null> {
+  if (!isMicrolearningSlug(slug)) return null;
   const base = apiBase(); if (!base) throw new Error("microlearning API unavailable");
   const response = await fetch(`${base}/api/v1/microlearning/${encodeURIComponent(slug)}`, { next: { revalidate: 60 } });
   if (response.status === 404) return null; if (!response.ok) throw new Error("microlearning detail unavailable"); return response.json() as Promise<MicrolearningItem>;
