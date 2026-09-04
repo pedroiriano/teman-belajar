@@ -23,15 +23,18 @@ export const navigationGroups: NavigationGroup[] = [
     label: "Ruang Kerja",
     items: [
       { id: "dashboard", href: "/dashboard", label: "Ringkasan", icon: "dashboard" },
-      { id: "statistics", href: "/dashboard/statistics", label: "Statistik", icon: "dashboard" },
+      { id: "workflow", href: "/dashboard/workflow", label: "Alur Kerja", icon: "audit" },
+      { id: "review-queue", href: "/dashboard/review-queue", label: "Antrean Peninjauan", icon: "check" },
+      { id: "schedule", href: "/dashboard/schedule", label: "Jadwal Publikasi", icon: "calendar" },
+      { id: "statistics", href: "/dashboard/statistics", label: "Statistik", icon: "grid" },
     ],
   },
   {
     id: "learning",
     label: "Pembelajaran",
     items: [
-      { id: "training-programs", href: "/dashboard/training-programs", label: "Program Pelatihan", icon: "knowledge" },
-      { id: "microlearning", href: "/dashboard/microlearning", label: "Pembelajaran Singkat", icon: "knowledge" },
+      { id: "training-programs", href: "/dashboard/training-programs", label: "Program Pelatihan", icon: "book" },
+      { id: "microlearning", href: "/dashboard/microlearning", label: "Pembelajaran Singkat", icon: "video" },
       { id: "learning-paths", href: "/dashboard/learning-paths", label: "Jalur Belajar", icon: "knowledge" },
     ],
   },
@@ -42,7 +45,7 @@ export const navigationGroups: NavigationGroup[] = [
       { id: "knowledge", href: "/dashboard/knowledge", label: "Pusat Pengetahuan", icon: "file" },
       { id: "news", href: "/dashboard/news", label: "Berita", icon: "news" },
       { id: "announcements", href: "/dashboard/announcements", label: "Pengumuman", icon: "announcement" },
-      { id: "faqs", href: "/dashboard/faqs", label: "FAQ", icon: "folder" },
+      { id: "faqs", href: "/dashboard/faqs", label: "FAQ", icon: "help" },
     ],
   },
   {
@@ -60,6 +63,14 @@ export const navigationGroups: NavigationGroup[] = [
     label: "Administrasi Platform",
     items: [
       { id: "users", href: "/dashboard/users", label: "Pengguna & Profil", icon: "users" },
+      {
+        id: "roles",
+        href: "/dashboard/roles",
+        label: "Peran & Izin Akses",
+        icon: "users",
+        requiredRole: "Portal Administrator",
+        requiredAnyRole: ["Portal Administrator"],
+      },
       {
         id: "integration-health",
         href: "/dashboard/integration-health",
@@ -90,6 +101,9 @@ export const navigationGroups: NavigationGroup[] = [
 
 export const titleBySegment: Record<string, string> = {
   dashboard: "Dasbor",
+  workflow: "Alur Kerja",
+  "review-queue": "Antrean Peninjauan",
+  schedule: "Jadwal Publikasi",
   statistics: "Statistik",
   "integration-health": "Kesehatan Integrasi",
   audit: "Audit",
@@ -103,6 +117,7 @@ export const titleBySegment: Record<string, string> = {
   taxonomy: "Taksonomi & SEO",
   faqs: "FAQ",
   users: "Pengguna & Profil",
+  roles: "Peran & Izin Akses",
   "training-programs": "Program Pelatihan",
   microlearning: "Pembelajaran Singkat",
   "learning-paths": "Jalur Belajar",

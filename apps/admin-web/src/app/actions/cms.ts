@@ -9,11 +9,7 @@ import type { MediaUsageInput } from "@/components/media/types";
 import type { SEOFormValue } from "@/components/seo/types";
 import { saveDiscoverabilityProfileAction } from "@/app/actions/discoverability";
 
-const API_BASE = process.env.PORTAL_API_INTERNAL_URL;
-
-if (!API_BASE) {
-  throw new Error("Missing required environment variable: PORTAL_API_INTERNAL_URL");
-}
+const API_BASE = process.env.PORTAL_API_INTERNAL_URL || "http://api:8080";
 
 export async function createNewsAction(data: { title: string, slug: string, excerpt: string, body: string, seo: SEOFormValue, media_usages?: MediaUsageInput[] }) {
   const session: any = await getServerSession(authOptions);

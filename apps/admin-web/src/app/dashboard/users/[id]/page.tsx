@@ -5,6 +5,7 @@ import { kcAdminFetch } from "@/lib/keycloak-admin";
 import { toggleUserAction, updateUserProfileAction, updateUserRolesAction } from "@/app/actions/users";
 import Link from "next/link";
 import { KeycloakUser, KeycloakRole, PRODUCT_ROLES } from "@/types/user";
+import { AdminIcon } from "@/components/admin-icon";
 
 export default async function UserDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const session = await getServerSession(authOptions);
@@ -54,8 +55,9 @@ export default async function UserDetailPage({ params }: { params: Promise<{ id:
             <form action={toggleUser}>
               <button 
                 type="submit"
-                className="admin-button-secondary"
+                className="admin-button-secondary inline-flex items-center gap-2"
               >
+                <AdminIcon name={user.enabled ? "x" : "check"} className="h-4 w-4" />
                 {user.enabled ? "Nonaktifkan Akun" : "Aktifkan Akun"}
               </button>
             </form>
@@ -65,21 +67,21 @@ export default async function UserDetailPage({ params }: { params: Promise<{ id:
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="md:col-span-1">
             <div className="admin-card p-6">
-              <h3 className="text-lg font-black text-slate-900 mb-4 border-b border-slate-100 pb-3 dark:border-slate-800">Informasi Akun</h3>
+              <h3 className="text-lg font-black text-slate-900 dark:text-white mb-4 border-b border-slate-100 pb-3 dark:border-slate-800">Informasi Akun</h3>
               <dl className="space-y-4">
                 <div>
                   <dt className="text-xs font-bold uppercase tracking-wider text-slate-500">Nama Pengguna</dt>
-                  <dd className="mt-1 text-sm font-medium text-slate-900">{user.username}</dd>
+                  <dd className="mt-1 text-sm font-medium text-slate-900 dark:text-white">{user.username}</dd>
                 </div>
                 <div>
                   <dt className="text-xs font-bold uppercase tracking-wider text-slate-500">Email</dt>
-                  <dd className="mt-1 text-sm font-medium text-slate-900">{user.email || "-"}</dd>
+                  <dd className="mt-1 text-sm font-medium text-slate-900 dark:text-white">{user.email || "-"}</dd>
                 </div>
                 <div>
                   <dt className="text-xs font-bold uppercase tracking-wider text-slate-500">Status</dt>
                   <dd className="mt-1">
-                    <span className={`admin-status ${
-                      user.enabled ? "bg-green-100 text-green-800" : "bg-red-50 text-rose-700"
+                    <span className={`cuba-badge ${
+                      user.enabled ? "cuba-badge-success" : "cuba-badge-danger"
                     }`}>
                       {user.enabled ? "Aktif" : "Nonaktif"}
                     </span>

@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "next build --webpack",
     "start": "next start",
     "lint": "eslint . --max-warnings=0",
     "typecheck": "tsc --noEmit",
@@ -19,6 +19,7 @@
     "test:platform-configuration": "node ../../scripts/verify-platform-configuration-contract.mjs",
     "test:media-gallery": "node ../../scripts/verify-media-gallery-contract.mjs",
     "test:learning-paths": "node ../../scripts/verify-learning-path-contract.mjs",
+    "test:portal-experience": "node scripts/verify-portal-learner-experience-contract.mjs",
     "test:vendor-foundation": "node ../../scripts/verify-ui-foundation-contract.mjs portal"
   },
   "dependencies": {

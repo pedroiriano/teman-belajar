@@ -10,7 +10,8 @@ const config: Config = {
   theme: {
     extend: {
       fontFamily: {
-        rubik: ["var(--font-cuba-rubik)", "ui-sans-serif", "system-ui", "sans-serif"],
+        sans: ["var(--font-cuba-rubik)", "Rubik", "Inter", "ui-sans-serif", "system-ui", "-apple-system", "BlinkMacSystemFont", "Segoe UI", "sans-serif"],
+        rubik: ["var(--font-cuba-rubik)", "Rubik", "Inter", "ui-sans-serif", "system-ui", "sans-serif"],
       },
       backgroundImage: {
         "gradient-radial": "radial-gradient(var(--tw-gradient-stops))",

@@ -28,6 +28,7 @@ import (
 	platformconfigapplication "teman-belajar-api/internal/application/platformconfig"
 	searchapplication "teman-belajar-api/internal/application/search"
 	"teman-belajar-api/internal/domain/analytics"
+	"teman-belajar-api/internal/domain/dashboard"
 	"teman-belajar-api/internal/domain/cms"
 	"teman-belajar-api/internal/domain/discoverability"
 	"teman-belajar-api/internal/domain/draft"
@@ -210,6 +211,10 @@ func main() {
 	analyticsRepo := analytics.NewPostgresRepository(db)
 	analyticsHandler := handler.NewAnalyticsHandler(analyticsRepo, moodleClient)
 
+	dashboardRepo := postgres.NewDashboardRepository(db)
+	dashboardSvc := dashboard.NewService(dashboardRepo)
+	dashboardHandler := handler.NewDashboardHandler(dashboardSvc)
+
 	engagementService := engagementapplication.NewService(engagementRepo, engagementResolver, searchService)
 	engagementHandler := handler.NewEngagementHandler(engagementService)
 
@@ -281,6 +286,8 @@ func main() {
 	mux.Handle("POST /api/v1/analytics/events", http.HandlerFunc(analyticsHandler.HandlePublicIngest))
 	mux.Handle("POST /api/v1/internal/analytics/events", http.HandlerFunc(analyticsHandler.HandleInternalIngest))
 	mux.Handle("GET /api/v1/admin/analytics/statistics", adminAuthMiddleware(http.HandlerFunc(analyticsHandler.HandleGetStatistics)))
+	mux.Handle("GET /api/v1/admin/dashboard/summary", adminAuthMiddleware(http.HandlerFunc(dashboardHandler.GetSummary)))
+	mux.Handle("GET /api/v1/admin/workflow", adminAuthMiddleware(http.HandlerFunc(dashboardHandler.GetWorkflow)))
 	mux.Handle("/metrics", promhttp.Handler())
 
 	// Public CMS Endpoints
@@ -425,6 +432,7 @@ func main() {
 	mux.Handle("GET /api/v1/admin/knowledge/{id}", adminAuthMiddleware(http.HandlerFunc(knowledgeHandler.GetAdminArticle)))
 	mux.Handle("PUT /api/v1/admin/knowledge/{id}/primary-node", adminAuthMiddleware(http.HandlerFunc(hierarchyHandler.AssignArticle)))
 	mux.Handle("POST /api/v1/admin/knowledge/{id}/revisions", adminAuthMiddleware(http.HandlerFunc(knowledgeHandler.CreateRevision)))
+	mux.Handle("GET /api/v1/admin/knowledge/{id}/revisions", adminAuthMiddleware(http.HandlerFunc(knowledgeHandler.ListRevisions)))
 	mux.Handle("POST /api/v1/admin/knowledge/{id}/transition", adminAuthMiddleware(http.HandlerFunc(knowledgeHandler.TransitionStatus)))
 
 	// Owner-isolated authoring drafts (TASK-011A).

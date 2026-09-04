@@ -18,6 +18,7 @@ export default async function CreateUserPage() {
       <div>
         <div className="admin-page-header">
           <div>
+            <Link href="/dashboard/users" className="text-sm font-bold text-sky-700 dark:text-sky-400 mb-2 inline-block">&larr; Kembali ke Manajemen Pengguna</Link>
             <p className="admin-kicker">MANAJEMEN PENGGUNA</p>
             <h1 className="admin-page-title">Tambah Pengguna Baru</h1>
             <p className="admin-page-copy">Buat kredensial akun baru dan konfigurasi hak akses.</p>
@@ -26,7 +27,8 @@ export default async function CreateUserPage() {
 
         <div className="admin-form-card">
           <div className="admin-form-header">
-            <h2 className="font-black text-slate-900">Informasi Pengguna</h2>
+            <h2 className="font-black text-slate-900 dark:text-white">Informasi Pengguna</h2>
+            <p className="mt-1 text-xs text-slate-500">Lengkapi data identitas dan tetapkan peran akses platform.</p>
           </div>
           <form action={createUserAction}>
             <div className="admin-form-body space-y-6">

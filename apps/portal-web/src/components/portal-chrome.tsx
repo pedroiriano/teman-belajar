@@ -27,6 +27,7 @@ const navigationGroups: NavigationGroup[] = [
       {
         label: "Untuk Siswa",
         items: [
+          { href: "/catalog", label: "Katalog Pembelajaran", description: "Jelajahi seluruh program, microlearning & webinar." },
           { href: "/my-learning", label: "Koleksi Saya", description: "Bookmark, kelas, dan progres personal." },
           { href: "/search?content_type=course", label: "Cari Kelas", description: "Temukan katalog kelas Moodle." },
           { href: "/training-programs", label: "Pelatihan Penuh", description: "Program pelatihan terstruktur." },
@@ -209,7 +210,12 @@ export function PortalChrome({ authenticated, configuration, children }: { authe
             <ThemeToggle />
             {authenticated ? <PortalNotificationCenter /> : null}
             {authenticated ? (
-              <Link href="/api/auth/federated-logout" prefetch={false} className="portal-button-secondary hidden sm:inline-flex">Keluar</Link>
+              <>
+                <Link href="/profile" className="portal-header-action hidden sm:inline-flex" aria-label="Profil Akun" title="Profil Akun">
+                  <PortalIcon name="user" className="h-5 w-5" />
+                </Link>
+                <Link href="/api/auth/federated-logout" prefetch={false} className="portal-button-secondary hidden sm:inline-flex">Keluar</Link>
+              </>
             ) : (
               <Link href="/api/auth/signin?callbackUrl=/" className="portal-header-action hidden sm:inline-flex" aria-label="Masuk ke akun" title="Masuk ke akun"><PortalIcon name="user" className="h-5 w-5" /></Link>
             )}

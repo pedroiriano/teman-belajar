@@ -6,8 +6,29 @@ import { getServerAccessToken } from "@/lib/server-auth";
 import { AdminUnauthorized } from "@/components/admin-states";
 import { AdminDataTable } from "@/components/admin-data-table";
 import { AdminPagination } from "@/components/admin-pagination";
+import { CubaNewsTable } from "@/components/bulk-actions/cuba-news-table";
 
-async function getAdminNews(token: string, page: number, pageSize: number) {
+interface NewsArticle {
+  id: string;
+  title: string;
+  slug: string;
+  status: "draft" | "in_review" | "approved" | "published" | "rejected" | "archived";
+  published_at?: string | null;
+  created_at?: string;
+  updated_at?: string;
+}
+
+interface NewsApiResponse {
+  data: NewsArticle[];
+  pagination: {
+    page: number;
+    page_size: number;
+    total: number;
+    total_pages: number;
+  };
+}
+
+async function getAdminNews(token: string, page: number, pageSize: number): Promise<NewsApiResponse | null> {
   const API_BASE = process.env.PORTAL_API_INTERNAL_URL;
   if (!API_BASE) throw new Error("Missing PORTAL_API_INTERNAL_URL");
 
@@ -15,19 +36,26 @@ async function getAdminNews(token: string, page: number, pageSize: number) {
     const params = new URLSearchParams({ page: String(page), page_size: String(pageSize) });
     const res = await fetch(`${API_BASE}/api/v1/admin/news?${params}`, {
       headers: {
-        'Authorization': `Bearer ${token}`
+        Authorization: `Bearer ${token}`,
       },
-      next: { revalidate: 0 } // no cache for admin
+      next: { revalidate: 0 }, // no cache for admin
     });
-    
+
     if (!res.ok) return null;
     return res.json();
-  } catch (e) {
+  } catch {
     return null;
   }
 }
 
-export default async function AdminNewsPage({ searchParams }: { searchParams: Promise<{ page?: string; page_size?: string }> }) {
+
+
+
+export default async function AdminNewsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ page?: string; page_size?: string }>;
+}) {
   const params = await searchParams;
   const page = Math.max(1, Number.parseInt(params.page || "1", 10) || 1);
   const requestedPageSize = Number.parseInt(params.page_size || "20", 10);
@@ -40,7 +68,7 @@ export default async function AdminNewsPage({ searchParams }: { searchParams: Pr
   }
 
   // Allow Portal Administrator, Content Editor, or Reviewer
-  const hasAccess = session.roles?.some((r: string) => 
+  const hasAccess = session.roles?.some((r: string) =>
     ["Portal Administrator", "Content Editor", "Reviewer"].includes(r)
   );
 
@@ -50,57 +78,54 @@ export default async function AdminNewsPage({ searchParams }: { searchParams: Pr
 
   const newsRes = accessToken ? await getAdminNews(accessToken, page, pageSize) : null;
   const news = newsRes?.data || [];
-  const pagination = newsRes?.pagination || { page, page_size: pageSize, total: news.length, total_pages: news.length ? 1 : 0 };
-  if (pagination.total_pages > 0 && page > pagination.total_pages) redirect(`/dashboard/news?page=${pagination.total_pages}&page_size=${pageSize}`);
-  if (pagination.total_pages > 0 && page > pagination.total_pages) redirect(`/dashboard/news?page=${pagination.total_pages}&page_size=${pageSize}`);
+  const pagination = newsRes?.pagination || {
+    page,
+    page_size: pageSize,
+    total: news.length,
+    total_pages: news.length ? 1 : 0,
+  };
+
+  if (pagination.total_pages > 0 && page > pagination.total_pages) {
+    redirect(`/dashboard/news?page=${pagination.total_pages}&page_size=${pageSize}`);
+  }
+
+  const headerActions = (
+    <Link
+      href="/dashboard/news/create"
+      className="admin-button !min-h-9 !py-1 !px-3 !text-xs"
+    >
+      <span aria-hidden="true">+</span> Buat berita
+    </Link>
+  );
 
   return (
-    <div className="admin-page">
-      <div>
-        <div className="admin-page-header">
-          <div>
-            <p className="admin-kicker">Manajemen konten</p>
-            <h1 className="admin-page-title">Berita</h1>
-            <p className="admin-page-copy">Susun dan kelola alur kerja berita Teman Belajar.</p>
-          </div>
-          <Link 
-            href="/dashboard/news/create" 
-            className="admin-button"
-          >
-            <span aria-hidden="true">+</span> Buat berita
-          </Link>
+    <div className="admin-page space-y-6">
+      <div className="admin-page-header">
+        <div>
+          <p className="admin-kicker">Manajemen konten</p>
+          <h1 className="admin-page-title">Berita</h1>
+          <p className="admin-page-copy">
+            Susun, tinjau, dan kelola alur kerja berita dan pengumuman publik Teman Belajar.
+          </p>
         </div>
-
-        <AdminDataTable title="Daftar berita" description="Seluruh status editorial" itemCount={pagination.total} headers={["Judul", "Status", "Diterbitkan", "Aksi"]} emptyState="Belum ada berita. Buat draf pertama untuk memulai." error={newsRes ? null : "Data berita gagal dimuat."} retryHref="/dashboard/news">
-              {news.map((news: any) => (
-                  <tr key={news.id} className="hover:bg-slate-50 transition-colors">
-                    <td className="p-4">
-                      <div className="font-medium text-slate-900">{news.title}</div>
-                      <div className="text-xs text-slate-500 mt-1">{news.slug}</div>
-                    </td>
-                    <td className="p-4">
-                      <span className={`admin-status
-                        ${news.status === 'published' ? 'bg-green-100 text-green-800' : 
-                          news.status === 'draft' ? 'bg-gray-100 text-gray-800' : 
-                          news.status === 'in_review' ? 'bg-yellow-100 text-yellow-800' :
-                          'bg-blue-100 text-blue-800'}`}>
-                        {({ draft: 'Draf', in_review: 'Peninjauan', published: 'Terbit', archived: 'Diarsipkan', approved: 'Disetujui', rejected: 'Ditolak' } as Record<string, string>)[news.status] || news.status.replace('_', ' ')}
-                      </span>
-                    </td>
-                    <td className="p-4 text-sm text-slate-600">
-                      {news.published_at ? new Date(news.published_at).toLocaleDateString("id-ID") : '-'}
-                    </td>
-                    <td className="p-4 text-sm">
-                      <Link href={`/dashboard/news/${news.id}`} className="mr-4 font-bold text-sky-700 hover:text-sky-600">
-                        Buka detail →
-                      </Link>
-                    </td>
-                  </tr>
-                ))}
-        </AdminDataTable>
-        <AdminPagination page={pagination.page} pages={pagination.total_pages} total={pagination.total} pageSize={pagination.page_size} pathname="/dashboard/news" />
       </div>
+
+      {/* AdminDataTable presentation via CubaNewsTable with multi-select bulk operations */}
+      <CubaNewsTable
+        news={news}
+        itemCount={pagination.total}
+        headerActions={headerActions}
+        errorMessage={newsRes ? null : "Data berita gagal dimuat. Periksa koneksi backend."}
+      />
+
+
+      <AdminPagination
+        page={pagination.page}
+        pages={pagination.total_pages}
+        total={pagination.total}
+        pageSize={pagination.page_size}
+        pathname="/dashboard/news"
+      />
     </div>
   );
 }
-

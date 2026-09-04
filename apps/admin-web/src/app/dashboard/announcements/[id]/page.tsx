@@ -8,15 +8,35 @@ import { DraftStatus } from "@/components/drafts/DraftStatus";
 import type { DraftPayload } from "@/components/drafts/types";
 import { useAutoSaveDraft } from "@/components/drafts/use-auto-save-draft";
 import MediaPicker from "@/components/media/MediaPicker";
+import { CubaMarkdownEditor } from "@/components/editor/cuba-markdown-editor";
+import { AdminMarkdownRenderer } from "@/components/editor/admin-markdown-renderer";
 import { mediaMarkdown, mediaUsagesFromMarkdown } from "@/components/media/insertion";
 import type { MediaSelection } from "@/components/media/types";
 import { getDiscoverabilityProfileAction, saveDiscoverabilityProfileAction } from "@/app/actions/discoverability";
 import { SeoDiscoverySection } from "@/components/seo/SeoDiscoverySection";
 import { emptySEOValue, pickSEOValue, profileToSEOValue, type DiscoverabilityProfile, type SEOFormValue } from "@/components/seo/types";
+import { AdminIcon } from "@/components/admin-icon";
+import { CubaContentVersioningPanel } from "@/components/versioning/cuba-content-versioning-panel";
 
 type AnnouncementEditDraft = DraftPayload & SEOFormValue & { title: string; body: string; start_at: string | null; end_at: string | null; media_asset_ids: string[] };
 const blankDraft: AnnouncementEditDraft = { ...emptySEOValue(), title: "", body: "", start_at: null, end_at: null, media_asset_ids: [] };
 const dateTimeValue = (value?: string) => value ? new Date(new Date(value).getTime() - new Date(value).getTimezoneOffset() * 60_000).toISOString().slice(0, 16) : "";
+
+const statusLabels: Record<string, string> = {
+  draft: "Draf",
+  in_review: "Peninjauan",
+  approved: "Disetujui",
+  published: "Terbit",
+  archived: "Arsip",
+};
+
+const statusBadgeClasses: Record<string, string> = {
+  published: "cuba-badge-success",
+  approved: "cuba-badge-primary",
+  in_review: "cuba-badge-warning",
+  draft: "cuba-badge-neutral",
+  archived: "cuba-badge-neutral",
+};
 
 export default function AdminAnnouncementDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -27,6 +47,7 @@ export default function AdminAnnouncementDetailPage() {
   const [actionLoading, setActionLoading] = useState(false);
   const [error, setError] = useState("");
   const [title, setTitle] = useState(""); const [seo, setSEO] = useState<SEOFormValue>(emptySEOValue()); const [body, setBody] = useState(""); const [startAt, setStartAt] = useState(""); const [endAt, setEndAt] = useState("");
+  const [activeTab, setActiveTab] = useState<"content" | "versioning">("content");
 
   useEffect(() => {
     const fetchAnnouncement = async () => {
@@ -97,84 +118,161 @@ export default function AdminAnnouncementDetailPage() {
 
   return (
     <div className="admin-page max-w-5xl">
-      <div className="admin-page-header"><div><Link href="/dashboard/announcements" className="text-sm font-bold text-sky-700">&larr; Kembali ke Pengumuman</Link><p className="admin-kicker mt-5">Detail editorial</p><h1 className="admin-page-title">{ann.title}</h1><p className="admin-page-copy">Tinjau jadwal tayang, isi, dan status publikasi.</p></div><span className="admin-status bg-sky-50 text-sky-800">{ann.status}</span></div>
+      <div className="admin-page-header"><div><Link href="/dashboard/announcements" className="text-sm font-bold text-sky-700 dark:text-sky-400">&larr; Kembali ke Pengumuman</Link><p className="admin-kicker mt-5">Detail editorial</p><h1 className="admin-page-title">{ann.title}</h1><p className="admin-page-copy">Tinjau jadwal tayang, isi, dan status publikasi.</p></div><span className={`cuba-badge ${statusBadgeClasses[ann.status] || "cuba-badge-neutral"}`}>{statusLabels[ann.status] || ann.status}</span></div>
       {error && <div className="admin-alert-error mb-5" role="alert">{error}</div>}
-      {canEdit && <DraftStatus state={autoSave.state} message={autoSave.message} lastSavedAt={autoSave.lastSavedAt} recovery={autoSave.recovery} onRecover={autoSave.recoverFrom} onKeepCurrent={autoSave.keepCurrent} onDiscard={autoSave.discard} onStartNew={autoSave.startNew} onRetry={autoSave.saveNow} allowStartNew={false} />}
-      <section className="admin-form-card">
-          <div className="admin-form-header flex flex-wrap items-center justify-between gap-4"><div><h2 className="font-black text-slate-900">Alur publikasi</h2><p className="mt-1 text-xs text-slate-500">Aksi mengikuti status dan peran editorial.</p></div>
-            <div className="flex flex-wrap gap-2">
+
+      <div className="flex items-center gap-2 border-b border-slate-200 dark:border-slate-800 pb-3 mb-6">
+        <button
+          type="button"
+          onClick={() => setActiveTab("content")}
+          className={`flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold transition-all ${
+            activeTab === "content"
+              ? "bg-sky-600 text-white shadow-sm"
+              : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+          }`}
+        >
+          <AdminIcon name="edit" className="h-4 w-4" />
+          <span>Edit Konten</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab("versioning")}
+          className={`flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold transition-all ${
+            activeTab === "versioning"
+              ? "bg-sky-600 text-white shadow-sm"
+              : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+          }`}
+        >
+          <AdminIcon name="clock" className="h-4 w-4" />
+          <span>Riwayat Revisi & Diff</span>
+        </button>
+      </div>
+
+      {activeTab === "versioning" ? (
+        <CubaContentVersioningPanel
+          module="announcements"
+          articleId={id}
+          onRollbackComplete={() => {
+            router.refresh();
+          }}
+        />
+      ) : (
+        <>
+          {canEdit && <DraftStatus state={autoSave.state} message={autoSave.message} lastSavedAt={autoSave.lastSavedAt} recovery={autoSave.recovery} onRecover={autoSave.recoverFrom} onKeepCurrent={autoSave.keepCurrent} onDiscard={autoSave.discard} onStartNew={autoSave.startNew} onRetry={autoSave.saveNow} allowStartNew={false} />}
+          <section className="admin-form-card">
+              <div className="admin-form-header flex flex-wrap items-center justify-between gap-4"><div><h2 className="font-black text-slate-900 dark:text-white">Alur publikasi</h2><p className="mt-1 text-xs text-slate-500">Aksi mengikuti status dan peran editorial.</p></div>
+                <div className="flex flex-wrap gap-2">
+                  
+                  {ann.status === 'draft' && isEditor && (
+                    <button 
+                      onClick={() => handleTransition('in_review')} 
+                      disabled={actionLoading}
+                      className="admin-button"
+                    >
+                      Ajukan peninjauan
+                    </button>
+                  )}
+
+                  {ann.status === 'in_review' && isReviewer && (
+                    <>
+                      <button 
+                        onClick={() => handleTransition('draft')} 
+                        disabled={actionLoading}
+                        className="admin-button-secondary !text-rose-700 hover:!border-rose-300"
+                      >
+                        Kembalikan ke draf
+                      </button>
+                      <button 
+                        onClick={() => handleTransition('approved')} 
+                        disabled={actionLoading}
+                        className="admin-button"
+                      >
+                        Setujui
+                      </button>
+                    </>
+                  )}
+
+                  {ann.status === 'approved' && isReviewer && (
+                    <button 
+                      onClick={() => handleTransition('published')} 
+                      disabled={actionLoading}
+                      className="admin-button"
+                    >
+                      Terbitkan
+                    </button>
+                  )}
+
+                  {ann.status === 'published' && (isEditor || isReviewer) && (
+                    <button 
+                      onClick={() => handleTransition('archived')} 
+                      disabled={actionLoading}
+                      className="admin-button-secondary"
+                    >
+                      Arsipkan
+                    </button>
+                  )}
+                </div>
+              </div>
               
-              {ann.status === 'draft' && isEditor && (
-                <button 
-                  onClick={() => handleTransition('in_review')} 
-                  disabled={actionLoading}
-                  className="admin-button"
-                >
-                  Ajukan peninjauan
-                </button>
-              )}
-
-              {ann.status === 'in_review' && isReviewer && (
-                <>
-                  <button 
-                    onClick={() => handleTransition('draft')} 
-                    disabled={actionLoading}
-                    className="admin-button-secondary !text-rose-700"
-                  >
-                    Kembalikan ke draf
-                  </button>
-                  <button 
-                    onClick={() => handleTransition('approved')} 
-                    disabled={actionLoading}
-                    className="admin-button"
-                  >
-                    Setujui
-                  </button>
-                </>
-              )}
-
-              {ann.status === 'approved' && isReviewer && (
-                <button 
-                  onClick={() => handleTransition('published')} 
-                  disabled={actionLoading}
-                  className="admin-button"
-                >
-                  Terbitkan
-                </button>
-              )}
-
-              {ann.status === 'published' && (isEditor || isReviewer) && (
-                <button 
-                  onClick={() => handleTransition('archived')} 
-                  disabled={actionLoading}
-                  className="admin-button-secondary"
-                >
-                  Arsipkan
-                </button>
-              )}
-            </div>
-          </div>
-          
-          <div className="admin-form-body">
-            {canEdit ? <><div><label htmlFor="announcement-edit-title" className="admin-label">Judul *</label><input id="announcement-edit-title" className="admin-input" value={title} onChange={(event) => setTitle(event.target.value)} /></div><div className="grid gap-6 md:grid-cols-2"><div><label htmlFor="announcement-edit-start" className="admin-label">Mulai tayang</label><input id="announcement-edit-start" type="datetime-local" className="admin-input" value={startAt} onChange={(event) => setStartAt(event.target.value)} /></div><div><label htmlFor="announcement-edit-end" className="admin-label">Selesai tayang</label><input id="announcement-edit-end" type="datetime-local" className="admin-input" value={endAt} onChange={(event) => setEndAt(event.target.value)} /></div></div><div><div className="mb-2 flex items-center justify-between gap-3"><label htmlFor="announcement-edit-body" className="admin-label !mb-0">Isi pengumuman *</label><MediaPicker onSelect={(selection: MediaSelection) => { setBody((current) => `${current}\n${mediaMarkdown(selection)}\n`); autoSave.requestImmediateSave(); }} buttonLabel="Sisipkan media" /></div><textarea id="announcement-edit-body" className="admin-input font-mono" rows={12} value={body} onChange={(event) => setBody(event.target.value)} /></div></> : <><div><h3 className="admin-label">Jadwal tayang</h3>
-            <div className="grid gap-4 rounded-xl bg-slate-50 p-4 sm:grid-cols-2">
-              <div>
-                <span className="text-slate-500 block text-xs uppercase font-bold">Mulai</span>
-                <span className="text-slate-800">{ann.start_at ? new Date(ann.start_at).toLocaleString("id-ID") : 'Secepatnya'}</span>
+              <div className="admin-form-body">
+                {canEdit ? (
+                  <>
+                    <div>
+                      <label className="admin-label" htmlFor="ann-title">Judul pengumuman</label>
+                      <input id="ann-title" type="text" className="admin-input" value={title} onChange={(e) => setTitle(e.target.value)} required />
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="admin-label" htmlFor="ann-start">Mulai tayang</label>
+                        <input id="ann-start" type="datetime-local" className="admin-input" value={startAt} onChange={(e) => setStartAt(e.target.value)} />
+                      </div>
+                      <div>
+                        <label className="admin-label" htmlFor="ann-end">Selesai tayang</label>
+                        <input id="ann-end" type="datetime-local" className="admin-input" value={endAt} onChange={(e) => setEndAt(e.target.value)} />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="admin-label" htmlFor="ann-body">Konten pengumuman</label>
+                      <CubaMarkdownEditor
+                        id="ann-body"
+                        value={body}
+                        onChange={setBody}
+                        rows={14}
+                        placeholder="Tulis konten pengumuman dalam format Markdown…"
+                        mediaPickerSlot={<MediaPicker onSelect={(selection) => { setBody((current) => `${current}\n${mediaMarkdown(selection)}\n`); autoSave.requestImmediateSave(); }} buttonLabel="Sisipkan media" />}
+                      />
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-850/50 p-4">
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <span className="text-slate-500 dark:text-slate-400 block text-xs uppercase font-bold">Mulai</span>
+                          <span className="text-slate-900 dark:text-white font-medium">{ann.start_at ? new Date(ann.start_at).toLocaleString("id-ID") : 'Segera'}</span>
+                        </div>
+                        <div>
+                          <span className="text-slate-500 dark:text-slate-400 block text-xs uppercase font-bold">Selesai</span>
+                          <span className="text-slate-900 dark:text-white font-medium">{ann.end_at ? new Date(ann.end_at).toLocaleString("id-ID") : 'Tanpa batas'}</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div>
+                      <h3 className="admin-label">Isi pengumuman</h3>
+                      <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-800/40 p-5">
+                        <AdminMarkdownRenderer content={ann.body} />
+                      </div>
+                    </div>
+                  </>
+                )}
               </div>
-              <div>
-                <span className="text-slate-500 block text-xs uppercase font-bold">Selesai</span>
-                <span className="text-slate-800">{ann.end_at ? new Date(ann.end_at).toLocaleString("id-ID") : 'Tanpa batas'}</span>
-              </div>
-            </div></div>
-            <div><h3 className="admin-label">Isi pengumuman</h3><div className="rounded-xl border border-slate-200 bg-slate-50 p-4 font-mono text-sm leading-7 text-slate-600 whitespace-pre-wrap">{ann.body}</div></div>
-            </>}
-          </div>
-          {canEdit && <SeoDiscoverySection compact embedded value={seo} onChange={setSEO} contentTitle={title || ann.title} contentSummary={(body || ann.body || "").slice(0, 300)} contentBody={body || ann.body || ""} routePrefix="/announcements/" />}
-          {canEdit && <div className="admin-form-footer"><button type="button" className="admin-button" disabled={actionLoading || !title || !seo.slug || !body} onClick={handleSave}>Simpan perubahan</button></div>}
-      </section>
-      {!canEdit && <SeoDiscoverySection compact value={seo} onChange={setSEO} contentTitle={title || ann.title} contentSummary={(body || ann.body || "").slice(0, 300)} contentBody={body || ann.body || ""} routePrefix="/announcements/" disabled={!canEditSEO} />}
-      {!canEdit && canEditSEO && <div className="flex justify-end"><button type="button" className="admin-button" disabled={actionLoading} onClick={handleSaveSEO}>Simpan pengaturan publikasi</button></div>}
+              {canEdit && <SeoDiscoverySection compact embedded value={seo} onChange={setSEO} contentTitle={title || ann.title} contentSummary={(body || ann.body || "").slice(0, 300)} contentBody={body || ann.body || ""} routePrefix="/announcements/" />}
+              {canEdit && <div className="admin-form-footer"><button type="button" className="admin-button" disabled={actionLoading || !title || !seo.slug || !body} onClick={handleSave}>Simpan perubahan</button></div>}
+          </section>
+          {!canEdit && <SeoDiscoverySection compact value={seo} onChange={setSEO} contentTitle={title || ann.title} contentSummary={(body || ann.body || "").slice(0, 300)} contentBody={body || ann.body || ""} routePrefix="/announcements/" disabled={!canEditSEO} />}
+          {!canEdit && canEditSEO && <div className="flex justify-end"><button type="button" className="admin-button" disabled={actionLoading} onClick={handleSaveSEO}>Simpan pengaturan publikasi</button></div>}
+        </>
+      )}
     </div>
   );
 }

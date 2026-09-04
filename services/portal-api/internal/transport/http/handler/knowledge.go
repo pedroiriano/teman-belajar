@@ -318,6 +318,22 @@ func (h *KnowledgeHandler) CreateRevision(w http.ResponseWriter, r *http.Request
 	respondJSON(w, http.StatusCreated, map[string]interface{}{"id": revision.ID, "article_id": revision.ArticleID, "revision_no": revision.RevisionNo})
 }
 
+func (h *KnowledgeHandler) ListRevisions(w http.ResponseWriter, r *http.Request) {
+	id := r.PathValue("id")
+	if id == "" {
+		respondProblem(w, http.StatusBadRequest, "Bad Request", "Missing ID")
+		return
+	}
+
+	revisions, err := h.svc.ListRevisions(r.Context(), id)
+	if err != nil {
+		respondProblem(w, http.StatusInternalServerError, "Internal Server Error", "Unable to list knowledge revisions")
+		return
+	}
+
+	respondJSON(w, http.StatusOK, revisions)
+}
+
 func (h *KnowledgeHandler) TransitionStatus(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
 

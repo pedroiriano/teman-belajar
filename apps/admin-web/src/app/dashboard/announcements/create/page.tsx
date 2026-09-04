@@ -7,6 +7,7 @@ import { createAnnouncementAction } from "@/app/actions/cms";
 import { AdminIcon } from "@/components/admin-icon";
 
 import MediaPicker from "@/components/media/MediaPicker";
+import { CubaMarkdownEditor } from "@/components/editor/cuba-markdown-editor";
 import { mediaMarkdown, mediaUsagesFromMarkdown } from "@/components/media/insertion";
 import type { MediaSelection } from "@/components/media/types";
 import { DraftStatus } from "@/components/drafts/DraftStatus";
@@ -83,10 +84,26 @@ export default function CreateAnnouncementPage() {
 
   return (
     <div className="admin-page max-w-5xl">
-      <div className="admin-page-header"><div><Link href="/dashboard/announcements" className="text-sm font-bold text-sky-700">← Kembali ke Pengumuman</Link><p className="admin-kicker mt-5">Editor pengumuman</p><h1 className="admin-page-title">Buat pengumuman baru</h1><p className="admin-page-copy">Atur periode tayang agar informasi muncul pada waktu yang tepat.</p></div><span className="admin-status bg-slate-100 text-slate-600">Status: Draf</span></div>
+      <div className="admin-page-header">
+        <div>
+          <Link href="/dashboard/announcements" className="text-sm font-bold text-sky-700 dark:text-sky-400">&larr; Kembali ke Pengumuman</Link>
+          <p className="admin-kicker mt-5">Editor pengumuman</p>
+          <h1 className="admin-page-title">Buat pengumuman baru</h1>
+          <p className="admin-page-copy">Atur periode tayang agar informasi muncul pada waktu yang tepat.</p>
+        </div>
+        <span className="cuba-badge cuba-badge-neutral">Draf</span>
+      </div>
       <DraftStatus state={autoSave.state} message={autoSave.message} lastSavedAt={autoSave.lastSavedAt} recovery={autoSave.recovery} onRecover={autoSave.recoverFrom} onKeepCurrent={autoSave.keepCurrent} onDiscard={autoSave.discard} onStartNew={autoSave.startNew} onRetry={autoSave.saveNow} />
       <form onSubmit={handleSubmit} className="admin-form-card">
-        <div className="admin-form-header"><div className="flex items-center gap-3"><span className="admin-stat-icon"><AdminIcon name="announcement" className="h-5 w-5" /></span><div><h2 className="font-black text-slate-900">Informasi pengumuman</h2><p className="mt-1 text-xs text-slate-500">Lengkapi isi dan jadwal publikasi.</p></div></div></div>
+        <div className="admin-form-header">
+          <div className="flex items-center gap-3">
+            <span className="admin-stat-icon"><AdminIcon name="announcement" className="h-5 w-5" /></span>
+            <div>
+              <h2 className="font-black text-slate-900 dark:text-white">Informasi pengumuman</h2>
+              <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Lengkapi isi dan jadwal publikasi.</p>
+            </div>
+          </div>
+        </div>
         <div className="admin-form-body">
             {error && (
               <div className="admin-alert-error" role="alert">
@@ -132,20 +149,16 @@ export default function CreateAnnouncementPage() {
               </div>
             </div>
 
-            <div className="space-y-2">
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <label htmlFor="announcement-body" className="admin-label">Isi pengumuman <span className="text-rose-600">*</span></label>
-                <MediaPicker onSelect={insertMedia} buttonLabel="Sisipkan media" />
-              </div>
-              <textarea id="announcement-body"
-                required
-                rows={10}
-                value={body}
-                onChange={(e) => setBody(e.target.value)}
-                className="admin-input font-mono"
-                placeholder="Tulis isi pengumuman dalam Markdown…"
-              />
-            </div>
+            <CubaMarkdownEditor
+              id="announcement-body"
+              value={body}
+              onChange={setBody}
+              label="Isi pengumuman"
+              required
+              rows={12}
+              placeholder="Tulis isi pengumuman dalam Markdown…"
+              mediaPickerSlot={<MediaPicker onSelect={insertMedia} buttonLabel="Sisipkan media" />}
+            />
 
           </div>
         <SeoDiscoverySection compact embedded value={seo} onChange={setSEO} contentTitle={title} contentSummary={body.slice(0, 300)} contentBody={body} routePrefix="/announcements/" />

@@ -8,14 +8,34 @@ import { DraftStatus } from "@/components/drafts/DraftStatus";
 import type { DraftPayload } from "@/components/drafts/types";
 import { useAutoSaveDraft } from "@/components/drafts/use-auto-save-draft";
 import MediaPicker from "@/components/media/MediaPicker";
+import { CubaMarkdownEditor } from "@/components/editor/cuba-markdown-editor";
+import { AdminMarkdownRenderer } from "@/components/editor/admin-markdown-renderer";
 import { mediaMarkdown, mediaUsagesFromMarkdown } from "@/components/media/insertion";
 import type { MediaSelection } from "@/components/media/types";
 import { getDiscoverabilityProfileAction, saveDiscoverabilityProfileAction } from "@/app/actions/discoverability";
 import { SeoDiscoverySection } from "@/components/seo/SeoDiscoverySection";
 import { emptySEOValue, pickSEOValue, profileToSEOValue, type DiscoverabilityProfile, type SEOFormValue } from "@/components/seo/types";
+import { AdminIcon } from "@/components/admin-icon";
+import { CubaContentVersioningPanel } from "@/components/versioning/cuba-content-versioning-panel";
 
 type NewsEditDraft = DraftPayload & SEOFormValue & { title: string; excerpt: string; body: string; media_asset_ids: string[] };
 const blankDraft: NewsEditDraft = { ...emptySEOValue(), title: "", excerpt: "", body: "", media_asset_ids: [] };
+
+const statusLabels: Record<string, string> = {
+  draft: "Draf",
+  in_review: "Peninjauan",
+  approved: "Disetujui",
+  published: "Terbit",
+  archived: "Arsip",
+};
+
+const statusBadgeClasses: Record<string, string> = {
+  published: "cuba-badge-success",
+  approved: "cuba-badge-primary",
+  in_review: "cuba-badge-warning",
+  draft: "cuba-badge-neutral",
+  archived: "cuba-badge-neutral",
+};
 
 export default function AdminNewsDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -29,6 +49,7 @@ export default function AdminNewsDetailPage() {
   const [seo, setSEO] = useState<SEOFormValue>(emptySEOValue());
   const [excerpt, setExcerpt] = useState("");
   const [body, setBody] = useState("");
+  const [activeTab, setActiveTab] = useState<"content" | "versioning">("content");
 
   useEffect(() => {
     const fetchNews = async () => {
@@ -101,75 +122,150 @@ export default function AdminNewsDetailPage() {
   return (
     <div className="admin-page max-w-5xl">
       <div className="admin-page-header">
-        <div><Link href="/dashboard/news" className="text-sm font-bold text-sky-700">&larr; Kembali ke Berita</Link><p className="admin-kicker mt-5">Detail editorial</p><h1 className="admin-page-title">{news.title}</h1><p className="admin-page-copy">Tinjau konten dan jalankan transisi sesuai peran editorial.</p></div>
-        <span className="admin-status bg-sky-50 text-sky-800">{news.status}</span>
+        <div><Link href="/dashboard/news" className="text-sm font-bold text-sky-700 dark:text-sky-400">&larr; Kembali ke Berita</Link><p className="admin-kicker mt-5">Detail editorial</p><h1 className="admin-page-title">{news.title}</h1><p className="admin-page-copy">Tinjau konten dan jalankan transisi sesuai peran editorial.</p></div>
+        <span className={`cuba-badge ${statusBadgeClasses[news.status] || "cuba-badge-neutral"}`}>{statusLabels[news.status] || news.status}</span>
       </div>
       {error && <div className="admin-alert-error mb-5" role="alert">{error}</div>}
-      {canEdit && <DraftStatus state={autoSave.state} message={autoSave.message} lastSavedAt={autoSave.lastSavedAt} recovery={autoSave.recovery} onRecover={autoSave.recoverFrom} onKeepCurrent={autoSave.keepCurrent} onDiscard={autoSave.discard} onStartNew={autoSave.startNew} onRetry={autoSave.saveNow} allowStartNew={false} />}
-      <section className="admin-form-card">
-          <div className="admin-form-header flex flex-wrap items-center justify-between gap-4">
-            <div><h2 className="font-black text-slate-900">Alur publikasi</h2><p className="mt-1 text-xs text-slate-500">Aksi yang tersedia mengikuti status dan peran Anda.</p></div>
-            <div className="flex flex-wrap gap-2">
+
+      <div className="flex items-center gap-2 border-b border-slate-200 dark:border-slate-800 pb-3 mb-6">
+        <button
+          type="button"
+          onClick={() => setActiveTab("content")}
+          className={`flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold transition-all ${
+            activeTab === "content"
+              ? "bg-sky-600 text-white shadow-sm"
+              : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+          }`}
+        >
+          <AdminIcon name="edit" className="h-4 w-4" />
+          <span>Edit Konten</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab("versioning")}
+          className={`flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold transition-all ${
+            activeTab === "versioning"
+              ? "bg-sky-600 text-white shadow-sm"
+              : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+          }`}
+        >
+          <AdminIcon name="clock" className="h-4 w-4" />
+          <span>Riwayat Revisi & Diff</span>
+        </button>
+      </div>
+
+      {activeTab === "versioning" ? (
+        <CubaContentVersioningPanel
+          module="news"
+          articleId={id}
+          onRollbackComplete={() => {
+            router.refresh();
+          }}
+        />
+      ) : (
+        <>
+          {canEdit && <DraftStatus state={autoSave.state} message={autoSave.message} lastSavedAt={autoSave.lastSavedAt} recovery={autoSave.recovery} onRecover={autoSave.recoverFrom} onKeepCurrent={autoSave.keepCurrent} onDiscard={autoSave.discard} onStartNew={autoSave.startNew} onRetry={autoSave.saveNow} allowStartNew={false} />}
+          <section className="admin-form-card">
+              <div className="admin-form-header flex flex-wrap items-center justify-between gap-4">
+                <div><h2 className="font-black text-slate-900 dark:text-white">Alur publikasi</h2><p className="mt-1 text-xs text-slate-500">Aksi yang tersedia mengikuti status dan peran Anda.</p></div>
+                <div className="flex flex-wrap gap-2">
+                  
+                  {news.status === 'draft' && isEditor && (
+                    <button 
+                      onClick={() => handleTransition('in_review')} 
+                      disabled={actionLoading}
+                      className="admin-button"
+                    >
+                      Ajukan peninjauan
+                    </button>
+                  )}
+
+                  {news.status === 'in_review' && isReviewer && (
+                    <>
+                      <button 
+                        onClick={() => handleTransition('draft')} 
+                        disabled={actionLoading}
+                        className="admin-button-secondary !text-rose-700 hover:!border-rose-300"
+                      >
+                        Kembalikan ke draf
+                      </button>
+                      <button 
+                        onClick={() => handleTransition('approved')} 
+                        disabled={actionLoading}
+                        className="admin-button"
+                      >
+                        Setujui
+                      </button>
+                    </>
+                  )}
+
+                  {news.status === 'approved' && isReviewer && (
+                    <button 
+                      onClick={() => handleTransition('published')} 
+                      disabled={actionLoading}
+                      className="admin-button"
+                    >
+                      Terbitkan
+                    </button>
+                  )}
+
+                  {news.status === 'published' && (isEditor || isReviewer) && (
+                    <button 
+                      onClick={() => handleTransition('archived')} 
+                      disabled={actionLoading}
+                      className="admin-button-secondary"
+                    >
+                      Arsipkan
+                    </button>
+                  )}
+                </div>
+              </div>
               
-              {news.status === 'draft' && isEditor && (
-                <button 
-                  onClick={() => handleTransition('in_review')} 
-                  disabled={actionLoading}
-                  className="admin-button"
-                >
-                  Ajukan peninjauan
-                </button>
-              )}
-
-              {news.status === 'in_review' && isReviewer && (
-                <>
-                  <button 
-                    onClick={() => handleTransition('draft')} 
-                    disabled={actionLoading}
-                    className="admin-button-secondary !text-rose-700"
-                  >
-                    Kembalikan ke draf
-                  </button>
-                  <button 
-                    onClick={() => handleTransition('approved')} 
-                    disabled={actionLoading}
-                    className="admin-button"
-                  >
-                    Setujui
-                  </button>
-                </>
-              )}
-
-              {news.status === 'approved' && isReviewer && (
-                <button 
-                  onClick={() => handleTransition('published')} 
-                  disabled={actionLoading}
-                  className="admin-button"
-                >
-                  Terbitkan
-                </button>
-              )}
-
-              {news.status === 'published' && (isEditor || isReviewer) && (
-                <button 
-                  onClick={() => handleTransition('archived')} 
-                  disabled={actionLoading}
-                  className="admin-button-secondary"
-                >
-                  Arsipkan
-                </button>
-              )}
-            </div>
-          </div>
-          
-          <div className="admin-form-body">
-            {canEdit ? <><div><label htmlFor="news-edit-title" className="admin-label">Judul *</label><input id="news-edit-title" className="admin-input" value={title} onChange={(event) => setTitle(event.target.value)} /></div><div><label htmlFor="news-edit-excerpt" className="admin-label">Ringkasan</label><textarea id="news-edit-excerpt" className="admin-input" rows={3} value={excerpt} onChange={(event) => setExcerpt(event.target.value)} /></div><div><div className="mb-2 flex items-center justify-between gap-3"><label htmlFor="news-edit-body" className="admin-label !mb-0">Isi berita *</label><MediaPicker onSelect={(selection: MediaSelection) => { setBody((current) => `${current}\n${mediaMarkdown(selection)}\n`); autoSave.requestImmediateSave(); }} buttonLabel="Sisipkan media" /></div><textarea id="news-edit-body" className="admin-input font-mono" rows={14} value={body} onChange={(event) => setBody(event.target.value)} /></div></> : <><div><h3 className="admin-label">Ringkasan</h3><p className="rounded-xl bg-slate-50 p-4 text-sm leading-7 text-slate-600">{news.excerpt || "Belum ada ringkasan."}</p></div><div><h3 className="admin-label">Isi berita</h3><div className="rounded-xl border border-slate-200 bg-slate-50 p-4 font-mono text-sm leading-7 text-slate-600 whitespace-pre-wrap">{news.body}</div></div></>}
-          </div>
-          {canEdit && <SeoDiscoverySection compact embedded value={seo} onChange={setSEO} contentTitle={title || news.title} contentSummary={excerpt || news.excerpt || ""} contentBody={body || news.body || ""} routePrefix="/news/" />}
-          {canEdit && <div className="admin-form-footer"><button type="button" className="admin-button" disabled={actionLoading || !title || !seo.slug || !body} onClick={handleSave}>Simpan perubahan</button></div>}
-      </section>
-      {!canEdit && <SeoDiscoverySection compact value={seo} onChange={setSEO} contentTitle={title || news.title} contentSummary={excerpt || news.excerpt || ""} contentBody={body || news.body || ""} routePrefix="/news/" disabled={!canEditSEO} />}
-      {!canEdit && canEditSEO && <div className="flex justify-end"><button type="button" className="admin-button" disabled={actionLoading} onClick={handleSaveSEO}>Simpan pengaturan publikasi</button></div>}
+              <div className="admin-form-body">
+                {canEdit ? (
+                  <>
+                    <div>
+                      <label className="admin-label" htmlFor="news-title">Judul berita</label>
+                      <input id="news-title" type="text" className="admin-input" value={title} onChange={(e) => setTitle(e.target.value)} required />
+                    </div>
+                    <div>
+                      <label className="admin-label" htmlFor="news-excerpt">Ringkasan singkat</label>
+                      <textarea id="news-excerpt" className="admin-textarea" rows={2} value={excerpt} onChange={(e) => setExcerpt(e.target.value)} />
+                    </div>
+                    <div>
+                      <label className="admin-label" htmlFor="news-body">Konten berita</label>
+                      <CubaMarkdownEditor
+                        id="news-body"
+                        value={body}
+                        onChange={setBody}
+                        rows={14}
+                        placeholder="Tulis konten berita dalam format Markdown…"
+                        mediaPickerSlot={<MediaPicker onSelect={(selection) => { setBody((current) => `${current}\n${mediaMarkdown(selection)}\n`); autoSave.requestImmediateSave(); }} buttonLabel="Sisipkan media" />}
+                      />
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div>
+                      <h3 className="admin-label">Ringkasan</h3>
+                      <p className="rounded-xl bg-slate-50 dark:bg-slate-800/60 p-4 text-sm leading-7 text-slate-600 dark:text-slate-300 border border-slate-200/70 dark:border-slate-800">{news.excerpt || "Belum ada ringkasan."}</p>
+                    </div>
+                    <div>
+                      <h3 className="admin-label">Isi berita</h3>
+                      <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 p-5">
+                        <AdminMarkdownRenderer content={news.body} />
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+              {canEdit && <SeoDiscoverySection compact embedded value={seo} onChange={setSEO} contentTitle={title || news.title} contentSummary={excerpt || news.excerpt || ""} contentBody={body || news.body || ""} routePrefix="/news/" />}
+              {canEdit && <div className="admin-form-footer"><button type="button" className="admin-button" disabled={actionLoading || !title || !seo.slug || !body} onClick={handleSave}>Simpan perubahan</button></div>}
+          </section>
+          {!canEdit && <SeoDiscoverySection compact value={seo} onChange={setSEO} contentTitle={title || news.title} contentSummary={excerpt || news.excerpt || ""} contentBody={body || news.body || ""} routePrefix="/news/" disabled={!canEditSEO} />}
+          {!canEdit && canEditSEO && <div className="flex justify-end"><button type="button" className="admin-button" disabled={actionLoading} onClick={handleSaveSEO}>Simpan pengaturan publikasi</button></div>}
+        </>
+      )}
     </div>
   );
 }

@@ -32,6 +32,12 @@ export interface AdminDataTableProps {
   onSortChange?: (key: string) => void;
   freshnessText?: string;
   responsiveCards?: boolean;
+  // Cuba Bulk Selection
+  selectable?: boolean;
+  isAllSelected?: boolean;
+  isSomeSelected?: boolean;
+  onToggleSelectAll?: (checked: boolean) => void;
+  bulkActionBar?: ReactNode;
 }
 
 export function AdminDataTable({
@@ -57,11 +63,17 @@ export function AdminDataTable({
   onSortChange,
   freshnessText,
   responsiveCards = true,
+  selectable = false,
+  isAllSelected = false,
+  isSomeSelected = false,
+  onToggleSelectAll,
+  bulkActionBar,
 }: AdminDataTableProps) {
   const tableId = `table-${title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
   const normalizedHeaders: ColumnHeader[] = headers.map((h) =>
     typeof h === "string" ? { label: h } : h
   );
+
 
   const hasToolbarControls = Boolean(
     onSearchChange || onStatusFilterChange || actions || freshnessText
@@ -83,11 +95,11 @@ export function AdminDataTable({
               <div className="flex items-center gap-3">
                 <h2
                   id={tableId}
-                  className="text-base font-bold text-slate-900 dark:text-slate-100"
+                  className="text-base font-extrabold text-slate-900 dark:text-white tracking-tight"
                 >
                   {title}
                 </h2>
-                <span className="rounded-full bg-slate-100 dark:bg-slate-800 px-2.5 py-0.5 text-xs font-semibold text-slate-600 dark:text-slate-400">
+                <span className="rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700/80 px-2.5 py-0.5 text-xs font-bold text-slate-700 dark:text-slate-300 shadow-sm">
                   {itemCount} data
                 </span>
               </div>
@@ -157,6 +169,25 @@ export function AdminDataTable({
         >
           <thead className="bg-slate-50 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-800">
             <tr>
+              {selectable && (
+                <th
+                  scope="col"
+                  className="w-10 px-4 py-3 text-center"
+                >
+                  <input
+                    type="checkbox"
+                    className="cuba-checkbox h-4 w-4 rounded border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-sky-600 focus:ring-sky-500 cursor-pointer"
+                    checked={Boolean(isAllSelected)}
+                    ref={(el) => {
+                      if (el) {
+                        el.indeterminate = Boolean(isSomeSelected && !isAllSelected);
+                      }
+                    }}
+                    onChange={(e) => onToggleSelectAll?.(e.target.checked)}
+                    aria-label="Pilih semua baris"
+                  />
+                </th>
+              )}
               {normalizedHeaders.map((col, idx) => {
                 const isSortable = Boolean(col.sortable && col.key && onSortChange);
                 const isSorted = isSortable && sortKey === col.key;
@@ -177,7 +208,7 @@ export function AdminDataTable({
                       <button
                         type="button"
                         onClick={() => onSortChange!(col.key!)}
-                        className="inline-flex items-center gap-1.5 font-bold uppercase tracking-wider hover:text-sky-600 dark:hover:text-sky-400 transition-colors"
+                        className="inline-flex items-center gap-1.5 font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 hover:text-sky-600 dark:hover:text-sky-400 transition-colors"
                         aria-label={`Urutkan berdasarkan ${col.label}`}
                       >
                         <span>{col.label}</span>
@@ -196,7 +227,7 @@ export function AdminDataTable({
           <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60">
             {loading ? (
               <tr>
-                <td colSpan={headers.length} className="p-8 text-center">
+                <td colSpan={normalizedHeaders.length + (selectable ? 1 : 0)} className="p-8 text-center">
                   <div className="mx-auto max-w-sm space-y-3" role="status">
                     <div className="h-4 w-3/4 mx-auto animate-pulse rounded bg-slate-200 dark:bg-slate-700" />
                     <div className="h-4 w-1/2 mx-auto animate-pulse rounded bg-slate-200 dark:bg-slate-700" />
@@ -210,7 +241,7 @@ export function AdminDataTable({
             ) : error ? (
               <tr>
                 <td
-                  colSpan={headers.length}
+                  colSpan={normalizedHeaders.length + (selectable ? 1 : 0)}
                   className="p-8 text-center text-rose-700 dark:text-rose-400"
                   role="alert"
                 >
@@ -228,10 +259,13 @@ export function AdminDataTable({
             ) : itemCount === 0 ? (
               <tr>
                 <td
-                  colSpan={headers.length}
-                  className="p-8 text-center text-sm text-slate-500 dark:text-slate-400"
+                  colSpan={normalizedHeaders.length + (selectable ? 1 : 0)}
+                  className="p-10 text-center"
                 >
-                  <p>{emptyState}</p>
+                  <div className="mx-auto max-w-sm flex flex-col items-center justify-center text-slate-400 dark:text-slate-500">
+                    <AdminIcon name="file" className="h-8 w-8 mb-2 stroke-[1.5] text-slate-300 dark:text-slate-600" />
+                    <p className="text-sm font-medium text-slate-600 dark:text-slate-400">{emptyState}</p>
+                  </div>
                 </td>
               </tr>
             ) : (
@@ -240,6 +274,7 @@ export function AdminDataTable({
           </tbody>
         </table>
       </div>
+      {bulkActionBar}
     </section>
   );
 }
