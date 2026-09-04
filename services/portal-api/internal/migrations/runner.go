@@ -1,6 +1,7 @@
 package migrations
 
 import (
+	"bytes"
 	"context"
 	"crypto/sha256"
 	"database/sql"
@@ -87,6 +88,7 @@ func Run(ctx context.Context, db *sql.DB, migrationsDir, checksumPolicy string) 
 		if err != nil {
 			return fmt.Errorf("failed to read migration file %s: %w", file, err)
 		}
+		content = bytes.TrimPrefix(content, []byte("\xef\xbb\xbf"))
 		checksum := ChecksumSHA256(content)
 		rawChecksum := rawChecksumSHA256(content)
 
@@ -205,12 +207,14 @@ func updateAdoptedChecksum(ctx context.Context, db *sql.DB, version, expected, p
 }
 
 func ChecksumSHA256(content []byte) string {
+	content = bytes.TrimPrefix(content, []byte("\xef\xbb\xbf"))
 	canonical := strings.ReplaceAll(string(content), "\r\n", "\n")
 	canonical = strings.ReplaceAll(canonical, "\r", "\n")
 	return rawChecksumSHA256([]byte(canonical))
 }
 
 func rawChecksumSHA256(content []byte) string {
+	content = bytes.TrimPrefix(content, []byte("\xef\xbb\xbf"))
 	digest := sha256.Sum256(content)
 	return hex.EncodeToString(digest[:])
 }

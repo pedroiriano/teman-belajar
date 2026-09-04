@@ -1,4 +1,4 @@
-﻿-- 025_create_publication_schedules_and_admin_workflow.sql
+-- 025_create_publication_schedules_and_admin_workflow.sql
 -- Migration to persist publication schedules, application-level role policies, and editorial review notes.
 
 -- 1. Publication Schedules
