@@ -13,6 +13,7 @@ import { DraftStatus } from "@/components/drafts/DraftStatus";
 import type { DraftPayload } from "@/components/drafts/types";
 import { useAutoSaveDraft } from "@/components/drafts/use-auto-save-draft";
 import { KnowledgeNodeSelect } from "@/components/knowledge/KnowledgeNodeSelect";
+import { CubaMarkdownEditor } from "@/components/editor/cuba-markdown-editor";
 import { SeoDiscoverySection } from "@/components/seo/SeoDiscoverySection";
 import { emptySEOValue, pickSEOValue, type SEOFormValue } from "@/components/seo/types";
 
@@ -72,12 +73,25 @@ export default function CreateKnowledgePage() {
   return (
     <div className="admin-page max-w-5xl">
       <div className="admin-page-header">
-        <div><Link href="/dashboard/knowledge" className="text-sm font-bold text-sky-700">← Kembali ke Pusat Pengetahuan</Link><p className="admin-kicker mt-5">Editor pengetahuan</p><h1 className="admin-page-title">Buat artikel baru</h1><p className="admin-page-copy">Susun pengetahuan yang jelas dan siap melewati peninjauan editorial.</p></div>
-        <span className="admin-status bg-slate-100 text-slate-600">Status: Draf</span>
+        <div>
+          <Link href="/dashboard/knowledge" className="text-sm font-bold text-sky-700 dark:text-sky-400">&larr; Kembali ke Pusat Pengetahuan</Link>
+          <p className="admin-kicker mt-5">Editor pengetahuan</p>
+          <h1 className="admin-page-title">Buat artikel baru</h1>
+          <p className="admin-page-copy">Susun pengetahuan yang jelas dan siap melewati peninjauan editorial.</p>
+        </div>
+        <span className="cuba-badge cuba-badge-neutral">Draf</span>
       </div>
       <DraftStatus state={autoSave.state} message={autoSave.message} lastSavedAt={autoSave.lastSavedAt} recovery={autoSave.recovery} onRecover={autoSave.recoverFrom} onKeepCurrent={autoSave.keepCurrent} onDiscard={autoSave.discard} onStartNew={autoSave.startNew} onRetry={autoSave.saveNow} />
       <form onSubmit={handleSubmit} className="admin-form-card">
-        <div className="admin-form-header"><div className="flex items-center gap-3"><span className="admin-stat-icon"><AdminIcon name="knowledge" className="h-5 w-5" /></span><div><h2 className="font-black text-slate-900">Informasi artikel</h2><p className="mt-1 text-xs text-slate-500">Judul dan ringkasan membantu artikel mudah ditemukan.</p></div></div></div>
+        <div className="admin-form-header">
+          <div className="flex items-center gap-3">
+            <span className="admin-stat-icon"><AdminIcon name="knowledge" className="h-5 w-5" /></span>
+            <div>
+              <h2 className="font-black text-slate-900 dark:text-white">Informasi artikel</h2>
+              <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Judul dan ringkasan membantu artikel mudah ditemukan.</p>
+            </div>
+          </div>
+        </div>
         <div className="admin-form-body">
             {error && (
               <div className="admin-alert-error" role="alert">
@@ -116,20 +130,16 @@ export default function CreateKnowledgePage() {
 
           <KnowledgeNodeSelect value={primaryNodeId} onChange={setPrimaryNodeId} required />
 
-            <div className="space-y-2">
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <label htmlFor="knowledge-body" className="admin-label">Isi artikel <span className="text-rose-600">*</span></label>
-                <MediaPicker onSelect={insertMedia} buttonLabel="Sisipkan media" />
-              </div>
-              <textarea id="knowledge-body"
-                required
-                rows={10}
-                value={body}
-                onChange={(e) => setBody(e.target.value)}
-                className="admin-input font-mono"
-                placeholder="Tulis panduan atau pengetahuan dalam teks yang terstruktur..."
-              />
-            </div>
+            <CubaMarkdownEditor
+              id="knowledge-body"
+              value={body}
+              onChange={setBody}
+              label="Isi artikel"
+              required
+              rows={12}
+              placeholder="Tulis panduan atau pengetahuan dalam teks yang terstruktur..."
+              mediaPickerSlot={<MediaPicker onSelect={insertMedia} buttonLabel="Sisipkan media" />}
+            />
 
           </div>
         <SeoDiscoverySection compact embedded value={seo} onChange={setSEO} contentTitle={title} contentSummary={summary} contentBody={body} routePrefix="/knowledge/" />

@@ -171,7 +171,7 @@ export default function TaxonomyPage() {
           </div>
         </div>
 
-        <div className="admin-taxonomy-tabs" role="tablist" aria-label="Pilih jenis taksonomi">
+        <div className="admin-taxonomy-tabs" role="tablist" aria-label="Pilih jenis taxonomy">
           {(["categories", "tags"] as const).map((kind) => {
             const config = termConfig[kind];
             const terms = kind === "categories" ? categories : tags;
@@ -398,13 +398,13 @@ function TermPanel({
             <li key={term.id} className="admin-taxonomy-row">
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-2">
-                  <p className="font-black text-slate-900">{term.name}</p>
-                  <span className={`admin-status ${term.status === "active" ? "admin-status-success" : "admin-status-neutral"}`}>
+                  <p className="font-black text-slate-900 dark:text-white">{term.name}</p>
+                  <span className={`cuba-badge ${term.status === "active" ? "cuba-badge-success" : "cuba-badge-neutral"}`}>
                     {term.status === "active" ? "Aktif" : "Diarsipkan"}
                   </span>
                 </div>
-                {term.description && <p className="mt-2 text-sm leading-6 text-slate-600">{term.description}</p>}
-                <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-slate-500">
+                {term.description && <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">{term.description}</p>}
+                <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-slate-500 dark:text-slate-400">
                   <code className="admin-taxonomy-slug">/{term.slug}</code>
                   <span>{term.usage_count} penggunaan</span>
                 </div>
@@ -412,7 +412,7 @@ function TermPanel({
               {term.status === "active" && (
                 <button
                   type="button"
-                  className="admin-button-secondary w-full shrink-0 sm:w-auto"
+                  className="admin-button-secondary w-full shrink-0 sm:w-auto hover:!border-rose-300 hover:!text-rose-600"
                   disabled={busy === term.id}
                   onClick={() => void onArchive(kind, term)}
                 >

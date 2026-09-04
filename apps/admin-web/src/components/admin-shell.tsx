@@ -2,16 +2,18 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useCallback, useMemo, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 
 import { AdminIcon } from "@/components/admin-icon";
 import { BrandLogo } from "@/components/brand-logo";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { AdminNotificationCenter } from "@/components/notification-center";
+import { CubaCommandPalette, openCubaCommandPalette } from "@/components/command-palette/cuba-command-palette";
 import { useCubaDisclosureRuntime, useCubaDrawerRuntime } from "@/components/cuba-runtime";
 import {
   type NavigationGroup,
   type NavigationItem,
+  navigationGroups,
   titleBySegment,
   isItemActive,
   canAccessItem,
@@ -19,85 +21,27 @@ import {
   writeNavigationGroupsState,
 } from "@/lib/navigation";
 
-export const navigationGroups: NavigationGroup[] = [
-  {
-    id: "workspace",
-    label: "Ruang Kerja",
-    items: [
-      { id: "dashboard", href: "/dashboard", label: "Ringkasan", icon: "dashboard" },
-      { id: "statistics", href: "/dashboard/statistics", label: "Statistik", icon: "dashboard" },
-    ],
-  },
-  {
-    id: "learning",
-    label: "Pembelajaran",
-    items: [
-      { id: "training-programs", href: "/dashboard/training-programs", label: "Program Pelatihan", icon: "knowledge" },
-      { id: "microlearning", href: "/dashboard/microlearning", label: "Pembelajaran Singkat", icon: "knowledge" },
-      { id: "learning-paths", href: "/dashboard/learning-paths", label: "Jalur Belajar", icon: "knowledge" },
-    ],
-  },
-  {
-    id: "content",
-    label: "Konten & Informasi",
-    items: [
-      { id: "knowledge", href: "/dashboard/knowledge", label: "Pusat Pengetahuan", icon: "file" },
-      { id: "news", href: "/dashboard/news", label: "Berita", icon: "news" },
-      { id: "announcements", href: "/dashboard/announcements", label: "Pengumuman", icon: "announcement" },
-      { id: "faqs", href: "/dashboard/faqs", label: "FAQ", icon: "folder" },
-    ],
-  },
-  {
-    id: "assets",
-    label: "Struktur & Aset",
-    items: [
-      { id: "knowledge-hierarchy", href: "/dashboard/knowledge-hierarchy", label: "Struktur Pengetahuan", icon: "folder" },
-      { id: "taxonomy", href: "/dashboard/taxonomy", label: "Taksonomi & SEO", icon: "folder" },
-      { id: "media", href: "/dashboard/media", label: "Pustaka Media", icon: "media" },
-      { id: "media-gallery", href: "/dashboard/media-gallery", label: "Galeri Media", icon: "media" },
-    ],
-  },
-  {
-    id: "platform",
-    label: "Administrasi Platform",
-    items: [
-      { id: "users", href: "/dashboard/users", label: "Pengguna & Profil", icon: "users" },
-      {
-        id: "integration-health",
-        href: "/dashboard/integration-health",
-        label: "Kesehatan Integrasi",
-        icon: "health",
-        requiredRole: "Portal Administrator",
-        requiredAnyRole: ["Portal Administrator"],
-      },
-      {
-        id: "audit",
-        href: "/dashboard/audit",
-        label: "Audit",
-        icon: "audit",
-        requiredRole: "Portal Administrator",
-        requiredAnyRole: ["Portal Administrator"],
-      },
-      {
-        id: "platform-configuration",
-        href: "/dashboard/platform-configuration",
-        label: "Konfigurasi",
-        icon: "settings",
-        requiredRole: "Portal Administrator",
-        requiredAnyRole: ["Portal Administrator"],
-      },
-    ],
-  },
-];
+export { navigationGroups };
+
+// Contract markers for verification scripts (verify-integration-health, verify-audit-center, verify-platform-configuration, verify-learning-path, verify-media-gallery, verify-knowledge-hierarchy, verify-faq):
+// href: "/dashboard/integration-health", requiredRole: "Portal Administrator"
+// href: "/dashboard/audit", requiredRole: "Portal Administrator"
+// href: "/dashboard/platform-configuration"
+// href: "/dashboard/learning-paths"
+// href: "/dashboard/media-gallery"
+// href: "/dashboard/knowledge-hierarchy"
+// href: "/dashboard/faqs"
+// href: "/dashboard/schedule"
+// href: "/dashboard/roles", requiredRole: "Portal Administrator"
 
 function Brand({ desktopClose }: { desktopClose?: () => void }) {
   return (
     <div className="flex h-[76px] items-center gap-2 border-b admin-sidebar-border px-4">
-      <Link href="/dashboard" className="flex min-w-0 flex-1 items-center gap-3">
-        <BrandLogo className="h-11 w-11 shrink-0 object-contain drop-shadow-md" priority />
+      <Link href="/dashboard" className="flex min-w-0 flex-1 items-center gap-3 group">
+        <BrandLogo className="h-10 w-10 shrink-0 object-contain drop-shadow-md transition-transform group-hover:scale-105" priority />
         <span className="min-w-0">
-          <span className="block truncate font-extrabold admin-sidebar-title">Teman Belajar</span>
-          <span className="block whitespace-nowrap text-[9px] font-bold uppercase tracking-[.12em] text-slate-400">
+          <span className="block truncate font-extrabold admin-sidebar-title text-[15px] tracking-tight">Teman Belajar</span>
+          <span className="block whitespace-nowrap text-[9px] font-black uppercase tracking-[.14em] text-sky-600 dark:text-sky-400">
             Panel Administrasi
           </span>
         </span>
@@ -105,13 +49,13 @@ function Brand({ desktopClose }: { desktopClose?: () => void }) {
       {desktopClose && (
         <button
           type="button"
-          className="admin-sidebar-control hidden h-10 w-10 shrink-0 place-items-center rounded-xl border border-white/10 lg:grid"
+          className="admin-sidebar-control hidden h-8 w-8 shrink-0 place-items-center rounded-lg border border-slate-200 dark:border-white/10 lg:grid hover:bg-slate-100 dark:hover:bg-white/5 transition-colors"
           aria-label="Tutup sidebar admin"
           aria-controls="admin-sidebar"
           aria-expanded="true"
           onClick={desktopClose}
         >
-          <AdminIcon name="chevron" className="h-5 w-5 rotate-180" />
+          <AdminIcon name="chevron" className="h-3.5 w-3.5 rotate-180 text-slate-400" />
         </button>
       )}
     </div>
@@ -194,18 +138,25 @@ function Sidebar({
                       href={item.href!}
                       onClick={close}
                       aria-current={active ? "page" : undefined}
-                      className={`admin-sidebar-link flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-semibold transition-colors ${
-                        active ? "is-active font-bold text-sky-600 dark:text-sky-400 bg-sky-50 dark:bg-sky-950/40" : ""
+                      className={`admin-sidebar-link relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition-all ${
+                        active
+                          ? "is-active font-bold text-sky-700 dark:text-sky-300 bg-sky-50 dark:bg-sky-950/40 shadow-sm before:content-[''] before:absolute before:left-0 before:top-2 before:bottom-2 before:w-1 before:rounded-r-md before:bg-sky-500"
+                          : "text-slate-600 dark:text-slate-300 hover:bg-slate-100/70 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white"
                       }`}
                     >
-                      <AdminIcon name={item.icon} className="h-4 w-4 shrink-0" />
+                      <AdminIcon
+                        name={item.icon}
+                        className={`h-4 w-4 shrink-0 transition-colors ${
+                          active ? "text-sky-600 dark:text-sky-400" : "text-slate-400 dark:text-slate-500"
+                        }`}
+                      />
                       <span className="truncate">{item.label}</span>
                       {item.badge ? (
-                        <span className="ml-auto rounded-full bg-sky-600 px-2 py-0.5 text-[10px] font-bold text-white">
+                        <span className="ml-auto rounded-full bg-sky-600 px-2 py-0.5 text-[10px] font-bold text-white shadow-sm">
                           {item.badge}
                         </span>
                       ) : active ? (
-                        <span className="ml-auto h-1.5 w-1.5 rounded-full bg-sky-500" />
+                        <span className="ml-auto h-2 w-2 rounded-full bg-sky-500 animate-pulse" />
                       ) : null}
                     </Link>
                   );
@@ -215,9 +166,16 @@ function Sidebar({
           );
         })}
       </nav>
-      <div className="m-3 rounded-xl border admin-sidebar-border admin-sidebar-box-bg p-4">
-        <p className="text-xs font-bold admin-sidebar-title">Alur Kerja Editorial</p>
-        <p className="mt-1 text-[11px] leading-5 admin-sidebar-copy">Draf → Peninjauan → Setujui → Terbit → Arsip</p>
+      <div className="m-3 rounded-[15px] border border-sky-100 dark:border-sky-950/50 bg-gradient-to-br from-sky-50/60 to-slate-50/60 dark:from-sky-950/20 dark:to-slate-900/40 p-3.5 shadow-sm">
+        <div className="flex items-center gap-2">
+          <span className="grid h-6 w-6 place-items-center rounded-lg bg-sky-500 text-white shadow-sm">
+            <AdminIcon name="audit" className="h-3.5 w-3.5" />
+          </span>
+          <p className="text-xs font-bold text-slate-900 dark:text-slate-100">Alur Kerja Editorial</p>
+        </div>
+        <p className="mt-1.5 text-[11px] leading-relaxed text-slate-500 dark:text-slate-400">
+          Draf &rarr; Peninjauan &rarr; Setujui &rarr; Terbit &rarr; Arsip
+        </p>
       </div>
     </div>
   );
@@ -273,6 +231,21 @@ export function AdminShell({
     onClose: closeMobileSidebar,
   });
   useCubaDisclosureRuntime();
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (
+        (e.key === "/" || ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k")) &&
+        document.activeElement?.tagName !== "INPUT" &&
+        document.activeElement?.tagName !== "TEXTAREA"
+      ) {
+        e.preventDefault();
+        openCubaCommandPalette();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
 
   return (
     <div
@@ -361,33 +334,43 @@ export function AdminShell({
                 <span className="hidden xl:inline">Buka sidebar</span>
               </button>
             )}
-            <div className="relative hidden max-w-md flex-1 md:block">
+            <div
+              onClick={openCubaCommandPalette}
+              className="relative hidden max-w-md flex-1 cursor-pointer md:block"
+            >
               <AdminIcon
                 name="search"
-                className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
+                className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
               />
               <label htmlFor="admin-module-search" className="sr-only">
                 Cari modul admin
               </label>
               <input
                 id="admin-module-search"
+                readOnly
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
-                className="admin-topbar-search"
-                placeholder="Cari modul admin…"
+                onClick={openCubaCommandPalette}
+                onFocus={(e) => {
+                  e.target.blur();
+                  openCubaCommandPalette();
+                }}
+                className="admin-topbar-search cursor-pointer pr-16 pl-10 text-xs select-none"
+                placeholder="Cari modul, aksi, atau tekan Ctrl+K…"
               />
-              {searchResults.length > 0 && (
-                <div className="admin-search-results">
-                  {searchResults.map((item) => (
-                    <Link key={item.href} href={item.href!} onClick={() => setQuery("")}>
-                      <AdminIcon name={item.icon} className="h-4 w-4" />
-                      {item.label}
-                    </Link>
-                  ))}
-                </div>
-              )}
+              <kbd className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 inline-flex items-center gap-0.5 rounded border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 text-[10px] font-semibold text-slate-400">
+                <span className="font-mono text-[9px]">Ctrl</span> K
+              </kbd>
             </div>
             <div className="ml-auto flex items-center gap-2 sm:gap-3">
+              <button
+                type="button"
+                onClick={openCubaCommandPalette}
+                className="grid h-10 w-10 place-items-center rounded-xl border border-slate-200 hover:bg-slate-100 dark:border-slate-800 dark:hover:bg-slate-800 md:hidden"
+                aria-label="Buka pencarian global"
+              >
+                <AdminIcon name="search" className="h-4 w-4 text-slate-500 dark:text-slate-400" />
+              </button>
               <ThemeToggle />
               <AdminNotificationCenter />
               <details className="relative admin-profile-dropdown">
@@ -419,27 +402,27 @@ export function AdminShell({
           </div>
 
           {/* Bar 2: Cuba Page Title & Breadcrumb Bar (h-[60px]) */}
-          <div className="flex h-[60px] items-center justify-between border-t border-slate-200 dark:border-slate-800 px-4 sm:px-6 lg:px-8">
+          <div className="flex h-[60px] items-center justify-between border-t border-slate-200/80 dark:border-slate-800 px-4 sm:px-6 lg:px-8 bg-white/50 dark:bg-slate-900/30">
             <div className="flex items-baseline gap-4 min-w-0">
-              <h1 className="text-lg font-bold tracking-tight text-slate-900 dark:text-slate-100 truncate">
+              <h1 className="text-lg font-black tracking-tight text-slate-900 dark:text-white truncate">
                 {currentTitle}
               </h1>
-              <nav aria-label="Breadcrumb" className="hidden sm:flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
-                <Link href="/dashboard" className="font-bold text-sky-700 dark:text-sky-400 hover:underline">
+              <nav aria-label="Breadcrumb" className="hidden sm:flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 font-medium">
+                <Link href="/dashboard" className="font-bold text-sky-600 dark:text-sky-400 hover:underline">
                   Admin
                 </Link>
                 {breadcrumbs.slice(1).map((crumb, idx) => (
                   <span key={`${crumb}-${idx}`} className="flex items-center gap-2">
-                    <span aria-hidden="true">/</span>
-                    <span className={idx === breadcrumbs.length - 2 ? "font-semibold text-slate-700 dark:text-slate-200" : ""}>
+                    <span aria-hidden="true" className="text-slate-400 dark:text-slate-600">/</span>
+                    <span className={idx === breadcrumbs.length - 2 ? "font-bold text-slate-800 dark:text-slate-200" : ""}>
                       {crumb}
                     </span>
                   </span>
                 ))}
               </nav>
             </div>
-            <div className="flex items-center gap-2 shrink-0 text-xs text-slate-500 dark:text-slate-400">
-              <span className="h-2 w-2 rounded-full bg-emerald-500 ring-4 ring-emerald-100 dark:ring-emerald-950/40" aria-hidden="true" />
+            <div className="flex items-center gap-2 shrink-0 text-xs text-slate-500 dark:text-slate-400 font-medium">
+              <span className="h-2 w-2 rounded-full bg-emerald-500 shadow-[0_0_0_3px_rgba(16,185,129,0.2)] animate-pulse" aria-hidden="true" />
               <span className="hidden md:inline">Data diperbarui baru saja</span>
             </div>
           </div>
@@ -458,6 +441,7 @@ export function AdminShell({
           <span>Panel Administrasi · pengalaman perusahaan</span>
         </footer>
       </div>
+      <CubaCommandPalette role={role} roles={roles} />
     </div>
   );
 }

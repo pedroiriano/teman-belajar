@@ -50,8 +50,8 @@ const heroSlides: TechwindHeroSlide[] = [
     image: "/techwind/hero/bg01.jpg",
     title: "Bangun Kompetensi untuk Masa Depan",
     description: "Temukan pembelajaran terarah untuk mengembangkan keahlian, memperluas wawasan, dan mencapai tujuan profesional Anda.",
-    ctaLabel: "Cari Pembelajaran",
-    ctaHref: "#cari",
+    ctaLabel: "Jelajahi Katalog",
+    ctaHref: "/catalog",
     align: "left",
   },
   {
@@ -454,15 +454,21 @@ export default async function Home() {
           </div>
 
           <div className="grid md:grid-cols-12 grid-cols-1 mt-8">
-            <div className="md:col-span-12 text-center">
+            <div className="md:col-span-12 flex flex-wrap items-center justify-center gap-3 text-center">
               <Link
-                className="py-2 px-5 inline-flex items-center justify-center gap-1.5 font-semibold tracking-wide border align-middle duration-500 text-base text-center bg-transparent hover:bg-primary border-primary text-primary hover:text-white rounded-md transition-all shadow-sm group"
-                href="/training-programs"
+                className="py-2.5 px-6 inline-flex items-center justify-center gap-2 font-semibold tracking-wide border align-middle duration-500 text-base text-center bg-primary hover:bg-primary/90 border-primary text-white rounded-md transition-all shadow-sm group"
+                href="/catalog"
               >
-                <span>Selengkapnya</span>
+                <span>Buka Katalog Terpadu</span>
                 <svg className="size-4 inline-block transition-transform duration-300 group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" />
                 </svg>
+              </Link>
+              <Link
+                className="py-2.5 px-6 inline-flex items-center justify-center gap-1.5 font-semibold tracking-wide border align-middle duration-500 text-base text-center bg-transparent hover:bg-primary border-primary text-primary hover:text-white rounded-md transition-all shadow-sm"
+                href="/training-programs"
+              >
+                <span>Lihat Pelatihan Formal</span>
               </Link>
             </div>
           </div>

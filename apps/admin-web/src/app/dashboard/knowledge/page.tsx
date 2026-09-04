@@ -6,6 +6,7 @@ import { getServerAccessToken } from "@/lib/server-auth";
 import { AdminUnauthorized } from "@/components/admin-states";
 import { AdminDataTable } from "@/components/admin-data-table";
 import { AdminPagination } from "@/components/admin-pagination";
+import { CubaKnowledgeTable } from "@/components/bulk-actions/cuba-knowledge-table";
 
 interface KnowledgeArticle {
   id: string;
@@ -48,33 +49,8 @@ async function getAdminKnowledge(token: string, page: number, pageSize: number):
   }
 }
 
-const statusLabels: Record<string, string> = {
-  draft: "Draf",
-  in_review: "Dalam peninjauan",
-  approved: "Disetujui",
-  published: "Terbit",
-  rejected: "Perlu revisi",
-  archived: "Diarsipkan",
-};
 
-function getStatusBadgeClass(status: string): string {
-  switch (status) {
-    case "published":
-      return "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300";
-    case "approved":
-      return "bg-sky-100 text-sky-800 dark:bg-sky-950/50 dark:text-sky-300";
-    case "in_review":
-      return "bg-yellow-100 text-yellow-800 dark:bg-yellow-950/50 dark:text-yellow-300";
-    case "rejected":
-      return "bg-rose-100 text-rose-800 dark:bg-rose-950/50 dark:text-rose-300";
-    case "draft":
-      return "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300";
-    case "archived":
-      return "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400";
-    default:
-      return "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300";
-  }
-}
+
 
 export default async function AdminKnowledgePage({
   searchParams,
@@ -143,65 +119,14 @@ export default async function AdminKnowledgePage({
         </div>
       </div>
 
-      <AdminDataTable
-        title="Daftar artikel"
-        description="Versi dan status publikasi kanonis artikel pengetahuan"
+      {/* AdminDataTable presentation via CubaKnowledgeTable with multi-select bulk operations */}
+      <CubaKnowledgeTable
+        articles={articles}
         itemCount={pagination.total}
-        headers={[
-          { label: "Judul", key: "title" },
-          { label: "Status", key: "status" },
-          { label: "Revisi aktif / terbit", key: "revision" },
-          { label: "Aksi", key: "actions" },
-        ]}
-        emptyState="Belum ada artikel pengetahuan. Buat draf pertama untuk memulai."
-        error={knowledgeRes ? null : "Data artikel gagal dimuat. Periksa koneksi backend."}
-        retryHref="/dashboard/knowledge"
-        actions={headerActions}
-      >
-        {articles.map((article) => (
-          <tr
-            key={article.id}
-            className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors"
-          >
-            <td className="p-4" data-label="Judul">
-              <div className="font-semibold text-slate-900 dark:text-slate-100">
-                {article.title}
-              </div>
-              <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                {article.slug}
-              </div>
-            </td>
-            <td className="p-4" data-label="Status">
-              <span
-                className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-bold ${getStatusBadgeClass(
-                  article.status
-                )}`}
-              >
-                {statusLabels[article.status] || article.status.replace("_", " ")}
-              </span>
-            </td>
-            <td
-              className="p-4 text-xs text-slate-600 dark:text-slate-400"
-              data-label="Revisi"
-            >
-              <span>Revisi {article.current_revision_no}</span>
-              <span className="ml-1 text-slate-400 dark:text-slate-500">
-                {article.published_revision_no
-                  ? `(Terbit: Rev ${article.published_revision_no})`
-                  : "(Belum terbit)"}
-              </span>
-            </td>
-            <td className="p-4 text-xs font-semibold" data-label="Aksi">
-              <Link
-                href={`/dashboard/knowledge/${article.id}`}
-                className="font-bold text-sky-700 dark:text-sky-400 hover:underline inline-flex items-center gap-1"
-              >
-                Buka detail <span aria-hidden="true">→</span>
-              </Link>
-            </td>
-          </tr>
-        ))}
-      </AdminDataTable>
+        headerActions={headerActions}
+        errorMessage={knowledgeRes ? null : "Data artikel gagal dimuat. Periksa koneksi backend."}
+      />
+
 
       <AdminPagination
         page={pagination.page}

@@ -6,8 +6,34 @@ import { getServerAccessToken } from "@/lib/server-auth";
 import { AdminUnauthorized } from "@/components/admin-states";
 import { AdminDataTable } from "@/components/admin-data-table";
 import { AdminPagination } from "@/components/admin-pagination";
+import { CubaAnnouncementsTable } from "@/components/bulk-actions/cuba-announcements-table";
 
-async function getAdminAnnouncements(token: string, page: number, pageSize: number) {
+interface Announcement {
+  id: string;
+  title: string;
+  slug: string;
+  status: "draft" | "in_review" | "approved" | "published" | "rejected" | "archived";
+  start_at?: string | null;
+  end_at?: string | null;
+  created_at?: string;
+  updated_at?: string;
+}
+
+interface AnnouncementsApiResponse {
+  data: Announcement[];
+  pagination: {
+    page: number;
+    page_size: number;
+    total: number;
+    total_pages: number;
+  };
+}
+
+async function getAdminAnnouncements(
+  token: string,
+  page: number,
+  pageSize: number
+): Promise<AnnouncementsApiResponse | null> {
   try {
     const API_BASE = process.env.PORTAL_API_INTERNAL_URL;
     if (!API_BASE) throw new Error("Missing PORTAL_API_INTERNAL_URL");
@@ -15,19 +41,26 @@ async function getAdminAnnouncements(token: string, page: number, pageSize: numb
     const params = new URLSearchParams({ page: String(page), page_size: String(pageSize) });
     const res = await fetch(`${API_BASE}/api/v1/admin/announcements?${params}`, {
       headers: {
-        'Authorization': `Bearer ${token}`
+        Authorization: `Bearer ${token}`,
       },
-      next: { revalidate: 0 }
+      next: { revalidate: 0 },
     });
-    
+
     if (!res.ok) return null;
     return res.json();
-  } catch (e) {
+  } catch {
     return null;
   }
 }
 
-export default async function AdminAnnouncementsPage({ searchParams }: { searchParams: Promise<{ page?: string; page_size?: string }> }) {
+
+
+
+export default async function AdminAnnouncementsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ page?: string; page_size?: string }>;
+}) {
   const params = await searchParams;
   const page = Math.max(1, Number.parseInt(params.page || "1", 10) || 1);
   const requestedPageSize = Number.parseInt(params.page_size || "20", 10);
@@ -39,7 +72,7 @@ export default async function AdminAnnouncementsPage({ searchParams }: { searchP
     redirect("/api/auth/signin");
   }
 
-  const hasAccess = session.roles?.some((r: string) => 
+  const hasAccess = session.roles?.some((r: string) =>
     ["Portal Administrator", "Content Editor", "Reviewer"].includes(r)
   );
 
@@ -49,55 +82,54 @@ export default async function AdminAnnouncementsPage({ searchParams }: { searchP
 
   const annsRes = accessToken ? await getAdminAnnouncements(accessToken, page, pageSize) : null;
   const announcements = annsRes?.data || [];
-  const pagination = annsRes?.pagination || { page, page_size: pageSize, total: announcements.length, total_pages: announcements.length ? 1 : 0 };
-  if (pagination.total_pages > 0 && page > pagination.total_pages) redirect(`/dashboard/announcements?page=${pagination.total_pages}&page_size=${pageSize}`);
+  const pagination = annsRes?.pagination || {
+    page,
+    page_size: pageSize,
+    total: announcements.length,
+    total_pages: announcements.length ? 1 : 0,
+  };
+
+  if (pagination.total_pages > 0 && page > pagination.total_pages) {
+    redirect(`/dashboard/announcements?page=${pagination.total_pages}&page_size=${pageSize}`);
+  }
+
+  const headerActions = (
+    <Link
+      href="/dashboard/announcements/create"
+      className="admin-button !min-h-9 !py-1 !px-3 !text-xs"
+    >
+      <span aria-hidden="true">+</span> Buat pengumuman
+    </Link>
+  );
 
   return (
-    <div className="admin-page">
-      <div>
-        <div className="admin-page-header">
-          <div>
-            <p className="admin-kicker">Manajemen konten</p><h1 className="admin-page-title">Pengumuman</h1><p className="admin-page-copy">Kelola informasi aktif dan terjadwal.</p>
-          </div>
-          <Link 
-            href="/dashboard/announcements/create" 
-            className="admin-button"
-          >
-            <span aria-hidden="true">+</span> Buat pengumuman
-          </Link>
+    <div className="admin-page space-y-6">
+      <div className="admin-page-header">
+        <div>
+          <p className="admin-kicker">Manajemen konten</p>
+          <h1 className="admin-page-title">Pengumuman</h1>
+          <p className="admin-page-copy">
+            Kelola pengumuman aktif, informasi terjadwal, dan edaran resmi Teman Belajar.
+          </p>
         </div>
-
-        <AdminDataTable title="Daftar pengumuman" description="Konten aktif dan terjadwal" itemCount={pagination.total} headers={["Judul", "Status", "Jadwal", "Aksi"]} emptyState="Belum ada pengumuman. Buat draf pertama untuk memulai." error={annsRes ? null : "Data pengumuman gagal dimuat."} retryHref="/dashboard/announcements">
-              {announcements.map((ann: any) => (
-                  <tr key={ann.id} className="hover:bg-slate-50 transition-colors">
-                    <td className="p-4">
-                      <div className="font-medium text-slate-900">{ann.title}</div>
-                      <div className="text-xs text-slate-500 mt-1">{ann.slug}</div>
-                    </td>
-                    <td className="p-4">
-                      <span className={`admin-status
-                        ${ann.status === 'published' ? 'bg-green-100 text-green-800' : 
-                          ann.status === 'draft' ? 'bg-gray-100 text-gray-800' : 
-                          ann.status === 'in_review' ? 'bg-yellow-100 text-yellow-800' :
-                          'bg-blue-100 text-blue-800'}`}>
-                        {({ draft: 'Draf', in_review: 'Peninjauan', published: 'Terbit', archived: 'Diarsipkan', approved: 'Disetujui', rejected: 'Ditolak' } as Record<string, string>)[ann.status] || ann.status.replace('_', ' ')}
-                      </span>
-                    </td>
-                    <td className="p-4 text-sm text-slate-600">
-                      <div><span className="font-medium">Mulai:</span> {ann.start_at ? new Date(ann.start_at).toLocaleDateString("id-ID") : '-'}</div>
-                      <div><span className="font-medium">Selesai:</span> {ann.end_at ? new Date(ann.end_at).toLocaleDateString("id-ID") : '-'}</div>
-                    </td>
-                    <td className="p-4 text-sm">
-                      <Link href={`/dashboard/announcements/${ann.id}`} className="mr-4 font-bold text-sky-700 hover:text-sky-600">
-                        Buka detail →
-                      </Link>
-                    </td>
-                  </tr>
-                ))}
-        </AdminDataTable>
-        <AdminPagination page={pagination.page} pages={pagination.total_pages} total={pagination.total} pageSize={pagination.page_size} pathname="/dashboard/announcements" />
       </div>
+
+      {/* AdminDataTable presentation via CubaAnnouncementsTable with multi-select bulk operations */}
+      <CubaAnnouncementsTable
+        announcements={announcements}
+        itemCount={pagination.total}
+        headerActions={headerActions}
+        errorMessage={annsRes ? null : "Data pengumuman gagal dimuat. Periksa koneksi backend."}
+      />
+
+
+      <AdminPagination
+        page={pagination.page}
+        pages={pagination.total_pages}
+        total={pagination.total}
+        pageSize={pagination.page_size}
+        pathname="/dashboard/announcements"
+      />
     </div>
   );
 }
-

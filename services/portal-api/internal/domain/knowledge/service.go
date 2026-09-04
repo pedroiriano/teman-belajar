@@ -240,6 +240,14 @@ func (s *Service) GetAdminArticleWithRevision(ctx context.Context, id string) (*
 	return article, revision, nil
 }
 
+func (s *Service) ListRevisions(ctx context.Context, articleID string) ([]Revision, error) {
+	return s.repo.ListRevisions(ctx, articleID)
+}
+
+func (s *Service) GetRevision(ctx context.Context, articleID string, revisionNo int) (*Revision, error) {
+	return s.repo.GetRevision(ctx, articleID, revisionNo)
+}
+
 func (s *Service) AddRelatedArticle(ctx context.Context, articleID1, articleID2 string, actorID *string) error {
 	if articleID1 == articleID2 {
 		return errors.New("cannot relate article to itself")

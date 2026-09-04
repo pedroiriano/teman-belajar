@@ -8,22 +8,277 @@ import { useEffect, useState } from "react";
 
 import { AdminIcon } from "@/components/admin-icon";
 
-type MediaAsset = { id: string; display_filename?: string | null; original_filename?: string | null; detected_mime_type: string; size_bytes: number; title?: string | null; alt_text?: string | null; caption?: string | null; status: string; created_at: string };
+type MediaAsset = {
+  id: string;
+  display_filename?: string | null;
+  original_filename?: string | null;
+  detected_mime_type: string;
+  size_bytes: number;
+  title?: string | null;
+  alt_text?: string | null;
+  caption?: string | null;
+  status: string;
+  created_at: string;
+};
 
 export default function MediaDetailPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const [asset, setAsset] = useState<MediaAsset | null>(null);
-  const [displayFilename, setDisplayFilename] = useState(""); const [title, setTitle] = useState(""); const [altText, setAltText] = useState(""); const [caption, setCaption] = useState("");
+  const [displayFilename, setDisplayFilename] = useState("");
+  const [title, setTitle] = useState("");
+  const [altText, setAltText] = useState("");
+  const [caption, setCaption] = useState("");
   const [canManage, setCanManage] = useState(false);
-  const [loading, setLoading] = useState(true); const [saving, setSaving] = useState(false); const [error, setError] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
 
-  useEffect(() => { const controller = new AbortController(); const load = async () => { try { const [response, sessionResponse] = await Promise.all([fetch(`/api/bff/media/${id}`, { signal: controller.signal }), fetch("/api/auth/session", { signal: controller.signal })]); if (!response.ok) throw new Error("Detail media belum dapat dimuat"); const payload = await response.json(); const data = payload.data || payload; const session = await sessionResponse.json().catch(() => ({})); const roles = Array.isArray(session.roles) ? session.roles : []; setCanManage(roles.some((role: string) => ["Portal Administrator", "Content Editor"].includes(role))); setAsset(data); setDisplayFilename(data.display_filename || data.original_filename || ""); setTitle(data.title || ""); setAltText(data.alt_text || ""); setCaption(data.caption || ""); } catch (caught) { if (!controller.signal.aborted) setError(caught instanceof Error ? caught.message : "Detail media belum dapat dimuat"); } finally { if (!controller.signal.aborted) setLoading(false); } }; void load(); return () => controller.abort(); }, [id]);
-  const save = async (event: React.FormEvent) => { event.preventDefault(); if (!canManage) return; setSaving(true); setError(""); try { const response = await fetch(`/api/bff/media/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ display_filename: displayFilename, title, alt_text: altText, caption }) }); const payload = await response.json().catch(() => ({})); if (!response.ok) throw new Error(payload.detail || "Metadata media belum dapat disimpan"); setAsset(payload.data); } catch (caught) { setError(caught instanceof Error ? caught.message : "Metadata media belum dapat disimpan"); } finally { setSaving(false); } };
-  const archive = async () => { if (!window.confirm("Arsipkan media ini? Konten yang masih menggunakannya harus ditinjau terlebih dahulu.")) return; setSaving(true); setError(""); try { const response = await fetch(`/api/bff/media/${id}/archive`, { method: "POST" }); if (!response.ok) throw new Error("Media belum dapat diarsipkan"); router.push("/dashboard/media"); } catch (caught) { setError(caught instanceof Error ? caught.message : "Media belum dapat diarsipkan"); setSaving(false); } };
+  useEffect(() => {
+    const controller = new AbortController();
+    const load = async () => {
+      try {
+        const [response, sessionResponse] = await Promise.all([
+          fetch(`/api/bff/media/${id}`, { signal: controller.signal }),
+          fetch("/api/auth/session", { signal: controller.signal }),
+        ]);
+        if (!response.ok) throw new Error("Detail media belum dapat dimuat");
+        const payload = await response.json();
+        const data = payload.data || payload;
+        const session = await sessionResponse.json().catch(() => ({}));
+        const roles = Array.isArray(session.roles) ? session.roles : [];
+        setCanManage(
+          roles.some((role: string) =>
+            ["Portal Administrator", "Content Editor"].includes(role)
+          )
+        );
+        setAsset(data);
+        setDisplayFilename(data.display_filename || data.original_filename || "");
+        setTitle(data.title || "");
+        setAltText(data.alt_text || "");
+        setCaption(data.caption || "");
+      } catch (caught) {
+        if (!controller.signal.aborted) {
+          setError(caught instanceof Error ? caught.message : "Detail media belum dapat dimuat");
+        }
+      } finally {
+        if (!controller.signal.aborted) setLoading(false);
+      }
+    };
+    void load();
+    return () => controller.abort();
+  }, [id]);
 
-  if (loading) return <div className="admin-card animate-pulse p-8"><div className="h-7 w-52 rounded bg-slate-100" /><div className="mt-5 h-72 rounded-xl bg-slate-100" /></div>;
-  if (!asset) return <div className="admin-card mx-auto max-w-xl p-8 text-center" role="alert"><h1 className="text-xl font-black text-slate-900">Media tidak tersedia</h1><p className="mt-3 text-sm text-slate-500">{error}</p><Link href="/dashboard/media" className="admin-button mt-6">Kembali</Link></div>;
+  const save = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!canManage) return;
+    setSaving(true);
+    setError("");
+    try {
+      const response = await fetch(`/api/bff/media/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          display_filename: displayFilename,
+          title,
+          alt_text: altText,
+          caption,
+        }),
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(payload.detail || "Metadata media belum dapat disimpan");
+      }
+      setAsset(payload.data);
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Metadata media belum dapat disimpan");
+    } finally {
+      setSaving(false);
+    }
+  };
 
-  return <div className="admin-page max-w-6xl"><div className="admin-page-header"><div><Link href="/dashboard/media" className="text-sm font-bold text-sky-700">← Kembali ke Pustaka Media</Link><p className="admin-kicker mt-5">Detail aset</p><h1 className="admin-page-title">{canManage ? "Kelola media" : "Detail media"}</h1><p className="admin-page-copy">Nama tampilan dapat diubah tanpa memindahkan penyimpanan objek atau mengubah nama asli.</p></div><span className={`admin-status ${asset.status === "active" ? "bg-emerald-50 text-emerald-800" : "bg-slate-100 text-slate-600"}`}>{asset.status === "active" ? "Aktif" : asset.status === "archived" ? "Diarsipkan" : asset.status}</span></div><div className="grid gap-7 lg:grid-cols-[.85fr_1.15fr]"><section className="admin-card overflow-hidden"><div className="flex aspect-square items-center justify-center bg-slate-100">{asset.detected_mime_type.startsWith("image/") ? <img src={`/api/bff/media/${asset.id}/content`} alt={altText || "Pratinjau media"} className="h-full w-full object-contain" /> : <AdminIcon name="file" className="h-16 w-16 text-slate-300" />}</div><div className="space-y-2 p-5 text-xs text-slate-500"><p className="truncate font-bold text-slate-800">{asset.display_filename || asset.original_filename}</p><p>Nama asli: {asset.original_filename || "Tidak tersedia"}</p><p>{asset.detected_mime_type}</p><p>{new Intl.NumberFormat("id-ID").format(asset.size_bytes)} byte</p></div></section><form onSubmit={save} className="admin-form-card"><div className="admin-form-header"><h2 className="font-black text-slate-900">Metadata media</h2><p className="mt-1 text-xs text-slate-500">Peninjau memiliki akses baca; Administrator dan Editor dapat mengubah metadata.</p></div><div className="admin-form-body">{error && <div className="admin-alert-error" role="alert">{error}</div>}<div><label htmlFor="media-filename" className="admin-label">Nama tampilan berkas</label><input id="media-filename" value={displayFilename} disabled={!canManage} onChange={(event) => setDisplayFilename(event.target.value)} className="admin-input" /><p className="mt-2 text-xs text-slate-500">Ekstensi harus tetap cocok dengan MIME terdeteksi.</p></div><div><label htmlFor="media-title" className="admin-label">Judul</label><input id="media-title" value={title} disabled={!canManage} onChange={(event) => setTitle(event.target.value)} className="admin-input" /></div><div><label htmlFor="media-alt" className="admin-label">Teks alternatif</label><textarea id="media-alt" rows={3} value={altText} disabled={!canManage} onChange={(event) => setAltText(event.target.value)} className="admin-input" aria-describedby="media-alt-help" /><p id="media-alt-help" className="mt-2 text-xs text-slate-500">Jelaskan informasi visual penting bagi pengguna pembaca layar.</p></div><div><label htmlFor="media-caption" className="admin-label">Keterangan</label><textarea id="media-caption" rows={3} value={caption} disabled={!canManage} onChange={(event) => setCaption(event.target.value)} className="admin-input" /></div></div>{canManage && <div className="admin-form-footer"><button type="button" onClick={archive} disabled={saving || asset.status !== "active"} className="admin-button-secondary !text-rose-700">Arsipkan</button><button type="submit" disabled={saving} className="admin-button">{saving ? "Menyimpan…" : "Simpan metadata"}</button></div>}</form></div></div>;
+  const archive = async () => {
+    if (
+      !window.confirm(
+        "Arsipkan media ini? Konten yang masih menggunakannya harus ditinjau terlebih dahulu."
+      )
+    )
+      return;
+    setSaving(true);
+    setError("");
+    try {
+      const response = await fetch(`/api/bff/media/${id}/archive`, { method: "POST" });
+      if (!response.ok) throw new Error("Media belum dapat diarsipkan");
+      router.push("/dashboard/media");
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Media belum dapat diarsipkan");
+      setSaving(false);
+    }
+  };
+
+  if (loading)
+    return (
+      <div className="admin-card animate-pulse p-8">
+        <div className="h-7 w-52 rounded bg-slate-100 dark:bg-slate-800" />
+        <div className="mt-5 h-72 rounded-xl bg-slate-100 dark:bg-slate-800" />
+      </div>
+    );
+
+  if (!asset)
+    return (
+      <div className="admin-card mx-auto max-w-xl p-8 text-center" role="alert">
+        <h1 className="text-xl font-black text-slate-900 dark:text-white">Media tidak tersedia</h1>
+        <p className="mt-3 text-sm text-slate-500">{error}</p>
+        <Link href="/dashboard/media" className="admin-button mt-6">
+          Kembali
+        </Link>
+      </div>
+    );
+
+  return (
+    <div className="admin-page max-w-6xl">
+      <div className="admin-page-header">
+        <div>
+          <Link
+            href="/dashboard/media"
+            className="text-sm font-bold text-sky-700 dark:text-sky-400"
+          >
+            ← Kembali ke Pustaka Media
+          </Link>
+          <p className="admin-kicker mt-5">Detail aset</p>
+          <h1 className="admin-page-title">{canManage ? "Kelola media" : "Detail media"}</h1>
+          <p className="admin-page-copy">
+            Nama tampilan dapat diubah tanpa memindahkan penyimpanan objek atau mengubah nama asli.
+          </p>
+        </div>
+        <span
+          className={`cuba-badge ${
+            asset.status === "active"
+              ? "cuba-badge-success"
+              : asset.status === "archived"
+              ? "cuba-badge-neutral"
+              : "cuba-badge-neutral"
+          }`}
+        >
+          {asset.status === "active"
+            ? "Aktif"
+            : asset.status === "archived"
+            ? "Diarsipkan"
+            : asset.status}
+        </span>
+      </div>
+
+      <div className="grid gap-7 lg:grid-cols-[.85fr_1.15fr]">
+        <section className="admin-card overflow-hidden">
+          <div className="flex aspect-square items-center justify-center bg-slate-100 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-800">
+            {asset.detected_mime_type.startsWith("image/") ? (
+              <img
+                src={`/api/bff/media/${asset.id}/content`}
+                alt={altText || "Pratinjau media"}
+                className="h-full w-full object-contain"
+              />
+            ) : (
+              <AdminIcon name="file" className="h-16 w-16 text-slate-300 dark:text-slate-600 stroke-[1.5]" />
+            )}
+          </div>
+          <div className="space-y-2 p-5 text-xs text-slate-500 dark:text-slate-400">
+            <p className="truncate font-bold text-slate-800 dark:text-slate-200 text-sm">
+              {asset.display_filename || asset.original_filename}
+            </p>
+            <p>Nama asli: {asset.original_filename || "Tidak tersedia"}</p>
+            <p>Tipe MIME: {asset.detected_mime_type}</p>
+            <p>Ukuran: {new Intl.NumberFormat("id-ID").format(asset.size_bytes)} byte</p>
+          </div>
+        </section>
+
+        <form onSubmit={save} className="admin-form-card">
+          <div className="admin-form-header">
+            <h2 className="font-black text-slate-900 dark:text-white">Metadata media</h2>
+            <p className="mt-1 text-xs text-slate-500">
+              Peninjau memiliki akses baca; Administrator dan Editor dapat mengubah metadata.
+            </p>
+          </div>
+          <div className="admin-form-body space-y-5">
+            {error && (
+              <div className="admin-alert-error" role="alert">
+                {error}
+              </div>
+            )}
+            <div>
+              <label htmlFor="media-filename" className="admin-label">
+                Nama tampilan berkas
+              </label>
+              <input
+                id="media-filename"
+                value={displayFilename}
+                disabled={!canManage}
+                onChange={(event) => setDisplayFilename(event.target.value)}
+                className="admin-input"
+              />
+              <p className="mt-2 text-xs text-slate-500">
+                Ekstensi harus tetap cocok dengan MIME terdeteksi.
+              </p>
+            </div>
+            <div>
+              <label htmlFor="media-title" className="admin-label">
+                Judul
+              </label>
+              <input
+                id="media-title"
+                value={title}
+                disabled={!canManage}
+                onChange={(event) => setTitle(event.target.value)}
+                className="admin-input"
+              />
+            </div>
+            <div>
+              <label htmlFor="media-alt" className="admin-label">
+                Teks alternatif
+              </label>
+              <textarea
+                id="media-alt"
+                rows={3}
+                value={altText}
+                disabled={!canManage}
+                onChange={(event) => setAltText(event.target.value)}
+                className="admin-input"
+                aria-describedby="media-alt-help"
+              />
+              <p id="media-alt-help" className="mt-2 text-xs text-slate-500">
+                Jelaskan informasi visual penting bagi pengguna pembaca layar.
+              </p>
+            </div>
+            <div>
+              <label htmlFor="media-caption" className="admin-label">
+                Keterangan
+              </label>
+              <textarea
+                id="media-caption"
+                rows={3}
+                value={caption}
+                disabled={!canManage}
+                onChange={(event) => setCaption(event.target.value)}
+                className="admin-input"
+              />
+            </div>
+          </div>
+          {canManage && (
+            <div className="admin-form-footer flex justify-between">
+              <button
+                type="button"
+                onClick={archive}
+                disabled={saving || asset.status !== "active"}
+                className="admin-button-secondary !text-rose-700 hover:!border-rose-300"
+              >
+                Arsipkan
+              </button>
+              <button type="submit" disabled={saving} className="admin-button">
+                {saving ? "Menyimpan…" : "Simpan metadata"}
+              </button>
+            </div>
+          )}
+        </form>
+      </div>
+    </div>
+  );
 }

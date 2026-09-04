@@ -7,8 +7,7 @@ import { authOptions } from "@/lib/auth";
 import { getServerAccessToken } from "@/lib/server-auth";
 import { attachMediaUsages, detachMediaUsage } from "@/lib/media-usages";
 
-const API_BASE = process.env.PORTAL_API_INTERNAL_URL;
-if (!API_BASE) throw new Error("Missing required environment variable: PORTAL_API_INTERNAL_URL");
+const API_BASE = process.env.PORTAL_API_INTERNAL_URL || "http://api:8080";
 
 export type FAQCategory = { id: string; slug: string; name: string; description: string; sort_order: number; status: "active" | "archived" };
 export type FAQItem = { id: string; category_id: string; category_name: string; category_slug: string; slug: string; question: string; answer: string; sort_order: number; status: "draft" | "in_review" | "approved" | "published" | "archived"; media_asset_id?: string; media_alt?: string; seo_title: string; meta_description: string; indexable: boolean; version: number; updated_at: string };
