@@ -9,7 +9,8 @@ export type ScheduleStatus =
   | "scheduled"
   | "published"
   | "needs_review"
-  | "ready";
+  | "ready"
+  | "cancelled";
 
 export interface ScheduleEvent {
   id: string;

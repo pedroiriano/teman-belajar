@@ -3,7 +3,7 @@
 import { useId, useMemo, useState } from "react";
 import { AdminIcon } from "@/components/admin-icon";
 import type { CreateScheduleInput, ScheduleEvent, ScheduleModule } from "@/types/schedule";
-import { createScheduleEventAction } from "@/app/actions/schedule";
+import { createScheduleEventAction, cancelScheduleEventAction } from "@/app/actions/schedule";
 
 interface CubaScheduleCalendarProps {
   initialEvents: ScheduleEvent[];
@@ -23,6 +23,8 @@ const statusBadgeClasses: Record<string, string> = {
   published: "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-300 dark:border-emerald-800",
   needs_review: "bg-yellow-50 text-yellow-800 border-yellow-200 dark:bg-yellow-950/50 dark:text-yellow-300 dark:border-yellow-800",
   ready: "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-300 dark:border-emerald-800",
+  cancelled: "bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700",
+  failed: "bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/50 dark:text-rose-300 dark:border-rose-800",
 };
 
 export function CubaScheduleCalendar({
@@ -442,11 +444,43 @@ export function CubaScheduleCalendar({
                           </span>
                         )}
                       </div>
-                      <span
-                        className={`shrink-0 rounded-md border px-2 py-0.5 text-[9px] font-black uppercase ${badgeClass}`}
-                      >
-                        {item.statusLabel}
-                      </span>
+                      <div className="flex shrink-0 items-center gap-1.5">
+                        <span
+                          className={`rounded-md border px-2 py-0.5 text-[9px] font-black uppercase ${badgeClass}`}
+                        >
+                          {item.statusLabel}
+                        </span>
+                        {item.status === "scheduled" && (
+                          <button
+                            type="button"
+                            className="rounded p-1 text-slate-400 hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950/40 dark:hover:text-rose-400"
+                            title="Batalkan jadwal"
+                            aria-label={`Batalkan jadwal ${item.title}`}
+                            disabled={busy}
+                            onClick={async (e) => {
+                              e.stopPropagation();
+                              if (!confirm(`Batalkan jadwal publikasi untuk "${item.title}"?`)) return;
+                              setBusy(true);
+                              const res = await cancelScheduleEventAction(item.id);
+                              setBusy(false);
+                              if (res.success) {
+                                setEvents((prev) =>
+                                  prev.map((ev) =>
+                                    ev.id === item.id
+                                      ? { ...ev, status: "cancelled", statusLabel: "Dibatalkan" }
+                                      : ev
+                                  )
+                                );
+                                showToast(`Jadwal "${item.title}" berhasil dibatalkan.`);
+                              } else {
+                                showToast(res.error || "Gagal membatalkan jadwal.");
+                              }
+                            }}
+                          >
+                            <AdminIcon name="x" className="h-3 w-3" />
+                          </button>
+                        )}
+                      </div>
                     </li>
                   );
                 })}
