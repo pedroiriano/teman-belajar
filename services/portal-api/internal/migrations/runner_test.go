@@ -40,6 +40,9 @@ func TestChecksumSHA256(t *testing.T) {
 	if crlf := ChecksumSHA256([]byte("SELECT 1;\r\n")); crlf != want {
 		t.Fatalf("CRLF checksum = %q, want canonical %q", crlf, want)
 	}
+	if bom := ChecksumSHA256([]byte("\xef\xbb\xbfSELECT 1;\n")); bom != want {
+		t.Fatalf("BOM checksum = %q, want canonical %q", bom, want)
+	}
 }
 
 func TestRunChecksumLifecycle(t *testing.T) {

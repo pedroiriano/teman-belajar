@@ -3338,6 +3338,254 @@ paths:
         '403': { $ref: '#/components/responses/Forbidden' }
         '404': { $ref: '#/components/responses/NotFound' }
         '409': { $ref: '#/components/responses/ConflictError' }
+  /admin/schedules:
+    get:
+      tags: [Admin, Schedule]
+      operationId: listAdminSchedules
+      summary: List scheduled publication events with conflict detection
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: month
+          in: query
+          required: false
+          schema: { type: string, example: "2026-09" }
+        - name: module
+          in: query
+          required: false
+          schema: { type: string, example: "all" }
+      responses:
+        '200':
+          description: List of schedules and conflict summary
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items: { type: object }
+                  conflict_count:
+                    type: integer
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+    post:
+      tags: [Admin, Schedule]
+      operationId: createAdminSchedule
+      summary: Create a publication schedule
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [title, target_date, target_time]
+              properties:
+                title: { type: string }
+                target_date: { type: string, format: date }
+                target_time: { type: string }
+                entity_type: { type: string }
+                entity_id: { type: string }
+                module: { type: string }
+                owner: { type: string }
+                cohort_label: { type: string }
+                participants_count: { type: integer }
+                description: { type: string }
+      responses:
+        '201':
+          description: Created schedule event
+          content:
+            application/json:
+              schema: { type: object }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+  /admin/schedules/{id}/cancel:
+    post:
+      tags: [Admin, Schedule]
+      operationId: cancelAdminSchedule
+      summary: Cancel a pending publication schedule
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Schedule cancelled successfully
+          content:
+            application/json:
+              schema: { type: object }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /admin/rbac/roles:
+    get:
+      tags: [Admin, RBAC]
+      operationId: listAdminRolePolicies
+      summary: List application-level role policies
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: Role policies list
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { type: object }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+    post:
+      tags: [Admin, RBAC]
+      operationId: createAdminRolePolicy
+      summary: Create a custom role policy
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, description]
+              properties:
+                name: { type: string }
+                description: { type: string }
+                template_id: { type: string }
+                permissions: { type: object }
+      responses:
+        '201':
+          description: Created custom role policy
+          content:
+            application/json:
+              schema: { type: object }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+  /admin/rbac/roles/{id}:
+    get:
+      tags: [Admin, RBAC]
+      operationId: getAdminRolePolicy
+      summary: Get role policy by ID
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Role policy details
+          content:
+            application/json:
+              schema: { type: object }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    put:
+      tags: [Admin, RBAC]
+      operationId: updateAdminRolePolicy
+      summary: Update role policy permissions
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                permissions: { type: object }
+                description: { type: string }
+      responses:
+        '200':
+          description: Updated role policy
+          content:
+            application/json:
+              schema: { type: object }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    delete:
+      tags: [Admin, RBAC]
+      operationId: deleteAdminRolePolicy
+      summary: Delete a custom role policy
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Role policy deleted
+          content:
+            application/json:
+              schema: { type: object }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /admin/review-notes:
+    post:
+      tags: [Admin, Review Queue]
+      operationId: createAdminReviewNote
+      summary: Create an editorial review feedback note
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [entity_type, entity_id, notes]
+              properties:
+                entity_type: { type: string }
+                entity_id: { type: string }
+                action: { type: string }
+                notes: { type: string }
+                reviewer_id: { type: string }
+                reviewer_name: { type: string }
+      responses:
+        '201':
+          description: Review note recorded
+          content:
+            application/json:
+              schema: { type: object }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+  /admin/review-notes/{entityType}/{entityId}:
+    get:
+      tags: [Admin, Review Queue]
+      operationId: listAdminReviewNotes
+      summary: List review feedback notes for an entity
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: entityType
+          in: path
+          required: true
+          schema: { type: string }
+        - name: entityId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: List of review notes
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items: { type: object }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
 components:
   securitySchemes:
     oidc:

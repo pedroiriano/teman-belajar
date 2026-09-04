@@ -39,6 +39,9 @@ import (
 	"teman-belajar-api/internal/domain/media"
 	"teman-belajar-api/internal/domain/mediagallery"
 	"teman-belajar-api/internal/domain/microlearning"
+	"teman-belajar-api/internal/domain/rbac"
+	"teman-belajar-api/internal/domain/reviewnote"
+	"teman-belajar-api/internal/domain/schedule"
 	"teman-belajar-api/internal/domain/training"
 	"teman-belajar-api/internal/domain/webinar"
 	"teman-belajar-api/internal/observability"
@@ -215,6 +218,19 @@ func main() {
 	dashboardSvc := dashboard.NewService(dashboardRepo)
 	dashboardHandler := handler.NewDashboardHandler(dashboardSvc)
 
+	scheduleRepo := postgres.NewScheduleRepository(db)
+	compositePublisher := NewCompositeEntityPublisher(db)
+	scheduleSvc := schedule.NewService(scheduleRepo, compositePublisher)
+	scheduleHandler := handler.NewScheduleHandler(scheduleSvc)
+
+	rbacRepo := postgres.NewRBACRepository(db)
+	rbacSvc := rbac.NewService(rbacRepo)
+	rbacHandler := handler.NewRBACHandler(rbacSvc)
+
+	reviewNoteRepo := postgres.NewReviewNoteRepository(db)
+	reviewNoteSvc := reviewnote.NewService(reviewNoteRepo)
+	reviewNoteHandler := handler.NewReviewNoteHandler(reviewNoteSvc)
+
 	engagementService := engagementapplication.NewService(engagementRepo, engagementResolver, searchService)
 	engagementHandler := handler.NewEngagementHandler(engagementService)
 
@@ -288,6 +304,16 @@ func main() {
 	mux.Handle("GET /api/v1/admin/analytics/statistics", adminAuthMiddleware(http.HandlerFunc(analyticsHandler.HandleGetStatistics)))
 	mux.Handle("GET /api/v1/admin/dashboard/summary", adminAuthMiddleware(http.HandlerFunc(dashboardHandler.GetSummary)))
 	mux.Handle("GET /api/v1/admin/workflow", adminAuthMiddleware(http.HandlerFunc(dashboardHandler.GetWorkflow)))
+	mux.Handle("GET /api/v1/admin/schedules", adminAuthMiddleware(http.HandlerFunc(scheduleHandler.List)))
+	mux.Handle("POST /api/v1/admin/schedules", adminAuthMiddleware(http.HandlerFunc(scheduleHandler.Create)))
+	mux.Handle("POST /api/v1/admin/schedules/{id}/cancel", adminAuthMiddleware(http.HandlerFunc(scheduleHandler.Cancel)))
+	mux.Handle("GET /api/v1/admin/rbac/roles", adminAuthMiddleware(http.HandlerFunc(rbacHandler.List)))
+	mux.Handle("GET /api/v1/admin/rbac/roles/{id}", adminAuthMiddleware(http.HandlerFunc(rbacHandler.Get)))
+	mux.Handle("PUT /api/v1/admin/rbac/roles/{id}", adminAuthMiddleware(http.HandlerFunc(rbacHandler.Update)))
+	mux.Handle("POST /api/v1/admin/rbac/roles", adminAuthMiddleware(http.HandlerFunc(rbacHandler.Create)))
+	mux.Handle("DELETE /api/v1/admin/rbac/roles/{id}", adminAuthMiddleware(http.HandlerFunc(rbacHandler.Delete)))
+	mux.Handle("GET /api/v1/admin/review-notes/{entityType}/{entityId}", adminAuthMiddleware(http.HandlerFunc(reviewNoteHandler.List)))
+	mux.Handle("POST /api/v1/admin/review-notes", adminAuthMiddleware(http.HandlerFunc(reviewNoteHandler.Create)))
 	mux.Handle("/metrics", promhttp.Handler())
 
 	// Public CMS Endpoints
@@ -466,6 +492,11 @@ func main() {
 	go func() {
 		defer processorWg.Done()
 		runAuditRetention(processorCtx, auditCenterSvc)
+	}()
+	processorWg.Add(1)
+	go func() {
+		defer processorWg.Done()
+		runSchedulePublisher(processorCtx, scheduleSvc)
 	}()
 
 	port := os.Getenv("PORT")

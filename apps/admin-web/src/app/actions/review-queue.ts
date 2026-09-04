@@ -129,6 +129,32 @@ export async function transitionReviewItemAction(
       };
     }
 
+    // Persist reviewer notes to database if provided
+    if (reviewerNotes && reviewerNotes.trim().length > 0) {
+      const apiBase = process.env.PORTAL_API_INTERNAL_URL || "http://api:8080";
+      const token = await getServerAccessToken();
+      if (token) {
+        try {
+          await fetch(`${apiBase}/api/v1/admin/review-notes`, {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              entity_type: module,
+              entity_id: id,
+              action: targetStatus === "draft" ? "request_changes" : targetStatus,
+              notes: reviewerNotes.trim(),
+              reviewer_name: session?.user?.name || "Reviewer",
+            }),
+          });
+        } catch {
+          // Non-blocking error
+        }
+      }
+    }
+
     // Revalidate paths
     revalidatePath("/dashboard/review-queue");
     revalidatePath("/dashboard/workflow");
