@@ -18,6 +18,7 @@ import { listLearningPaths } from "@/lib/learning-paths";
 import { listMediaCollections } from "@/lib/media-gallery";
 import { listMicrolearning } from "@/lib/microlearning";
 import { getPublicPlatformConfiguration, publicMediaPath } from "@/lib/platform-configuration";
+import { getCuratedRecommendations } from "@/lib/recommendations";
 import { listTrainingPrograms } from "@/lib/training-programs";
 
 type News = { id: string; slug: string; title: string; excerpt?: string; published_at?: string };
@@ -202,6 +203,7 @@ export default async function Home() {
     newsResult,
     announcementsResult,
     mediaResult,
+    recommendationsResult,
   ] = await Promise.all([
     getPublicFAQs(),
     getPublicPlatformConfiguration(),
@@ -211,7 +213,10 @@ export default async function Home() {
     getNews(1, 4),
     getAnnouncements(8),
     listMediaCollections("", "", 1),
+    getCuratedRecommendations(6),
   ]);
+
+  const curatedRecommendations = recommendationsResult.data;
 
   const rawFaqs = faqResult.data.flatMap((group) => group.items);
   const faqs = rawFaqs.length ? rawFaqs.slice(0, 6) : fallbackFaqs;
@@ -474,6 +479,108 @@ export default async function Home() {
           </div>
         </div>
       </section>
+
+      {/* 2B. REKOMENDASI PILIHAN EDITOR (#rekomendasi) */}
+      {curatedRecommendations.length > 0 ? (
+        <section
+          {...sectionProps("recommendations", 2)}
+          className="relative md:py-24 py-16 bg-gray-50 dark:bg-slate-800"
+          id="rekomendasi"
+        >
+          <div className="container relative">
+            <div className="grid md:grid-cols-12 grid-cols-1 pb-8 items-end">
+              <div className="lg:col-span-8 md:col-span-6 md:text-start text-center">
+                <span className="text-primary text-sm font-bold uppercase tracking-wider block mb-2">
+                  Kurasi Spesial
+                </span>
+                <h2 className="mb-4 md:text-3xl md:leading-normal text-2xl leading-normal font-bold text-slate-900 dark:text-white">
+                  Rekomendasi Pilihan Editor
+                </h2>
+                <p className="text-slate-400 max-w-xl text-base">
+                  Materi terpilih yang dikurasi khusus oleh tim editorial untuk mendukung akselerasi kompetensi Anda.
+                </p>
+              </div>
+              <div className="lg:col-span-4 md:col-span-6 md:text-end hidden md:block">
+                <Link
+                  className="relative inline-flex items-center gap-1.5 font-semibold tracking-wide text-base text-slate-400 hover:text-primary duration-500 ease-in-out group"
+                  href="/catalog"
+                >
+                  <span>Lihat Semua Katalog</span>
+                  <svg className="size-4 inline-block transition-transform duration-300 group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                  </svg>
+                </Link>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 md:grid-cols-2 gap-[30px] mt-8">
+              {curatedRecommendations.map((item, idx) => (
+                <div
+                  key={`rec-${item.target_type}-${item.target_id}`}
+                  className="group rounded-md shadow-sm dark:shadow-gray-800 bg-white dark:bg-slate-900 transition-all duration-500 hover:scale-[1.02] hover:shadow-md flex flex-col overflow-hidden"
+                >
+                  <div className="relative overflow-hidden">
+                    <img
+                      src={`/techwind-hero/course/c${((idx + 1) % 10) + 1}.jpg`}
+                      alt=""
+                      className="w-full h-48 object-cover group-hover:scale-105 duration-500"
+                    />
+                    <div className="absolute top-4 start-4">
+                      <span className="bg-primary/90 text-white text-[12px] px-2.5 py-1 font-semibold rounded-full flex items-center gap-1 shadow-sm">
+                        <svg className="size-3.5 fill-current" viewBox="0 0 24 24">
+                          <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                        </svg>
+                        Pilihan Editor
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="p-6 flex flex-col flex-1">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-xs font-semibold text-primary uppercase tracking-wider">
+                        {item.target_type === "microlearning" ? "Pembelajaran Singkat" : "Pusat Pengetahuan"}
+                      </span>
+                      <span className="text-xs text-slate-400">
+                        {item.published_at ? formatDate(item.published_at) : "Unggulan"}
+                      </span>
+                    </div>
+
+                    <h3 className="text-lg font-bold text-slate-900 dark:text-white group-hover:text-primary duration-300 line-clamp-2">
+                      <Link href={item.url}>
+                        {item.title}
+                      </Link>
+                    </h3>
+
+                    {item.summary && (
+                      <p className="text-slate-400 text-sm mt-3 line-clamp-3 leading-relaxed">
+                        {item.summary}
+                      </p>
+                    )}
+
+                    <div className="mt-auto pt-5 border-t border-gray-100 dark:border-gray-800 flex items-center justify-between">
+                      <span className="text-xs font-medium text-slate-400 flex items-center gap-1">
+                        <svg className="size-3.5 text-primary inline" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                        </svg>
+                        Terkurasi
+                      </span>
+                      <Link
+                        href={item.url}
+                        className="inline-flex items-center gap-1 text-sm font-semibold text-primary hover:text-primary/80 duration-300"
+                      >
+                        <span>Pelajari</span>
+                        <svg className="size-3.5 inline-block transition-transform duration-300 group-hover:translate-x-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                        </svg>
+                      </Link>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      ) : null}
 
       {/* 3. PUSAT PEMBELAJARAN DAN PENGETAHUAN (#pusat-pengetahuan & #cari) */}
       <section

@@ -348,3 +348,60 @@ func TestRecommendationFallbackAndSearchFailure(t *testing.T) {
 		t.Fatalf("search failure=%v", err)
 	}
 }
+
+type stubPinProvider struct {
+	pins []domain.ActivePin
+}
+
+func (p *stubPinProvider) ListActivePins(_ context.Context, _ string, limit int) ([]domain.ActivePin, error) {
+	if len(p.pins) > limit {
+		return p.pins[:limit], nil
+	}
+	return p.pins, nil
+}
+
+func TestPublicRecommendationsAndEditorialPins(t *testing.T) {
+	now := time.Now().UTC()
+	pinTarget := domain.Target{Type: domain.TargetKnowledge, ID: uuid.NewString()}
+	fallbackTarget := domain.Target{Type: domain.TargetKnowledge, ID: uuid.NewString()}
+	resolver := targetResolverStub{
+		targets: map[domain.Target]domain.ResolvedTarget{
+			pinTarget:      resolved(pinTarget, "Pinned Content", "cat-1", now),
+			fallbackTarget: resolved(fallbackTarget, "Fallback Content", "cat-2", now),
+		},
+		hidden: map[domain.Target]bool{},
+	}
+	pinProv := &stubPinProvider{
+		pins: []domain.ActivePin{
+			{TargetType: pinTarget.Type, TargetID: pinTarget.ID, Title: "Pinned Content", Weight: 100},
+		},
+	}
+	service := NewService(newMemoryRepository(), resolver, discoveryStub{candidates: []domain.Candidate{{Target: fallbackTarget}}})
+	service.SetPinProvider(pinProv)
+
+	publicRes, err := service.PublicRecommendations(context.Background(), "", 5)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(publicRes.Items) != 2 {
+		t.Fatalf("expected 2 items, got %d", len(publicRes.Items))
+	}
+	if publicRes.Items[0].Reason != domain.ReasonEditorialPin {
+		t.Fatalf("expected first item to be editorial_pin, got %s", publicRes.Items[0].Reason)
+	}
+	if publicRes.Items[1].Reason != domain.ReasonFallbackRecent {
+		t.Fatalf("expected second item to be fallback_recent, got %s", publicRes.Items[1].Reason)
+	}
+
+	authRes, err := service.Recommendations(context.Background(), "user-b", 5)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(authRes.Items) != 2 {
+		t.Fatalf("expected 2 items, got %d", len(authRes.Items))
+	}
+	if authRes.Items[0].Reason != domain.ReasonEditorialPin {
+		t.Fatalf("expected first item to be editorial_pin, got %s", authRes.Items[0].Reason)
+	}
+}
+

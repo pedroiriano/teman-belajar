@@ -56,6 +56,20 @@ func (s *engagementServiceStub) Recommendations(_ context.Context, actor string,
 	s.actor = actor
 	return domain.RecommendationResult{Items: []domain.Recommendation{}}, nil
 }
+func (s *engagementServiceStub) PublicRecommendations(_ context.Context, _ string, _ int) (domain.RecommendationResult, error) {
+	return domain.RecommendationResult{Items: []domain.Recommendation{
+		{
+			Target: domain.ResolvedTarget{
+				Target: domain.Target{Type: domain.TargetKnowledge, ID: "8f542a20-8cff-4c13-bf38-d3b516626fea"},
+				Title:  "Test Article",
+				URL:    "/knowledge/test-article",
+			},
+			Reason: domain.ReasonEditorialPin,
+			Score:  1100,
+		},
+	}, Personalized: false}, nil
+}
+
 
 func withActor(request *http.Request, subject string) *http.Request {
 	claims := middleware.CustomClaims{Subject: subject}
@@ -121,3 +135,26 @@ func TestRatingPayloadIsStrictAndBounded(t *testing.T) {
 		}
 	}
 }
+
+func TestPublicRecommendationsHandler(t *testing.T) {
+	stub := &engagementServiceStub{}
+	handler := NewEngagementHandler(stub)
+	mux := http.NewServeMux()
+	mux.HandleFunc("GET /api/v1/recommendations", handler.PublicRecommendations)
+
+	// Valid request without auth
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/recommendations?limit=5", nil)
+	rec := httptest.NewRecorder()
+	mux.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected 200 OK, got %d: %s", rec.Code, rec.Body.String())
+	}
+	if !strings.Contains(rec.Body.String(), "editorial_pin") {
+		t.Fatalf("expected editorial_pin in response, got %s", rec.Body.String())
+	}
+	if !strings.Contains(rec.Body.String(), "Test Article") {
+		t.Fatalf("expected Test Article in response, got %s", rec.Body.String())
+	}
+}
+

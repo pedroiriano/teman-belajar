@@ -81,6 +81,7 @@ const (
 	ReasonRecentInterest RecommendationReason = "recent_interest"
 	ReasonPopularRating  RecommendationReason = "popular_rating"
 	ReasonFallbackRecent RecommendationReason = "fallback_recent"
+	ReasonEditorialPin   RecommendationReason = "editorial_pin"
 )
 
 type Recommendation struct {

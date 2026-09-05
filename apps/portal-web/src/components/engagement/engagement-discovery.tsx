@@ -11,16 +11,28 @@ const reasonLabels: Record<Recommendation["reason"], string> = {
   recent_interest: "Selaras dengan konten yang baru dilihat",
   popular_rating: "Selaras dengan artikel yang Anda nilai tinggi",
   fallback_recent: "Konten publik terbaru",
+  editorial_pin: "Pilihan Kurasi Editorial",
 };
 
 function ContentCard({ item, reason }: { item: EngagementItem; reason?: string }) {
+  const isEditorial = reason === reasonLabels.editorial_pin;
   return (
     <article className="portal-card flex h-full flex-col p-5">
-      <span className="portal-badge">Pusat Pengetahuan</span>
-      <h3 className="mt-4 text-lg font-black leading-6 text-slate-900"><Link href={item.url} className="hover:text-teal-700">{item.title}</Link></h3>
-      {item.summary && <p className="mt-3 line-clamp-3 text-sm leading-6 text-slate-600">{item.summary}</p>}
-      {reason && <p className="mt-4 flex items-start gap-2 text-xs font-semibold text-teal-700"><PortalIcon name="sparkles" className="mt-0.5 h-4 w-4 shrink-0" />{reason}</p>}
-      <Link href={item.url} className="mt-auto pt-5 text-sm font-bold text-teal-700">Baca artikel →</Link>
+      <div className="flex items-center justify-between gap-2">
+        <span className="portal-badge">
+          {item.target_type === "microlearning" ? "Pembelajaran Singkat" : "Pusat Pengetahuan"}
+        </span>
+        {isEditorial && (
+          <span className="inline-flex items-center gap-1 rounded-full bg-teal-50 px-2 py-0.5 text-xs font-semibold text-teal-700 dark:bg-teal-900/30 dark:text-teal-300">
+            <PortalIcon name="sparkles" className="h-3.5 w-3.5 text-teal-600" />
+            Pilihan Editor
+          </span>
+        )}
+      </div>
+      <h3 className="mt-4 text-lg font-black leading-6 text-slate-900 dark:text-white"><Link href={item.url} className="hover:text-teal-700 dark:hover:text-teal-400">{item.title}</Link></h3>
+      {item.summary && <p className="mt-3 line-clamp-3 text-sm leading-6 text-slate-600 dark:text-slate-300">{item.summary}</p>}
+      {reason && <p className="mt-4 flex items-start gap-2 text-xs font-semibold text-teal-700 dark:text-teal-400"><PortalIcon name="sparkles" className="mt-0.5 h-4 w-4 shrink-0" />{reason}</p>}
+      <Link href={item.url} className="mt-auto pt-5 text-sm font-bold text-teal-700 hover:underline dark:text-teal-400">Pelajari sekarang →</Link>
     </article>
   );
 }

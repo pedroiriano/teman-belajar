@@ -24,3 +24,15 @@ type TargetResolver interface {
 type CandidateDiscovery interface {
 	Discover(ctx context.Context, query CandidateQuery) ([]Candidate, error)
 }
+
+type ActivePin struct {
+	TargetType TargetType
+	TargetID   string
+	Title      string
+	Weight     int
+}
+
+type PinProvider interface {
+	ListActivePins(ctx context.Context, targetType string, limit int) ([]ActivePin, error)
+}
+
