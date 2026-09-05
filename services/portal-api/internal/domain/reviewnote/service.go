@@ -1,4 +1,4 @@
-﻿package reviewnote
+package reviewnote
 
 import (
 	"context"
@@ -18,11 +18,29 @@ func NewService(repo Repository) *Service {
 	return &Service{repo: repo}
 }
 
+func normalizeEntityType(t string) string {
+	t = strings.ToLower(strings.TrimSpace(t))
+	switch t {
+	case "announcements", "announcement":
+		return "announcements"
+	case "faqs", "faq":
+		return "faqs"
+	case "training", "training_programs", "training-programs":
+		return "training"
+	case "microlearning", "microlearnings":
+		return "microlearning"
+	case "learning_paths", "learning-paths", "learning_path":
+		return "learning_paths"
+	default:
+		return t
+	}
+}
+
 func (s *Service) ListByEntity(ctx context.Context, entityType string, entityID string, limit int) ([]ReviewNote, error) {
 	if limit <= 0 || limit > 100 {
 		limit = 50
 	}
-	return s.repo.ListByEntity(ctx, strings.ToLower(strings.TrimSpace(entityType)), strings.TrimSpace(entityID), limit)
+	return s.repo.ListByEntity(ctx, normalizeEntityType(entityType), strings.TrimSpace(entityID), limit)
 }
 
 func (s *Service) Create(ctx context.Context, input CreateReviewNoteInput) (*ReviewNote, error) {
@@ -30,7 +48,7 @@ func (s *Service) Create(ctx context.Context, input CreateReviewNoteInput) (*Rev
 	if notes == "" {
 		return nil, fmt.Errorf("%w: notes cannot be empty", ErrInvalidInput)
 	}
-	entityType := strings.ToLower(strings.TrimSpace(input.EntityType))
+	entityType := normalizeEntityType(input.EntityType)
 	if entityType == "" {
 		return nil, fmt.Errorf("%w: entity_type is required", ErrInvalidInput)
 	}

@@ -66,7 +66,7 @@ export async function getAdminRecommendationPinsAction(
 
     if (response.ok) {
       const payload = await response.json();
-      if (Array.isArray(payload.data) && payload.data.length > 0) {
+      if (Array.isArray(payload.data)) {
         return { success: true, data: payload.data };
       }
     }

@@ -18,6 +18,8 @@ import { SeoDiscoverySection } from "@/components/seo/SeoDiscoverySection";
 import { emptySEOValue, pickSEOValue, profileToSEOValue, type DiscoverabilityProfile, type SEOFormValue } from "@/components/seo/types";
 import { AdminIcon } from "@/components/admin-icon";
 import { CubaContentVersioningPanel } from "@/components/versioning/cuba-content-versioning-panel";
+import { getReviewNotesAction, type ReviewNote } from "@/app/actions/review-notes";
+import { CubaReviewNotesCard } from "@/components/review-notes/cuba-review-notes-card";
 
 type KnowledgeEditDraft = DraftPayload & SEOFormValue & { body: string; primary_node_id: string | null; media_asset_ids: string[] };
 const blankDraft: KnowledgeEditDraft = { ...emptySEOValue(), body: "", primary_node_id: null, media_asset_ids: [] };
@@ -50,14 +52,21 @@ export default function AdminKnowledgeDetailPage() {
   const [primaryNodeId, setPrimaryNodeId] = useState("");
   const [seo, setSEO] = useState<SEOFormValue>(emptySEOValue());
   const [activeTab, setActiveTab] = useState<"content" | "versioning">("content");
+  const [reviewNotes, setReviewNotes] = useState<ReviewNote[]>([]);
 
   useEffect(() => {
     const fetchArticle = async () => {
       try {
-        const res = await getAdminKnowledgeDetailAction(id);
+        const [res, notesRes] = await Promise.all([
+          getAdminKnowledgeDetailAction(id),
+          getReviewNotesAction("knowledge", id),
+        ]);
         if (!res.success) {
           setError(res.error || "Artikel pengetahuan belum dapat dimuat");
           return;
+        }
+        if (notesRes.success && notesRes.data) {
+          setReviewNotes(notesRes.data);
         }
         
 		const profileResult = await getDiscoverabilityProfileAction("knowledge", id);
@@ -180,6 +189,14 @@ export default function AdminKnowledgeDetailPage() {
       ) : (
         <>
           {canCreateRevision && <DraftStatus state={autoSave.state} message={autoSave.message} lastSavedAt={autoSave.lastSavedAt} recovery={autoSave.recovery} onRecover={autoSave.recoverFrom} onKeepCurrent={autoSave.keepCurrent} onDiscard={autoSave.discard} onStartNew={autoSave.startNew} onRetry={autoSave.saveNow} allowStartNew={false} />}
+          <CubaReviewNotesCard
+            entityType="knowledge"
+            entityId={id}
+            notes={reviewNotes}
+            canAddNote={isEditor || isReviewer}
+            onNoteAdded={(newNote) => setReviewNotes((prev) => [newNote, ...prev])}
+            className="mb-6"
+          />
           <section className="admin-form-card">
               <div className="admin-form-header flex flex-wrap items-center justify-between gap-4">
                 <div>
