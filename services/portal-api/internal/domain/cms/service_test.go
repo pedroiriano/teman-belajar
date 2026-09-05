@@ -25,7 +25,12 @@ func TestCanTransitionTo(t *testing.T) {
 		{"approved to published as reviewer", StatusApproved, StatusPublished, reviewerRoles, true},
 		{"draft to published directly", StatusDraft, StatusPublished, adminRoles, false},
 		{"published to archived as editor", StatusPublished, StatusArchived, editorRoles, true},
+		{"published to draft as editor", StatusPublished, StatusDraft, editorRoles, true},
+		{"published to draft as reviewer", StatusPublished, StatusDraft, reviewerRoles, true},
+		{"archived to draft as editor", StatusArchived, StatusDraft, editorRoles, true},
+		{"archived to draft as reviewer", StatusArchived, StatusDraft, reviewerRoles, true},
 		{"archived to published (invalid restore)", StatusArchived, StatusPublished, adminRoles, false},
+		{"archived to draft without role", StatusArchived, StatusDraft, noRoles, false},
 		{"no roles cannot do anything", StatusDraft, StatusInReview, noRoles, false},
 	}
 

@@ -135,6 +135,36 @@ func (h *CMSHandler) ListAdminNews(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(res) // #nosec G104 -- response writer error after commit is non-actionable in HTTP handler
 }
 
+func (h *CMSHandler) GetAdminNews(w http.ResponseWriter, r *http.Request) {
+	_, ok := r.Context().Value(middleware.ClaimsContextKey).(middleware.CustomClaims)
+	if !ok {
+		respondProblem(w, http.StatusUnauthorized, "Unauthorized", "Missing claims")
+		return
+	}
+
+	id := r.PathValue("id")
+	if id == "" {
+		respondProblem(w, http.StatusBadRequest, "Bad Request", "Missing ID")
+		return
+	}
+
+	news, err := h.svc.GetAdminNewsByID(r.Context(), id)
+	if err != nil {
+		if err == cms.ErrNotFound {
+			respondProblem(w, http.StatusNotFound, "Not Found", "News not found")
+			return
+		}
+		respondProblem(w, http.StatusInternalServerError, "Internal Server Error", "Unable to get news")
+		return
+	}
+
+	if h.discovery != nil {
+		news.SEO, _ = h.discovery.Metadata(r.Context(), discoverability.ContentNews, news.ID)
+	}
+
+	respondJSON(w, http.StatusOK, news)
+}
+
 func (h *CMSHandler) ListAdminAnnouncements(w http.ResponseWriter, r *http.Request) {
 	_, ok := r.Context().Value(middleware.ClaimsContextKey).(middleware.CustomClaims)
 	if !ok {
@@ -153,6 +183,36 @@ func (h *CMSHandler) ListAdminAnnouncements(w http.ResponseWriter, r *http.Reque
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(res) // #nosec G104 -- response writer error after commit is non-actionable in HTTP handler
+}
+
+func (h *CMSHandler) GetAdminAnnouncement(w http.ResponseWriter, r *http.Request) {
+	_, ok := r.Context().Value(middleware.ClaimsContextKey).(middleware.CustomClaims)
+	if !ok {
+		respondProblem(w, http.StatusUnauthorized, "Unauthorized", "Missing claims")
+		return
+	}
+
+	id := r.PathValue("id")
+	if id == "" {
+		respondProblem(w, http.StatusBadRequest, "Bad Request", "Missing ID")
+		return
+	}
+
+	ann, err := h.svc.GetAdminAnnouncementByID(r.Context(), id)
+	if err != nil {
+		if err == cms.ErrNotFound {
+			respondProblem(w, http.StatusNotFound, "Not Found", "Announcement not found")
+			return
+		}
+		respondProblem(w, http.StatusInternalServerError, "Internal Server Error", "Unable to get announcement")
+		return
+	}
+
+	if h.discovery != nil {
+		ann.SEO, _ = h.discovery.Metadata(r.Context(), discoverability.ContentAnnouncement, ann.ID)
+	}
+
+	respondJSON(w, http.StatusOK, ann)
 }
 
 func (h *CMSHandler) CreateNews(w http.ResponseWriter, r *http.Request) {
@@ -242,21 +302,24 @@ func (h *CMSHandler) TransitionNews(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Simple path parsing /api/v1/admin/news/{id}/status
-	path := r.URL.Path
-	idStart := len("/api/v1/admin/news/")
-	idEnd := idStart
-	for i := idStart; i < len(path); i++ {
-		if path[i] == '/' {
-			idEnd = i
-			break
+	// Extract ID using PathValue or manual parsing fallback
+	id := r.PathValue("id")
+	if id == "" {
+		path := r.URL.Path
+		idStart := len("/api/v1/admin/news/")
+		idEnd := len(path)
+		for i := idStart; i < len(path); i++ {
+			if path[i] == '/' {
+				idEnd = i
+				break
+			}
 		}
+		if idEnd <= idStart {
+			respondProblem(w, http.StatusBadRequest, "Bad Request", "Missing ID")
+			return
+		}
+		id = path[idStart:idEnd]
 	}
-	if idEnd == idStart {
-		respondProblem(w, http.StatusBadRequest, "Bad Request", "Missing ID")
-		return
-	}
-	id := path[idStart:idEnd]
 
 	var req struct {
 		Status cms.ContentStatus `json:"status"`
@@ -373,20 +436,24 @@ func (h *CMSHandler) TransitionAnnouncement(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	path := r.URL.Path
-	idStart := len("/api/v1/admin/announcements/")
-	idEnd := idStart
-	for i := idStart; i < len(path); i++ {
-		if path[i] == '/' {
-			idEnd = i
-			break
+	// Extract ID using PathValue or manual parsing fallback
+	id := r.PathValue("id")
+	if id == "" {
+		path := r.URL.Path
+		idStart := len("/api/v1/admin/announcements/")
+		idEnd := len(path)
+		for i := idStart; i < len(path); i++ {
+			if path[i] == '/' {
+				idEnd = i
+				break
+			}
 		}
+		if idEnd <= idStart {
+			respondProblem(w, http.StatusBadRequest, "Bad Request", "Missing ID")
+			return
+		}
+		id = path[idStart:idEnd]
 	}
-	if idEnd == idStart {
-		respondProblem(w, http.StatusBadRequest, "Bad Request", "Missing ID")
-		return
-	}
-	id := path[idStart:idEnd]
 
 	var req struct {
 		Status cms.ContentStatus `json:"status"`

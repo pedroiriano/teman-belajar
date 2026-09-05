@@ -155,6 +155,10 @@ func (s *Service) ListNewsRevisions(ctx context.Context, newsID string) ([]NewsR
 	return s.repo.ListNewsRevisions(ctx, newsID)
 }
 
+func (s *Service) GetAdminNewsByID(ctx context.Context, id string) (*News, error) {
+	return s.repo.GetNewsByID(ctx, id)
+}
+
 func (s *Service) GetPublicNews(ctx context.Context, page, pageSize int) (*NewsList, error) {
 	if page < 1 {
 		page = 1
@@ -365,6 +369,10 @@ func (s *Service) UpdateDraftAnnouncement(ctx context.Context, id, title, slug, 
 
 func (s *Service) ListAnnouncementRevisions(ctx context.Context, announcementID string) ([]AnnouncementRevision, error) {
 	return s.repo.ListAnnouncementRevisions(ctx, announcementID)
+}
+
+func (s *Service) GetAdminAnnouncementByID(ctx context.Context, id string) (*Announcement, error) {
+	return s.repo.GetAnnouncementByID(ctx, id)
 }
 
 func (s *Service) logCMSAudit(ctx context.Context, userID *string, action, targetType, targetID string) {
