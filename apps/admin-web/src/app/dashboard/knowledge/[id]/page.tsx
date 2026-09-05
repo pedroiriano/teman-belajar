@@ -192,6 +192,7 @@ export default function AdminKnowledgeDetailPage() {
           <CubaReviewNotesCard
             entityType="knowledge"
             entityId={id}
+            contentTitle={article.title}
             notes={reviewNotes}
             canAddNote={isEditor || isReviewer}
             onNoteAdded={(newNote) => setReviewNotes((prev) => [newNote, ...prev])}

@@ -24,7 +24,8 @@ import type {
   BulkOperationProgress,
   BulkOperationResult,
 } from "@/types/bulk-actions";
-
+import { getReviewNotesAction, type ReviewNote } from "@/app/actions/review-notes";
+import { CubaReviewNotesCard } from "@/components/review-notes/cuba-review-notes-card";
 
 interface CubaReviewQueueProps {
   initialItems: ReviewQueueItem[];
@@ -49,6 +50,10 @@ export function CubaReviewQueue({ initialItems, roles }: CubaReviewQueueProps) {
   const [notice, setNotice] = useState("");
   const [error, setError] = useState("");
   const [confirmModal, setConfirmModal] = useState<ConfirmationModalState | null>(null);
+  const [confirmModalNotes, setConfirmModalNotes] = useState<ReviewNote[]>([]);
+  const [viewNotesItem, setViewNotesItem] = useState<ReviewQueueItem | null>(null);
+  const [notesForItem, setNotesForItem] = useState<ReviewNote[]>([]);
+  const [isLoadingNotes, setIsLoadingNotes] = useState(false);
   const [isPending, startTransition] = useTransition();
 
   // Multi-item selection state
@@ -147,11 +152,29 @@ export function CubaReviewQueue({ initialItems, roles }: CubaReviewQueueProps) {
   const openConfirmModal = (item: ReviewQueueItem, targetStatus: string) => {
     setError("");
     setNotice("");
+    setConfirmModalNotes([]);
     setConfirmModal({
       item,
       targetStatus,
       notes: "",
     });
+    getReviewNotesAction(item.module, item.id).then((res) => {
+      if (res.success && res.data) {
+        setConfirmModalNotes(res.data);
+      }
+    });
+  };
+
+  const handleOpenNotes = async (item: ReviewQueueItem) => {
+    setViewNotesItem(item);
+    setIsLoadingNotes(true);
+    const res = await getReviewNotesAction(item.module, item.id);
+    if (res.success && res.data) {
+      setNotesForItem(res.data);
+    } else {
+      setNotesForItem([]);
+    }
+    setIsLoadingNotes(false);
   };
 
   const executeTransition = () => {
@@ -725,6 +748,17 @@ export function CubaReviewQueue({ initialItems, roles }: CubaReviewQueueProps) {
                     </button>
                   )}
 
+                  {/* Tombol Riwayat Catatan Editorial */}
+                  <button
+                    type="button"
+                    onClick={() => handleOpenNotes(item)}
+                    className="inline-flex items-center gap-1 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-2.5 py-1 text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+                    title="Lihat riwayat catatan & diskusi editorial"
+                  >
+                    <AdminIcon name="message" className="h-3.5 w-3.5 text-sky-600" />
+                    <span>Catatan</span>
+                  </button>
+
                   {/* Link ke editor lengkap */}
                   <Link
                     href={editorHref}
@@ -821,6 +855,43 @@ export function CubaReviewQueue({ initialItems, roles }: CubaReviewQueueProps) {
                 </div>
               </div>
 
+              {/* Past Review Notes Thread in Confirmation Modal */}
+              {confirmModalNotes.length > 0 && (
+                <div className="rounded-xl border border-slate-200/80 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/40 p-3.5 space-y-2">
+                  <div className="flex items-center justify-between text-xs font-bold text-slate-700 dark:text-slate-300">
+                    <span className="flex items-center gap-1.5">
+                      <AdminIcon name="message" className="h-3.5 w-3.5 text-sky-600" />
+                      Riwayat Catatan Sebelumnya ({confirmModalNotes.length})
+                    </span>
+                  </div>
+                  <div className="max-h-36 overflow-y-auto space-y-2 pr-1">
+                    {confirmModalNotes.map((note) => (
+                      <div
+                        key={note.id}
+                        className="rounded-lg border border-slate-200 dark:border-slate-700/60 bg-white dark:bg-slate-900/60 p-2.5 text-xs shadow-xs"
+                      >
+                        <div className="flex items-center justify-between gap-2 mb-1">
+                          <span className="font-semibold text-slate-900 dark:text-white">
+                            {note.reviewer_name}
+                          </span>
+                          <span className="text-[10px] text-slate-400">
+                            {new Date(note.created_at).toLocaleDateString("id-ID", {
+                              day: "numeric",
+                              month: "short",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
+                          </span>
+                        </div>
+                        <p className="text-slate-600 dark:text-slate-300 whitespace-pre-wrap leading-relaxed">
+                          {note.notes}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               <div>
                 <label
                   htmlFor="reviewer-notes"
@@ -875,6 +946,78 @@ export function CubaReviewQueue({ initialItems, roles }: CubaReviewQueueProps) {
                   : "Simpan Perubahan"}
               </button>
 
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Cuba Quick Review Notes Modal Dialog */}
+      {viewNotesItem && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200"
+        >
+          <div className="w-full max-w-2xl max-h-[85vh] rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xl flex flex-col overflow-hidden">
+            {/* Header Dialog */}
+            <div className="border-b border-slate-100 dark:border-slate-800 p-5 flex items-center justify-between shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-sky-50 text-sky-600 dark:bg-sky-950/40 dark:text-sky-400">
+                  <AdminIcon name="message" className="h-5 w-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-extrabold text-slate-900 dark:text-white tracking-tight line-clamp-1">
+                    {viewNotesItem.title}
+                  </h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    Diskusi Editorial · Modul {reviewModuleLabels[viewNotesItem.module]} · Oleh {viewNotesItem.author || "Penulis"}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setViewNotesItem(null)}
+                className="rounded-lg p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                aria-label="Tutup dialog"
+              >
+                <AdminIcon name="x" className="h-5 w-5" />
+              </button>
+            </div>
+
+            {/* Modal Body with CubaReviewNotesCard */}
+            <div className="p-5 overflow-y-auto grow">
+              {isLoadingNotes ? (
+                <div className="space-y-3 p-4 animate-pulse">
+                  <div className="h-4 w-40 bg-slate-200 dark:bg-slate-800 rounded" />
+                  <div className="h-20 bg-slate-100 dark:bg-slate-800/60 rounded-xl" />
+                </div>
+              ) : (
+                <CubaReviewNotesCard
+                  entityType={viewNotesItem.module}
+                  entityId={viewNotesItem.id}
+                  contentTitle={viewNotesItem.title}
+                  notes={notesForItem}
+                  canAddNote={true}
+                  onNoteAdded={(newNote) => setNotesForItem((prev) => [newNote, ...prev])}
+                />
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="border-t border-slate-100 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/50 p-4 flex items-center justify-between shrink-0">
+              <Link
+                href={reviewModuleHrefs[viewNotesItem.module] ? reviewModuleHrefs[viewNotesItem.module](viewNotesItem.id) : `/dashboard/${viewNotesItem.module}`}
+                className="text-xs font-bold text-sky-700 dark:text-sky-400 hover:underline"
+              >
+                Buka di Editor Lengkap &rarr;
+              </Link>
+              <button
+                type="button"
+                onClick={() => setViewNotesItem(null)}
+                className="admin-button-secondary text-xs !min-h-9"
+              >
+                Tutup
+              </button>
             </div>
           </div>
         </div>

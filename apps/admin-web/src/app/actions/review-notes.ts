@@ -5,6 +5,9 @@ import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { getServerAccessToken } from "@/lib/server-auth";
 
+import { notificationStreamHub } from "@/lib/notifications/stream-hub";
+import { reviewModuleLabels, reviewModuleHrefs } from "@/types/review-queue";
+
 const API_BASE = process.env.PORTAL_API_INTERNAL_URL || "http://api:8080";
 
 export interface ReviewNote {
@@ -81,7 +84,8 @@ export async function createReviewNoteAction(
   entityType: string,
   entityId: string,
   action: string,
-  notes: string
+  notes: string,
+  contentTitle?: string
 ): Promise<CreateReviewNoteResult> {
   const session = await getServerSession(authOptions);
   const token = await getServerAccessToken();
@@ -121,6 +125,44 @@ export async function createReviewNoteAction(
     }
 
     const created: ReviewNote = await response.json();
+
+    // Broadcast real-time editorial notification
+    const moduleLabel = reviewModuleLabels[entityType] || entityType;
+    const hrefFn = reviewModuleHrefs[entityType];
+    const deepLink = hrefFn ? hrefFn(entityId) : `/dashboard/${entityType}`;
+    const actionType =
+      action === "approved"
+        ? "approved"
+        : action === "published"
+        ? "published"
+        : "draft";
+    const actionLabel =
+      action === "request_changes"
+        ? "Perlu Revisi"
+        : action === "reject"
+        ? "Ditolak ke Draf"
+        : action === "approved"
+        ? "Disetujui"
+        : action === "published"
+        ? "Diterbitkan"
+        : "Catatan Editorial";
+
+    try {
+      notificationStreamHub.broadcastEditorialUpdate({
+        id: entityId,
+        title: contentTitle || `Catatan Editorial (${moduleLabel})`,
+        module: entityType,
+        module_label: moduleLabel,
+        action: actionType,
+        action_label: actionLabel,
+        reviewer_name: session.user?.name || "Editor",
+        reviewer_notes: trimmedNotes,
+        deep_link: deepLink,
+        timestamp: new Date().toISOString(),
+      });
+    } catch {
+      // Non-blocking broadcast
+    }
 
     // Revalidate paths
     revalidatePath(`/dashboard/news/${entityId}`);
