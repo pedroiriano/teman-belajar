@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { Fragment, useMemo, useState } from "react";
 import { AdminDataTable } from "@/components/admin-data-table";
 import type {
   ContentDaily,
@@ -161,13 +161,13 @@ export function CubaTrafficGroupedTable({ data }: { data: PageDaily[] }) {
       description="Lalu lintas Portal publik dikelompokkan berdasarkan Path dan diurutkan berdasarkan tanggal aktivitas terbaru. Klik baris atau tombol untuk melihat rincian harian."
       itemCount={filteredAndSorted.length}
       headers={[
-        { label: "", key: "expand" },
+        { label: "", key: "expand", width: "w-10", className: "px-2 text-center" },
         { label: "Path Halaman", key: "path", sortable: true },
         { label: "Tanggal Terbaru", key: "latestDate", sortable: true },
         { label: "Total Tayangan", key: "views", sortable: true },
         { label: "Total Pengunjung Unik", key: "visitors", sortable: true },
         { label: "Hari Tercatat", key: "days", sortable: true },
-        { label: "Aksi", key: "actions" },
+        { label: "Aksi", key: "actions", align: "right" },
       ]}
       emptyState="Belum ada data pengunjung untuk rentang waktu ini."
       searchQuery={searchQuery}
@@ -198,13 +198,10 @@ export function CubaTrafficGroupedTable({ data }: { data: PageDaily[] }) {
         const isChecked = selectedPaths.has(group.path);
 
         return (
-          <tbody
-            key={group.path}
-            className="border-b border-slate-200 dark:border-slate-800 last:border-b-0"
-          >
+          <Fragment key={group.path}>
             <tr
               onClick={() => handleToggleExpand(group.path)}
-              className={`cursor-pointer transition-colors hover:bg-sky-50/50 dark:hover:bg-slate-800/60 ${
+              className={`cursor-pointer transition-colors border-b border-slate-200 dark:border-slate-800 hover:bg-sky-50/50 dark:hover:bg-slate-800/60 ${
                 isExpanded
                   ? "bg-sky-50/30 dark:bg-slate-800/40"
                   : isChecked
@@ -360,7 +357,7 @@ export function CubaTrafficGroupedTable({ data }: { data: PageDaily[] }) {
                 </td>
               </tr>
             )}
-          </tbody>
+          </Fragment>
         );
       })}
     </AdminDataTable>
@@ -508,14 +505,14 @@ export function CubaContentGroupedTable({ data }: { data: ContentDaily[] }) {
       description="Metrik penayangan dikelompokkan menurut target dan jenis konten, terurut tanggal terbaru. Klik baris untuk melihat rincian harian."
       itemCount={filteredAndSorted.length}
       headers={[
-        { label: "", key: "expand" },
+        { label: "", key: "expand", width: "w-10", className: "px-2 text-center" },
         { label: "Jenis", key: "contentType", sortable: true },
         { label: "Target Konten", key: "targetId", sortable: true },
         { label: "Tanggal Terbaru", key: "latestDate", sortable: true },
         { label: "Total Tayangan", key: "views", sortable: true },
         { label: "Pengunjung Unik", key: "visitors", sortable: true },
         { label: "Hari Tercatat", key: "days" },
-        { label: "Aksi", key: "actions" },
+        { label: "Aksi", key: "actions", align: "right" },
       ]}
       emptyState="Belum ada data konten untuk rentang waktu ini."
       searchQuery={searchQuery}
@@ -553,13 +550,10 @@ export function CubaContentGroupedTable({ data }: { data: ContentDaily[] }) {
         const isChecked = selectedTargets.has(key);
 
         return (
-          <tbody
-            key={key}
-            className="border-b border-slate-200 dark:border-slate-800 last:border-b-0"
-          >
+          <Fragment key={key}>
             <tr
               onClick={() => handleToggleExpand(key)}
-              className={`cursor-pointer transition-colors hover:bg-sky-50/50 dark:hover:bg-slate-800/60 ${
+              className={`cursor-pointer transition-colors border-b border-slate-200 dark:border-slate-800 hover:bg-sky-50/50 dark:hover:bg-slate-800/60 ${
                 isExpanded
                   ? "bg-sky-50/30 dark:bg-slate-800/40"
                   : isChecked
@@ -628,7 +622,7 @@ export function CubaContentGroupedTable({ data }: { data: ContentDaily[] }) {
 
             {isExpanded && (
               <tr className="bg-slate-50/75 dark:bg-slate-900/75">
-                <td colSpan={8} className="p-4 sm:p-5">
+                <td colSpan={9} className="p-4 sm:p-5">
                   <div className="rounded-xl border border-sky-200/80 dark:border-sky-900/60 bg-white dark:bg-slate-900 p-4 shadow-sm">
                     <h4 className="text-xs font-bold uppercase tracking-wider text-sky-700 dark:text-sky-400 mb-2">
                       Rincian Harian: {group.contentType} — {group.targetId}
@@ -666,7 +660,7 @@ export function CubaContentGroupedTable({ data }: { data: ContentDaily[] }) {
                 </td>
               </tr>
             )}
-          </tbody>
+          </Fragment>
         );
       })}
     </AdminDataTable>

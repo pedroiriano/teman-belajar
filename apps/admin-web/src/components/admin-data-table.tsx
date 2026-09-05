@@ -7,6 +7,9 @@ export interface ColumnHeader {
   key?: string;
   label: string;
   sortable?: boolean;
+  className?: string;
+  width?: string;
+  align?: "left" | "center" | "right";
 }
 
 export interface AdminDataTableProps {
@@ -207,11 +210,20 @@ export function AdminDataTable({
               {normalizedHeaders.map((col, idx) => {
                 const isSortable = Boolean(col.sortable && col.key && onSortChange);
                 const isSorted = isSortable && sortKey === col.key;
+                const widthClass = col.width ? col.width : "";
+                const alignClass =
+                  col.align === "center"
+                    ? "text-center"
+                    : col.align === "right"
+                    ? "text-right"
+                    : "";
+                const baseClass = "whitespace-nowrap px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400";
+                const thClass = `${baseClass} ${widthClass} ${alignClass} ${col.className || ""}`.trim();
                 return (
                   <th
                     key={col.key || `${col.label}-${idx}`}
                     scope="col"
-                    className="whitespace-nowrap px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400"
+                    className={thClass}
                     aria-sort={
                       isSorted
                         ? sortDirection === "asc"
@@ -224,7 +236,13 @@ export function AdminDataTable({
                       <button
                         type="button"
                         onClick={() => onSortChange!(col.key!)}
-                        className="inline-flex items-center gap-1.5 font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 hover:text-sky-600 dark:hover:text-sky-400 transition-colors"
+                        className={`inline-flex items-center gap-1.5 font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 hover:text-sky-600 dark:hover:text-sky-400 transition-colors ${
+                          col.align === "right"
+                            ? "justify-end"
+                            : col.align === "center"
+                            ? "justify-center"
+                            : ""
+                        }`}
                         aria-label={`Urutkan berdasarkan ${col.label}`}
                       >
                         <span>{col.label}</span>
@@ -232,8 +250,10 @@ export function AdminDataTable({
                           {isSorted ? (sortDirection === "asc" ? "▲" : "▼") : "↕"}
                         </span>
                       </button>
-                    ) : (
+                    ) : col.label ? (
                       col.label
+                    ) : (
+                      <span className="sr-only">{col.key || "Kolom Kontrol"}</span>
                     )}
                   </th>
                 );
