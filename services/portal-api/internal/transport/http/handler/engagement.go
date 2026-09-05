@@ -25,6 +25,7 @@ type EngagementService interface {
 	RecordView(context.Context, string, domain.Target) (domain.Item, error)
 	ListRecentViews(context.Context, string) ([]domain.Item, error)
 	Recommendations(context.Context, string, int) (domain.RecommendationResult, error)
+	PublicRecommendations(context.Context, string, int) (domain.RecommendationResult, error)
 }
 
 type EngagementHandler struct{ service EngagementService }
@@ -336,4 +337,40 @@ func (h *EngagementHandler) Recommendations(w http.ResponseWriter, r *http.Reque
 	}{Data: data, Personalized: result.Personalized})
 }
 
+func (h *EngagementHandler) PublicRecommendations(w http.ResponseWriter, r *http.Request) {
+	if rejectUnexpectedQuery(r, "limit", "content_type") {
+		respondProblem(w, http.StatusUnprocessableEntity, "Validation Error", "Unknown query parameter")
+		return
+	}
+	contentType := r.URL.Query().Get("content_type")
+	if contentType != "" && contentType != string(domain.TargetKnowledge) && contentType != string(domain.TargetMicrolearning) {
+		engagementProblem(w, domain.ErrInvalidTarget)
+		return
+	}
+	limit := 0
+	if raw := r.URL.Query().Get("limit"); raw != "" {
+		parsed, err := strconv.Atoi(raw)
+		if err != nil {
+			engagementProblem(w, domain.ErrInvalidTarget)
+			return
+		}
+		limit = parsed
+	}
+	result, err := h.service.PublicRecommendations(r.Context(), contentType, limit)
+	if err != nil {
+		engagementProblem(w, err)
+		return
+	}
+	data := make([]recommendationResponse, 0, len(result.Items))
+	for _, item := range result.Items {
+		data = append(data, recommendationResponse{engagementTargetResponse: targetResponse(item.Target), Reason: string(item.Reason)})
+	}
+	w.Header().Set("Cache-Control", "public, max-age=60")
+	respondJSON(w, http.StatusOK, struct {
+		Data         []recommendationResponse `json:"data"`
+		Personalized bool                     `json:"personalized"`
+	}{Data: data, Personalized: result.Personalized})
+}
+
 var _ EngagementService = (*application.Service)(nil)
+

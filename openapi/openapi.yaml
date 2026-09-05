@@ -3675,6 +3675,33 @@ paths:
                 items: { type: object }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '403': { $ref: '#/components/responses/Forbidden' }
+  /recommendations:
+    get:
+      tags: [Recommendations, Engagement]
+      operationId: listPublicRecommendations
+      summary: List public curated editorial recommendations and recent highlights
+      security: []
+      parameters:
+        - name: limit
+          in: query
+          schema: { type: integer, default: 6 }
+        - name: content_type
+          in: query
+          schema: { type: string }
+      responses:
+        '200':
+          description: Public recommendations list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items: { type: object }
+                  personalized:
+                    type: boolean
+        '400': { $ref: '#/components/responses/ValidationError' }
   /admin/recommendations/pins:
     get:
       tags: [Admin, Recommendations]

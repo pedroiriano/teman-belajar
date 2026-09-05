@@ -32,6 +32,7 @@ import (
 	"teman-belajar-api/internal/domain/cms"
 	"teman-belajar-api/internal/domain/discoverability"
 	"teman-belajar-api/internal/domain/draft"
+	engagementdomain "teman-belajar-api/internal/domain/engagement"
 	"teman-belajar-api/internal/domain/faq"
 	"teman-belajar-api/internal/domain/knowledge"
 	"teman-belajar-api/internal/domain/learning"
@@ -249,6 +250,7 @@ func main() {
 	recommendationPinRepo := postgres.NewRecommendationPinRepository(db)
 	recommendationPinSvc := recommendationpin.NewService(recommendationPinRepo)
 	recommendationPinHandler := handler.NewRecommendationPinHandler(recommendationPinSvc)
+	engagementService.SetPinProvider(&recommendationPinAdapter{repo: recommendationPinRepo})
 
 	issuerURL := os.Getenv("KEYCLOAK_ISSUER_URL")
 	if issuerURL == "" {
@@ -361,6 +363,7 @@ func main() {
 	mux.HandleFunc("GET /api/v1/microlearning/{slug}", microlearningHandler.PublicDetail)
 	mux.HandleFunc("GET /api/v1/discovery/sitemap", discoveryHandler.Sitemap)
 	mux.HandleFunc("GET /api/v1/discovery/{kind}/{slug}", discoveryHandler.Landing)
+	mux.HandleFunc("GET /api/v1/recommendations", engagementHandler.PublicRecommendations)
 
 	if searchHandler != nil {
 		mux.HandleFunc("GET /api/v1/search", searchHandler.Search)
@@ -564,3 +567,28 @@ func envOrDefault(name, fallback string) string {
 	}
 	return fallback
 }
+
+type recommendationPinAdapter struct {
+	repo recommendationpin.Repository
+}
+
+func (a *recommendationPinAdapter) ListActivePins(ctx context.Context, targetType string, limit int) ([]engagementdomain.ActivePin, error) {
+	pins, err := a.repo.List(ctx, targetType, limit)
+	if err != nil {
+		return nil, err
+	}
+	out := make([]engagementdomain.ActivePin, 0, len(pins))
+	for _, p := range pins {
+		if !p.Pinned {
+			continue
+		}
+		out = append(out, engagementdomain.ActivePin{
+			TargetType: engagementdomain.TargetType(p.TargetType),
+			TargetID:   p.TargetID,
+			Title:      p.Title,
+			Weight:     p.Weight,
+		})
+	}
+	return out, nil
+}
+

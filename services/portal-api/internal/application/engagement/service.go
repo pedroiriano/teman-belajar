@@ -20,14 +20,19 @@ const (
 )
 
 type Service struct {
-	repo      domain.Repository
-	resolver  domain.TargetResolver
-	discovery domain.CandidateDiscovery
-	now       func() time.Time
+	repo        domain.Repository
+	resolver    domain.TargetResolver
+	discovery   domain.CandidateDiscovery
+	pinProvider domain.PinProvider
+	now         func() time.Time
 }
 
 func NewService(repo domain.Repository, resolver domain.TargetResolver, discovery domain.CandidateDiscovery) *Service {
 	return &Service{repo: repo, resolver: resolver, discovery: discovery, now: func() time.Time { return time.Now().UTC() }}
+}
+
+func (s *Service) SetPinProvider(provider domain.PinProvider) {
+	s.pinProvider = provider
 }
 
 func ParseTarget(targetType, targetID string) (domain.Target, error) {
@@ -275,18 +280,56 @@ func (s *Service) Recommendations(ctx context.Context, userKey string, limit int
 		}
 	}
 
-	if len(signals) == 0 {
-		candidates, discoverErr := s.discovery.Discover(ctx, domain.CandidateQuery{TargetType: domain.TargetKnowledge, Limit: limit, Newest: true})
-		if discoverErr != nil {
-			return domain.RecommendationResult{}, domain.ErrRecommendationUnavailable
+	var pinnedRecs []domain.Recommendation
+	if s.pinProvider != nil {
+		pins, err := s.pinProvider.ListActivePins(ctx, "", limit)
+		if err == nil {
+			for _, pin := range pins {
+				target := domain.Target{Type: pin.TargetType, ID: pin.TargetID}
+				if _, seeded := seedIDs[target]; seeded {
+					continue
+				}
+				resolved, resolveErr := s.resolve(ctx, target)
+				if resolveErr != nil {
+					continue
+				}
+				seedIDs[target] = struct{}{}
+				pinnedRecs = append(pinnedRecs, domain.Recommendation{
+					Target: resolved,
+					Reason: domain.ReasonEditorialPin,
+					Score:  1000 + pin.Weight,
+				})
+				if len(pinnedRecs) >= limit {
+					break
+				}
+			}
 		}
-		items := s.rankCandidates(ctx, candidates, nil, seedIDs, limit)
-		for i := range items {
-			items[i].Reason = domain.ReasonFallbackRecent
-		}
-		return domain.RecommendationResult{Items: items, Personalized: false}, nil
 	}
 
+	if len(signals) == 0 {
+		remaining := limit - len(pinnedRecs)
+		items := make([]domain.Recommendation, 0, limit)
+		items = append(items, pinnedRecs...)
+		if remaining > 0 {
+			candidates, discoverErr := s.discovery.Discover(ctx, domain.CandidateQuery{TargetType: domain.TargetKnowledge, Limit: remaining * 2, Newest: true})
+			if discoverErr != nil && len(items) == 0 {
+				return domain.RecommendationResult{}, domain.ErrRecommendationUnavailable
+			}
+			if discoverErr == nil {
+				discoveredItems := s.rankCandidates(ctx, candidates, nil, seedIDs, remaining)
+				for i := range discoveredItems {
+					discoveredItems[i].Reason = domain.ReasonFallbackRecent
+				}
+				items = append(items, discoveredItems...)
+			}
+		}
+		if len(items) > limit {
+			items = items[:limit]
+		}
+		return domain.RecommendationResult{Items: items, Personalized: len(pinnedRecs) > 0}, nil
+	}
+
+	remaining := limit - len(pinnedRecs)
 	candidates := make([]domain.Candidate, 0, len(signals)*limit)
 	for _, signal := range signals {
 		discovered, discoverErr := s.discovery.Discover(ctx, domain.CandidateQuery{TargetType: signal.target.Target.Type, CategoryID: signal.target.CategoryID, Limit: limit * 2, Newest: true})
@@ -295,7 +338,83 @@ func (s *Service) Recommendations(ctx context.Context, userKey string, limit int
 		}
 		candidates = append(candidates, discovered...)
 	}
-	return domain.RecommendationResult{Items: s.rankCandidates(ctx, candidates, signals, seedIDs, limit), Personalized: true}, nil
+	ranked := s.rankCandidates(ctx, candidates, signals, seedIDs, remaining)
+	items := make([]domain.Recommendation, 0, limit)
+	items = append(items, pinnedRecs...)
+	items = append(items, ranked...)
+	if len(items) > limit {
+		items = items[:limit]
+	}
+	return domain.RecommendationResult{Items: items, Personalized: true}, nil
+}
+
+func (s *Service) PublicRecommendations(ctx context.Context, contentType string, limit int) (domain.RecommendationResult, error) {
+	if limit == 0 {
+		limit = defaultRecommendation
+	}
+	if limit < 1 || limit > maxRecommendation {
+		return domain.RecommendationResult{}, domain.ErrInvalidTarget
+	}
+
+	usedTargets := map[domain.Target]struct{}{}
+	items := make([]domain.Recommendation, 0, limit)
+
+	if s.pinProvider != nil {
+		pins, err := s.pinProvider.ListActivePins(ctx, contentType, limit)
+		if err == nil {
+			for _, pin := range pins {
+				target := domain.Target{Type: pin.TargetType, ID: pin.TargetID}
+				resolved, resolveErr := s.resolve(ctx, target)
+				if resolveErr != nil {
+					continue
+				}
+				usedTargets[target] = struct{}{}
+				items = append(items, domain.Recommendation{
+					Target: resolved,
+					Reason: domain.ReasonEditorialPin,
+					Score:  1000 + pin.Weight,
+				})
+				if len(items) >= limit {
+					break
+				}
+			}
+		}
+	}
+
+	if len(items) < limit && s.discovery != nil {
+		targetType := domain.TargetKnowledge
+		if contentType == string(domain.TargetMicrolearning) {
+			targetType = domain.TargetMicrolearning
+		}
+		remaining := limit - len(items)
+		candidates, discoverErr := s.discovery.Discover(ctx, domain.CandidateQuery{
+			TargetType: targetType,
+			Limit:      remaining * 2,
+			Newest:     true,
+		})
+		if discoverErr == nil {
+			for _, candidate := range candidates {
+				if _, used := usedTargets[candidate.Target]; used {
+					continue
+				}
+				resolved, resolveErr := s.resolve(ctx, candidate.Target)
+				if resolveErr != nil {
+					continue
+				}
+				usedTargets[candidate.Target] = struct{}{}
+				items = append(items, domain.Recommendation{
+					Target: resolved,
+					Reason: domain.ReasonFallbackRecent,
+					Score:  10,
+				})
+				if len(items) >= limit {
+					break
+				}
+			}
+		}
+	}
+
+	return domain.RecommendationResult{Items: items, Personalized: false}, nil
 }
 
 func (s *Service) rankCandidates(ctx context.Context, candidates []domain.Candidate, signals []recommendationSignal, seedIDs map[domain.Target]struct{}, limit int) []domain.Recommendation {

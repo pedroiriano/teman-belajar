@@ -23,7 +23,7 @@ export type RatingSummary = {
 };
 
 export type Recommendation = EngagementItem & {
-  reason: "same_category" | "recent_interest" | "popular_rating" | "fallback_recent";
+  reason: "same_category" | "recent_interest" | "popular_rating" | "fallback_recent" | "editorial_pin";
 };
 
 export type RecommendationList = {
