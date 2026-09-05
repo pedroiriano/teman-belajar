@@ -362,6 +362,7 @@ func main() {
 	mux.HandleFunc("GET /api/v1/microlearning", microlearningHandler.PublicList)
 	mux.HandleFunc("GET /api/v1/microlearning/{slug}", microlearningHandler.PublicDetail)
 	mux.HandleFunc("GET /api/v1/discovery/sitemap", discoveryHandler.Sitemap)
+	mux.HandleFunc("GET /api/v1/discovery/{kind}", discoveryHandler.PublicTerms)
 	mux.HandleFunc("GET /api/v1/discovery/{kind}/{slug}", discoveryHandler.Landing)
 	mux.HandleFunc("GET /api/v1/recommendations", engagementHandler.PublicRecommendations)
 

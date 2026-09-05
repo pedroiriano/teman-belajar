@@ -2965,6 +2965,31 @@ paths:
                     type: array
                     items: { $ref: '#/components/schemas/SitemapEntry' }
         '503': { $ref: '#/components/responses/ServiceUnavailableError' }
+  /discovery/{kind}:
+    get:
+      tags: [Discovery]
+      operationId: listPublicTaxonomyTerms
+      summary: List active taxonomy categories or tags
+      security: []
+      parameters:
+        - name: kind
+          in: path
+          required: true
+          schema: { type: string, enum: [categories, tags] }
+      responses:
+        '200':
+          description: List of active terms
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/TaxonomyTerm' }
+        '404': { $ref: '#/components/responses/NotFoundError' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
   /discovery/{kind}/{slug}:
     get:
       tags: [Discovery]
