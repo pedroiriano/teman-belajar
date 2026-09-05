@@ -5,6 +5,7 @@ import Link from "next/link";
 import { AdminDataTable } from "@/components/admin-data-table";
 import { CubaBulkActionBar } from "@/components/bulk-actions/cuba-bulk-action-bar";
 import { CubaBulkConfirmModal } from "@/components/bulk-actions/cuba-bulk-confirm-modal";
+import { AdminQuickLinks } from "@/components/admin-quick-links";
 import { executeBulkActionAction } from "@/app/actions/bulk-actions";
 import type {
   BulkActionType,
@@ -249,12 +250,17 @@ export function CubaNewsTable({
                 {item.published_at ? new Date(item.published_at).toLocaleDateString("id-ID") : "-"}
               </td>
               <td className="p-4 text-xs font-semibold" data-label="Aksi">
-                <Link
-                  href={`/dashboard/news/${item.id}`}
-                  className="font-bold text-sky-700 dark:text-sky-400 hover:underline inline-flex items-center gap-1"
-                >
-                  Buka detail <span aria-hidden="true">→</span>
-                </Link>
+                <div className="flex items-center gap-2">
+                  <Link
+                    href={`/dashboard/news/${item.id}`}
+                    className="font-bold text-sky-700 dark:text-sky-400 hover:underline inline-flex items-center gap-1"
+                  >
+                    Detail <span aria-hidden="true">→</span>
+                  </Link>
+                  {item.status === "published" && (
+                    <AdminQuickLinks path={`/news/${item.slug}`} title={item.title} />
+                  )}
+                </div>
               </td>
             </tr>
           );
