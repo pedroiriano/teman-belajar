@@ -29,6 +29,8 @@ export function CubaMoodleEventsWorkspace({
   const [total, setTotal] = useState<number>(initialTotal);
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [eventTypeFilter, setEventTypeFilter] = useState<string>("all");
+  const [sortKey, setSortKey] = useState<string>("occurred_at");
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
   const [selectedEvent, setSelectedEvent] = useState<MoodleInboxEvent | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [page, setPage] = useState(1);
@@ -36,6 +38,37 @@ export function CubaMoodleEventsWorkspace({
   const [requeuingId, setRequeuingId] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<{ type: "success" | "error"; message: string } | null>(null);
   const [isPending, startTransition] = useTransition();
+
+  const handleSortChange = (key: string) => {
+    if (sortKey === key) {
+      setSortDirection((prev) => (prev === "asc" ? "desc" : "asc"));
+    } else {
+      setSortKey(key);
+      setSortDirection("asc");
+    }
+  };
+
+  const sortedEvents = useMemo(() => {
+    return [...events].sort((a, b) => {
+      let comparison = 0;
+      if (sortKey === "event_id") {
+        comparison = (a.event_id || "").localeCompare(b.event_id || "");
+      } else if (sortKey === "event_type") {
+        comparison = (a.event_type || "").localeCompare(b.event_type || "");
+      } else if (sortKey === "subject_id") {
+        comparison = (a.subject_id || "").localeCompare(b.subject_id || "");
+      } else if (sortKey === "occurred_at") {
+        const timeA = new Date(a.occurred_at).getTime();
+        const timeB = new Date(b.occurred_at).getTime();
+        comparison = timeA - timeB;
+      } else if (sortKey === "attempts") {
+        comparison = (a.attempts || 0) - (b.attempts || 0);
+      } else if (sortKey === "status") {
+        comparison = (a.status || "").localeCompare(b.status || "");
+      }
+      return sortDirection === "asc" ? comparison : -comparison;
+    });
+  }, [events, sortKey, sortDirection]);
 
   const fetchPage = (targetPage: number, targetSize: number, status: string, eventType: string) => {
     startTransition(async () => {
@@ -261,14 +294,17 @@ export function CubaMoodleEventsWorkspace({
         description="Log antrean peristiwa integrasi Moodle LMS dengan verifikasi integritas data."
         itemCount={events.length}
         headers={[
-          { label: "Event ID / Sumber", key: "event_id" },
-          { label: "Tipe Peristiwa", key: "event_type" },
-          { label: "Subjek", key: "subject_id" },
-          { label: "Waktu Kejadian", key: "occurred_at" },
-          { label: "Percobaan", key: "attempts", align: "center" },
-          { label: "Status", key: "status" },
+          { label: "Event ID / Sumber", key: "event_id", sortable: true },
+          { label: "Tipe Peristiwa", key: "event_type", sortable: true },
+          { label: "Subjek", key: "subject_id", sortable: true },
+          { label: "Waktu Kejadian", key: "occurred_at", sortable: true },
+          { label: "Percobaan", key: "attempts", align: "center", sortable: true },
+          { label: "Status", key: "status", sortable: true },
           { label: "Aksi", key: "actions", align: "right" },
         ]}
+        sortKey={sortKey}
+        sortDirection={sortDirection}
+        onSortChange={handleSortChange}
         emptyState="Tidak ada peristiwa yang cocok dengan filter yang dipilih."
         statusFilter={statusFilter}
         statusOptions={[
@@ -309,7 +345,7 @@ export function CubaMoodleEventsWorkspace({
         onPageSizeChange={handlePageSizeChange}
         pageSizeOptions={[10, 20, 50]}
       >
-        {events.map((event) => {
+        {sortedEvents.map((event) => {
           const isChecked = selectedIds.has(event.event_id);
           return (
             <tr
