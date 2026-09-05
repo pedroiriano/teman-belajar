@@ -42,8 +42,8 @@ pendukung setelah foundation release.
 | TASK-020 | Platform Configuration & Dynamic Site Management | P1-High | Konfigurasi non-secret untuk identitas situs, homepage sections, navigation, banner, footer, kontak/help, SEO defaults, dan presentasi fitur. | CMS, Media, TASK-011D | DONE |
 | TASK-021 | Notification Center | P1-High | Bell Admin/Portal, inbox, unread/read, preference, deep-link, event, dan reminder. In-app lebih dahulu; email melalui adapter bila disetujui. | Event/audit infrastructure | DONE — MERGED via PR #26 (`0a005f9`) |
 | TASK-022 | Media Gallery & Video Hub | P1-Medium | Evolusi Media Library menjadi galeri/video publik terkurasi dengan collection, featured, caption, SEO, dan usage; storage mentah tidak dipublikasikan. | TASK-004E, TASK-011D | DONE — MERGED PR #43 (`1c5ab6f`) |
-| TASK-023 | Experience Personalization & Recommendation 2.0 | P1-Medium | Untuk Anda, lanjutkan belajar, related knowledge, program/path recommendation berbasis evidence aman tanpa profil sensitif. | TASK-006, TASK-008, TASK-013–016 | PLANNED |
-| TASK-024 | Post-Expansion Release Gate | Gate | Verifikasi delta fitur TASK-013–023: migrasi, security, performance, accessibility, SSO regression, rollback, dan observability. | Task ekspansi yang masuk release candidate | PLANNED |
+| TASK-023 | Experience Personalization & Recommendation 2.0 | P1-Medium | Untuk Anda, lanjutkan belajar, related knowledge, program/path recommendation berbasis evidence aman tanpa profil sensitif. | TASK-006, TASK-008, TASK-013–016 | DONE — MERGED via PR #47 & PR #48 |
+| TASK-024 | Post-Expansion Release Gate | Gate | Verifikasi delta fitur TASK-013–023: migrasi, security, performance, accessibility, SSO regression, rollback, dan observability. | Task ekspansi yang masuk release candidate | DONE — MERGED (PR #49) |
 
 ## 3. Urutan Delivery Berbasis Dependensi
 
