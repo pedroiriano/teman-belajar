@@ -15,6 +15,14 @@ export { TechwindFaqSection, type FaqItem } from "@/components/techwind-faq-sect
 export { HomepageSearchSection, type HomepageSearchItem } from "@/components/homepage-search-section";
 export { DetailSidebar, type QuickFactItem, type InstructorItem, type DetailSidebarProps } from "./detail-sidebar";
 export { RelatedContentSection, type RelatedContentSectionProps } from "./related-content-section";
+export {
+  TechwindCourseCardSkeleton,
+  MicrolearningCardSkeleton,
+  LearningPathCardSkeleton,
+  TechwindNewsCardSkeleton,
+  PageHeroSkeleton,
+  CatalogGridSkeleton,
+} from "./skeletons";
 
 export type PaginationData = { page: number; page_size: number; total: number; total_pages: number };
 
@@ -284,14 +292,43 @@ export function Badge({ children, className }: { children: ReactNode; className?
   return <span className={cx("portal-badge", className)}>{children}</span>;
 }
 
-export function TrainingProgramCard({ href, title, summary, audience, courseCount, cohortStatus, headingLevel = "h2" }: { href: string; title: string; summary: string; audience?: string; courseCount: number; cohortStatus?: { label: string; className?: string }; headingLevel?: "h2" | "h3" }) {
+export function TrainingProgramCard({
+  href,
+  title,
+  summary,
+  audience,
+  courseCount,
+  cohortStatus,
+  progress,
+  completed,
+  headingLevel = "h2",
+}: {
+  href: string;
+  title: string;
+  summary: string;
+  audience?: string;
+  courseCount: number;
+  cohortStatus?: { label: string; className?: string };
+  progress?: number;
+  completed?: boolean;
+  headingLevel?: "h2" | "h3";
+}) {
   const Heading = headingLevel;
+  const isDone = Boolean(completed || (progress !== undefined && progress >= 100));
   return (
     <ContentCard className="portal-course-card p-6 flex flex-col h-full group hover:-translate-y-1.5 hover:shadow-xl dark:shadow-gray-800 transition-all duration-500 rounded-xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-slate-900">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex flex-wrap items-center gap-2">
           <Badge className="bg-primary/10 text-primary font-bold text-xs uppercase tracking-wider">Program penuh</Badge>
-          {cohortStatus ? (
+          {isDone ? (
+            <span className="text-xs font-bold px-2.5 py-0.5 rounded-full inline-flex items-center gap-1 bg-emerald-100 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300">
+              <span>✓</span> Selesai
+            </span>
+          ) : progress !== undefined && progress > 0 ? (
+            <span className="text-xs font-bold px-2.5 py-0.5 rounded-full inline-flex items-center gap-1 bg-teal-100 text-teal-800 dark:bg-teal-950/50 dark:text-teal-300">
+              <span>●</span> {progress}% Selesai
+            </span>
+          ) : cohortStatus ? (
             <span className={cx("text-xs font-semibold px-2.5 py-0.5 rounded-full inline-block", cohortStatus.className)}>
               {cohortStatus.label}
             </span>
@@ -312,10 +349,26 @@ export function TrainingProgramCard({ href, title, summary, audience, courseCoun
           <span className="truncate">Untuk: {audience}</span>
         </div>
       ) : null}
+      {(progress !== undefined || completed) && (
+        <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800">
+          <div className="flex items-center justify-between text-xs mb-1.5 font-semibold">
+            <span className="text-slate-500 dark:text-slate-400">Progres Belajar</span>
+            <span className={isDone ? "text-emerald-600 dark:text-emerald-400 font-bold" : "text-teal-600 dark:text-teal-400 font-bold"}>
+              {isDone ? "100%" : `${progress ?? 0}%`}
+            </span>
+          </div>
+          <div className="h-2 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+            <div
+              className={`h-full rounded-full transition-all duration-500 ${isDone ? "bg-emerald-500" : "bg-teal-500"}`}
+              style={{ width: `${isDone ? 100 : Math.min(100, Math.max(0, progress ?? 0))}%` }}
+            />
+          </div>
+        </div>
+      )}
       <div className="mt-5 flex items-center justify-between border-t border-slate-100 dark:border-slate-800 pt-4">
         <span className="text-xs font-semibold text-slate-400">Kurikulum Moodle</span>
         <Link href={href} className="inline-flex items-center gap-1 font-bold text-sm text-primary group-hover:translate-x-1.5 duration-500 transition-transform">
-          Lihat program →
+          {isDone ? "Ulas materi →" : progress ? "Lanjutkan belajar →" : "Lihat program →"}
         </Link>
       </div>
     </ContentCard>
@@ -323,8 +376,29 @@ export function TrainingProgramCard({ href, title, summary, audience, courseCoun
 }
 
 /* eslint-disable @next/next/no-img-element -- media route is access-controlled and cannot use the image optimizer. */
-export function MicrolearningCard({ href, title, summary, formatLabel, durationMinutes, featuredMediaId, headingLevel = "h2" }: { href: string; title: string; summary: string; formatLabel: string; durationMinutes: number; featuredMediaId?: string; headingLevel?: "h2" | "h3" }) {
+export function MicrolearningCard({
+  href,
+  title,
+  summary,
+  formatLabel,
+  durationMinutes,
+  featuredMediaId,
+  progress,
+  completed,
+  headingLevel = "h2",
+}: {
+  href: string;
+  title: string;
+  summary: string;
+  formatLabel: string;
+  durationMinutes: number;
+  featuredMediaId?: string;
+  progress?: number;
+  completed?: boolean;
+  headingLevel?: "h2" | "h3";
+}) {
   const Heading = headingLevel;
+  const isDone = Boolean(completed || (progress !== undefined && progress >= 100));
   return (
     <ContentCard className="portal-course-card group overflow-hidden rounded-xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-slate-900 shadow-sm hover:shadow-xl dark:shadow-gray-800 hover:-translate-y-1.5 transition-all duration-500 flex flex-col h-full">
       <div className="aspect-[16/9] relative overflow-hidden bg-gradient-to-br from-teal-700 to-sky-700">
@@ -343,18 +417,45 @@ export function MicrolearningCard({ href, title, summary, formatLabel, durationM
         )}
       </div>
       <div className="flex flex-1 flex-col p-6">
-        <div className="flex flex-wrap gap-2">
-          <Badge className="bg-primary/10 text-primary font-bold text-xs">{formatLabel}</Badge>
-          <Badge className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-semibold text-xs">{durationMinutes} menit</Badge>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="flex flex-wrap gap-2">
+            <Badge className="bg-primary/10 text-primary font-bold text-xs">{formatLabel}</Badge>
+            <Badge className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-semibold text-xs">{durationMinutes} menit</Badge>
+          </div>
+          {isDone ? (
+            <span className="text-xs font-bold px-2 py-0.5 rounded-full inline-flex items-center gap-1 bg-emerald-100 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300">
+              <span>✓</span> Selesai
+            </span>
+          ) : progress !== undefined && progress > 0 ? (
+            <span className="text-xs font-bold px-2 py-0.5 rounded-full inline-flex items-center gap-1 bg-teal-100 text-teal-800 dark:bg-teal-950/50 dark:text-teal-300">
+              <span>●</span> {progress}% Selesai
+            </span>
+          ) : null}
         </div>
         <Heading className="mt-4 text-xl font-bold leading-snug text-slate-900 dark:text-white group-hover:text-primary transition-colors duration-500">
           <Link href={href}>{title}</Link>
         </Heading>
         <p className="mt-2.5 line-clamp-3 text-sm leading-relaxed text-slate-600 dark:text-slate-400 grow">{summary}</p>
+        {(progress !== undefined || completed) && (
+          <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800">
+            <div className="flex items-center justify-between text-xs mb-1.5 font-semibold">
+              <span className="text-slate-500 dark:text-slate-400">Progres Belajar</span>
+              <span className={isDone ? "text-emerald-600 dark:text-emerald-400 font-bold" : "text-teal-600 dark:text-teal-400 font-bold"}>
+                {isDone ? "100%" : `${progress ?? 0}%`}
+              </span>
+            </div>
+            <div className="h-2 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+              <div
+                className={`h-full rounded-full transition-all duration-500 ${isDone ? "bg-emerald-500" : "bg-teal-500"}`}
+                style={{ width: `${isDone ? 100 : Math.min(100, Math.max(0, progress ?? 0))}%` }}
+              />
+            </div>
+          </div>
+        )}
         <div className="mt-5 border-t border-slate-100 dark:border-slate-800 pt-4 flex items-center justify-between">
           <span className="text-xs font-semibold text-slate-400">Pembelajaran Singkat</span>
           <Link href={href} className="font-bold text-sm text-primary group-hover:translate-x-1.5 duration-500 transition-transform">
-            Mulai materi →
+            {isDone ? "Ulas materi →" : progress ? "Lanjutkan belajar →" : "Mulai materi →"}
           </Link>
         </div>
       </div>
@@ -433,14 +534,44 @@ export function MicrolearningDetailHero({
   );
 }
 
-export function LearningPathCard({ href, title, summary, version, itemCount, publishedAt, headingLevel = "h2" }: { href: string; title: string; summary: string; version: number; itemCount: number; publishedAt?: string; headingLevel?: "h2" | "h3" }) {
+export function LearningPathCard({
+  href,
+  title,
+  summary,
+  version,
+  itemCount,
+  publishedAt,
+  progress,
+  completed,
+  headingLevel = "h2",
+}: {
+  href: string;
+  title: string;
+  summary: string;
+  version: number;
+  itemCount: number;
+  publishedAt?: string;
+  progress?: number;
+  completed?: boolean;
+  headingLevel?: "h2" | "h3";
+}) {
   const Heading = headingLevel;
+  const isDone = Boolean(completed || (progress !== undefined && progress >= 100));
   return (
     <ContentCard className="portal-course-card group p-6 flex flex-col h-full rounded-xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-slate-900 shadow-sm hover:shadow-xl dark:shadow-gray-800 hover:-translate-y-1.5 transition-all duration-500">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex flex-wrap items-center gap-2">
           <Badge className="bg-primary/10 text-primary font-bold text-xs">Versi {version}</Badge>
           <Badge className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-semibold text-xs">{itemCount} langkah</Badge>
+          {isDone ? (
+            <span className="text-xs font-bold px-2 py-0.5 rounded-full inline-flex items-center gap-1 bg-emerald-100 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300">
+              <span>✓</span> Selesai
+            </span>
+          ) : progress !== undefined && progress > 0 ? (
+            <span className="text-xs font-bold px-2 py-0.5 rounded-full inline-flex items-center gap-1 bg-teal-100 text-teal-800 dark:bg-teal-950/50 dark:text-teal-300">
+              <span>●</span> {progress}% Selesai
+            </span>
+          ) : null}
         </div>
         {publishedAt ? (
           <span className="text-xs font-medium text-slate-400">
@@ -452,10 +583,26 @@ export function LearningPathCard({ href, title, summary, version, itemCount, pub
         <Link href={href}>{title}</Link>
       </Heading>
       <p className="mt-2.5 line-clamp-3 text-sm leading-relaxed text-slate-600 dark:text-slate-400 grow">{summary}</p>
+      {(progress !== undefined || completed) && (
+        <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800">
+          <div className="flex items-center justify-between text-xs mb-1.5 font-semibold">
+            <span className="text-slate-500 dark:text-slate-400">Progres Belajar</span>
+            <span className={isDone ? "text-emerald-600 dark:text-emerald-400 font-bold" : "text-teal-600 dark:text-teal-400 font-bold"}>
+              {isDone ? "100%" : `${progress ?? 0}%`}
+            </span>
+          </div>
+          <div className="h-2 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+            <div
+              className={`h-full rounded-full transition-all duration-500 ${isDone ? "bg-emerald-500" : "bg-teal-500"}`}
+              style={{ width: `${isDone ? 100 : Math.min(100, Math.max(0, progress ?? 0))}%` }}
+            />
+          </div>
+        </div>
+      )}
       <div className="mt-5 border-t border-slate-100 dark:border-slate-800 pt-4 flex items-center justify-between">
         <span className="text-xs font-semibold text-slate-400">Jalur Pembelajaran</span>
         <Link href={href} className="font-bold text-sm text-primary group-hover:translate-x-1.5 duration-500 transition-transform">
-          Lihat jalur →
+          {isDone ? "Ulas jalur →" : progress ? "Lanjutkan belajar →" : "Lihat jalur →"}
         </Link>
       </div>
     </ContentCard>
@@ -897,6 +1044,8 @@ export function TechwindCourseCard({
   duration = "6 jam",
   views = "1.2k",
   badge = "Gratis",
+  progress,
+  completed,
 }: {
   href: string;
   image: string;
@@ -909,7 +1058,10 @@ export function TechwindCourseCard({
   duration?: string;
   views?: string;
   badge?: string;
+  progress?: number;
+  completed?: boolean;
 }) {
+  const isDone = Boolean(completed || (progress !== undefined && progress >= 100));
   return (
     <div className="group relative rounded-2xl shadow-sm hover:shadow-xl dark:shadow-gray-900/50 hover:-translate-y-1.5 duration-500 ease-in-out overflow-hidden bg-white dark:bg-[#111a2e] border border-slate-200/80 dark:border-slate-800 transition-all">
       <div className="relative overflow-hidden aspect-[16/10]">
@@ -919,6 +1071,19 @@ export function TechwindCourseCard({
           src={image}
         />
         <div className="absolute inset-0 bg-slate-900/50 opacity-0 group-hover:opacity-100 duration-500 ease-in-out" />
+        {isDone ? (
+          <div className="absolute top-3 left-3 z-10">
+            <span className="bg-emerald-600 text-white text-xs font-bold px-2.5 py-1 rounded-md shadow-md inline-flex items-center gap-1">
+              <span>✓</span> Selesai
+            </span>
+          </div>
+        ) : progress !== undefined && progress > 0 ? (
+          <div className="absolute top-3 left-3 z-10">
+            <span className="bg-teal-600 text-white text-xs font-bold px-2.5 py-1 rounded-md shadow-md inline-flex items-center gap-1">
+              <span>●</span> {progress}%
+            </span>
+          </div>
+        ) : null}
         <div className="absolute inset-x-0 bottom-0 opacity-0 group-hover:opacity-100 duration-500 ease-in-out">
           <div className="pb-4 px-4 flex items-center">
             <img
@@ -944,6 +1109,22 @@ export function TechwindCourseCard({
         <p className="text-slate-600 dark:text-slate-300 mt-3 mb-4 text-sm line-clamp-2 leading-relaxed">
           {summary}
         </p>
+        {(progress !== undefined || completed) && (
+          <div className="mb-4 pt-2">
+            <div className="flex items-center justify-between text-xs mb-1 font-semibold">
+              <span className="text-slate-500 dark:text-slate-400">Progres Belajar</span>
+              <span className={isDone ? "text-emerald-600 dark:text-emerald-400 font-bold" : "text-teal-600 dark:text-teal-400 font-bold"}>
+                {isDone ? "100%" : `${progress ?? 0}%`}
+              </span>
+            </div>
+            <div className="h-1.5 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+              <div
+                className={`h-full rounded-full transition-all duration-500 ${isDone ? "bg-emerald-500" : "bg-teal-500"}`}
+                style={{ width: `${isDone ? 100 : Math.min(100, Math.max(0, progress ?? 0))}%` }}
+              />
+            </div>
+          </div>
+        )}
         <ul className="pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center list-none text-slate-500 dark:text-slate-400 text-xs font-medium">
           <li className="flex items-center me-4">
             <svg className="size-4 leading-none me-1.5 text-slate-900 dark:text-white inline-block" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" aria-hidden="true">

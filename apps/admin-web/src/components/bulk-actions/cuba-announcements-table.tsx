@@ -5,6 +5,7 @@ import Link from "next/link";
 import { AdminDataTable } from "@/components/admin-data-table";
 import { CubaBulkActionBar } from "@/components/bulk-actions/cuba-bulk-action-bar";
 import { CubaBulkConfirmModal } from "@/components/bulk-actions/cuba-bulk-confirm-modal";
+import { AdminQuickLinks } from "@/components/admin-quick-links";
 import { executeBulkActionAction } from "@/app/actions/bulk-actions";
 import type {
   BulkActionType,
@@ -257,12 +258,17 @@ export function CubaAnnouncementsTable({
                 </div>
               </td>
               <td className="p-4 text-xs font-semibold" data-label="Aksi">
-                <Link
-                  href={`/dashboard/announcements/${ann.id}`}
-                  className="font-bold text-sky-700 dark:text-sky-400 hover:underline inline-flex items-center gap-1"
-                >
-                  Buka detail <span aria-hidden="true">→</span>
-                </Link>
+                <div className="flex items-center gap-2">
+                  <Link
+                    href={`/dashboard/announcements/${ann.id}`}
+                    className="font-bold text-sky-700 dark:text-sky-400 hover:underline inline-flex items-center gap-1"
+                  >
+                    Detail <span aria-hidden="true">→</span>
+                  </Link>
+                  {ann.status === "published" && (
+                    <AdminQuickLinks path={`/announcements/${ann.slug}`} title={ann.title} />
+                  )}
+                </div>
               </td>
             </tr>
           );

@@ -8,6 +8,7 @@ import { AdminIcon } from "@/components/admin-icon";
 import { BrandLogo } from "@/components/brand-logo";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { AdminNotificationCenter } from "@/components/notification-center";
+import { CubaToastProvider } from "@/components/cuba-toast";
 import { CubaCommandPalette, openCubaCommandPalette } from "@/components/command-palette/cuba-command-palette";
 import { useCubaDisclosureRuntime, useCubaDrawerRuntime } from "@/components/cuba-runtime";
 import {
@@ -248,13 +249,14 @@ export function AdminShell({
   }, []);
 
   return (
-    <div
-      id="pageWrapper"
-      data-cuba-template="dashboard-03"
-      className={`page-wrapper compact-wrapper dashboard-03-layout cuba-foundation min-h-screen lg:grid ${
-        desktopSidebarOpen ? "lg:grid-cols-[255px_1fr]" : "lg:grid-cols-[1fr]"
-      }`}
-    >
+    <CubaToastProvider>
+      <div
+        id="pageWrapper"
+        data-cuba-template="dashboard-03"
+        className={`page-wrapper compact-wrapper dashboard-03-layout cuba-foundation min-h-screen lg:grid ${
+          desktopSidebarOpen ? "lg:grid-cols-[255px_1fr]" : "lg:grid-cols-[1fr]"
+        }`}
+      >
       {desktopSidebarOpen && (
         <aside
           id="admin-sidebar"
@@ -443,5 +445,6 @@ export function AdminShell({
       </div>
       <CubaCommandPalette role={role} roles={roles} />
     </div>
+    </CubaToastProvider>
   );
 }
