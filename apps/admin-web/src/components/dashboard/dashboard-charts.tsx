@@ -12,6 +12,7 @@ interface DashboardChartsProps {
 
 export function DashboardCharts({ kpi, breakdown }: DashboardChartsProps) {
   const [rangeDays, setRangeDays] = useState<"7" | "14" | "30">("7");
+  const [viewMode, setViewMode] = useState<"trend" | "modules">("trend");
 
   const colors = {
     primary: "#0ea5e9",
@@ -85,6 +86,93 @@ export function DashboardCharts({ kpi, breakdown }: DashboardChartsProps) {
     };
   }, [rangeDays, kpi, colors.primary, colors.cyan, colors.success]);
 
+  // Module Comparison Bar Chart Configuration
+  const moduleOptions: ApexOptions = useMemo(() => {
+    const categories = [
+      "Pengetahuan",
+      "Berita",
+      "Pengumuman",
+      "FAQ",
+      "Mikro",
+      "Pelatihan",
+      "Jalur Belajar",
+    ];
+
+    return {
+      chart: {
+        type: "bar",
+        height: 278,
+        stacked: true,
+        fontFamily: "Rubik, Inter, system-ui, sans-serif",
+        toolbar: { show: false },
+      },
+      colors: [colors.primary, colors.warning, colors.success],
+      series: [
+        {
+          name: "Draf",
+          data: [
+            breakdown.knowledge?.draft || 0,
+            breakdown.news?.draft || 0,
+            breakdown.announcements?.draft || 0,
+            breakdown.faqs?.draft || 0,
+            breakdown.microlearning?.draft || 0,
+            breakdown.training?.draft || 0,
+            breakdown.learning_paths?.draft || 0,
+          ],
+        },
+        {
+          name: "Ditinjau",
+          data: [
+            breakdown.knowledge?.in_review || 0,
+            breakdown.news?.in_review || 0,
+            breakdown.announcements?.in_review || 0,
+            breakdown.faqs?.in_review || 0,
+            breakdown.microlearning?.in_review || 0,
+            breakdown.training?.in_review || 0,
+            breakdown.learning_paths?.in_review || 0,
+          ],
+        },
+        {
+          name: "Terbit",
+          data: [
+            breakdown.knowledge?.published || 0,
+            breakdown.news?.published || 0,
+            breakdown.announcements?.published || 0,
+            breakdown.faqs?.published || 0,
+            breakdown.microlearning?.published || 0,
+            breakdown.training?.published || 0,
+            breakdown.learning_paths?.published || 0,
+          ],
+        },
+      ],
+      plotOptions: {
+        bar: {
+          horizontal: false,
+          borderRadius: 4,
+          columnWidth: "42%",
+        },
+      },
+      dataLabels: { enabled: false },
+      legend: { show: false },
+      grid: {
+        strokeDashArray: 4,
+        borderColor: "rgba(148, 163, 184, 0.2)",
+      },
+      xaxis: {
+        categories,
+        labels: { style: { fontSize: "11px" } },
+        axisBorder: { show: false },
+        axisTicks: { show: false },
+      },
+      yaxis: {
+        min: 0,
+        tickAmount: 4,
+        labels: { style: { fontSize: "11px" } },
+      },
+      tooltip: { shared: true },
+    };
+  }, [breakdown, colors.primary, colors.warning, colors.success]);
+
   // Donut Workflow Distribution Chart Configuration
   const totalContent = kpi.total_draft + kpi.pending_review + kpi.total_published;
   const workflowOptions: ApexOptions = useMemo(() => {
@@ -130,49 +218,71 @@ export function DashboardCharts({ kpi, breakdown }: DashboardChartsProps) {
 
   return (
     <div className="grid gap-5 lg:grid-cols-12">
-      {/* Chart 1: Tren Aktivitas Editorial (Area Chart) */}
+      {/* Chart 1: Tren Aktivitas Editorial & Distribusi Format */}
       <article className="admin-card p-6 lg:col-span-8" id="activity-chart-card">
         <header className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
           <div>
             <span className="text-xs font-black uppercase tracking-wider text-slate-400">
-              Aktivitas editorial
+              Aktivitas editorial & pembelajaran
             </span>
             <h2 className="mt-1 text-lg font-black text-slate-900 dark:text-white">
-              Tren Aktivitas Konten
+              {viewMode === "trend" ? "Tren Aktivitas Konten" : "Volume per Modul Pembelajaran"}
             </h2>
             <p className="text-xs text-slate-500">
-              Pergerakan konten yang dibuat, ditinjau, dan dipublikasikan.
+              {viewMode === "trend"
+                ? "Pergerakan konten yang dibuat, ditinjau, dan dipublikasikan."
+                : "Perbandingan materi pembelajaran antar seluruh modul aktif."}
             </p>
           </div>
-          <div className="flex items-center gap-3">
-            <div className="hidden items-center gap-3 text-xs font-bold sm:flex">
-              <span className="inline-flex items-center gap-1.5 text-slate-600 dark:text-slate-300">
-                <span className="h-2.5 w-2.5 rounded-full bg-sky-500" /> Dibuat
-              </span>
-              <span className="inline-flex items-center gap-1.5 text-slate-600 dark:text-slate-300">
-                <span className="h-2.5 w-2.5 rounded-full bg-cyan-500" /> Ditinjau
-              </span>
-              <span className="inline-flex items-center gap-1.5 text-slate-600 dark:text-slate-300">
-                <span className="h-2.5 w-2.5 rounded-full bg-emerald-500" /> Terbit
-              </span>
-            </div>
-            <label className="text-xs">
-              <span className="sr-only">Rentang Waktu</span>
-              <select
-                className="admin-input !min-h-9 !py-1 text-xs"
-                value={rangeDays}
-                onChange={(e) => setRangeDays(e.target.value as "7" | "14" | "30")}
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+            <div className="inline-flex rounded-lg bg-slate-100 p-0.5 dark:bg-slate-800">
+              <button
+                type="button"
+                onClick={() => setViewMode("trend")}
+                className={`rounded-md px-2.5 py-1 text-xs font-bold transition ${
+                  viewMode === "trend"
+                    ? "bg-white text-sky-700 shadow-sm dark:bg-slate-900 dark:text-sky-300"
+                    : "text-slate-500 hover:text-slate-700 dark:text-slate-400"
+                }`}
               >
-                <option value="7">7 hari</option>
-                <option value="14">14 hari</option>
-                <option value="30">30 hari</option>
-              </select>
-            </label>
+                Tren Waktu
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewMode("modules")}
+                className={`rounded-md px-2.5 py-1 text-xs font-bold transition ${
+                  viewMode === "modules"
+                    ? "bg-white text-sky-700 shadow-sm dark:bg-slate-900 dark:text-sky-300"
+                    : "text-slate-500 hover:text-slate-700 dark:text-slate-400"
+                }`}
+              >
+                Format Modul
+              </button>
+            </div>
+
+            {viewMode === "trend" ? (
+              <label className="text-xs">
+                <span className="sr-only">Rentang Waktu</span>
+                <select
+                  className="admin-input !min-h-9 !py-1 text-xs"
+                  value={rangeDays}
+                  onChange={(e) => setRangeDays(e.target.value as "7" | "14" | "30")}
+                >
+                  <option value="7">7 hari</option>
+                  <option value="14">14 hari</option>
+                  <option value="30">30 hari</option>
+                </select>
+              </label>
+            ) : null}
           </div>
         </header>
 
         <div className="mt-4">
-          <CubaApexChart options={activityOptions} height={278} ariaLabel="Grafik tren aktivitas editorial" />
+          <CubaApexChart
+            options={viewMode === "trend" ? activityOptions : moduleOptions}
+            height={278}
+            ariaLabel={viewMode === "trend" ? "Grafik tren aktivitas editorial" : "Grafik volume per modul pembelajaran"}
+          />
         </div>
       </article>
 

@@ -142,6 +142,20 @@ func (h *DiscoverabilityHandler) Sitemap(w http.ResponseWriter, r *http.Request)
 	respondJSON(w, http.StatusOK, map[string]any{"data": items})
 }
 
+func (h *DiscoverabilityHandler) PublicTerms(w http.ResponseWriter, r *http.Request) {
+	kind := taxonomyKind(r.PathValue("kind"))
+	if !discoverability.ValidTermKind(kind) {
+		respondProblem(w, http.StatusNotFound, "Not Found", "Unknown taxonomy kind")
+		return
+	}
+	items, err := h.svc.ListTerms(r.Context(), kind, false)
+	if err != nil {
+		respondDiscoverabilityError(w, err)
+		return
+	}
+	respondJSON(w, http.StatusOK, map[string]any{"data": items})
+}
+
 func (h *DiscoverabilityHandler) Landing(w http.ResponseWriter, r *http.Request) {
 	landing, err := h.svc.Landing(r.Context(), taxonomyKind(r.PathValue("kind")), r.PathValue("slug"))
 	if err != nil {

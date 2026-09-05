@@ -82,7 +82,7 @@ export default async function AdminMediaPage({
 
   return (
     <div className="admin-page space-y-6">
-      <div className="admin-page-header">
+      <div className="admin-page-header border-b border-slate-200/70 dark:border-slate-800 pb-5">
         <div>
           <p className="admin-kicker">Manajemen aset</p>
           <h1 className="admin-page-title">Pustaka Media</h1>
@@ -121,7 +121,7 @@ export default async function AdminMediaPage({
             <option value="document">Dokumen PDF</option>
           </select>
         </div>
-        <button type="submit" className="admin-button">
+        <button type="submit" className="admin-button !py-2.5 !px-4 shadow-sm font-bold text-xs">
           Terapkan filter
         </button>
       </form>

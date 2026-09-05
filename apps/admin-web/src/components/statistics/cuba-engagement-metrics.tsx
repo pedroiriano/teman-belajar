@@ -215,6 +215,9 @@ export function CubaEngagementMetrics({
                       <span className="rounded bg-slate-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-slate-600 dark:bg-slate-800 dark:text-slate-400">
                         {item.content_type}
                       </span>
+                      <span className="rounded bg-sky-50 px-2 py-0.5 text-[10px] font-bold text-sky-700 dark:bg-sky-950/40 dark:text-sky-300">
+                        {item.content_type === "knowledge" ? "Est. 5 mnt" : item.content_type === "microlearning" ? "Est. 3 mnt" : "Est. 2 mnt"}
+                      </span>
                     </div>
 
                     <div className="mt-2 flex items-center gap-3">

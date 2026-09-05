@@ -104,7 +104,7 @@ export default function MediaUploadPanel({ policy: suppliedPolicy, compact = fal
             <AdminIcon name="media" className="h-6 w-6" />
           </div>
           <span className="font-extrabold text-sm text-slate-900 dark:text-white">Tarik berkas ke sini atau klik untuk memilih</span>
-          <span className="mt-1.5 text-xs text-slate-500 dark:text-slate-400">Format didukung: JPG, PNG, WEBP, PDF, MP4, WEBM · Batas ukuran sesuai kebijakan server</span>
+          <span className="mt-1.5 text-xs text-slate-500 dark:text-slate-400">Format didukung: JPG, PNG, WEBP, PDF, MP4, WEBM · Batas ukuran sesuai kebijakan policy server</span>
         </label>
         <input
           ref={inputRef}
@@ -205,10 +205,10 @@ export default function MediaUploadPanel({ policy: suppliedPolicy, compact = fal
               Ukuran berkas ({formatBytes(file.size)}) melebihi batas 2,5 MiB. Sistem peramban dapat mengompresi dimensi dan resolusi gambar secara proporsional sebelum diunggah ke penyimpanan.
             </p>
             <div className="mt-4 flex flex-wrap gap-2.5">
-              <button type="button" className="admin-button text-xs font-bold" onClick={() => void upload(true)}>
-                Setuju dan Kompresi
+              <button type="button" className="admin-button !py-2.5 !px-4 shadow-sm text-xs font-bold" onClick={() => void upload(true)}>
+                Setuju dan kompres
               </button>
-              <button type="button" className="admin-button-secondary text-xs font-bold" onClick={() => setConsentOpen(false)}>
+              <button type="button" className="admin-button-secondary !py-2.5 !px-4 shadow-sm text-xs font-bold" onClick={() => setConsentOpen(false)}>
                 Batal
               </button>
             </div>

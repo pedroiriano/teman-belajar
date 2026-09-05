@@ -91,16 +91,16 @@ export default async function AdminKnowledgePage({
   }
 
   const headerActions = (
-    <div className="flex flex-wrap items-center gap-2">
+    <div className="flex flex-wrap items-center gap-2.5">
       <Link
         href="/dashboard/knowledge-hierarchy"
-        className="admin-button-secondary !min-h-9 !py-1 !px-3 !text-xs"
+        className="admin-button-secondary !py-2.5 !px-4 shadow-sm font-bold text-xs"
       >
         Kelola struktur
       </Link>
       <Link
         href="/dashboard/knowledge/create"
-        className="admin-button !min-h-9 !py-1 !px-3 !text-xs"
+        className="admin-button !py-2.5 !px-4 shadow-sm font-bold text-xs"
       >
         <span aria-hidden="true">+</span> Buat artikel
       </Link>
@@ -109,13 +109,16 @@ export default async function AdminKnowledgePage({
 
   return (
     <div className="admin-page space-y-6">
-      <div className="admin-page-header">
+      <div className="admin-page-header flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-slate-200/70 dark:border-slate-800 pb-5">
         <div>
           <p className="admin-kicker">Manajemen konten</p>
           <h1 className="admin-page-title">Pusat Pengetahuan</h1>
           <p className="admin-page-copy">
             Kelola artikel, revisi, taksonomi, dan alur kerja peninjauan materi operasional.
           </p>
+        </div>
+        <div>
+          {headerActions}
         </div>
       </div>
 
