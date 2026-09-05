@@ -8,6 +8,7 @@ import { AdminPagination } from "@/components/admin-pagination";
 import { AdminDataTable } from "@/components/admin-data-table";
 import { AdminUnauthorized } from "@/components/admin-states";
 import { MediaPreviewImage } from "@/components/media/MediaPreviewImage";
+import { CubaMediaTable } from "@/components/media/cuba-media-table";
 import type { MediaAsset } from "@/components/media/types";
 
 async function getAdminMedia(token: string, query: string, kind: string, page: number, pageSize: number) {
@@ -167,100 +168,22 @@ export default async function AdminMediaPage({
         </section>
       )}
 
-      <AdminDataTable
-        title="Daftar aset"
-        description="Metadata, ukuran, dan status penyimpanan media"
+      {/* AdminDataTable presentation via CubaMediaTable with multi-select and pagination */}
+      <CubaMediaTable
+        mediaAssets={mediaAssets}
         itemCount={total}
-        headers={[
-          { label: "Pratinjau", key: "preview" },
-          { label: "Detail berkas", key: "details" },
-          { label: "Ukuran", key: "size" },
-          { label: "Dibuat", key: "created_at" },
-          { label: "Aksi", key: "actions" },
-        ]}
-        emptyState={
-          canUpload ? "Belum ada media. Silakan unggah berkas baru." : "Belum ada media yang dapat ditinjau."
+        canUpload={Boolean(canUpload)}
+        errorMessage={mediaRes ? null : "Data media gagal dimuat. Periksa koneksi backend."}
+        paginationSlot={
+          <AdminPagination
+            page={page}
+            pages={pages}
+            total={total}
+            pageSize={pageSize}
+            pathname="/dashboard/media"
+            query={{ q: query, kind }}
+          />
         }
-        error={mediaRes ? null : "Data media gagal dimuat. Periksa koneksi backend."}
-        retryHref="/dashboard/media"
-      >
-        {mediaAssets.map((asset) => (
-          <tr
-            key={asset.id}
-            className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors"
-          >
-            <td className="p-4" data-label="Pratinjau">
-              {asset.detected_mime_type.startsWith("image/") ? (
-                <div className="w-14 h-14 rounded-lg overflow-hidden bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shrink-0">
-                  <MediaPreviewImage
-                    src={`/api/bff/media/${asset.id}/content`}
-                    alt={asset.alt_text || asset.display_filename || asset.original_filename || "Pratinjau media"}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-              ) : (
-                <div className="w-14 h-14 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-400 font-bold text-xs shrink-0">
-                  {asset.detected_mime_type.split("/")[1]?.toUpperCase().substring(0, 4) || "FILE"}
-                </div>
-              )}
-            </td>
-            <td className="p-4" data-label="Detail berkas">
-              <div
-                className="font-semibold text-slate-900 dark:text-slate-100 truncate max-w-[220px]"
-                title={asset.display_filename || asset.original_filename || undefined}
-              >
-                {asset.display_filename || asset.original_filename || asset.title || "Tanpa Judul"}
-              </div>
-              <div className="text-xs text-slate-500 dark:text-slate-400 mt-1 flex flex-col gap-1">
-                <span>{asset.detected_mime_type}</span>
-                <span
-                  className={`cuba-badge w-fit ${
-                    asset.status === "active"
-                      ? "cuba-badge-success"
-                      : "cuba-badge-neutral"
-                  }`}
-                >
-                  {asset.status === "active" ? "Aktif" : asset.status === "archived" ? "Diarsipkan" : asset.status}
-                </span>
-              </div>
-            </td>
-            <td className="p-4 text-xs text-slate-600 dark:text-slate-400" data-label="Ukuran">
-              {formatBytes(asset.size_bytes)}
-            </td>
-            <td className="p-4 text-xs text-slate-600 dark:text-slate-400" data-label="Dibuat">
-              {asset.created_at ? new Date(asset.created_at).toLocaleDateString("id-ID") : "-"}
-            </td>
-            <td className="p-4 text-xs font-semibold" data-label="Aksi">
-              <div className="flex items-center gap-3">
-                <Link
-                  href={`/dashboard/media/${asset.id}`}
-                  className="font-bold text-sky-700 dark:text-sky-400 hover:underline"
-                >
-                  {canUpload ? "Kelola" : "Lihat"}
-                </Link>
-                {asset.status === "active" && (
-                  <a
-                    href={`/api/bff/media/${asset.id}/content`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
-                  >
-                    Buka
-                  </a>
-                )}
-              </div>
-            </td>
-          </tr>
-        ))}
-      </AdminDataTable>
-
-      <AdminPagination
-        page={page}
-        pages={pages}
-        total={total}
-        pageSize={pageSize}
-        pathname="/dashboard/media"
-        query={{ q: query, kind }}
       />
     </div>
   );

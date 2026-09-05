@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import type { RecommendationPinItem, CreateRecommendationPinInput } from "@/types/recommendation";
 import {
   createAdminRecommendationPinAction,
   deleteAdminRecommendationPinAction,
 } from "@/app/actions/recommendations";
+import { AdminDataTable } from "@/components/admin-data-table";
 
 interface CubaRecommendationWorkspaceProps {
   initialPins: RecommendationPinItem[];
@@ -14,6 +15,10 @@ interface CubaRecommendationWorkspaceProps {
 export function CubaRecommendationWorkspace({ initialPins }: CubaRecommendationWorkspaceProps) {
   const [pins, setPins] = useState<RecommendationPinItem[]>(initialPins);
   const [filter, setFilter] = useState<string>("all");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [formSuccess, setFormSuccess] = useState<string | null>(null);
@@ -25,10 +30,50 @@ export function CubaRecommendationWorkspace({ initialPins }: CubaRecommendationW
     weight: 100,
   });
 
-  const filtered = pins.filter((p) => {
-    if (filter === "all") return true;
-    return p.target_type === filter;
-  });
+  const filtered = useMemo(() => {
+    return pins.filter((p) => {
+      const matchesFilter = filter === "all" || p.target_type === filter;
+      const q = searchQuery.toLowerCase().trim();
+      const matchesSearch =
+        !q ||
+        p.title.toLowerCase().includes(q) ||
+        p.target_id.toLowerCase().includes(q) ||
+        p.pinned_by.toLowerCase().includes(q);
+      return matchesFilter && matchesSearch;
+    });
+  }, [pins, filter, searchQuery]);
+
+  const pagedPins = useMemo(() => {
+    const start = (page - 1) * pageSize;
+    return filtered.slice(start, start + pageSize);
+  }, [filtered, page, pageSize]);
+
+  const allCurrentKeys = pagedPins.map((p) => p.id);
+  const isAllSelected =
+    allCurrentKeys.length > 0 && allCurrentKeys.every((id) => selectedIds.has(id));
+  const isSomeSelected =
+    allCurrentKeys.some((id) => selectedIds.has(id)) && !isAllSelected;
+
+  const handleToggleSelectAll = (checked: boolean) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (checked) {
+        allCurrentKeys.forEach((id) => next.add(id));
+      } else {
+        allCurrentKeys.forEach((id) => next.delete(id));
+      }
+      return next;
+    });
+  };
+
+  const handleToggleRow = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
 
   const handleCreatePin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -80,7 +125,7 @@ export function CubaRecommendationWorkspace({ initialPins }: CubaRecommendationW
           </div>
           <div>
             <h2 className="text-sm font-bold text-slate-900 dark:text-white">
-              Kurasi Rekomendasi & Editorial Pinning (TASK-023)
+              Kurasi Rekomendasi & Editorial Pinning
             </h2>
             <p className="mt-1 text-xs text-slate-600 dark:text-slate-300">
               Konten yang disematkan (*pinned*) akan mendapatkan prioritas bobot lebih tinggi pada feed
@@ -185,83 +230,98 @@ export function CubaRecommendationWorkspace({ initialPins }: CubaRecommendationW
         </div>
 
         {/* Right: Pinned List */}
-        <div className="admin-card p-5 space-y-4 lg:col-span-2">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <h2 className="text-sm font-bold text-slate-900 dark:text-white">Konten Tersemat Aktif</h2>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
-                Daftar sorotan yang saat ini memengaruhi algoritma beranda.
-              </p>
-            </div>
-            <div className="flex gap-1.5">
-              {["all", "knowledge", "microlearning", "course", "news"].map((t) => (
-                <button
-                  key={t}
-                  type="button"
-                  onClick={() => setFilter(t)}
-                  className={`rounded-lg px-2.5 py-1 text-[11px] font-bold transition ${
-                    filter === t
-                      ? "bg-sky-600 text-white"
-                      : "bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300"
+        <div className="lg:col-span-2">
+          <AdminDataTable
+            title="Konten Tersemat Aktif"
+            description="Daftar sorotan yang saat ini memengaruhi algoritma beranda."
+            itemCount={filtered.length}
+            headers={["Konten Rekomendasi", "Tipe", "Bobot", "Disematkan Oleh", "Aksi"]}
+            searchQuery={searchQuery}
+            onSearchChange={(q) => {
+              setSearchQuery(q);
+              setPage(1);
+            }}
+            searchPlaceholder="Cari judul, ID target, atau penyemat..."
+            selectable
+            isAllSelected={isAllSelected}
+            isSomeSelected={isSomeSelected}
+            onToggleSelectAll={handleToggleSelectAll}
+            page={page}
+            pageSize={pageSize}
+            total={filtered.length}
+            onPageChange={setPage}
+            onPageSizeChange={(size) => {
+              setPageSize(size);
+              setPage(1);
+            }}
+            actions={
+              <div className="flex flex-wrap gap-1.5">
+                {["all", "knowledge", "microlearning", "course", "news"].map((t) => (
+                  <button
+                    key={t}
+                    type="button"
+                    onClick={() => {
+                      setFilter(t);
+                      setPage(1);
+                    }}
+                    className={`rounded-lg px-2.5 py-1 text-[11px] font-bold transition ${
+                      filter === t
+                        ? "bg-sky-600 text-white"
+                        : "bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300"
+                    }`}
+                  >
+                    {t === "all" ? "Semua" : t === "knowledge" ? "Pengetahuan" : t === "microlearning" ? "Mikro" : t === "course" ? "Kursus" : "Berita"}
+                  </button>
+                ))}
+              </div>
+            }
+          >
+            {pagedPins.map((pin) => {
+              const isChecked = selectedIds.has(pin.id);
+              return (
+                <tr
+                  key={pin.id}
+                  className={`transition-colors hover:bg-slate-50/75 dark:hover:bg-slate-800/50 ${
+                    isChecked ? "bg-sky-50/50 dark:bg-sky-950/20" : ""
                   }`}
                 >
-                  {t === "all" ? "Semua" : t === "knowledge" ? "Pengetahuan" : t === "microlearning" ? "Mikro" : t === "course" ? "Kursus" : "Berita"}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead className="border-b border-slate-200 bg-slate-50/75 font-bold uppercase tracking-wider text-slate-600 dark:border-slate-800 dark:bg-slate-900/50 dark:text-slate-400">
-                <tr>
-                  <th className="px-4 py-3">Konten Rekomendasi</th>
-                  <th className="px-4 py-3">Tipe</th>
-                  <th className="px-4 py-3">Bobot</th>
-                  <th className="px-4 py-3">Disematkan Oleh</th>
-                  <th className="px-4 py-3 text-right">Aksi</th>
+                  <td className="w-10 px-4 py-3.5 text-center">
+                    <input
+                      type="checkbox"
+                      className="cuba-checkbox h-4 w-4 rounded border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-sky-600 focus:ring-sky-500 cursor-pointer"
+                      checked={isChecked}
+                      onChange={() => handleToggleRow(pin.id)}
+                      aria-label={`Pilih ${pin.title}`}
+                    />
+                  </td>
+                  <td className="px-4 py-3 font-semibold text-slate-900 dark:text-white">
+                    <p>{pin.title}</p>
+                    <p className="font-mono text-[11px] text-slate-400">{pin.target_id}</p>
+                  </td>
+                  <td className="px-4 py-3">
+                    <span className="inline-flex rounded-full bg-sky-50 px-2 py-0.5 font-bold text-sky-700 border border-sky-200 dark:bg-sky-950/40 dark:text-sky-300 dark:border-sky-800">
+                      {pin.target_type}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 font-bold font-mono text-slate-700 dark:text-slate-300">
+                    {pin.weight}
+                  </td>
+                  <td className="px-4 py-3 text-slate-500 dark:text-slate-400">
+                    {pin.pinned_by}
+                  </td>
+                  <td className="px-4 py-3 text-right">
+                    <button
+                      type="button"
+                      onClick={() => handleDeletePin(pin.id)}
+                      className="rounded-lg border border-rose-200 bg-rose-50 px-2.5 py-1 font-bold text-rose-700 hover:bg-rose-100 dark:border-rose-900 dark:bg-rose-950/50 dark:text-rose-300 dark:hover:bg-rose-900/60"
+                    >
+                      Hapus
+                    </button>
+                  </td>
                 </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
-                {filtered.length === 0 ? (
-                  <tr>
-                    <td colSpan={5} className="px-4 py-8 text-center text-slate-500 dark:text-slate-400">
-                      Belum ada konten yang disematkan untuk kategori ini.
-                    </td>
-                  </tr>
-                ) : (
-                  filtered.map((pin) => (
-                    <tr key={pin.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/40">
-                      <td className="px-4 py-3 font-semibold text-slate-900 dark:text-white">
-                        <p>{pin.title}</p>
-                        <p className="font-mono text-[11px] text-slate-400">{pin.target_id}</p>
-                      </td>
-                      <td className="px-4 py-3">
-                        <span className="inline-flex rounded-full bg-sky-50 px-2 py-0.5 font-bold text-sky-700 border border-sky-200 dark:bg-sky-950/40 dark:text-sky-300 dark:border-sky-800">
-                          {pin.target_type}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 font-bold font-mono text-slate-700 dark:text-slate-300">
-                        {pin.weight}
-                      </td>
-                      <td className="px-4 py-3 text-slate-500 dark:text-slate-400">
-                        {pin.pinned_by}
-                      </td>
-                      <td className="px-4 py-3 text-right">
-                        <button
-                          type="button"
-                          onClick={() => handleDeletePin(pin.id)}
-                          className="rounded-lg border border-rose-200 bg-rose-50 px-2.5 py-1 font-bold text-rose-700 hover:bg-rose-100 dark:border-rose-900 dark:bg-rose-950/50 dark:text-rose-300 dark:hover:bg-rose-900/60"
-                        >
-                          Hapus
-                        </button>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+              );
+            })}
+          </AdminDataTable>
         </div>
       </div>
     </div>

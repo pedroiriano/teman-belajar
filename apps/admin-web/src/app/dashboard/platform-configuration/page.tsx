@@ -66,7 +66,7 @@ export default async function PlatformConfigurationPage() {
       <div className="admin-page-header flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <p className="admin-kicker text-xs font-black uppercase tracking-wider text-sky-600 dark:text-sky-400">
-            TASK-020 &bull; ADMINISTRASI SISTEM
+            ADMINISTRASI SISTEM
           </p>
           <h1 className="text-2xl font-black text-slate-900 dark:text-white sm:text-3xl">
             Konfigurasi Platform

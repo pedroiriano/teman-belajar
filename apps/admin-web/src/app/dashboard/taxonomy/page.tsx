@@ -9,6 +9,7 @@ import {
 import { AdminIcon } from "@/components/admin-icon";
 import type { TaxonomyTerm } from "@/components/seo/types";
 import { AdminClientPagination } from "@/components/admin-pagination";
+import { AdminDataTable } from "@/components/admin-data-table";
 
 type Kind = "categories" | "tags";
 type StatusFilter = "active" | "archived" | "all";
@@ -230,8 +231,9 @@ function TermPanel({
   const [description, setDescription] = useState("");
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("active");
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(20);
+  const [pageSize, setPageSize] = useState(10);
   const slug = slugify(name);
   const isCreating = busy === `create:${kind}`;
 
@@ -239,12 +241,49 @@ function TermPanel({
     const normalizedQuery = query.trim().toLowerCase();
     return [...terms]
       .filter((term) => statusFilter === "all" || term.status === statusFilter)
-      .filter((term) => !normalizedQuery || [term.name, term.slug, term.description || ""]
-        .some((value) => value.toLowerCase().includes(normalizedQuery)))
+      .filter((term) =>
+        !normalizedQuery ||
+        [term.name, term.slug, term.description || ""].some((value) =>
+          value.toLowerCase().includes(normalizedQuery)
+        )
+      )
       .sort((a, b) => a.name.localeCompare(b.name, "id"));
   }, [query, statusFilter, terms]);
+
   const totalPages = Math.max(1, Math.ceil(filteredTerms.length / pageSize));
-  const visibleTerms = filteredTerms.slice((Math.min(page, totalPages) - 1) * pageSize, Math.min(page, totalPages) * pageSize);
+  const currentPage = Math.min(page, totalPages);
+  const visibleTerms = filteredTerms.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
+  );
+
+  const allCurrentKeys = visibleTerms.map((t) => t.id);
+  const isAllSelected =
+    allCurrentKeys.length > 0 &&
+    allCurrentKeys.every((id) => selectedIds.has(id));
+  const isSomeSelected =
+    allCurrentKeys.some((id) => selectedIds.has(id)) && !isAllSelected;
+
+  const handleToggleSelectAll = (checked: boolean) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (checked) {
+        allCurrentKeys.forEach((id) => next.add(id));
+      } else {
+        allCurrentKeys.forEach((id) => next.delete(id));
+      }
+      return next;
+    });
+  };
+
+  const handleToggleRow = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
 
   const resetComposer = () => {
     setName("");
@@ -263,39 +302,59 @@ function TermPanel({
       id={`taxonomy-panel-${kind}`}
       role="tabpanel"
       aria-labelledby={`taxonomy-tab-${kind}`}
-      className="admin-form-body"
+      className="space-y-6"
     >
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div className="max-w-2xl">
-          <h3 className="text-xl font-black text-slate-900">{config.title}</h3>
-          <p className="mt-1 text-sm leading-6 text-slate-500">{config.copy}</p>
-          <p className="mt-2 text-xs font-semibold leading-5 text-slate-500">{config.guidance}</p>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h3 className="text-xl font-black text-slate-900 dark:text-white">
+            {config.title}
+          </h3>
+          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+            {config.copy}
+          </p>
         </div>
         <button
           type="button"
-          className={showComposer ? "admin-button-secondary shrink-0" : "admin-button shrink-0"}
+          className={
+            showComposer
+              ? "admin-button-secondary shrink-0 font-bold text-xs"
+              : "admin-button shrink-0 font-bold text-xs"
+          }
           aria-expanded={showComposer}
           aria-controls={`${kind}-composer`}
           onClick={() => setShowComposer((current) => !current)}
         >
-          {showComposer ? "Tutup form" : `Tambah ${config.title}`}
+          {showComposer ? "Tutup Formulir" : `+ Tambah ${config.title}`}
         </button>
       </div>
 
       {showComposer && (
-        <form id={`${kind}-composer`} className="admin-taxonomy-composer" onSubmit={submit}>
-          <div className="flex flex-col gap-1">
-            <p className="font-black text-slate-900">Tambah {config.singular} baru</p>
-            <p className="text-xs leading-5 text-slate-500">Nama harus unik. Slug dibuat otomatis dan ditampilkan sebelum disimpan.</p>
+        <form
+          id={`${kind}-composer`}
+          className="admin-card rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 sm:p-7 space-y-5 shadow-sm"
+          onSubmit={submit}
+        >
+          <div className="border-b border-slate-100 dark:border-slate-800 pb-3">
+            <h4 className="font-extrabold text-slate-900 dark:text-white text-base">
+              Tambah {config.singular} Baru
+            </h4>
+            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+              Nama harus unik. Slug dibuat otomatis dan divalidasi oleh sistem.
+            </p>
           </div>
 
-          <div className="grid gap-5 lg:grid-cols-2">
+          <div className="grid gap-6 md:grid-cols-2">
             <div>
-              <label className="admin-label" htmlFor={`${kind}-name`}>Nama {config.title} *</label>
+              <label
+                className="admin-label font-bold text-slate-800 dark:text-slate-200"
+                htmlFor={`${kind}-name`}
+              >
+                Nama {config.title} *
+              </label>
               <input
                 id={`${kind}-name`}
                 name="name"
-                className="admin-input"
+                className="admin-input mt-2"
                 required
                 autoFocus
                 autoComplete="off"
@@ -303,127 +362,200 @@ function TermPanel({
                 value={name}
                 onChange={(event) => setName(event.target.value)}
                 aria-describedby={`${kind}-name-help`}
-                placeholder={kind === "categories" ? "Contoh: Pengembangan Kompetensi" : "Contoh: Kepemimpinan"}
+                placeholder={
+                  kind === "categories"
+                    ? "Contoh: Pengembangan Kompetensi"
+                    : "Contoh: Kepemimpinan"
+                }
               />
-              <p id={`${kind}-name-help`} className="mt-2 text-xs text-slate-500">{name.length}/120 karakter</p>
+              <p
+                id={`${kind}-name-help`}
+                className="mt-1.5 text-[11px] text-slate-500"
+              >
+                {name.length}/120 karakter
+              </p>
             </div>
             <div>
-              <label className="admin-label" htmlFor={`${kind}-slug`}>Slug otomatis</label>
+              <label
+                className="admin-label font-bold text-slate-800 dark:text-slate-200"
+                htmlFor={`${kind}-slug`}
+              >
+                Slug URL Otomatis
+              </label>
               <input
                 id={`${kind}-slug`}
-                className="admin-input"
+                className="admin-input mt-2 bg-slate-50 dark:bg-slate-800"
                 readOnly
                 value={slug}
                 placeholder="dibuat-dari-nama"
                 aria-describedby={`${kind}-slug-help`}
               />
-              <p id={`${kind}-slug-help`} className="mt-2 text-xs text-slate-500">Dipakai sebagai identitas teknis dan tidak perlu diketik manual.</p>
+              <p
+                id={`${kind}-slug-help`}
+                className="mt-1.5 text-[11px] text-slate-500"
+              >
+                Dipakai sebagai identitas URL dan tidak perlu diketik manual.
+              </p>
             </div>
           </div>
 
           <div>
             <div className="flex items-center justify-between gap-3">
-              <label className="admin-label mb-2" htmlFor={`${kind}-description`}>Deskripsi <span className="font-normal">(opsional)</span></label>
-              <span className="text-xs text-slate-500" aria-live="polite">{description.length}/1000</span>
+              <label
+                className="admin-label font-bold text-slate-800 dark:text-slate-200 mb-1"
+                htmlFor={`${kind}-description`}
+              >
+                Deskripsi <span className="font-normal text-xs text-slate-500">(opsional)</span>
+              </label>
+              <span className="text-[11px] text-slate-500" aria-live="polite">
+                {description.length}/1000
+              </span>
             </div>
             <textarea
               id={`${kind}-description`}
               name="description"
-              className="admin-input"
+              className="admin-input mt-1"
               rows={3}
               maxLength={1000}
               value={description}
               onChange={(event) => setDescription(event.target.value)}
-              placeholder="Jelaskan kapan istilah ini sebaiknya digunakan oleh editor."
+              placeholder="Jelaskan kapan istilah ini sebaiknya digunakan oleh editor..."
             />
           </div>
 
-          <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-            <button type="button" className="admin-button-secondary" disabled={isCreating} onClick={resetComposer}>Batal</button>
-            <button type="submit" className="admin-button" disabled={isCreating || !name.trim() || !slug}>
+          <div className="flex flex-wrap items-center justify-end gap-3 pt-2">
+            <button
+              type="button"
+              className="admin-button-secondary text-xs"
+              disabled={isCreating}
+              onClick={resetComposer}
+            >
+              Batal
+            </button>
+            <button
+              type="submit"
+              className="admin-button text-xs font-bold"
+              disabled={isCreating || !name.trim() || !slug}
+            >
               {isCreating ? "Menyimpan…" : `Simpan ${config.title}`}
             </button>
           </div>
         </form>
       )}
 
-      <div className="admin-taxonomy-toolbar">
-        <div className="relative min-w-0 flex-1">
-          <AdminIcon name="search" className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
-          <label className="sr-only" htmlFor={`${kind}-search`}>Cari {config.singular}</label>
-          <input
-            id={`${kind}-search`}
-            type="search"
-            className="admin-input pl-11"
-            value={query}
-            onChange={(event) => { setQuery(event.target.value); setPage(1); }}
-            placeholder={`Cari nama, slug, atau deskripsi ${config.singular}…`}
+      {/* Cuba DataTable presentation with checkboxes & pagination */}
+      <AdminDataTable
+        title={`Daftar ${config.title}`}
+        description={`Katalog ${config.singular} yang dapat digunakan untuk penandaan materi.`}
+        itemCount={filteredTerms.length}
+        headers={[
+          { label: "Nama & Deskripsi", key: "name" },
+          { label: "Slug", key: "slug" },
+          { label: "Penggunaan", key: "usage_count" },
+          { label: "Status", key: "status" },
+          { label: "Aksi", key: "actions" },
+        ]}
+        searchQuery={query}
+        onSearchChange={(q) => {
+          setQuery(q);
+          setPage(1);
+        }}
+        searchPlaceholder={`Cari nama, slug, atau deskripsi ${config.singular}…`}
+        statusFilter={statusFilter}
+        statusOptions={[
+          { value: "active", label: "Aktif" },
+          { value: "archived", label: "Diarsipkan" },
+          { value: "all", label: "Semua status" },
+        ]}
+        onStatusFilterChange={(val) => {
+          setStatusFilter(val as StatusFilter);
+          setPage(1);
+        }}
+        selectable
+        isAllSelected={isAllSelected}
+        isSomeSelected={isSomeSelected}
+        onToggleSelectAll={handleToggleSelectAll}
+        emptyState={`Tidak ada ${config.singular} yang sesuai.`}
+        paginationSlot={
+          <AdminClientPagination
+            page={currentPage}
+            pages={totalPages}
+            total={filteredTerms.length}
+            pageSize={pageSize}
+            onPageChange={setPage}
+            onPageSizeChange={(size) => {
+              setPageSize(size);
+              setPage(1);
+            }}
           />
-        </div>
-        <div className="sm:w-48">
-          <label className="sr-only" htmlFor={`${kind}-status`}>Filter status</label>
-          <select
-            id={`${kind}-status`}
-            className="admin-input"
-            value={statusFilter}
-            onChange={(event) => { setStatusFilter(event.target.value as StatusFilter); setPage(1); }}
-          >
-            <option value="active">Aktif</option>
-            <option value="archived">Diarsipkan</option>
-            <option value="all">Semua status</option>
-          </select>
-        </div>
-      </div>
-
-      <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500" aria-live="polite">
-        <span>{filteredTerms.length} {config.singular} ditampilkan</span>
-        {(query || statusFilter !== "active") && (
-            <button type="button" className="font-bold text-sky-700" onClick={() => { setQuery(""); setStatusFilter("active"); setPage(1); }}>
-            Reset filter
-          </button>
-        )}
-      </div>
-
-      {loading ? (
-        <div className="admin-empty" role="status">Memuat {config.title.toLowerCase()}…</div>
-      ) : filteredTerms.length === 0 ? (
-        <div className="admin-empty rounded-2xl border border-slate-200">
-          <span className="admin-stat-icon mx-auto"><AdminIcon name="search" className="h-5 w-5" /></span>
-          <p className="mt-4 font-black text-slate-900">Tidak ada {config.singular} yang sesuai</p>
-          <p className="mt-1 text-sm">Ubah kata pencarian atau filter status, atau tambahkan {config.singular} baru.</p>
-        </div>
-      ) : (
-        <ul className="grid gap-3" aria-label={`Daftar ${config.title}`}>
-          {visibleTerms.map((term) => (
-            <li key={term.id} className="admin-taxonomy-row">
-              <div className="min-w-0 flex-1">
-                <div className="flex flex-wrap items-center gap-2">
-                  <p className="font-black text-slate-900 dark:text-white">{term.name}</p>
-                  <span className={`cuba-badge ${term.status === "active" ? "cuba-badge-success" : "cuba-badge-neutral"}`}>
-                    {term.status === "active" ? "Aktif" : "Diarsipkan"}
-                  </span>
-                </div>
-                {term.description && <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">{term.description}</p>}
-                <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-slate-500 dark:text-slate-400">
-                  <code className="admin-taxonomy-slug">/{term.slug}</code>
-                  <span>{term.usage_count} penggunaan</span>
-                </div>
-              </div>
-              {term.status === "active" && (
-                <button
-                  type="button"
-                  className="admin-button-secondary w-full shrink-0 sm:w-auto hover:!border-rose-300 hover:!text-rose-600"
-                  disabled={busy === term.id}
-                  onClick={() => void onArchive(kind, term)}
+        }
+      >
+        {visibleTerms.map((term) => {
+          const isChecked = selectedIds.has(term.id);
+          return (
+            <tr
+              key={term.id}
+              className={`hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition-colors ${
+                isChecked ? "bg-sky-50/40 dark:bg-sky-950/20" : ""
+              }`}
+            >
+              <td className="w-10 px-4 py-3.5 text-center">
+                <input
+                  type="checkbox"
+                  className="cuba-checkbox h-4 w-4 rounded border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-sky-600 focus:ring-sky-500 cursor-pointer"
+                  checked={isChecked}
+                  onChange={() => handleToggleRow(term.id)}
+                  aria-label={`Pilih ${term.name}`}
+                />
+              </td>
+              <td className="px-6 py-4">
+                <p className="font-bold text-slate-900 dark:text-white text-sm">
+                  {term.name}
+                </p>
+                {term.description && (
+                  <p className="mt-1 text-xs text-slate-500 dark:text-slate-400 line-clamp-2">
+                    {term.description}
+                  </p>
+                )}
+              </td>
+              <td className="px-6 py-4 font-mono text-xs text-slate-600 dark:text-slate-300 whitespace-nowrap">
+                <code className="rounded bg-slate-100 dark:bg-slate-800 px-2 py-1">
+                  /{term.slug}
+                </code>
+              </td>
+              <td className="px-6 py-4 text-xs text-slate-600 dark:text-slate-400 whitespace-nowrap">
+                <span className="font-bold text-slate-900 dark:text-white">
+                  {term.usage_count}
+                </span>{" "}
+                konten
+              </td>
+              <td className="px-6 py-4 whitespace-nowrap">
+                <span
+                  className={`cuba-badge ${
+                    term.status === "active"
+                      ? "cuba-badge-success"
+                      : "cuba-badge-neutral"
+                  }`}
                 >
-                  {busy === term.id ? "Mengarsipkan…" : "Arsipkan"}
-                </button>
-              )}
-            </li>
-          ))}
-        </ul>
-      )}
-      <AdminClientPagination page={Math.min(page, totalPages)} pages={totalPages} total={filteredTerms.length} pageSize={pageSize} onPageChange={setPage} onPageSizeChange={(size) => { setPageSize(size); setPage(1); }} />
+                  {term.status === "active" ? "Aktif" : "Diarsipkan"}
+                </span>
+              </td>
+              <td className="px-6 py-4 text-right whitespace-nowrap">
+                {term.status === "active" && (
+                  <button
+                    type="button"
+                    className="rounded-lg border border-rose-200 bg-rose-50 px-2.5 py-1 text-xs font-bold text-rose-700 hover:bg-rose-100 dark:border-rose-900 dark:bg-rose-950/40 dark:text-rose-300"
+                    disabled={busy === term.id}
+                    onClick={() => void onArchive(kind, term)}
+                  >
+                    {busy === term.id ? "Mengarsipkan…" : "Arsipkan"}
+                  </button>
+                )}
+              </td>
+            </tr>
+          );
+        })}
+      </AdminDataTable>
     </div>
   );
 }

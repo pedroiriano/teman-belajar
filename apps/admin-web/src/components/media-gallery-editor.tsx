@@ -318,7 +318,7 @@ export default function MediaGalleryEditor({ roles }: { roles: string[] }) {
     <div className="admin-page">
       <header className="admin-page-header">
         <div>
-          <p className="admin-kicker">TASK-022 · Kurasi publik</p>
+          <p className="admin-kicker">Kurasi Media Publik</p>
           <h1 className="admin-page-title">Galeri Media & Video Hub</h1>
           <p className="admin-page-copy">
             Susun aset aktif menjadi koleksi publik tanpa mengekspos storage mentah.

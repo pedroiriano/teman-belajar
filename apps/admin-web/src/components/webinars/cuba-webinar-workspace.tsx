@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import type { AdminWebinarItem } from "@/types/webinar";
+import { AdminDataTable } from "@/components/admin-data-table";
 
 interface CubaWebinarWorkspaceProps {
   initialWebinars: AdminWebinarItem[];
@@ -10,12 +11,56 @@ interface CubaWebinarWorkspaceProps {
 export function CubaWebinarWorkspace({ initialWebinars }: CubaWebinarWorkspaceProps) {
   const [webinars] = useState<AdminWebinarItem[]>(initialWebinars);
   const [filter, setFilter] = useState<string>("all");
+  const [searchQuery, setSearchQuery] = useState("");
   const [selectedWebinar, setSelectedWebinar] = useState<AdminWebinarItem | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
-  const filtered = webinars.filter((w) => {
-    if (filter === "all") return true;
-    return w.status === filter;
-  });
+  const filteredWebinars = useMemo(() => {
+    return webinars.filter((w) => {
+      const matchesFilter = filter === "all" || w.status === filter;
+      const q = searchQuery.toLowerCase().trim();
+      const matchesSearch =
+        !q ||
+        w.title.toLowerCase().includes(q) ||
+        w.speaker.toLowerCase().includes(q) ||
+        (w.description || "").toLowerCase().includes(q);
+      return matchesFilter && matchesSearch;
+    });
+  }, [webinars, filter, searchQuery]);
+
+  const filteredAndPaged = useMemo(() => {
+    const start = (page - 1) * pageSize;
+    return filteredWebinars.slice(start, start + pageSize);
+  }, [filteredWebinars, page, pageSize]);
+
+  const allCurrentKeys = filteredAndPaged.map((w) => String(w.id));
+  const isAllSelected =
+    allCurrentKeys.length > 0 && allCurrentKeys.every((id) => selectedIds.has(id));
+  const isSomeSelected =
+    allCurrentKeys.some((id) => selectedIds.has(id)) && !isAllSelected;
+
+  const handleToggleSelectAll = (checked: boolean) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (checked) {
+        allCurrentKeys.forEach((id) => next.add(id));
+      } else {
+        allCurrentKeys.forEach((id) => next.delete(id));
+      }
+      return next;
+    });
+  };
+
+  const handleToggleRow = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
 
   const totalCapacity = webinars.reduce((sum, w) => sum + w.capacity, 0);
   const totalEnrolled = webinars.reduce((sum, w) => sum + w.enrolled_count, 0);
@@ -46,121 +91,139 @@ export function CubaWebinarWorkspace({ initialWebinars }: CubaWebinarWorkspacePr
             <span className="h-2.5 w-2.5 rounded-full bg-emerald-500" />
             <span className="text-sm font-bold text-slate-800 dark:text-slate-200">Zoom S2S Standby</span>
           </div>
-          <p className="mt-1 text-xs text-slate-500 dark:text-slate-400 font-medium">ADR-020 Authority</p>
+          <p className="mt-1 text-xs text-slate-500 dark:text-slate-400 font-medium">Otoritas Moodle</p>
         </div>
       </div>
 
-      {/* Filter and Control Bar */}
-      <div className="admin-card p-4">
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            {["all", "upcoming", "in_progress", "completed"].map((tab) => (
-              <button
-                key={tab}
-                type="button"
-                onClick={() => setFilter(tab)}
-                className={`rounded-lg px-3.5 py-1.5 text-xs font-bold transition ${
-                  filter === tab
-                    ? "bg-sky-600 text-white shadow-sm"
-                    : "bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
-                }`}
-              >
-                {tab === "all"
-                  ? "Semua Sesi"
-                  : tab === "upcoming"
-                  ? "Akan Datang"
-                  : tab === "in_progress"
-                  ? "Sedang Berlangsung"
-                  : "Selesai"}
-              </button>
-            ))}
-          </div>
-          <div className="text-xs text-slate-500 dark:text-slate-400 font-medium">
-            Menampilkan <span className="font-bold text-slate-800 dark:text-slate-200">{filtered.length}</span> sesi
-          </div>
-        </div>
-      </div>
-
-      {/* Webinar Cards / Table */}
-      <div className="admin-card overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm">
-            <thead className="border-b border-slate-200 bg-slate-50/75 text-xs font-bold uppercase tracking-wider text-slate-600 dark:border-slate-800 dark:bg-slate-900/50 dark:text-slate-400">
-              <tr>
-                <th className="px-6 py-3.5">Topik Webinar</th>
-                <th className="px-6 py-3.5">Narasumber</th>
-                <th className="px-6 py-3.5">Jadwal (WIB)</th>
-                <th className="px-6 py-3.5">Peserta</th>
-                <th className="px-6 py-3.5">Status</th>
-                <th className="px-6 py-3.5 text-right">Aksi</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
-              {filtered.map((item) => (
-                <tr key={item.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/40">
-                  <td className="px-6 py-4">
-                    <p className="font-bold text-slate-900 dark:text-white">{item.title}</p>
-                    <p className="line-clamp-1 text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                      {item.description}
-                    </p>
-                  </td>
-                  <td className="px-6 py-4 text-xs font-medium text-slate-700 dark:text-slate-300">
-                    {item.speaker}
-                  </td>
-                  <td className="px-6 py-4 text-xs text-slate-600 dark:text-slate-400 whitespace-nowrap">
-                    {new Date(item.starts_at).toLocaleDateString("id-ID", {
-                      day: "numeric",
-                      month: "short",
-                      year: "numeric",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center gap-2">
-                      <div className="h-1.5 w-16 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700">
-                        <div
-                          className="h-full bg-sky-500 rounded-full"
-                          style={{ width: `${Math.min(100, Math.round((item.enrolled_count / item.capacity) * 100))}%` }}
-                        />
-                      </div>
-                      <span className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                        {item.enrolled_count}/{item.capacity}
-                      </span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span
-                      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-bold ${
-                        item.status === "upcoming"
-                          ? "bg-sky-50 text-sky-700 border border-sky-200 dark:bg-sky-950/40 dark:text-sky-300 dark:border-sky-800"
-                          : item.status === "in_progress"
-                          ? "bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800"
-                          : "bg-slate-100 text-slate-600 border border-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700"
-                      }`}
-                    >
-                      {item.status === "upcoming"
-                        ? "Akan Datang"
-                        : item.status === "in_progress"
-                        ? "Live"
-                        : "Selesai"}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-right whitespace-nowrap">
-                    <button
-                      type="button"
-                      onClick={() => setSelectedWebinar(item)}
-                      className="rounded-lg border border-sky-200 bg-sky-50 px-3 py-1 text-xs font-bold text-sky-700 hover:bg-sky-100 dark:border-sky-800 dark:bg-sky-950/50 dark:text-sky-300 dark:hover:bg-sky-900/60"
-                    >
-                      Detail
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
+      {/* Webinar DataTable */}
+      <AdminDataTable
+        title="Daftar Sesi Webinar"
+        description="Kelola jadwal, kapasitas peserta, dan status siaran webinar platform."
+        itemCount={filteredAndPaged.length}
+        headers={[
+          { label: "Topik Webinar", key: "title" },
+          { label: "Narasumber", key: "speaker" },
+          { label: "Jadwal (WIB)", key: "starts_at" },
+          { label: "Peserta", key: "capacity" },
+          { label: "Status", key: "status" },
+          { label: "Aksi", key: "actions" },
+        ]}
+        emptyState="Belum ada sesi webinar pada filter ini."
+        searchQuery={searchQuery}
+        onSearchChange={(q) => {
+          setSearchQuery(q);
+          setPage(1);
+        }}
+        searchPlaceholder="Cari topik atau narasumber…"
+        statusFilter={filter}
+        statusOptions={[
+          { value: "all", label: "Semua Status" },
+          { value: "upcoming", label: "Akan Datang" },
+          { value: "in_progress", label: "Sedang Berlangsung" },
+          { value: "completed", label: "Selesai" },
+        ]}
+        onStatusFilterChange={(s) => {
+          setFilter(s);
+          setPage(1);
+        }}
+        selectable={true}
+        isAllSelected={isAllSelected}
+        isSomeSelected={isSomeSelected}
+        onToggleSelectAll={handleToggleSelectAll}
+        page={page}
+        pageSize={pageSize}
+        total={filteredWebinars.length}
+        onPageChange={setPage}
+        onPageSizeChange={(size) => {
+          setPageSize(size);
+          setPage(1);
+        }}
+        pageSizeOptions={[10, 25, 50]}
+      >
+        {filteredAndPaged.map((item) => {
+          const isChecked = selectedIds.has(String(item.id));
+          return (
+            <tr
+              key={item.id}
+              className={`hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition-colors ${
+                isChecked ? "bg-sky-50/40 dark:bg-sky-950/20" : ""
+              }`}
+            >
+              <td className="w-10 px-4 py-3.5 text-center">
+                <input
+                  type="checkbox"
+                  className="cuba-checkbox h-4 w-4 rounded border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-sky-600 focus:ring-sky-500 cursor-pointer"
+                  checked={isChecked}
+                  onChange={() => handleToggleRow(String(item.id))}
+                  aria-label={`Pilih webinar ${item.title}`}
+                />
+              </td>
+              <td className="px-6 py-4">
+                <p className="font-bold text-slate-900 dark:text-white">{item.title}</p>
+                <p className="line-clamp-1 text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                  {item.description}
+                </p>
+              </td>
+              <td className="px-6 py-4 text-xs font-medium text-slate-700 dark:text-slate-300">
+                {item.speaker}
+              </td>
+              <td className="px-6 py-4 text-xs text-slate-600 dark:text-slate-400 whitespace-nowrap">
+                {new Date(item.starts_at).toLocaleDateString("id-ID", {
+                  day: "numeric",
+                  month: "short",
+                  year: "numeric",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
+              </td>
+              <td className="px-6 py-4 whitespace-nowrap">
+                <div className="flex items-center gap-2">
+                  <div className="h-1.5 w-16 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700">
+                    <div
+                      className="h-full bg-sky-500 rounded-full"
+                      style={{
+                        width: `${Math.min(
+                          100,
+                          Math.round((item.enrolled_count / item.capacity) * 100)
+                        )}%`,
+                      }}
+                    />
+                  </div>
+                  <span className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                    {item.enrolled_count}/{item.capacity}
+                  </span>
+                </div>
+              </td>
+              <td className="px-6 py-4 whitespace-nowrap">
+                <span
+                  className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-bold ${
+                    item.status === "upcoming"
+                      ? "bg-sky-50 text-sky-700 border border-sky-200 dark:bg-sky-950/40 dark:text-sky-300 dark:border-sky-800"
+                      : item.status === "in_progress"
+                      ? "bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800"
+                      : "bg-slate-100 text-slate-600 border border-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700"
+                  }`}
+                >
+                  {item.status === "upcoming"
+                    ? "Akan Datang"
+                    : item.status === "in_progress"
+                    ? "Live"
+                    : "Selesai"}
+                </span>
+              </td>
+              <td className="px-6 py-4 text-right whitespace-nowrap">
+                <button
+                  type="button"
+                  onClick={() => setSelectedWebinar(item)}
+                  className="rounded-lg border border-sky-200 bg-sky-50 px-3 py-1 text-xs font-bold text-sky-700 hover:bg-sky-100 dark:border-sky-800 dark:bg-sky-950/50 dark:text-sky-300 dark:hover:bg-sky-900/60"
+                >
+                  Detail
+                </button>
+              </td>
+            </tr>
+          );
+        })}
+      </AdminDataTable>
 
       {/* Detail Modal */}
       {selectedWebinar && (
