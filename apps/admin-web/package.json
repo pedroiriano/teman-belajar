@@ -36,6 +36,7 @@
     "test:rbac": "node scripts/verify-rbac-contract.mjs",
     "test:bulk-actions": "node scripts/verify-bulk-actions-contract.mjs",
     "test:content-versioning": "node scripts/verify-content-versioning-contract.mjs",
+    "test:moodle-events": "node scripts/verify-moodle-events-contract.mjs",
     "test:vendor-foundation": "node ../../scripts/verify-ui-foundation-contract.mjs admin"
   },
   "dependencies": {

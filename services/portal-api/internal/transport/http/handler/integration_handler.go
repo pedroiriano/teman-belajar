@@ -1,14 +1,18 @@
 package handler
 
 import (
+	"database/sql"
 	"encoding/json"
+	"errors"
 	"io"
 	"log"
 	"mime"
 	"net/http"
+	"strconv"
 
 	integrationapp "teman-belajar-api/internal/application/integration"
 	"teman-belajar-api/internal/domain/integration"
+	"teman-belajar-api/internal/transport/http/middleware"
 )
 
 // IntegrationHandler handles Moodle event ingestion HTTP requests.
@@ -94,3 +98,131 @@ func (h *IntegrationHandler) HandleMoodleEventIngest(w http.ResponseWriter, r *h
 		writeProblemDetails(w, http.StatusConflict, "Conflict", "event_id collision: same ID with different content")
 	}
 }
+
+func writeJSONResponse(w http.ResponseWriter, status int, data interface{}) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(status)
+	if err := json.NewEncoder(w).Encode(data); err != nil {
+		log.Printf("failed to write json response: %v", err)
+	}
+}
+
+// HandleGetSummary handles GET /api/v1/admin/moodle/events/summary.
+func (h *IntegrationHandler) HandleGetSummary(w http.ResponseWriter, r *http.Request) {
+	counts, err := h.eventService.GetSummary(r.Context())
+	if err != nil {
+		writeProblemDetails(w, http.StatusInternalServerError, "Internal Server Error", "Failed to retrieve event summary")
+		return
+	}
+
+	pending := counts["pending"]
+	processing := counts["processing"]
+	processed := counts["processed"]
+	deadLetter := counts["dead_letter"]
+	total := pending + processing + processed + deadLetter
+
+	writeJSONResponse(w, http.StatusOK, map[string]interface{}{
+		"pending":     pending,
+		"processing":  processing,
+		"processed":   processed,
+		"dead_letter": deadLetter,
+		"total":       total,
+	})
+}
+
+// HandleListEvents handles GET /api/v1/admin/moodle/events.
+func (h *IntegrationHandler) HandleListEvents(w http.ResponseWriter, r *http.Request) {
+	query := r.URL.Query()
+	status := query.Get("status")
+	eventType := query.Get("event_type")
+
+	limit := 20
+	if rawLimit := query.Get("limit"); rawLimit != "" {
+		if parsed, err := strconv.Atoi(rawLimit); err == nil && parsed > 0 {
+			limit = parsed
+			if limit > 100 {
+				limit = 100
+			}
+		}
+	}
+
+	offset := 0
+	if rawOffset := query.Get("offset"); rawOffset != "" {
+		if parsed, err := strconv.Atoi(rawOffset); err == nil && parsed >= 0 {
+			offset = parsed
+		}
+	}
+
+	filter := integration.EventFilter{
+		Status:    status,
+		EventType: eventType,
+		Limit:     limit,
+		Offset:    offset,
+	}
+
+	items, total, err := h.eventService.ListEvents(r.Context(), filter)
+	if err != nil {
+		writeProblemDetails(w, http.StatusInternalServerError, "Internal Server Error", "Failed to list events")
+		return
+	}
+	if items == nil {
+		items = []*integration.InboxEvent{}
+	}
+
+	writeJSONResponse(w, http.StatusOK, map[string]interface{}{
+		"items":  items,
+		"total":  total,
+		"limit":  limit,
+		"offset": offset,
+	})
+}
+
+// HandleGetEvent handles GET /api/v1/admin/moodle/events/{id}.
+func (h *IntegrationHandler) HandleGetEvent(w http.ResponseWriter, r *http.Request) {
+	id := r.PathValue("id")
+	if id == "" {
+		writeProblemDetails(w, http.StatusBadRequest, "Bad Request", "Event ID is required")
+		return
+	}
+
+	event, err := h.eventService.GetEvent(r.Context(), id)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			writeProblemDetails(w, http.StatusNotFound, "Not Found", "Event not found")
+			return
+		}
+		writeProblemDetails(w, http.StatusInternalServerError, "Internal Server Error", "Failed to get event")
+		return
+	}
+
+	writeJSONResponse(w, http.StatusOK, event)
+}
+
+// HandleRequeueEvent handles POST /api/v1/admin/moodle/events/{id}/requeue.
+func (h *IntegrationHandler) HandleRequeueEvent(w http.ResponseWriter, r *http.Request) {
+	id := r.PathValue("id")
+	if id == "" {
+		writeProblemDetails(w, http.StatusBadRequest, "Bad Request", "Event ID is required")
+		return
+	}
+
+	actor := "admin"
+	if claims, ok := middleware.ClaimsFromContext(r.Context()); ok && claims.Subject != "" {
+		actor = claims.Subject
+	}
+
+	if err := h.eventService.RequeueEvent(r.Context(), id, actor); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			writeProblemDetails(w, http.StatusNotFound, "Not Found", "Event not found or not in dead_letter status")
+			return
+		}
+		writeProblemDetails(w, http.StatusInternalServerError, "Internal Server Error", "Failed to requeue event")
+		return
+	}
+
+	writeJSONResponse(w, http.StatusOK, map[string]interface{}{
+		"status":   "requeued",
+		"event_id": id,
+	})
+}
+

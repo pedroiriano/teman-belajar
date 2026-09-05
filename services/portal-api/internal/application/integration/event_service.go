@@ -2,7 +2,9 @@ package integration
 
 import (
 	"context"
+	"fmt"
 	"log"
+	"time"
 
 	"teman-belajar-api/internal/domain/audit"
 	domainintegration "teman-belajar-api/internal/domain/integration"
@@ -74,3 +76,44 @@ func (s *EventService) IngestEvent(ctx context.Context, envelope *domainintegrat
 
 	return IngestCollision, nil
 }
+
+// GetSummary returns count of events grouped by status.
+func (s *EventService) GetSummary(ctx context.Context) (map[string]int64, error) {
+	return s.repo.CountByStatus(ctx)
+}
+
+// ListEvents retrieves inbox events according to filter.
+func (s *EventService) ListEvents(ctx context.Context, filter domainintegration.EventFilter) ([]*domainintegration.InboxEvent, int64, error) {
+	return s.repo.ListEvents(ctx, filter)
+}
+
+// GetEvent retrieves a single inbox event by eventID.
+func (s *EventService) GetEvent(ctx context.Context, eventID string) (*domainintegration.InboxEvent, error) {
+	return s.repo.GetEvent(ctx, eventID)
+}
+
+// RequeueEvent resets a dead_letter event to pending and records an audit event.
+func (s *EventService) RequeueEvent(ctx context.Context, eventID string, actorUserID string) error {
+	if err := s.repo.RequeueDeadLetter(ctx, eventID); err != nil {
+		return err
+	}
+
+	auditEvent := &audit.AuditEvent{
+		ID:          fmt.Sprintf("evt-requeue-%s-%d", eventID, time.Now().UnixNano()),
+		ActorUserID: actorUserID,
+		Action:      "moodle_event_requeued",
+		Module:      "integration",
+		TargetType:  "event_inbox",
+		TargetID:    eventID,
+		Result:      "success",
+		OccurredAt:  time.Now().UTC(),
+	}
+	if s.auditRepo != nil {
+		if auditErr := s.auditRepo.CreateEvent(ctx, auditEvent); auditErr != nil {
+			log.Printf("Failed to record requeue audit event: %v", auditErr)
+		}
+	}
+
+	return nil
+}
+

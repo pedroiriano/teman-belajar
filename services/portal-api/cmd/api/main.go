@@ -505,6 +505,10 @@ func main() {
 	integrationHandler := handler.NewIntegrationHandler(eventService)
 	hmacAuth := middleware.HMACAuthMiddleware(eventIngestSecret, auditRepo)
 	mux.Handle("POST /api/v1/internal/moodle/events", hmacAuth(http.HandlerFunc(integrationHandler.HandleMoodleEventIngest)))
+	mux.Handle("GET /api/v1/admin/moodle/events/summary", adminAuthMiddleware(http.HandlerFunc(integrationHandler.HandleGetSummary)))
+	mux.Handle("GET /api/v1/admin/moodle/events", adminAuthMiddleware(http.HandlerFunc(integrationHandler.HandleListEvents)))
+	mux.Handle("GET /api/v1/admin/moodle/events/{id}", adminAuthMiddleware(http.HandlerFunc(integrationHandler.HandleGetEvent)))
+	mux.Handle("POST /api/v1/admin/moodle/events/{id}/requeue", adminAuthMiddleware(http.HandlerFunc(integrationHandler.HandleRequeueEvent)))
 
 	// Start background event processor
 	processorCtx, processorCancel := context.WithCancel(ctx)

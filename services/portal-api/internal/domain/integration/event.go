@@ -44,23 +44,23 @@ type EventEnvelope struct {
 
 // InboxEvent represents a persisted event in integration.event_inbox.
 type InboxEvent struct {
-	ID             int64
-	EventID        string
-	EventType      string
-	Source         string
-	SubjectID      string
-	OccurredAt     time.Time
-	SchemaVersion  string
-	Payload        json.RawMessage
-	Fingerprint    string
-	Status         string
-	Attempts       int
-	NextAttemptAt  *time.Time
-	ErrorCategory  *string
-	ReceivedAt     time.Time
-	ProcessedAt    *time.Time
-	CreatedAt      time.Time
-	UpdatedAt      time.Time
+	ID             int64           `json:"id"`
+	EventID        string          `json:"event_id"`
+	EventType      string          `json:"event_type"`
+	Source         string          `json:"source"`
+	SubjectID      string          `json:"subject_id"`
+	OccurredAt     time.Time       `json:"occurred_at"`
+	SchemaVersion  string          `json:"schema_version"`
+	Payload        json.RawMessage `json:"payload"`
+	Fingerprint    string          `json:"fingerprint"`
+	Status         string          `json:"status"`
+	Attempts       int             `json:"attempts"`
+	NextAttemptAt  *time.Time      `json:"next_attempt_at,omitempty"`
+	ErrorCategory  *string         `json:"error_category,omitempty"`
+	ReceivedAt     time.Time       `json:"received_at"`
+	ProcessedAt    *time.Time      `json:"processed_at,omitempty"`
+	CreatedAt      time.Time       `json:"created_at"`
+	UpdatedAt      time.Time       `json:"updated_at"`
 }
 
 // OutboxEvent represents a row in integration.event_outbox.
