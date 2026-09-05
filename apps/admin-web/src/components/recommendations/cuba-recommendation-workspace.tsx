@@ -235,7 +235,7 @@ export function CubaRecommendationWorkspace({ initialPins }: CubaRecommendationW
             title="Konten Tersemat Aktif"
             description="Daftar sorotan yang saat ini memengaruhi algoritma beranda."
             itemCount={filtered.length}
-            headers={["Konten Rekomendasi", "Tipe", "Bobot", "Disematkan Oleh", "Aksi"]}
+            headers={["Konten Rekomendasi", "Tipe", "Bobot", "Disematkan Oleh", { label: "Aksi", align: "right" }]}
             searchQuery={searchQuery}
             onSearchChange={(q) => {
               setSearchQuery(q);

@@ -265,9 +265,9 @@ export function CubaMoodleEventsWorkspace({
           { label: "Tipe Peristiwa", key: "event_type" },
           { label: "Subjek", key: "subject_id" },
           { label: "Waktu Kejadian", key: "occurred_at" },
-          { label: "Percobaan", key: "attempts" },
+          { label: "Percobaan", key: "attempts", align: "center" },
           { label: "Status", key: "status" },
-          { label: "Aksi", key: "actions" },
+          { label: "Aksi", key: "actions", align: "right" },
         ]}
         emptyState="Tidak ada peristiwa yang cocok dengan filter yang dipilih."
         statusFilter={statusFilter}

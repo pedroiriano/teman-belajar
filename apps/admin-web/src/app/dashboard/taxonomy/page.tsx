@@ -453,7 +453,7 @@ function TermPanel({
           { label: "Slug", key: "slug" },
           { label: "Penggunaan", key: "usage_count" },
           { label: "Status", key: "status" },
-          { label: "Aksi", key: "actions" },
+          { label: "Aksi", key: "actions", align: "right" },
         ]}
         searchQuery={query}
         onSearchChange={(q) => {

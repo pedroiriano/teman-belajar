@@ -106,7 +106,7 @@ export function CubaWebinarWorkspace({ initialWebinars }: CubaWebinarWorkspacePr
           { label: "Jadwal (WIB)", key: "starts_at" },
           { label: "Peserta", key: "capacity" },
           { label: "Status", key: "status" },
-          { label: "Aksi", key: "actions" },
+          { label: "Aksi", key: "actions", align: "right" },
         ]}
         emptyState="Belum ada sesi webinar pada filter ini."
         searchQuery={searchQuery}
