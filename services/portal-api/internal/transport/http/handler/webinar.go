@@ -133,6 +133,48 @@ func (h *WebinarHandler) mutate(w http.ResponseWriter, r *http.Request, operatio
 	respondJSON(w, http.StatusOK, result)
 }
 
+func (h *WebinarHandler) AdminList(w http.ResponseWriter, r *http.Request) {
+	identity, ok := webinarIdentity(w, r)
+	if !ok {
+		return
+	}
+	page, pageSize := 1, 50
+	if raw := r.URL.Query().Get("page"); raw != "" {
+		if p, err := strconv.Atoi(raw); err == nil && p >= 1 {
+			page = p
+		}
+	}
+	if raw := r.URL.Query().Get("page_size"); raw != "" {
+		if ps, err := strconv.Atoi(raw); err == nil && ps >= 1 && ps <= 100 {
+			pageSize = ps
+		}
+	}
+	payload, err := h.service.List(r.Context(), identity, page, pageSize)
+	if err != nil {
+		h.error(w, "admin_list", err)
+		return
+	}
+	respondJSON(w, http.StatusOK, payload)
+}
+
+func (h *WebinarHandler) AdminGet(w http.ResponseWriter, r *http.Request) {
+	identity, ok := webinarIdentity(w, r)
+	if !ok {
+		return
+	}
+	id, err := parseWebinarID(r)
+	if err != nil {
+		h.error(w, "admin_get", err)
+		return
+	}
+	session, err := h.service.Get(r.Context(), identity, id)
+	if err != nil {
+		h.error(w, "admin_get", err)
+		return
+	}
+	respondJSON(w, http.StatusOK, session)
+}
+
 func (h *WebinarHandler) error(w http.ResponseWriter, operation string, err error) {
 	result := "unavailable"
 	defer func() { observability.RecordWebinarAction(operation, result) }()

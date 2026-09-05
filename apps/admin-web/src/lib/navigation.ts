@@ -36,6 +36,7 @@ export const navigationGroups: NavigationGroup[] = [
       { id: "training-programs", href: "/dashboard/training-programs", label: "Program Pelatihan", icon: "book" },
       { id: "microlearning", href: "/dashboard/microlearning", label: "Pembelajaran Singkat", icon: "video" },
       { id: "learning-paths", href: "/dashboard/learning-paths", label: "Jalur Belajar", icon: "knowledge" },
+      { id: "webinars", href: "/dashboard/webinars", label: "Webinar & Live", icon: "video" },
     ],
   },
   {
@@ -46,6 +47,7 @@ export const navigationGroups: NavigationGroup[] = [
       { id: "news", href: "/dashboard/news", label: "Berita", icon: "news" },
       { id: "announcements", href: "/dashboard/announcements", label: "Pengumuman", icon: "announcement" },
       { id: "faqs", href: "/dashboard/faqs", label: "FAQ", icon: "help" },
+      { id: "recommendations", href: "/dashboard/recommendations", label: "Kurasi Rekomendasi", icon: "check" },
     ],
   },
   {
@@ -121,6 +123,8 @@ export const titleBySegment: Record<string, string> = {
   "training-programs": "Program Pelatihan",
   microlearning: "Pembelajaran Singkat",
   "learning-paths": "Jalur Belajar",
+  webinars: "Webinar & Live",
+  recommendations: "Kurasi Rekomendasi",
   notifications: "Pusat Notifikasi",
   create: "Buat baru",
 };

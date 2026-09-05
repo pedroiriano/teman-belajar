@@ -60,6 +60,27 @@ type Announcement struct {
 	SEO         *discoverability.Metadata `json:"seo,omitempty"`
 }
 
+type NewsRevision struct {
+	ID         string    `json:"id"`
+	NewsID     string    `json:"news_id"`
+	RevisionNo int       `json:"revision_no"`
+	Title      string    `json:"title"`
+	Excerpt    string    `json:"excerpt"`
+	Body       string    `json:"body"`
+	AuthorID   *string   `json:"author_id,omitempty"`
+	CreatedAt  time.Time `json:"created_at"`
+}
+
+type AnnouncementRevision struct {
+	ID             string    `json:"id"`
+	AnnouncementID string    `json:"announcement_id"`
+	RevisionNo     int       `json:"revision_no"`
+	Title          string    `json:"title"`
+	Body           string    `json:"body"`
+	AuthorID       *string   `json:"author_id,omitempty"`
+	CreatedAt      time.Time `json:"created_at"`
+}
+
 type Pagination struct {
 	Page       int `json:"page"`
 	PageSize   int `json:"page_size"`

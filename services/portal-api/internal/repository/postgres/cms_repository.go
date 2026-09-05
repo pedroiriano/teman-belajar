@@ -262,3 +262,75 @@ func contentUpdateResult(result sql.Result, err error) error {
 	}
 	return nil
 }
+
+func (r *CMSRepository) CreateNewsRevision(ctx context.Context, rev *cms.NewsRevision) error {
+	query := `INSERT INTO news_revisions (id, news_id, revision_no, title, excerpt, body, author_id, created_at)
+			  VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+			  ON CONFLICT (news_id, revision_no) DO UPDATE SET title = EXCLUDED.title, excerpt = EXCLUDED.excerpt, body = EXCLUDED.body`
+	_, err := r.db.ExecContext(ctx, query,
+		rev.ID, rev.NewsID, rev.RevisionNo, rev.Title, rev.Excerpt, rev.Body, rev.AuthorID, rev.CreatedAt,
+	)
+	return err
+}
+
+func (r *CMSRepository) ListNewsRevisions(ctx context.Context, newsID string) ([]cms.NewsRevision, error) {
+	query := `SELECT id, news_id, revision_no, title, excerpt, body, author_id, created_at
+			  FROM news_revisions WHERE news_id = $1 ORDER BY revision_no DESC`
+	rows, err := r.db.QueryContext(ctx, query, newsID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var revisions []cms.NewsRevision
+	for rows.Next() {
+		var rev cms.NewsRevision
+		var authorID sql.NullString
+		var excerpt sql.NullString
+		if err := rows.Scan(&rev.ID, &rev.NewsID, &rev.RevisionNo, &rev.Title, &excerpt, &rev.Body, &authorID, &rev.CreatedAt); err != nil {
+			return nil, err
+		}
+		if authorID.Valid {
+			rev.AuthorID = &authorID.String
+		}
+		if excerpt.Valid {
+			rev.Excerpt = excerpt.String
+		}
+		revisions = append(revisions, rev)
+	}
+	return revisions, nil
+}
+
+func (r *CMSRepository) CreateAnnouncementRevision(ctx context.Context, rev *cms.AnnouncementRevision) error {
+	query := `INSERT INTO announcement_revisions (id, announcement_id, revision_no, title, body, author_id, created_at)
+			  VALUES ($1, $2, $3, $4, $5, $6, $7)
+			  ON CONFLICT (announcement_id, revision_no) DO UPDATE SET title = EXCLUDED.title, body = EXCLUDED.body`
+	_, err := r.db.ExecContext(ctx, query,
+		rev.ID, rev.AnnouncementID, rev.RevisionNo, rev.Title, rev.Body, rev.AuthorID, rev.CreatedAt,
+	)
+	return err
+}
+
+func (r *CMSRepository) ListAnnouncementRevisions(ctx context.Context, announcementID string) ([]cms.AnnouncementRevision, error) {
+	query := `SELECT id, announcement_id, revision_no, title, body, author_id, created_at
+			  FROM announcement_revisions WHERE announcement_id = $1 ORDER BY revision_no DESC`
+	rows, err := r.db.QueryContext(ctx, query, announcementID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var revisions []cms.AnnouncementRevision
+	for rows.Next() {
+		var rev cms.AnnouncementRevision
+		var authorID sql.NullString
+		if err := rows.Scan(&rev.ID, &rev.AnnouncementID, &rev.RevisionNo, &rev.Title, &rev.Body, &authorID, &rev.CreatedAt); err != nil {
+			return nil, err
+		}
+		if authorID.Valid {
+			rev.AuthorID = &authorID.String
+		}
+		revisions = append(revisions, rev)
+	}
+	return revisions, nil
+}

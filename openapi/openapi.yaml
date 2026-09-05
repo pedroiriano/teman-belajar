@@ -3586,6 +3586,209 @@ paths:
                     items: { type: object }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '403': { $ref: '#/components/responses/Forbidden' }
+  /admin/batch-transitions:
+    post:
+      tags: [Admin, Batch Operations]
+      operationId: executeBatchTransitions
+      summary: Execute bulk lifecycle status transitions across multiple entities
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [action, items]
+              properties:
+                action: { type: string, enum: [approve, publish, archive, delete, reject] }
+                items:
+                  type: array
+                  items:
+                    type: object
+                    required: [id, module]
+                    properties:
+                      id: { type: string }
+                      module: { type: string }
+                      title: { type: string }
+                notes: { type: string }
+      responses:
+        '200':
+          description: Aggregated batch operation outcome
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total: { type: integer }
+                  succeeded: { type: integer }
+                  failed: { type: integer }
+                  errors:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id: { type: string }
+                        title: { type: string }
+                        error: { type: string }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+  /admin/news/{id}/revisions:
+    get:
+      tags: [Admin, CMS]
+      operationId: listAdminNewsRevisions
+      summary: List all historical revisions of a news article
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: List of news revisions
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { type: object }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+  /admin/announcements/{id}/revisions:
+    get:
+      tags: [Admin, CMS]
+      operationId: listAdminAnnouncementRevisions
+      summary: List all historical revisions of an announcement
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: List of announcement revisions
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { type: object }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+  /admin/recommendations/pins:
+    get:
+      tags: [Admin, Recommendations]
+      operationId: listAdminRecommendationPins
+      summary: List pinned editorial recommendations
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: target_type
+          in: query
+          schema: { type: string }
+        - name: limit
+          in: query
+          schema: { type: integer, default: 50 }
+      responses:
+        '200':
+          description: List of pinned recommendation items
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items: { type: object }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+    post:
+      tags: [Admin, Recommendations]
+      operationId: createAdminRecommendationPin
+      summary: Pin a learning content item to featured recommendations
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [target_type, target_id, title]
+              properties:
+                target_type: { type: string }
+                target_id: { type: string }
+                title: { type: string }
+                weight: { type: integer, default: 100 }
+      responses:
+        '201':
+          description: Created recommendation pin
+          content:
+            application/json:
+              schema: { type: object }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+  /admin/recommendations/pins/{id}:
+    delete:
+      tags: [Admin, Recommendations]
+      operationId: deleteAdminRecommendationPin
+      summary: Remove a pinned recommendation
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '204':
+          description: Pin removed
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+  /admin/webinars:
+    get:
+      tags: [Admin, Webinars]
+      operationId: listAdminWebinars
+      summary: List webinars for administration
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: page
+          in: query
+          schema: { type: integer, default: 1 }
+        - name: page_size
+          in: query
+          schema: { type: integer, default: 50 }
+      responses:
+        '200':
+          description: Admin list of webinars
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items: { type: object }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+  /admin/webinars/{id}:
+    get:
+      tags: [Admin, Webinars]
+      operationId: getAdminWebinarDetail
+      summary: Get detailed webinar administration session
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Webinar detail
+          content:
+            application/json:
+              schema: { type: object }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
 components:
   securitySchemes:
     oidc:
