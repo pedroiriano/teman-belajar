@@ -177,6 +177,7 @@ export default function AdminNewsDetailPage() {
           <CubaReviewNotesCard
             entityType="news"
             entityId={id}
+            contentTitle={title || news.title}
             notes={reviewNotes}
             canAddNote={isEditor || isReviewer}
             onNoteAdded={(newNote) => setReviewNotes((prev) => [newNote, ...prev])}

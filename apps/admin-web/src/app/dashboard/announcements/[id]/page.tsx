@@ -171,6 +171,7 @@ export default function AdminAnnouncementDetailPage() {
           <CubaReviewNotesCard
             entityType="announcements"
             entityId={id}
+            contentTitle={title || ann.title}
             notes={reviewNotes}
             canAddNote={isEditor || isReviewer}
             onNoteAdded={(newNote) => setReviewNotes((prev) => [newNote, ...prev])}
