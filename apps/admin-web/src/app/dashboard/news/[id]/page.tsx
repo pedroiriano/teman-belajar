@@ -17,6 +17,8 @@ import { SeoDiscoverySection } from "@/components/seo/SeoDiscoverySection";
 import { emptySEOValue, pickSEOValue, profileToSEOValue, type DiscoverabilityProfile, type SEOFormValue } from "@/components/seo/types";
 import { AdminIcon } from "@/components/admin-icon";
 import { CubaContentVersioningPanel } from "@/components/versioning/cuba-content-versioning-panel";
+import { getReviewNotesAction, type ReviewNote } from "@/app/actions/review-notes";
+import { CubaReviewNotesCard } from "@/components/review-notes/cuba-review-notes-card";
 
 type NewsEditDraft = DraftPayload & SEOFormValue & { title: string; excerpt: string; body: string; media_asset_ids: string[] };
 const blankDraft: NewsEditDraft = { ...emptySEOValue(), title: "", excerpt: "", body: "", media_asset_ids: [] };
@@ -50,14 +52,21 @@ export default function AdminNewsDetailPage() {
   const [excerpt, setExcerpt] = useState("");
   const [body, setBody] = useState("");
   const [activeTab, setActiveTab] = useState<"content" | "versioning">("content");
+  const [reviewNotes, setReviewNotes] = useState<ReviewNote[]>([]);
 
   useEffect(() => {
     const fetchNews = async () => {
       try {
-        const res = await getAdminNewsAction();
+        const [res, notesRes] = await Promise.all([
+          getAdminNewsAction(),
+          getReviewNotesAction("news", id),
+        ]);
         if (!res.success) {
           setError(res.error || "Berita belum dapat dimuat");
           return;
+        }
+        if (notesRes.success && notesRes.data) {
+          setReviewNotes(notesRes.data);
         }
         
         const found = res.data?.find((n: any) => n.id === id);
@@ -165,6 +174,14 @@ export default function AdminNewsDetailPage() {
       ) : (
         <>
           {canEdit && <DraftStatus state={autoSave.state} message={autoSave.message} lastSavedAt={autoSave.lastSavedAt} recovery={autoSave.recovery} onRecover={autoSave.recoverFrom} onKeepCurrent={autoSave.keepCurrent} onDiscard={autoSave.discard} onStartNew={autoSave.startNew} onRetry={autoSave.saveNow} allowStartNew={false} />}
+          <CubaReviewNotesCard
+            entityType="news"
+            entityId={id}
+            notes={reviewNotes}
+            canAddNote={isEditor || isReviewer}
+            onNoteAdded={(newNote) => setReviewNotes((prev) => [newNote, ...prev])}
+            className="mb-6"
+          />
           <section className="admin-form-card">
               <div className="admin-form-header flex flex-wrap items-center justify-between gap-4">
                 <div><h2 className="font-black text-slate-900 dark:text-white">Alur publikasi</h2><p className="mt-1 text-xs text-slate-500">Aksi yang tersedia mengikuti status dan peran Anda.</p></div>

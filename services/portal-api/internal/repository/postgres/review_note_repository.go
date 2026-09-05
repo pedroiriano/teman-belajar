@@ -1,4 +1,4 @@
-﻿package postgres
+package postgres
 
 import (
 	"context"
@@ -22,7 +22,7 @@ func (r *ReviewNoteRepository) ListByEntity(ctx context.Context, entityType stri
 	query := `
 		SELECT id, entity_type, entity_id, action, notes, reviewer_id, reviewer_name, created_at
 		FROM editorial_review_notes
-		WHERE entity_type = $1 AND entity_id = $2
+		WHERE (entity_type = $1 OR ($1 = 'announcements' AND entity_type = 'announcement') OR ($1 = 'announcement' AND entity_type = 'announcements') OR ($1 = 'faqs' AND entity_type = 'faq') OR ($1 = 'faq' AND entity_type = 'faqs')) AND entity_id = $2
 		ORDER BY created_at DESC
 		LIMIT $3
 	`

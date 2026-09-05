@@ -1,8 +1,12 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
-const read = (path) => readFileSync(resolve(process.cwd(), path), "utf8");
+const root = existsSync(resolve(process.cwd(), "apps/admin-web"))
+  ? resolve(process.cwd(), "apps/admin-web")
+  : process.cwd();
+
+const read = (path) => readFileSync(resolve(root, path), "utf8");
 
 const page = read("src/app/dashboard/moodle-events/page.tsx");
 const component = read("src/components/moodle-events/cuba-moodle-events-workspace.tsx");
@@ -20,7 +24,7 @@ assert.match(page, /Portal Administrator/);
 // 2. Component verification
 for (const token of [
   'data-cuba-component="moodle-events-workspace"',
-  "Moodle Event Inbox & Rekonsiliasi Integrasi (TASK-011)",
+  "Moodle Event Inbox & Rekonsiliasi Integrasi",
   "Total Peristiwa",
   "Berhasil (Processed)",
   "Menunggu (Pending)",
