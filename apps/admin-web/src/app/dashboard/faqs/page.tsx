@@ -164,7 +164,7 @@ export default function FAQWorkspacePage() {
 
   return (
     <div className="admin-page space-y-6">
-      <header className="admin-page-header">
+      <header className="admin-page-header border-b border-slate-200/70 dark:border-slate-800 pb-5">
         <div className="max-w-3xl">
           <p className="admin-kicker">Pusat Bantuan</p>
           <h1 className="admin-page-title">FAQ</h1>
@@ -176,7 +176,7 @@ export default function FAQWorkspacePage() {
           {canWrite && (
             <button
               type="button"
-              className="admin-button-secondary font-bold text-xs"
+              className="admin-button-secondary !py-2.5 !px-4 shadow-sm font-bold text-xs"
               onClick={() => setShowCategories((value) => !value)}
               aria-expanded={showCategories}
             >
@@ -186,7 +186,7 @@ export default function FAQWorkspacePage() {
           {canWrite && (
             <button
               type="button"
-              className="admin-button flex items-center gap-2 text-xs font-bold"
+              className="admin-button flex items-center gap-2 !py-2.5 !px-4 shadow-sm text-xs font-bold"
               onClick={beginCreate}
             >
               <AdminIcon name="plus" className="h-4 w-4" />
@@ -493,7 +493,7 @@ function CategoryManager({
         </div>
         <div className="self-end pb-0.5">
           <button
-            className="admin-button font-bold text-xs"
+            className="admin-button !py-2.5 !px-4 shadow-sm font-bold text-xs"
             disabled={busy || !slug}
           >
             {busy ? "Menyimpan…" : "+ Tambah Kategori"}

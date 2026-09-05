@@ -96,7 +96,7 @@ export default async function AdminAnnouncementsPage({
   const headerActions = (
     <Link
       href="/dashboard/announcements/create"
-      className="admin-button !min-h-9 !py-1 !px-3 !text-xs"
+      className="admin-button !py-2.5 !px-4 shadow-sm font-bold text-xs"
     >
       <span aria-hidden="true">+</span> Buat pengumuman
     </Link>
@@ -104,13 +104,16 @@ export default async function AdminAnnouncementsPage({
 
   return (
     <div className="admin-page space-y-6">
-      <div className="admin-page-header">
+      <div className="admin-page-header flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-slate-200/70 dark:border-slate-800 pb-5">
         <div>
           <p className="admin-kicker">Manajemen konten</p>
           <h1 className="admin-page-title">Pengumuman</h1>
           <p className="admin-page-copy">
             Kelola pengumuman aktif, informasi terjadwal, dan edaran resmi Teman Belajar.
           </p>
+        </div>
+        <div>
+          {headerActions}
         </div>
       </div>
 
