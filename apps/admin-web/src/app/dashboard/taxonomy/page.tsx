@@ -164,8 +164,8 @@ export default function TaxonomyPage() {
           <div className="flex items-start gap-3">
             <span className="admin-stat-icon shrink-0"><AdminIcon name="folder" className="h-5 w-5" /></span>
             <div>
-              <h2 id="taxonomy-workspace-title" className="font-black text-slate-900">Kelola istilah konten</h2>
-              <p className="mt-1 text-sm leading-6 text-slate-500">
+              <h2 id="taxonomy-workspace-title" className="font-black text-slate-900 dark:text-white">Kelola istilah konten</h2>
+              <p className="mt-1 text-sm leading-6 text-slate-500 dark:text-slate-400">
                 Pilih jenis istilah, tambahkan bila diperlukan, lalu gunakan dari form Berita, Pengumuman, atau Pusat Pengetahuan.
               </p>
             </div>
@@ -325,14 +325,14 @@ function TermPanel({
       id={`taxonomy-panel-${kind}`}
       role="tabpanel"
       aria-labelledby={`taxonomy-tab-${kind}`}
-      className="space-y-6"
+      className="p-5 sm:p-7 space-y-6"
     >
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h3 className="text-xl font-black text-slate-900 dark:text-white">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-slate-200/70 dark:border-slate-800 pb-5">
+        <div className="space-y-1">
+          <h3 className="text-xl font-extrabold tracking-tight text-slate-900 dark:text-white">
             {config.title}
           </h3>
-          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+          <p className="text-xs text-slate-500 dark:text-slate-400 max-w-xl">
             {config.copy}
           </p>
         </div>
@@ -340,8 +340,8 @@ function TermPanel({
           type="button"
           className={
             showComposer
-              ? "admin-button-secondary shrink-0 font-bold text-xs"
-              : "admin-button shrink-0 font-bold text-xs"
+              ? "admin-button-secondary shrink-0 font-bold text-xs !py-2.5 !px-4 shadow-sm"
+              : "admin-button shrink-0 font-bold text-xs !py-2.5 !px-4 shadow-sm"
           }
           aria-expanded={showComposer}
           aria-controls={`${kind}-composer`}
@@ -403,7 +403,7 @@ function TermPanel({
                 className="admin-label font-bold text-slate-800 dark:text-slate-200"
                 htmlFor={`${kind}-slug`}
               >
-                Slug URL Otomatis
+                Slug otomatis
               </label>
               <input
                 id={`${kind}-slug`}
