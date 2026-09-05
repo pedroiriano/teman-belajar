@@ -43,6 +43,20 @@ type Repository interface {
 	// ListDeadLetter returns dead-letter events for reconciliation.
 	ListDeadLetter(ctx context.Context, limit, offset int) ([]*InboxEvent, error)
 
+	// ListEvents returns inbox events with filtering and pagination, plus total count.
+	ListEvents(ctx context.Context, filter EventFilter) ([]*InboxEvent, int64, error)
+
+	// GetEvent returns a single inbox event by event_id.
+	GetEvent(ctx context.Context, eventID string) (*InboxEvent, error)
+
 	// RequeueDeadLetter resets a dead-letter event to pending for reprocessing.
 	RequeueDeadLetter(ctx context.Context, eventID string) error
+}
+
+// EventFilter defines filter options for listing inbox events.
+type EventFilter struct {
+	Status    string
+	EventType string
+	Limit     int
+	Offset    int
 }

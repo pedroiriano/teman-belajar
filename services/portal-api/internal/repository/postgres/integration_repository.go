@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"math"
+	"strings"
 	"time"
 
 	"teman-belajar-api/internal/domain/integration"
@@ -258,3 +259,105 @@ func (r *IntegrationRepository) RequeueDeadLetter(ctx context.Context, eventID s
 	}
 	return nil
 }
+
+// ListEvents returns inbox events matching the filter along with total count.
+func (r *IntegrationRepository) ListEvents(ctx context.Context, filter integration.EventFilter) ([]*integration.InboxEvent, int64, error) {
+	whereClauses := []string{}
+	args := []interface{}{}
+	argIdx := 1
+
+	if filter.Status != "" {
+		whereClauses = append(whereClauses, fmt.Sprintf("status = $%d", argIdx))
+		args = append(args, filter.Status)
+		argIdx++
+	}
+	if filter.EventType != "" {
+		whereClauses = append(whereClauses, fmt.Sprintf("event_type = $%d", argIdx))
+		args = append(args, filter.EventType)
+		argIdx++
+	}
+
+	whereSQL := ""
+	if len(whereClauses) > 0 {
+		whereSQL = " WHERE " + strings.Join(whereClauses, " AND ")
+	}
+
+	countSQL := "SELECT COUNT(*) FROM integration.event_inbox" + whereSQL
+	var total int64
+	if err := r.db.QueryRowContext(ctx, countSQL, args...).Scan(&total); err != nil {
+		return nil, 0, err
+	}
+
+	limit := filter.Limit
+	if limit <= 0 {
+		limit = 20
+	} else if limit > 100 {
+		limit = 100
+	}
+	offset := filter.Offset
+	if offset < 0 {
+		offset = 0
+	}
+
+	selectSQL := fmt.Sprintf(`
+		SELECT id, event_id, event_type, source, subject_id, occurred_at,
+		       schema_version, payload, fingerprint, status, attempts,
+		       next_attempt_at, error_category, received_at, processed_at,
+		       created_at, updated_at
+		FROM integration.event_inbox%s
+		ORDER BY created_at DESC
+		LIMIT $%d OFFSET $%d`, whereSQL, argIdx, argIdx+1)
+	args = append(args, limit, offset)
+
+	rows, err := r.db.QueryContext(ctx, selectSQL, args...)
+	if err != nil {
+		return nil, 0, err
+	}
+	defer rows.Close()
+
+	var events []*integration.InboxEvent
+	for rows.Next() {
+		e := &integration.InboxEvent{}
+		err := rows.Scan(
+			&e.ID, &e.EventID, &e.EventType, &e.Source, &e.SubjectID,
+			&e.OccurredAt, &e.SchemaVersion, &e.Payload, &e.Fingerprint,
+			&e.Status, &e.Attempts, &e.NextAttemptAt, &e.ErrorCategory,
+			&e.ReceivedAt, &e.ProcessedAt, &e.CreatedAt, &e.UpdatedAt,
+		)
+		if err != nil {
+			return nil, 0, err
+		}
+		events = append(events, e)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, 0, err
+	}
+	return events, total, nil
+}
+
+// GetEvent returns a single event by event_id.
+func (r *IntegrationRepository) GetEvent(ctx context.Context, eventID string) (*integration.InboxEvent, error) {
+	e := &integration.InboxEvent{}
+	err := r.db.QueryRowContext(ctx, `
+		SELECT id, event_id, event_type, source, subject_id, occurred_at,
+		       schema_version, payload, fingerprint, status, attempts,
+		       next_attempt_at, error_category, received_at, processed_at,
+		       created_at, updated_at
+		FROM integration.event_inbox
+		WHERE event_id = $1`,
+		eventID,
+	).Scan(
+		&e.ID, &e.EventID, &e.EventType, &e.Source, &e.SubjectID,
+		&e.OccurredAt, &e.SchemaVersion, &e.Payload, &e.Fingerprint,
+		&e.Status, &e.Attempts, &e.NextAttemptAt, &e.ErrorCategory,
+		&e.ReceivedAt, &e.ProcessedAt, &e.CreatedAt, &e.UpdatedAt,
+	)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, sql.ErrNoRows
+		}
+		return nil, err
+	}
+	return e, nil
+}
+

@@ -82,6 +82,14 @@ export const navigationGroups: NavigationGroup[] = [
         requiredAnyRole: ["Portal Administrator"],
       },
       {
+        id: "moodle-events",
+        href: "/dashboard/moodle-events",
+        label: "Moodle Event Inbox",
+        icon: "health",
+        requiredRole: "Portal Administrator",
+        requiredAnyRole: ["Portal Administrator"],
+      },
+      {
         id: "audit",
         href: "/dashboard/audit",
         label: "Audit",
@@ -108,6 +116,7 @@ export const titleBySegment: Record<string, string> = {
   schedule: "Jadwal Publikasi",
   statistics: "Statistik",
   "integration-health": "Kesehatan Integrasi",
+  "moodle-events": "Moodle Event Inbox",
   audit: "Audit",
   "platform-configuration": "Konfigurasi Platform",
   knowledge: "Pusat Pengetahuan",
