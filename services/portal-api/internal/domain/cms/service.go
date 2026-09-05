@@ -41,6 +41,17 @@ func (s *Service) CreateDraftNews(ctx context.Context, title, slug, excerpt, bod
 		return nil, err
 	}
 
+	_ = s.repo.CreateNewsRevision(ctx, &NewsRevision{
+		ID:         uuid.NewString(),
+		NewsID:     n.ID,
+		RevisionNo: int(n.Version),
+		Title:      n.Title,
+		Excerpt:    n.Excerpt,
+		Body:       n.Body,
+		AuthorID:   userID,
+		CreatedAt:  n.CreatedAt,
+	})
+
 	// Audit log
 	if s.auditRepo != nil {
 		actorID := ""
@@ -126,8 +137,22 @@ func (s *Service) UpdateDraftNews(ctx context.Context, id, title, slug, excerpt,
 	if err := s.repo.UpdateNews(ctx, n, expectedVersion); err != nil {
 		return nil, err
 	}
+	_ = s.repo.CreateNewsRevision(ctx, &NewsRevision{
+		ID:         uuid.NewString(),
+		NewsID:     n.ID,
+		RevisionNo: int(n.Version),
+		Title:      n.Title,
+		Excerpt:    n.Excerpt,
+		Body:       n.Body,
+		AuthorID:   userID,
+		CreatedAt:  n.UpdatedAt,
+	})
 	s.logCMSAudit(ctx, userID, "UPDATE_NEWS_DRAFT", "News", n.ID)
 	return n, nil
+}
+
+func (s *Service) ListNewsRevisions(ctx context.Context, newsID string) ([]NewsRevision, error) {
+	return s.repo.ListNewsRevisions(ctx, newsID)
 }
 
 func (s *Service) GetPublicNews(ctx context.Context, page, pageSize int) (*NewsList, error) {
@@ -230,6 +255,16 @@ func (s *Service) CreateDraftAnnouncement(ctx context.Context, title, slug, body
 		return nil, err
 	}
 
+	_ = s.repo.CreateAnnouncementRevision(ctx, &AnnouncementRevision{
+		ID:             uuid.NewString(),
+		AnnouncementID: a.ID,
+		RevisionNo:     int(a.Version),
+		Title:          a.Title,
+		Body:           a.Body,
+		AuthorID:       userID,
+		CreatedAt:      a.CreatedAt,
+	})
+
 	// Audit log
 	if s.auditRepo != nil {
 		actorID := ""
@@ -315,8 +350,21 @@ func (s *Service) UpdateDraftAnnouncement(ctx context.Context, id, title, slug, 
 	if err := s.repo.UpdateAnnouncement(ctx, a, expectedVersion); err != nil {
 		return nil, err
 	}
+	_ = s.repo.CreateAnnouncementRevision(ctx, &AnnouncementRevision{
+		ID:             uuid.NewString(),
+		AnnouncementID: a.ID,
+		RevisionNo:     int(a.Version),
+		Title:          a.Title,
+		Body:           a.Body,
+		AuthorID:       userID,
+		CreatedAt:      a.UpdatedAt,
+	})
 	s.logCMSAudit(ctx, userID, "UPDATE_ANNOUNCEMENT_DRAFT", "Announcement", a.ID)
 	return a, nil
+}
+
+func (s *Service) ListAnnouncementRevisions(ctx context.Context, announcementID string) ([]AnnouncementRevision, error) {
+	return s.repo.ListAnnouncementRevisions(ctx, announcementID)
 }
 
 func (s *Service) logCMSAudit(ctx context.Context, userID *string, action, targetType, targetID string) {

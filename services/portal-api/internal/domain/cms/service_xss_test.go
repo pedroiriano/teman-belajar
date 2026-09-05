@@ -39,6 +39,16 @@ func (m *mockRepo) ListActiveAnnouncements(ctx context.Context) ([]cms.Announcem
 func (m *mockRepo) ListAdminAnnouncements(ctx context.Context, p, ps int) ([]cms.Announcement, int, error) {
 	return nil, 0, nil
 }
+func (m *mockRepo) CreateNewsRevision(ctx context.Context, rev *cms.NewsRevision) error { return nil }
+func (m *mockRepo) ListNewsRevisions(ctx context.Context, newsID string) ([]cms.NewsRevision, error) {
+	return nil, nil
+}
+func (m *mockRepo) CreateAnnouncementRevision(ctx context.Context, rev *cms.AnnouncementRevision) error {
+	return nil
+}
+func (m *mockRepo) ListAnnouncementRevisions(ctx context.Context, announcementID string) ([]cms.AnnouncementRevision, error) {
+	return nil, nil
+}
 
 func TestCreateDraftNews_XSSPayload(t *testing.T) {
 	repo := &mockRepo{}

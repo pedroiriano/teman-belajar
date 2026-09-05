@@ -94,21 +94,29 @@ export async function getContentRevisionsAction(
     }
 
     if (module === "news") {
-      // News stores version as int64
-      const res = await fetch(`${API_BASE}/api/v1/admin/news/${articleId}`, {
-        headers: { Authorization: `Bearer ${accessToken}` },
-      });
+      const [newsRes, revsRes] = await Promise.all([
+        fetch(`${API_BASE}/api/v1/admin/news/${articleId}`, {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        }),
+        fetch(`${API_BASE}/api/v1/admin/news/${articleId}/revisions`, {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        }),
+      ]);
 
-      if (!res.ok) {
+      if (!newsRes.ok) {
         return { success: false, error: "Gagal memuat data berita." };
       }
 
-      const news = await res.json();
+      const news = await newsRes.json();
       const currentVer = news.version || 1;
 
-      // Construct revision timeline
-      const revisions: ContentRevision[] = [
-        {
+      let rawRevs: any[] = [];
+      if (revsRes.ok) {
+        rawRevs = await revsRes.json();
+      }
+
+      if (!Array.isArray(rawRevs) || rawRevs.length === 0) {
+        const currentRev: ContentRevision = {
           id: `${news.id}-v${currentVer}`,
           articleId: news.id,
           revisionNo: currentVer,
@@ -121,44 +129,56 @@ export async function getContentRevisionsAction(
           status: news.status,
           isCurrent: true,
           isPublished: news.status === "published",
-        },
-      ];
-
-      // If version > 1, add baseline revision record
-      if (currentVer > 1) {
-        revisions.push({
-          id: `${news.id}-v1`,
-          articleId: news.id,
-          revisionNo: 1,
-          module: "news",
-          title: news.title,
-          body: news.body ? news.body.slice(0, Math.floor(news.body.length * 0.7)) : "",
-          summary: news.excerpt,
-          authorName: "Editor Berita (Versi Draf Awal)",
-          createdAt: news.created_at,
-          status: "archived",
-          isCurrent: false,
-          isPublished: false,
-        });
+        };
+        return { success: true, data: [currentRev] };
       }
+
+      const revisions: ContentRevision[] = rawRevs.map((rev) => {
+        const isCur = rev.revision_no === currentVer;
+        return {
+          id: rev.id,
+          articleId: rev.news_id,
+          revisionNo: rev.revision_no,
+          module: "news",
+          title: rev.title || news.title,
+          body: rev.body || "",
+          summary: rev.excerpt || news.excerpt,
+          authorId: rev.author_id,
+          authorName: rev.author_id ? "Editor Berita" : session.user?.name || "Sistem",
+          createdAt: rev.created_at,
+          status: isCur ? news.status : "archived",
+          isCurrent: isCur,
+          isPublished: isCur && news.status === "published",
+        };
+      });
 
       return { success: true, data: revisions };
     }
 
     if (module === "announcements") {
-      const res = await fetch(`${API_BASE}/api/v1/admin/announcements/${articleId}`, {
-        headers: { Authorization: `Bearer ${accessToken}` },
-      });
+      const [annRes, revsRes] = await Promise.all([
+        fetch(`${API_BASE}/api/v1/admin/announcements/${articleId}`, {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        }),
+        fetch(`${API_BASE}/api/v1/admin/announcements/${articleId}/revisions`, {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        }),
+      ]);
 
-      if (!res.ok) {
+      if (!annRes.ok) {
         return { success: false, error: "Gagal memuat data pengumuman." };
       }
 
-      const ann = await res.json();
+      const ann = await annRes.json();
       const currentVer = ann.version || 1;
 
-      const revisions: ContentRevision[] = [
-        {
+      let rawRevs: any[] = [];
+      if (revsRes.ok) {
+        rawRevs = await revsRes.json();
+      }
+
+      if (!Array.isArray(rawRevs) || rawRevs.length === 0) {
+        const currentRev: ContentRevision = {
           id: `${ann.id}-v${currentVer}`,
           articleId: ann.id,
           revisionNo: currentVer,
@@ -170,24 +190,27 @@ export async function getContentRevisionsAction(
           status: ann.status,
           isCurrent: true,
           isPublished: ann.status === "published",
-        },
-      ];
-
-      if (currentVer > 1) {
-        revisions.push({
-          id: `${ann.id}-v1`,
-          articleId: ann.id,
-          revisionNo: 1,
-          module: "announcements",
-          title: ann.title,
-          body: ann.body ? ann.body.slice(0, Math.floor(ann.body.length * 0.8)) : "",
-          authorName: "Administrator (Versi Draf Awal)",
-          createdAt: ann.created_at,
-          status: "archived",
-          isCurrent: false,
-          isPublished: false,
-        });
+        };
+        return { success: true, data: [currentRev] };
       }
+
+      const revisions: ContentRevision[] = rawRevs.map((rev) => {
+        const isCur = rev.revision_no === currentVer;
+        return {
+          id: rev.id,
+          articleId: rev.announcement_id,
+          revisionNo: rev.revision_no,
+          module: "announcements",
+          title: rev.title || ann.title,
+          body: rev.body || "",
+          authorId: rev.author_id,
+          authorName: rev.author_id ? "Administrator" : session.user?.name || "Sistem",
+          createdAt: rev.created_at,
+          status: isCur ? ann.status : "archived",
+          isCurrent: isCur,
+          isPublished: isCur && ann.status === "published",
+        };
+      });
 
       return { success: true, data: revisions };
     }

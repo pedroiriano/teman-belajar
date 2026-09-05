@@ -413,3 +413,43 @@ func (h *CMSHandler) TransitionAnnouncement(w http.ResponseWriter, r *http.Reque
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(res) // #nosec G104 -- response writer error after commit is non-actionable in HTTP handler
 }
+
+func (h *CMSHandler) ListNewsRevisions(w http.ResponseWriter, r *http.Request) {
+	id := r.PathValue("id")
+	if id == "" {
+		respondProblem(w, http.StatusBadRequest, "Bad Request", "Missing ID")
+		return
+	}
+
+	revisions, err := h.svc.ListNewsRevisions(r.Context(), id)
+	if err != nil {
+		respondProblem(w, http.StatusInternalServerError, "Internal Server Error", "Unable to list news revisions")
+		return
+	}
+	if revisions == nil {
+		revisions = []cms.NewsRevision{}
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(revisions) // #nosec G104
+}
+
+func (h *CMSHandler) ListAnnouncementRevisions(w http.ResponseWriter, r *http.Request) {
+	id := r.PathValue("id")
+	if id == "" {
+		respondProblem(w, http.StatusBadRequest, "Bad Request", "Missing ID")
+		return
+	}
+
+	revisions, err := h.svc.ListAnnouncementRevisions(r.Context(), id)
+	if err != nil {
+		respondProblem(w, http.StatusInternalServerError, "Internal Server Error", "Unable to list announcement revisions")
+		return
+	}
+	if revisions == nil {
+		revisions = []cms.AnnouncementRevision{}
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(revisions) // #nosec G104
+}

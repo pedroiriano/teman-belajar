@@ -40,6 +40,7 @@ import (
 	"teman-belajar-api/internal/domain/mediagallery"
 	"teman-belajar-api/internal/domain/microlearning"
 	"teman-belajar-api/internal/domain/rbac"
+	"teman-belajar-api/internal/domain/recommendationpin"
 	"teman-belajar-api/internal/domain/reviewnote"
 	"teman-belajar-api/internal/domain/schedule"
 	"teman-belajar-api/internal/domain/training"
@@ -234,6 +235,21 @@ func main() {
 	engagementService := engagementapplication.NewService(engagementRepo, engagementResolver, searchService)
 	engagementHandler := handler.NewEngagementHandler(engagementService)
 
+	batchHandler := handler.NewBatchHandler(
+		knowledgeSvc,
+		cmsSvc,
+		faqSvc,
+		trainingSvc,
+		microlearningSvc,
+		learningPathSvc,
+		reviewNoteSvc,
+		auditRepo,
+	)
+
+	recommendationPinRepo := postgres.NewRecommendationPinRepository(db)
+	recommendationPinSvc := recommendationpin.NewService(recommendationPinRepo)
+	recommendationPinHandler := handler.NewRecommendationPinHandler(recommendationPinSvc)
+
 	issuerURL := os.Getenv("KEYCLOAK_ISSUER_URL")
 	if issuerURL == "" {
 		log.Fatal("Missing required environment variable: KEYCLOAK_ISSUER_URL")
@@ -314,6 +330,14 @@ func main() {
 	mux.Handle("DELETE /api/v1/admin/rbac/roles/{id}", adminAuthMiddleware(http.HandlerFunc(rbacHandler.Delete)))
 	mux.Handle("GET /api/v1/admin/review-notes/{entityType}/{entityId}", adminAuthMiddleware(http.HandlerFunc(reviewNoteHandler.List)))
 	mux.Handle("POST /api/v1/admin/review-notes", adminAuthMiddleware(http.HandlerFunc(reviewNoteHandler.Create)))
+	mux.Handle("POST /api/v1/admin/batch-transitions", adminAuthMiddleware(http.HandlerFunc(batchHandler.HandleBatchTransitions)))
+	mux.Handle("GET /api/v1/admin/news/{id}/revisions", adminAuthMiddleware(http.HandlerFunc(cmsHandler.ListNewsRevisions)))
+	mux.Handle("GET /api/v1/admin/announcements/{id}/revisions", adminAuthMiddleware(http.HandlerFunc(cmsHandler.ListAnnouncementRevisions)))
+	mux.Handle("GET /api/v1/admin/recommendations/pins", adminAuthMiddleware(http.HandlerFunc(recommendationPinHandler.List)))
+	mux.Handle("POST /api/v1/admin/recommendations/pins", adminAuthMiddleware(http.HandlerFunc(recommendationPinHandler.Create)))
+	mux.Handle("DELETE /api/v1/admin/recommendations/pins/{id}", adminAuthMiddleware(http.HandlerFunc(recommendationPinHandler.Delete)))
+	mux.Handle("GET /api/v1/admin/webinars", adminAuthMiddleware(http.HandlerFunc(webinarHandler.AdminList)))
+	mux.Handle("GET /api/v1/admin/webinars/{id}", adminAuthMiddleware(http.HandlerFunc(webinarHandler.AdminGet)))
 	mux.Handle("/metrics", promhttp.Handler())
 
 	// Public CMS Endpoints

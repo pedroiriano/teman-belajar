@@ -65,6 +65,67 @@ export async function executeBulkActionAction(
   };
   const targetStatus = targetStatusMap[action] || "draft";
 
+  const API_BASE = process.env.PORTAL_API_INTERNAL_URL || "http://api:8080";
+  try {
+    const payload = {
+      action,
+      items: items.map((it) => ({
+        id: it.id,
+        module: it.module || targetModule,
+        title: it.title,
+      })),
+      notes: `Aksi massal (${action}) oleh ${session.user?.name || "Administrator"}`,
+    };
+
+    const response = await fetch(`${API_BASE}/api/v1/admin/batch-transitions`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (response.ok) {
+      const batchResult: BulkOperationResult = await response.json();
+      for (const item of items) {
+        const isFailed = batchResult.errors?.some((e) => e.id === item.id);
+        if (!isFailed) {
+          const resolvedModule = (item.module || targetModule) as BulkActionModule;
+          broadcastEditorialUpdate({
+            id: item.id,
+            title: item.title,
+            module: resolvedModule,
+            module_label:
+              resolvedModule === "knowledge"
+                ? "Pengetahuan"
+                : resolvedModule === "news"
+                ? "Berita"
+                : resolvedModule === "announcements"
+                ? "Pengumuman"
+                : "Antrean Peninjauan",
+            action: action === "approve" ? "approved" : action === "publish" ? "published" : "draft",
+            action_label: action === "approve" ? "Disetujui" : action === "publish" ? "Terbit" : "Draf",
+            reviewer_name: session.user?.name || "Administrator",
+            reviewer_notes: `Operasi massal: ${action}`,
+            deep_link: `/dashboard/${resolvedModule === "review-queue" ? "review-queue" : resolvedModule}/${item.id}`,
+            timestamp: new Date().toISOString(),
+          });
+        }
+      }
+
+      revalidatePath("/dashboard/knowledge");
+      revalidatePath("/dashboard/news");
+      revalidatePath("/dashboard/announcements");
+      revalidatePath("/dashboard/review-queue");
+      revalidatePath("/dashboard/statistics");
+
+      return batchResult;
+    }
+  } catch {
+    // Fallback to sequential execution below if API fails or unreachable
+  }
+
   for (const item of items) {
     try {
       let opSuccess = false;

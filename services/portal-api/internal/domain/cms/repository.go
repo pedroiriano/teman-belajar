@@ -18,4 +18,10 @@ type Repository interface {
 	UpdateAnnouncement(ctx context.Context, ann *Announcement, expectedVersion int64) error
 	ListActiveAnnouncements(ctx context.Context) ([]Announcement, error)
 	ListAdminAnnouncements(ctx context.Context, page, pageSize int) ([]Announcement, int, error)
+
+	// Revisions
+	CreateNewsRevision(ctx context.Context, rev *NewsRevision) error
+	ListNewsRevisions(ctx context.Context, newsID string) ([]NewsRevision, error)
+	CreateAnnouncementRevision(ctx context.Context, rev *AnnouncementRevision) error
+	ListAnnouncementRevisions(ctx context.Context, announcementID string) ([]AnnouncementRevision, error)
 }
