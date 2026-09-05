@@ -1331,6 +1331,28 @@ paths:
           $ref: '#/components/responses/ValidationError'
       summary: create News
   /admin/news/{id}:
+    get:
+      tags: [Admin, CMS]
+      summary: get Admin News by ID
+      security:
+        - oidc: [content:read]
+      operationId: getAdminNews
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: News detail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/News'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
     patch:
       tags: [Admin, Drafts]
       summary: update editable draft News content
@@ -1449,6 +1471,28 @@ paths:
           $ref: '#/components/responses/ValidationError'
       summary: create Announcement
   /admin/announcements/{id}:
+    get:
+      tags: [Admin, CMS]
+      summary: get Admin Announcement by ID
+      security:
+        - oidc: [content:read]
+      operationId: getAdminAnnouncement
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Announcement detail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Announcement'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
     patch:
       tags: [Admin, Drafts]
       summary: update editable draft Announcement content

@@ -169,6 +169,13 @@ func CanTransitionTo(current, next ContentStatus, userRoles []string) bool {
 		if next == StatusArchived && (isEditor || isReviewer) {
 			return true
 		}
+		if next == StatusDraft && (isEditor || isReviewer) {
+			return true
+		}
+	case StatusArchived:
+		if next == StatusDraft && (isEditor || isReviewer) {
+			return true
+		}
 	}
 
 	return false

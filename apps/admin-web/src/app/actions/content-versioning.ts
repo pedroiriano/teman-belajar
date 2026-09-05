@@ -14,7 +14,12 @@ import type {
 } from "@/types/content-versioning";
 import { emptySEOValue } from "@/components/seo/types";
 import { getAdminKnowledgeDetailAction, createKnowledgeRevisionAction } from "./knowledge";
-import { updateNewsAction, updateAnnouncementAction } from "./cms";
+import {
+  updateNewsAction,
+  updateAnnouncementAction,
+  transitionNewsAction,
+  transitionAnnouncementAction,
+} from "./cms";
 
 const API_BASE = process.env.PORTAL_API_INTERNAL_URL || "http://api:8080";
 
@@ -307,6 +312,13 @@ export async function rollbackRevisionAction(
     }
 
     if (module === "news") {
+      if (currentRev && currentRev.status !== "draft") {
+        const transRes = await transitionNewsAction(articleId, "draft");
+        if (!transRes.success) {
+          return { success: false, error: transRes.error || "Gagal mengubah status berita ke draf sebelum pemulihan." };
+        }
+      }
+
       const res = await updateNewsAction(articleId, {
         title: targetRev.title,
         slug: targetRev.title.toLowerCase().replace(/\s+/g, "-"),
@@ -342,6 +354,13 @@ export async function rollbackRevisionAction(
     }
 
     if (module === "announcements") {
+      if (currentRev && currentRev.status !== "draft") {
+        const transRes = await transitionAnnouncementAction(articleId, "draft");
+        if (!transRes.success) {
+          return { success: false, error: transRes.error || "Gagal mengubah status pengumuman ke draf sebelum pemulihan." };
+        }
+      }
+
       const res = await updateAnnouncementAction(articleId, {
         title: targetRev.title,
         slug: targetRev.title.toLowerCase().replace(/\s+/g, "-"),

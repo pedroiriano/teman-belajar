@@ -404,24 +404,21 @@ func main() {
 	mux.Handle("PUT /api/v1/me/microlearning/{id}/progress", authMiddleware(http.HandlerFunc(microlearningHandler.Progress)))
 
 	// Admin CMS Endpoints
-	mux.Handle("/api/v1/admin/news", adminAuthMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.Method == http.MethodGet {
-			cmsHandler.ListAdminNews(w, r)
-			return
-		}
-		cmsHandler.CreateNews(w, r)
-	})))
-	mux.Handle("/api/v1/admin/news/", adminAuthMiddleware(http.HandlerFunc(cmsHandler.TransitionNews)))
+	mux.Handle("GET /api/v1/admin/news", adminAuthMiddleware(http.HandlerFunc(cmsHandler.ListAdminNews)))
+	mux.Handle("POST /api/v1/admin/news", adminAuthMiddleware(http.HandlerFunc(cmsHandler.CreateNews)))
+	mux.Handle("GET /api/v1/admin/news/{id}", adminAuthMiddleware(http.HandlerFunc(cmsHandler.GetAdminNews)))
 	mux.Handle("PATCH /api/v1/admin/news/{id}", adminAuthMiddleware(http.HandlerFunc(cmsHandler.UpdateNews)))
-	mux.Handle("/api/v1/admin/announcements", adminAuthMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.Method == http.MethodGet {
-			cmsHandler.ListAdminAnnouncements(w, r)
-			return
-		}
-		cmsHandler.CreateAnnouncement(w, r)
-	})))
-	mux.Handle("/api/v1/admin/announcements/", adminAuthMiddleware(http.HandlerFunc(cmsHandler.TransitionAnnouncement)))
+	mux.Handle("PUT /api/v1/admin/news/{id}", adminAuthMiddleware(http.HandlerFunc(cmsHandler.TransitionNews)))
+	mux.Handle("POST /api/v1/admin/news/{id}/status", adminAuthMiddleware(http.HandlerFunc(cmsHandler.TransitionNews)))
+	mux.Handle("POST /api/v1/admin/news/{id}/transition", adminAuthMiddleware(http.HandlerFunc(cmsHandler.TransitionNews)))
+
+	mux.Handle("GET /api/v1/admin/announcements", adminAuthMiddleware(http.HandlerFunc(cmsHandler.ListAdminAnnouncements)))
+	mux.Handle("POST /api/v1/admin/announcements", adminAuthMiddleware(http.HandlerFunc(cmsHandler.CreateAnnouncement)))
+	mux.Handle("GET /api/v1/admin/announcements/{id}", adminAuthMiddleware(http.HandlerFunc(cmsHandler.GetAdminAnnouncement)))
 	mux.Handle("PATCH /api/v1/admin/announcements/{id}", adminAuthMiddleware(http.HandlerFunc(cmsHandler.UpdateAnnouncement)))
+	mux.Handle("PUT /api/v1/admin/announcements/{id}", adminAuthMiddleware(http.HandlerFunc(cmsHandler.TransitionAnnouncement)))
+	mux.Handle("POST /api/v1/admin/announcements/{id}/status", adminAuthMiddleware(http.HandlerFunc(cmsHandler.TransitionAnnouncement)))
+	mux.Handle("POST /api/v1/admin/announcements/{id}/transition", adminAuthMiddleware(http.HandlerFunc(cmsHandler.TransitionAnnouncement)))
 	mux.Handle("GET /api/v1/admin/taxonomy/{kind}", adminAuthMiddleware(http.HandlerFunc(discoveryHandler.AdminTerms)))
 	mux.Handle("POST /api/v1/admin/taxonomy/{kind}", adminAuthMiddleware(http.HandlerFunc(discoveryHandler.AdminTerms)))
 	mux.Handle("POST /api/v1/admin/taxonomy/{kind}/{id}/archive", adminAuthMiddleware(http.HandlerFunc(discoveryHandler.ArchiveTerm)))
