@@ -231,11 +231,22 @@ function TermPanel({
   const [description, setDescription] = useState("");
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("active");
+  const [sortKey, setSortKey] = useState<string>("name");
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const slug = slugify(name);
   const isCreating = busy === `create:${kind}`;
+
+  const handleSortChange = (key: string) => {
+    if (sortKey === key) {
+      setSortDirection((prev) => (prev === "asc" ? "desc" : "asc"));
+    } else {
+      setSortKey(key);
+      setSortDirection("asc");
+    }
+  };
 
   const filteredTerms = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
@@ -247,8 +258,20 @@ function TermPanel({
           value.toLowerCase().includes(normalizedQuery)
         )
       )
-      .sort((a, b) => a.name.localeCompare(b.name, "id"));
-  }, [query, statusFilter, terms]);
+      .sort((a, b) => {
+        let comparison = 0;
+        if (sortKey === "name") {
+          comparison = a.name.localeCompare(b.name, "id");
+        } else if (sortKey === "slug") {
+          comparison = a.slug.localeCompare(b.slug);
+        } else if (sortKey === "usage_count") {
+          comparison = (a.usage_count || 0) - (b.usage_count || 0);
+        } else if (sortKey === "status") {
+          comparison = a.status.localeCompare(b.status);
+        }
+        return sortDirection === "asc" ? comparison : -comparison;
+      });
+  }, [query, statusFilter, terms, sortKey, sortDirection]);
 
   const totalPages = Math.max(1, Math.ceil(filteredTerms.length / pageSize));
   const currentPage = Math.min(page, totalPages);
@@ -449,12 +472,15 @@ function TermPanel({
         description={`Katalog ${config.singular} yang dapat digunakan untuk penandaan materi.`}
         itemCount={filteredTerms.length}
         headers={[
-          { label: "Nama & Deskripsi", key: "name" },
-          { label: "Slug", key: "slug" },
-          { label: "Penggunaan", key: "usage_count" },
-          { label: "Status", key: "status" },
+          { label: "Nama & Deskripsi", key: "name", sortable: true },
+          { label: "Slug", key: "slug", sortable: true },
+          { label: "Penggunaan", key: "usage_count", sortable: true },
+          { label: "Status", key: "status", sortable: true },
           { label: "Aksi", key: "actions", align: "right" },
         ]}
+        sortKey={sortKey}
+        sortDirection={sortDirection}
+        onSortChange={handleSortChange}
         searchQuery={query}
         onSearchChange={(q) => {
           setQuery(q);

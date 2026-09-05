@@ -6,7 +6,7 @@ import {
   createAdminRecommendationPinAction,
   deleteAdminRecommendationPinAction,
 } from "@/app/actions/recommendations";
-import { AdminDataTable } from "@/components/admin-data-table";
+import { AdminDataTable, type ColumnHeader } from "@/components/admin-data-table";
 
 interface CubaRecommendationWorkspaceProps {
   initialPins: RecommendationPinItem[];
@@ -16,6 +16,8 @@ export function CubaRecommendationWorkspace({ initialPins }: CubaRecommendationW
   const [pins, setPins] = useState<RecommendationPinItem[]>(initialPins);
   const [filter, setFilter] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
+  const [sortKey, setSortKey] = useState<string>("weight");
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
@@ -30,8 +32,17 @@ export function CubaRecommendationWorkspace({ initialPins }: CubaRecommendationW
     weight: 100,
   });
 
-  const filtered = useMemo(() => {
-    return pins.filter((p) => {
+  const handleSortChange = (key: string) => {
+    if (sortKey === key) {
+      setSortDirection((prev) => (prev === "asc" ? "desc" : "asc"));
+    } else {
+      setSortKey(key);
+      setSortDirection("desc");
+    }
+  };
+
+  const filteredAndSorted = useMemo(() => {
+    const list = pins.filter((p) => {
       const matchesFilter = filter === "all" || p.target_type === filter;
       const q = searchQuery.toLowerCase().trim();
       const matchesSearch =
@@ -41,12 +52,26 @@ export function CubaRecommendationWorkspace({ initialPins }: CubaRecommendationW
         p.pinned_by.toLowerCase().includes(q);
       return matchesFilter && matchesSearch;
     });
-  }, [pins, filter, searchQuery]);
+
+    return list.sort((a, b) => {
+      let comparison = 0;
+      if (sortKey === "title") {
+        comparison = (a.title || "").localeCompare(b.title || "", "id");
+      } else if (sortKey === "target_type") {
+        comparison = (a.target_type || "").localeCompare(b.target_type || "");
+      } else if (sortKey === "weight") {
+        comparison = (a.weight || 0) - (b.weight || 0);
+      } else if (sortKey === "pinned_by") {
+        comparison = (a.pinned_by || "").localeCompare(b.pinned_by || "");
+      }
+      return sortDirection === "asc" ? comparison : -comparison;
+    });
+  }, [pins, filter, searchQuery, sortKey, sortDirection]);
 
   const pagedPins = useMemo(() => {
     const start = (page - 1) * pageSize;
-    return filtered.slice(start, start + pageSize);
-  }, [filtered, page, pageSize]);
+    return filteredAndSorted.slice(start, start + pageSize);
+  }, [filteredAndSorted, page, pageSize]);
 
   const allCurrentKeys = pagedPins.map((p) => p.id);
   const isAllSelected =
@@ -234,8 +259,17 @@ export function CubaRecommendationWorkspace({ initialPins }: CubaRecommendationW
           <AdminDataTable
             title="Konten Tersemat Aktif"
             description="Daftar sorotan yang saat ini memengaruhi algoritma beranda."
-            itemCount={filtered.length}
-            headers={["Konten Rekomendasi", "Tipe", "Bobot", "Disematkan Oleh", { label: "Aksi", align: "right" }]}
+            itemCount={filteredAndSorted.length}
+            headers={[
+              { label: "Konten Rekomendasi", key: "title", sortable: true },
+              { label: "Tipe", key: "target_type", sortable: true },
+              { label: "Bobot", key: "weight", sortable: true },
+              { label: "Disematkan Oleh", key: "pinned_by", sortable: true },
+              { label: "Aksi", align: "right" },
+            ]}
+            sortKey={sortKey}
+            sortDirection={sortDirection}
+            onSortChange={handleSortChange}
             searchQuery={searchQuery}
             onSearchChange={(q) => {
               setSearchQuery(q);
@@ -248,7 +282,7 @@ export function CubaRecommendationWorkspace({ initialPins }: CubaRecommendationW
             onToggleSelectAll={handleToggleSelectAll}
             page={page}
             pageSize={pageSize}
-            total={filtered.length}
+            total={filteredAndSorted.length}
             onPageChange={setPage}
             onPageSizeChange={(size) => {
               setPageSize(size);

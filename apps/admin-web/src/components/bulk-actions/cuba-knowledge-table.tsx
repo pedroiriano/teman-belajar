@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useTransition } from "react";
+import React, { useState, useMemo, useTransition } from "react";
 import Link from "next/link";
 import { AdminDataTable } from "@/components/admin-data-table";
 import { CubaBulkActionBar } from "@/components/bulk-actions/cuba-bulk-action-bar";
@@ -67,12 +67,37 @@ export function CubaKnowledgeTable({
   errorMessage,
 }: CubaKnowledgeTableProps) {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [sortKey, setSortKey] = useState<string>("title");
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
   const [activeAction, setActiveAction] = useState<BulkActionType | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [progress, setProgress] = useState<BulkOperationProgress | null>(null);
   const [result, setResult] = useState<BulkOperationResult | null>(null);
   const [, startTransition] = useTransition();
+
+  const handleSortChange = (key: string) => {
+    if (sortKey === key) {
+      setSortDirection((prev) => (prev === "asc" ? "desc" : "asc"));
+    } else {
+      setSortKey(key);
+      setSortDirection("asc");
+    }
+  };
+
+  const sortedArticles = useMemo(() => {
+    return [...articles].sort((a, b) => {
+      let comparison = 0;
+      if (sortKey === "title") {
+        comparison = (a.title || "").localeCompare(b.title || "", "id");
+      } else if (sortKey === "status") {
+        comparison = (a.status || "").localeCompare(b.status || "");
+      } else if (sortKey === "revision") {
+        comparison = (a.current_revision_no || 0) - (b.current_revision_no || 0);
+      }
+      return sortDirection === "asc" ? comparison : -comparison;
+    });
+  }, [articles, sortKey, sortDirection]);
 
   const isAllSelected = articles.length > 0 && selectedIds.size === articles.length;
   const isSomeSelected = selectedIds.size > 0 && selectedIds.size < articles.length;
@@ -187,11 +212,14 @@ export function CubaKnowledgeTable({
         description="Versi dan status publikasi artikel pengetahuan"
         itemCount={itemCount}
         headers={[
-          { label: "Judul", key: "title" },
-          { label: "Status", key: "status" },
-          { label: "Revisi aktif / terbit", key: "revision" },
+          { label: "Judul", key: "title", sortable: true },
+          { label: "Status", key: "status", sortable: true },
+          { label: "Revisi aktif / terbit", key: "revision", sortable: true },
           { label: "Aksi", key: "actions" },
         ]}
+        sortKey={sortKey}
+        sortDirection={sortDirection}
+        onSortChange={handleSortChange}
         emptyState="Belum ada artikel pengetahuan. Buat draf pertama untuk memulai."
         error={errorMessage}
         retryHref="/dashboard/knowledge"
@@ -210,7 +238,7 @@ export function CubaKnowledgeTable({
           />
         }
       >
-        {articles.map((article) => {
+        {sortedArticles.map((article) => {
           const isChecked = selectedIds.has(article.id);
           return (
             <tr

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useTransition } from "react";
+import React, { useState, useMemo, useTransition } from "react";
 import Link from "next/link";
 import { AdminDataTable } from "@/components/admin-data-table";
 import { CubaBulkActionBar } from "@/components/bulk-actions/cuba-bulk-action-bar";
@@ -66,12 +66,39 @@ export function CubaNewsTable({
   errorMessage,
 }: CubaNewsTableProps) {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [sortKey, setSortKey] = useState<string>("published_at");
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
   const [activeAction, setActiveAction] = useState<BulkActionType | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [progress, setProgress] = useState<BulkOperationProgress | null>(null);
   const [result, setResult] = useState<BulkOperationResult | null>(null);
   const [, startTransition] = useTransition();
+
+  const handleSortChange = (key: string) => {
+    if (sortKey === key) {
+      setSortDirection((prev) => (prev === "asc" ? "desc" : "asc"));
+    } else {
+      setSortKey(key);
+      setSortDirection("asc");
+    }
+  };
+
+  const sortedNews = useMemo(() => {
+    return [...news].sort((a, b) => {
+      let comparison = 0;
+      if (sortKey === "title") {
+        comparison = (a.title || "").localeCompare(b.title || "", "id");
+      } else if (sortKey === "status") {
+        comparison = (a.status || "").localeCompare(b.status || "");
+      } else if (sortKey === "published_at") {
+        const timeA = a.published_at ? new Date(a.published_at).getTime() : 0;
+        const timeB = b.published_at ? new Date(b.published_at).getTime() : 0;
+        comparison = timeA - timeB;
+      }
+      return sortDirection === "asc" ? comparison : -comparison;
+    });
+  }, [news, sortKey, sortDirection]);
 
   const isAllSelected = news.length > 0 && selectedIds.size === news.length;
   const isSomeSelected = selectedIds.size > 0 && selectedIds.size < news.length;
@@ -185,11 +212,14 @@ export function CubaNewsTable({
         description="Seluruh status editorial dan riwayat publikasi berita"
         itemCount={itemCount}
         headers={[
-          { label: "Judul", key: "title" },
-          { label: "Status", key: "status" },
-          { label: "Diterbitkan", key: "published_at" },
+          { label: "Judul", key: "title", sortable: true },
+          { label: "Status", key: "status", sortable: true },
+          { label: "Diterbitkan", key: "published_at", sortable: true },
           { label: "Aksi", key: "actions" },
         ]}
+        sortKey={sortKey}
+        sortDirection={sortDirection}
+        onSortChange={handleSortChange}
         emptyState="Belum ada berita. Buat draf pertama untuk memulai."
         error={errorMessage}
         retryHref="/dashboard/news"
@@ -208,7 +238,7 @@ export function CubaNewsTable({
           />
         }
       >
-        {news.map((item) => {
+        {sortedNews.map((item) => {
           const isChecked = selectedIds.has(item.id);
           return (
             <tr

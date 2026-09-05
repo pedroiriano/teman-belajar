@@ -1,6 +1,6 @@
-﻿"use client";
+"use client";
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import Link from "next/link";
 import { AdminDataTable } from "@/components/admin-data-table";
 import { AdminIcon } from "@/components/admin-icon";
@@ -32,6 +32,35 @@ export function CubaMediaTable({
   paginationSlot,
 }: CubaMediaTableProps) {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [sortKey, setSortKey] = useState<string>("created_at");
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
+
+  const handleSortChange = (key: string) => {
+    if (sortKey === key) {
+      setSortDirection((prev) => (prev === "asc" ? "desc" : "asc"));
+    } else {
+      setSortKey(key);
+      setSortDirection("asc");
+    }
+  };
+
+  const sortedMediaAssets = useMemo(() => {
+    return [...mediaAssets].sort((a, b) => {
+      let comparison = 0;
+      if (sortKey === "details") {
+        const nameA = a.display_filename || a.original_filename || a.title || "";
+        const nameB = b.display_filename || b.original_filename || b.title || "";
+        comparison = nameA.localeCompare(nameB, "id");
+      } else if (sortKey === "size") {
+        comparison = (a.size_bytes || 0) - (b.size_bytes || 0);
+      } else if (sortKey === "created_at") {
+        const timeA = a.created_at ? new Date(a.created_at).getTime() : 0;
+        const timeB = b.created_at ? new Date(b.created_at).getTime() : 0;
+        comparison = timeA - timeB;
+      }
+      return sortDirection === "asc" ? comparison : -comparison;
+    });
+  }, [mediaAssets, sortKey, sortDirection]);
 
   const isAllSelected = mediaAssets.length > 0 && selectedIds.size === mediaAssets.length;
   const isSomeSelected = selectedIds.size > 0 && selectedIds.size < mediaAssets.length;
@@ -82,11 +111,14 @@ export function CubaMediaTable({
         itemCount={itemCount}
         headers={[
           { label: "Pratinjau", key: "preview" },
-          { label: "Detail berkas", key: "details" },
-          { label: "Ukuran", key: "size" },
-          { label: "Dibuat", key: "created_at" },
+          { label: "Detail berkas", key: "details", sortable: true },
+          { label: "Ukuran", key: "size", sortable: true },
+          { label: "Dibuat", key: "created_at", sortable: true },
           { label: "Aksi", key: "actions" },
         ]}
+        sortKey={sortKey}
+        sortDirection={sortDirection}
+        onSortChange={handleSortChange}
         emptyState={
           canUpload ? "Belum ada media. Silakan unggah berkas baru." : "Belum ada media yang dapat ditinjau."
         }
@@ -98,7 +130,7 @@ export function CubaMediaTable({
         onToggleSelectAll={handleToggleSelectAll}
         paginationSlot={paginationSlot}
       >
-        {mediaAssets.map((asset) => {
+        {sortedMediaAssets.map((asset) => {
           const isChecked = selectedIds.has(asset.id);
           return (
             <tr

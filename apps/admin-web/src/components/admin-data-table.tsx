@@ -52,6 +52,53 @@ export interface AdminDataTableProps {
   paginationSlot?: ReactNode;
 }
 
+/**
+ * CubaSortIcon renders dual stacked chevrons matching Cuba DataTables design:
+ * - When not sorted: both carets are muted/faint slate
+ * - When sorted ascending: top caret is highlighted in Sky Blue accent, bottom is faint
+ * - When sorted descending: bottom caret is highlighted in Sky Blue accent, top is faint
+ */
+export function CubaSortIcon({
+  isSorted,
+  sortDirection = "asc",
+}: {
+  isSorted: boolean;
+  sortDirection?: "asc" | "desc";
+}) {
+  const isAsc = isSorted && sortDirection === "asc";
+  const isDesc = isSorted && sortDirection === "desc";
+
+  return (
+    <span
+      className="inline-flex flex-col items-center justify-center -space-y-0.5 ml-1.5 shrink-0"
+      aria-hidden="true"
+    >
+      <svg
+        className={`h-2.5 w-2.5 transition-all duration-150 ${
+          isAsc
+            ? "text-sky-600 dark:text-sky-400 opacity-100 scale-110"
+            : "text-slate-300 dark:text-slate-600 opacity-40 group-hover:opacity-75"
+        }`}
+        viewBox="0 0 10 6"
+        fill="currentColor"
+      >
+        <path d="M5 0.5L9.5 5.5H0.5L5 0.5Z" />
+      </svg>
+      <svg
+        className={`h-2.5 w-2.5 transition-all duration-150 ${
+          isDesc
+            ? "text-sky-600 dark:text-sky-400 opacity-100 scale-110"
+            : "text-slate-300 dark:text-slate-600 opacity-40 group-hover:opacity-75"
+        }`}
+        viewBox="0 0 10 6"
+        fill="currentColor"
+      >
+        <path d="M5 5.5L0.5 0.5H9.5L5 5.5Z" />
+      </svg>
+    </span>
+  );
+}
+
 export function AdminDataTable({
   title,
   description,
@@ -225,10 +272,12 @@ export function AdminDataTable({
                     scope="col"
                     className={thClass}
                     aria-sort={
-                      isSorted
-                        ? sortDirection === "asc"
-                          ? "ascending"
-                          : "descending"
+                      isSortable
+                        ? isSorted
+                          ? sortDirection === "asc"
+                            ? "ascending"
+                            : "descending"
+                          : "none"
                         : undefined
                     }
                   >
@@ -236,19 +285,30 @@ export function AdminDataTable({
                       <button
                         type="button"
                         onClick={() => onSortChange!(col.key!)}
-                        className={`inline-flex items-center gap-1.5 font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 hover:text-sky-600 dark:hover:text-sky-400 transition-colors ${
+                        className={`group inline-flex items-center gap-1 font-bold uppercase tracking-wider transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-sky-500 rounded px-1 -mx-1 py-0.5 ${
+                          isSorted
+                            ? "text-sky-700 dark:text-sky-300"
+                            : "text-slate-700 dark:text-slate-300 hover:text-sky-600 dark:hover:text-sky-400"
+                        } ${
                           col.align === "right"
-                            ? "justify-end"
+                            ? "justify-end ml-auto"
                             : col.align === "center"
-                            ? "justify-center"
+                            ? "justify-center mx-auto"
+                            : "justify-start"
+                        }`}
+                        aria-label={`Urutkan berdasarkan ${col.label}${
+                          isSorted
+                            ? sortDirection === "asc"
+                              ? " (saat ini urut menaik)"
+                              : " (saat ini urut menurun)"
                             : ""
                         }`}
-                        aria-label={`Urutkan berdasarkan ${col.label}`}
+                        title={`Klik untuk mengurutkan berdasarkan ${col.label}`}
                       >
-                        <span>{col.label}</span>
-                        <span className="text-xs text-slate-400 dark:text-slate-500" aria-hidden="true">
-                          {isSorted ? (sortDirection === "asc" ? "▲" : "▼") : "↕"}
+                        <span className={isSorted ? "text-sky-700 dark:text-sky-300 font-extrabold" : ""}>
+                          {col.label}
                         </span>
+                        <CubaSortIcon isSorted={isSorted} sortDirection={sortDirection} />
                       </button>
                     ) : col.label ? (
                       col.label
