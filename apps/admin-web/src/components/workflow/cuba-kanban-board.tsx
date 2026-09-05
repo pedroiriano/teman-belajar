@@ -154,6 +154,26 @@ export function CubaKanbanBoard({ initialItems }: CubaKanbanBoardProps) {
     { label: "Aksi", sortable: false },
   ];
 
+  const [selectedListKeys, setSelectedListKeys] = useState<Set<string>>(new Set());
+
+  const isAllSelected = paginatedListItems.length > 0 && paginatedListItems.every((it) => selectedListKeys.has(`${it.module}-${it.id}`));
+  const isSomeSelected = selectedListKeys.size > 0 && !isAllSelected;
+
+  const handleToggleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedListKeys(new Set(paginatedListItems.map((it) => `${it.module}-${it.id}`)));
+    } else {
+      setSelectedListKeys(new Set());
+    }
+  };
+
+  const handleToggleRow = (key: string) => {
+    const next = new Set(selectedListKeys);
+    if (next.has(key)) next.delete(key);
+    else next.add(key);
+    setSelectedListKeys(next);
+  };
+
   return (
     <div className="space-y-6">
       {/* Control Toolbar */}
@@ -311,6 +331,22 @@ export function CubaKanbanBoard({ initialItems }: CubaKanbanBoardProps) {
       ) : (
         /* Mode 2: Alternative List/Table View */
         <div className="space-y-4">
+          {selectedListKeys.size > 0 && (
+            <div className="flex items-center justify-between rounded-xl border border-sky-200 dark:border-sky-800 bg-sky-50 dark:bg-sky-950/40 p-3 px-4 text-xs">
+              <div className="flex items-center gap-2 font-bold text-sky-900 dark:text-sky-200">
+                <AdminIcon name="check" className="h-4 w-4 text-sky-600" />
+                <span>{selectedListKeys.size} item dipilih dari daftar alur kerja</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSelectedListKeys(new Set())}
+                className="font-bold text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
+              >
+                Batal pilih
+              </button>
+            </div>
+          )}
+
           <AdminDataTable
             title="Daftar Alur Kerja Terpadu"
             description={`Menampilkan ${filteredItems.length} konten lintas modul dan siklus editorial.`}
@@ -331,8 +367,23 @@ export function CubaKanbanBoard({ initialItems }: CubaKanbanBoardProps) {
             }}
             responsiveCards={true}
             emptyState="Tidak ada item yang sesuai dengan kriteria pencarian atau filter."
+            selectable={true}
+            isAllSelected={isAllSelected}
+            isSomeSelected={isSomeSelected}
+            onToggleSelectAll={handleToggleSelectAll}
+            page={currentListPage}
+            pageSize={listPageSize}
+            total={filteredItems.length}
+            onPageChange={setListPage}
+            onPageSizeChange={(size) => {
+              setListPageSize(size);
+              setListPage(1);
+            }}
+            pageSizeOptions={[10, 25, 50]}
           >
             {paginatedListItems.map((item) => {
+              const itemKey = `${item.module}-${item.id}`;
+              const isChecked = selectedListKeys.has(itemKey);
               const modLabel = moduleLabels[item.module] || item.module;
               const hrefBuilder = moduleHrefs[item.module] || (() => `/dashboard`);
               const href = hrefBuilder(item.id);
@@ -343,7 +394,21 @@ export function CubaKanbanBoard({ initialItems }: CubaKanbanBoardProps) {
               });
 
               return (
-                <tr key={`${item.module}-${item.id}`} className="hover:bg-slate-50/70 dark:hover:bg-slate-800/40">
+                <tr
+                  key={itemKey}
+                  className={`hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition-colors ${
+                    isChecked ? "bg-sky-50/40 dark:bg-sky-950/20" : ""
+                  }`}
+                >
+                  <td className="w-10 px-4 py-3 text-center">
+                    <input
+                      type="checkbox"
+                      className="cuba-checkbox h-4 w-4 rounded border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-sky-600 focus:ring-sky-500 cursor-pointer"
+                      checked={isChecked}
+                      onChange={() => handleToggleRow(itemKey)}
+                      aria-label={`Pilih item ${item.title}`}
+                    />
+                  </td>
                   <td data-label="Konten" className="px-5 py-4">
                     <div className="font-bold text-slate-900 dark:text-white">{item.title}</div>
                     <div className="text-xs text-slate-400">ID: {item.id.slice(0, 8)}…</div>
@@ -374,21 +439,6 @@ export function CubaKanbanBoard({ initialItems }: CubaKanbanBoardProps) {
               );
             })}
           </AdminDataTable>
-
-          {filteredItems.length > 0 && (
-            <AdminClientPagination
-              page={currentListPage}
-              pages={totalListPages}
-              total={filteredItems.length}
-              pageSize={listPageSize}
-              onPageChange={setListPage}
-              onPageSizeChange={(size) => {
-                setListPageSize(size);
-                setListPage(1);
-              }}
-              pageSizeOptions={[10, 25, 50]}
-            />
-          )}
         </div>
       )}
     </div>

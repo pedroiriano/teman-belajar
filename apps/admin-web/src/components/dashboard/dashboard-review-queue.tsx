@@ -113,6 +113,8 @@ export function DashboardReviewQueue({ items }: DashboardReviewQueueProps) {
     { value: "approved", label: "Disetujui" },
   ];
 
+  const [selectedKeys, setSelectedKeys] = useState<Set<string>>(new Set());
+
   function handleSort(key: string) {
     if (sortKey === key) {
       setSortDirection((prev) => (prev === "asc" ? "desc" : "asc"));
@@ -123,8 +125,41 @@ export function DashboardReviewQueue({ items }: DashboardReviewQueueProps) {
     setPage(1);
   }
 
+  const isAllSelected = paginatedItems.length > 0 && paginatedItems.every((it) => selectedKeys.has(`${it.module}-${it.id}`));
+  const isSomeSelected = selectedKeys.size > 0 && !isAllSelected;
+
+  const handleToggleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedKeys(new Set(paginatedItems.map((it) => `${it.module}-${it.id}`)));
+    } else {
+      setSelectedKeys(new Set());
+    }
+  };
+
+  const handleToggleRow = (key: string) => {
+    const next = new Set(selectedKeys);
+    if (next.has(key)) next.delete(key);
+    else next.add(key);
+    setSelectedKeys(next);
+  };
+
   return (
     <section className="space-y-4" aria-labelledby="review-queue-title">
+      {selectedKeys.size > 0 && (
+        <div className="flex items-center justify-between rounded-xl border border-sky-200 dark:border-sky-800 bg-sky-50 dark:bg-sky-950/40 p-3 px-4 text-xs">
+          <div className="flex items-center gap-2 font-bold text-sky-900 dark:text-sky-200">
+            <AdminIcon name="check" className="h-4 w-4 text-sky-600" />
+            <span>{selectedKeys.size} item terpilih untuk peninjauan</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setSelectedKeys(new Set())}
+            className="font-bold text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
+          >
+            Batal pilih
+          </button>
+        </div>
+      )}
       <AdminDataTable
         title="Antrean Peninjauan Lintas Modul"
         description="Daftar konten yang membutuhkan peninjauan atau persetujuan editor."
@@ -153,8 +188,23 @@ export function DashboardReviewQueue({ items }: DashboardReviewQueueProps) {
             {items.length} item menunggu keputusan
           </span>
         }
+        selectable={true}
+        isAllSelected={isAllSelected}
+        isSomeSelected={isSomeSelected}
+        onToggleSelectAll={handleToggleSelectAll}
+        page={currentPage}
+        pageSize={pageSize}
+        total={filteredItems.length}
+        onPageChange={setPage}
+        onPageSizeChange={(size) => {
+          setPageSize(size);
+          setPage(1);
+        }}
+        pageSizeOptions={[5, 10, 25]}
       >
         {paginatedItems.map((item) => {
+          const itemKey = `${item.module}-${item.id}`;
+          const isChecked = selectedKeys.has(itemKey);
           const modLabel = moduleLabels[item.module] || item.module;
           const hrefBuilder = moduleHrefs[item.module] || (() => `/dashboard`);
           const href = hrefBuilder(item.id);
@@ -167,7 +217,21 @@ export function DashboardReviewQueue({ items }: DashboardReviewQueueProps) {
           });
 
           return (
-            <tr key={`${item.module}-${item.id}`} className="hover:bg-slate-50/70 dark:hover:bg-slate-800/40">
+            <tr
+              key={itemKey}
+              className={`hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition-colors ${
+                isChecked ? "bg-sky-50/40 dark:bg-sky-950/20" : ""
+              }`}
+            >
+              <td className="w-10 px-4 py-3 text-center">
+                <input
+                  type="checkbox"
+                  className="cuba-checkbox h-4 w-4 rounded border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-sky-600 focus:ring-sky-500 cursor-pointer"
+                  checked={isChecked}
+                  onChange={() => handleToggleRow(itemKey)}
+                  aria-label={`Pilih konten ${item.title}`}
+                />
+              </td>
               <td data-label="Konten" className="px-5 py-4">
                 <div className="font-bold text-slate-900 dark:text-white">{item.title}</div>
                 <div className="text-xs text-slate-400">ID: {item.id.slice(0, 8)}…</div>
@@ -200,21 +264,6 @@ export function DashboardReviewQueue({ items }: DashboardReviewQueueProps) {
           );
         })}
       </AdminDataTable>
-
-      {filteredItems.length > 0 && (
-        <AdminClientPagination
-          page={currentPage}
-          pages={totalPages}
-          total={filteredItems.length}
-          pageSize={pageSize}
-          onPageChange={setPage}
-          onPageSizeChange={(size) => {
-            setPageSize(size);
-            setPage(1);
-          }}
-          pageSizeOptions={[5, 10, 25]}
-        />
-      )}
     </section>
   );
 }

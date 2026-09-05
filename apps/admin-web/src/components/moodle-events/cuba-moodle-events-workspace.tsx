@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useMemo } from "react";
 import type {
   MoodleEventSummary,
   MoodleInboxEvent,
@@ -11,6 +11,7 @@ import {
   getMoodleEventsSummaryAction,
   requeueMoodleEventAction,
 } from "@/app/actions/moodle-events";
+import { AdminDataTable } from "@/components/admin-data-table";
 
 interface CubaMoodleEventsWorkspaceProps {
   initialSummary: MoodleEventSummary;
@@ -29,26 +30,74 @@ export function CubaMoodleEventsWorkspace({
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [eventTypeFilter, setEventTypeFilter] = useState<string>("all");
   const [selectedEvent, setSelectedEvent] = useState<MoodleInboxEvent | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
   const [requeuingId, setRequeuingId] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<{ type: "success" | "error"; message: string } | null>(null);
   const [isPending, startTransition] = useTransition();
 
-  const handleFilterChange = (newStatus: string, newType: string) => {
-    setStatusFilter(newStatus);
-    setEventTypeFilter(newType);
-    setFeedback(null);
-
+  const fetchPage = (targetPage: number, targetSize: number, status: string, eventType: string) => {
     startTransition(async () => {
       const res = await listMoodleEventsAction({
-        status: newStatus === "all" ? undefined : newStatus,
-        event_type: newType === "all" ? undefined : newType,
-        limit: 50,
-        offset: 0,
+        status: status === "all" ? undefined : status,
+        event_type: eventType === "all" ? undefined : eventType,
+        limit: targetSize,
+        offset: (targetPage - 1) * targetSize,
       });
       if (res.success && res.data) {
         setEvents(res.data.items);
         setTotal(res.data.total);
       }
+    });
+  };
+
+  const handleFilterChange = (newStatus: string, newType: string) => {
+    setStatusFilter(newStatus);
+    setEventTypeFilter(newType);
+    setPage(1);
+    setSelectedIds(new Set());
+    setFeedback(null);
+    fetchPage(1, pageSize, newStatus, newType);
+  };
+
+  const handlePageChange = (newPage: number) => {
+    setPage(newPage);
+    setSelectedIds(new Set());
+    fetchPage(newPage, pageSize, statusFilter, eventTypeFilter);
+  };
+
+  const handlePageSizeChange = (newSize: number) => {
+    setPageSize(newSize);
+    setPage(1);
+    setSelectedIds(new Set());
+    fetchPage(1, newSize, statusFilter, eventTypeFilter);
+  };
+
+  const allCurrentKeys = events.map((e) => e.event_id);
+  const isAllSelected =
+    allCurrentKeys.length > 0 && allCurrentKeys.every((id) => selectedIds.has(id));
+  const isSomeSelected =
+    allCurrentKeys.some((id) => selectedIds.has(id)) && !isAllSelected;
+
+  const handleToggleSelectAll = (checked: boolean) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (checked) {
+        allCurrentKeys.forEach((id) => next.add(id));
+      } else {
+        allCurrentKeys.forEach((id) => next.delete(id));
+      }
+      return next;
+    });
+  };
+
+  const handleToggleRow = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
     });
   };
 
@@ -147,7 +196,7 @@ export function CubaMoodleEventsWorkspace({
             </div>
             <div>
               <h2 className="text-sm font-bold text-slate-900 dark:text-white">
-                Moodle Event Inbox & Rekonsiliasi Integrasi (TASK-011)
+                Moodle Event Inbox & Rekonsiliasi Integrasi
               </h2>
               <p className="mt-1 text-xs text-slate-600 dark:text-slate-300">
                 Memantau antrean peristiwa integrasi dari Moodle LMS ke Teman Belajar, memeriksa integritas fingerprint,
@@ -206,137 +255,145 @@ export function CubaMoodleEventsWorkspace({
         </div>
       )}
 
-      {/* Filter and Table Container */}
-      <div className="admin-card overflow-hidden">
-        {/* Filter Bar */}
-        <div className="p-4 border-b border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/30 flex flex-wrap items-center justify-between gap-3">
-          <div className="flex flex-wrap items-center gap-3">
-            <div className="flex items-center gap-2">
-              <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">Status:</label>
-              <select
-                value={statusFilter}
-                onChange={(e) => handleFilterChange(e.target.value, eventTypeFilter)}
-                className="rounded-lg border border-slate-300 bg-white px-2.5 py-1 text-xs text-slate-800 shadow-sm focus:border-sky-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
-              >
-                <option value="all">Semua Status</option>
-                <option value="pending">Pending</option>
-                <option value="processing">Processing</option>
-                <option value="processed">Processed</option>
-                <option value="dead_letter">Dead Letter</option>
-              </select>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">Tipe Peristiwa:</label>
-              <select
-                value={eventTypeFilter}
-                onChange={(e) => handleFilterChange(statusFilter, e.target.value)}
-                className="rounded-lg border border-slate-300 bg-white px-2.5 py-1 text-xs text-slate-800 shadow-sm focus:border-sky-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
-              >
-                <option value="all">Semua Tipe</option>
-                <option value="learning.user_enrolled">learning.user_enrolled</option>
-                <option value="learning.course_completed">learning.course_completed</option>
-                <option value="learning.activity_completed">learning.activity_completed</option>
-                <option value="learning.badge_awarded">learning.badge_awarded</option>
-                <option value="learning.certificate_issued">learning.certificate_issued</option>
-                <option value="learning.course_updated">learning.course_updated</option>
-              </select>
-            </div>
+      {/* Events AdminDataTable */}
+      <AdminDataTable
+        title="Daftar Peristiwa Moodle"
+        description="Log antrean peristiwa integrasi Moodle LMS dengan verifikasi integritas data."
+        itemCount={events.length}
+        headers={[
+          { label: "Event ID / Sumber", key: "event_id" },
+          { label: "Tipe Peristiwa", key: "event_type" },
+          { label: "Subjek", key: "subject_id" },
+          { label: "Waktu Kejadian", key: "occurred_at" },
+          { label: "Percobaan", key: "attempts" },
+          { label: "Status", key: "status" },
+          { label: "Aksi", key: "actions" },
+        ]}
+        emptyState="Tidak ada peristiwa yang cocok dengan filter yang dipilih."
+        statusFilter={statusFilter}
+        statusOptions={[
+          { value: "all", label: "Semua Status" },
+          { value: "pending", label: "Pending" },
+          { value: "processing", label: "Processing" },
+          { value: "processed", label: "Processed" },
+          { value: "dead_letter", label: "Dead Letter" },
+        ]}
+        onStatusFilterChange={(s) => handleFilterChange(s, eventTypeFilter)}
+        actions={
+          <div className="flex items-center gap-2">
+            <label className="text-xs font-semibold text-slate-600 dark:text-slate-300 sr-only">Tipe Peristiwa</label>
+            <select
+              value={eventTypeFilter}
+              onChange={(e) => handleFilterChange(statusFilter, e.target.value)}
+              className="admin-input !h-9 !w-auto !py-1 text-xs"
+              aria-label="Filter tipe peristiwa"
+            >
+              <option value="all">Semua Tipe</option>
+              <option value="learning.user_enrolled">learning.user_enrolled</option>
+              <option value="learning.course_completed">learning.course_completed</option>
+              <option value="learning.activity_completed">learning.activity_completed</option>
+              <option value="learning.badge_awarded">learning.badge_awarded</option>
+              <option value="learning.certificate_issued">learning.certificate_issued</option>
+              <option value="learning.course_updated">learning.course_updated</option>
+            </select>
           </div>
-
-          <div className="text-xs text-slate-500 dark:text-slate-400 font-medium">
-            Menampilkan {events.length} dari {total} peristiwa
-          </div>
-        </div>
-
-        {/* Events Table */}
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse text-xs">
-            <thead>
-              <tr className="border-b border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-800/60 text-slate-600 dark:text-slate-300 font-semibold">
-                <th className="py-3 px-4">Event ID / Sumber</th>
-                <th className="py-3 px-4">Tipe Peristiwa</th>
-                <th className="py-3 px-4">Subjek</th>
-                <th className="py-3 px-4">Waktu Kejadian</th>
-                <th className="py-3 px-4 text-center">Percobaan</th>
-                <th className="py-3 px-4">Status</th>
-                <th className="py-3 px-4 text-right">Aksi</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
-              {events.length === 0 ? (
-                <tr>
-                  <td colSpan={7} className="py-8 text-center text-slate-500 dark:text-slate-400">
-                    Tidak ada peristiwa yang cocok dengan filter yang dipilih.
-                  </td>
-                </tr>
-              ) : (
-                events.map((event) => (
-                  <tr key={event.event_id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition-colors">
-                    <td className="py-3 px-4">
-                      <div className="font-mono text-slate-900 dark:text-white font-semibold">
-                        {event.event_id}
-                      </div>
-                      <div className="text-[11px] text-slate-500 dark:text-slate-400">
-                        {event.source} (v{event.schema_version})
-                      </div>
-                    </td>
-                    <td className="py-3 px-4">
-                      <span className="font-medium text-slate-800 dark:text-slate-200">
-                        {event.event_type}
-                      </span>
-                    </td>
-                    <td className="py-3 px-4 font-mono text-slate-600 dark:text-slate-300">
-                      {event.subject_id}
-                    </td>
-                    <td className="py-3 px-4 text-slate-600 dark:text-slate-300 whitespace-nowrap">
-                      {new Date(event.occurred_at).toLocaleString("id-ID", {
-                        year: "numeric",
-                        month: "short",
-                        day: "numeric",
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
-                    </td>
-                    <td className="py-3 px-4 text-center">
-                      <span className={`inline-block font-mono font-medium ${event.attempts > 3 ? "text-rose-600 dark:text-rose-400 font-bold" : "text-slate-700 dark:text-slate-300"}`}>
-                        {event.attempts}
-                      </span>
-                    </td>
-                    <td className="py-3 px-4 whitespace-nowrap">
-                      {getStatusBadge(event.status)}
-                      {event.error_category && (
-                        <div className="text-[10px] text-rose-600 dark:text-rose-400 font-mono mt-0.5">
-                          {event.error_category}
-                        </div>
-                      )}
-                    </td>
-                    <td className="py-3 px-4 text-right whitespace-nowrap space-x-2">
-                      <button
-                        type="button"
-                        onClick={() => setSelectedEvent(event)}
-                        className="inline-flex items-center px-2.5 py-1 rounded text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 transition-colors"
-                      >
-                        Detail
-                      </button>
-                      {event.status === "dead_letter" && (
-                        <button
-                          type="button"
-                          onClick={() => handleRequeue(event.event_id)}
-                          disabled={requeuingId === event.event_id}
-                          className="inline-flex items-center px-2.5 py-1 rounded text-xs font-semibold text-white bg-sky-500 hover:bg-sky-600 dark:bg-sky-600 dark:hover:bg-sky-500 transition-colors disabled:opacity-50"
-                        >
-                          {requeuingId === event.event_id ? "Memproses..." : "Requeue"}
-                        </button>
-                      )}
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
+        }
+        selectable={true}
+        isAllSelected={isAllSelected}
+        isSomeSelected={isSomeSelected}
+        onToggleSelectAll={handleToggleSelectAll}
+        page={page}
+        pageSize={pageSize}
+        total={total}
+        onPageChange={handlePageChange}
+        onPageSizeChange={handlePageSizeChange}
+        pageSizeOptions={[10, 20, 50]}
+      >
+        {events.map((event) => {
+          const isChecked = selectedIds.has(event.event_id);
+          return (
+            <tr
+              key={event.event_id}
+              className={`hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition-colors ${
+                isChecked ? "bg-sky-50/40 dark:bg-sky-950/20" : ""
+              }`}
+            >
+              <td className="w-10 px-4 py-3.5 text-center">
+                <input
+                  type="checkbox"
+                  className="cuba-checkbox h-4 w-4 rounded border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-sky-600 focus:ring-sky-500 cursor-pointer"
+                  checked={isChecked}
+                  onChange={() => handleToggleRow(event.event_id)}
+                  aria-label={`Pilih event ${event.event_id}`}
+                />
+              </td>
+              <td className="py-3.5 px-4">
+                <div className="font-mono text-slate-900 dark:text-white font-semibold">
+                  {event.event_id}
+                </div>
+                <div className="text-[11px] text-slate-500 dark:text-slate-400">
+                  {event.source} (v{event.schema_version})
+                </div>
+              </td>
+              <td className="py-3.5 px-4">
+                <span className="font-medium text-slate-800 dark:text-slate-200">
+                  {event.event_type}
+                </span>
+              </td>
+              <td className="py-3.5 px-4 font-mono text-slate-600 dark:text-slate-300">
+                {event.subject_id}
+              </td>
+              <td className="py-3.5 px-4 text-slate-600 dark:text-slate-300 whitespace-nowrap">
+                {new Date(event.occurred_at).toLocaleString("id-ID", {
+                  year: "numeric",
+                  month: "short",
+                  day: "numeric",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
+              </td>
+              <td className="py-3.5 px-4 text-center">
+                <span
+                  className={`inline-block font-mono font-medium ${
+                    event.attempts > 3
+                      ? "text-rose-600 dark:text-rose-400 font-bold"
+                      : "text-slate-700 dark:text-slate-300"
+                  }`}
+                >
+                  {event.attempts}
+                </span>
+              </td>
+              <td className="py-3.5 px-4 whitespace-nowrap">
+                {getStatusBadge(event.status)}
+                {event.error_category && (
+                  <div className="text-[10px] text-rose-600 dark:text-rose-400 font-mono mt-0.5">
+                    {event.error_category}
+                  </div>
+                )}
+              </td>
+              <td className="py-3.5 px-4 text-right whitespace-nowrap space-x-2">
+                <button
+                  type="button"
+                  onClick={() => setSelectedEvent(event)}
+                  className="inline-flex items-center px-2.5 py-1 rounded text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 transition-colors"
+                >
+                  Detail
+                </button>
+                {event.status === "dead_letter" && (
+                  <button
+                    type="button"
+                    onClick={() => handleRequeue(event.event_id)}
+                    disabled={requeuingId === event.event_id}
+                    className="inline-flex items-center px-2.5 py-1 rounded text-xs font-semibold text-white bg-sky-500 hover:bg-sky-600 dark:bg-sky-600 dark:hover:bg-sky-500 transition-colors disabled:opacity-50"
+                  >
+                    {requeuingId === event.event_id ? "Memproses..." : "Requeue"}
+                  </button>
+                )}
+              </td>
+            </tr>
+          );
+        })}
+      </AdminDataTable>
 
       {/* Event Detail Modal */}
       {selectedEvent && (

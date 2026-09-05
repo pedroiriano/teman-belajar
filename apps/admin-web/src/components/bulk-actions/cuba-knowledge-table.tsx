@@ -183,7 +183,7 @@ export function CubaKnowledgeTable({
     <>
       <AdminDataTable
         title="Daftar artikel"
-        description="Versi dan status publikasi kanonis artikel pengetahuan"
+        description="Versi dan status publikasi artikel pengetahuan"
         itemCount={itemCount}
         headers={[
           { label: "Judul", key: "title" },

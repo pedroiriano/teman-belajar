@@ -54,7 +54,7 @@ export default async function WorkflowPage() {
         </div>
         <div className="inline-flex items-center rounded-xl border border-sky-200 bg-sky-50 px-4 py-2 text-sm font-bold text-sky-800 dark:border-sky-900/60 dark:bg-sky-950/40 dark:text-sky-300">
           <span className="mr-2 h-2 w-2 rounded-full bg-sky-500" />
-          5 tahapan kanonis
+          5 tahapan alur kerja
         </div>
       </div>
 

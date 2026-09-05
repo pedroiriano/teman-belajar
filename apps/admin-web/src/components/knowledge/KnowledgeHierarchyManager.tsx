@@ -96,24 +96,197 @@ function NodeEditor({ node, tree, readOnly, onSaved, onArchived, onCancel }: { n
   };
 
   const siblings = siblingList(tree, form.parent_id ?? undefined).filter((item) => item.id !== node?.id);
-  return <div>
-    {!readOnly ? <DraftStatus state={autoSave.state} message={autoSave.message} lastSavedAt={autoSave.lastSavedAt} recovery={autoSave.recovery} onRecover={autoSave.recoverFrom} onKeepCurrent={autoSave.keepCurrent} onDiscard={autoSave.discard} onStartNew={autoSave.startNew} onRetry={autoSave.saveNow} allowStartNew={!node} /> : null}
-    <form onSubmit={submit} className="admin-form-card mt-4">
-      <div className="admin-form-header"><h2 className="font-black text-slate-900">{node ? "Edit node" : "Node baru"}</h2><p className="mt-1 text-xs text-slate-500">Metadata, induk, dan urutan divalidasi kembali oleh server.</p></div>
-      <div className="admin-form-body">
-        {error ? <div role="alert" className="admin-alert-error">{error}</div> : null}
-        <div className="grid gap-5 sm:grid-cols-2">
-          <div><label className="admin-label" htmlFor="node-title">Judul *</label><input id="node-title" className="admin-input mt-2" required maxLength={200} value={form.title} disabled={readOnly} onChange={(event) => { set("title", event.target.value); if (!node) set("slug", event.target.value.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "")); }} /></div>
-          <div><label className="admin-label" htmlFor="node-slug">Slug *</label><input id="node-slug" className="admin-input mt-2" required maxLength={120} pattern="[a-z0-9]+(?:-[a-z0-9]+)*" value={form.slug} disabled={readOnly} onChange={(event) => set("slug", event.target.value)} /></div>
-          <div><label className="admin-label" htmlFor="node-type">Jenis *</label><select id="node-type" className="admin-input mt-2" required value={form.type} disabled={readOnly} onChange={(event) => set("type", event.target.value as KnowledgeNodeType)}>{nodeTypes.map((type) => <option key={type} value={type}>{knowledgeNodeTypeLabels[type]}</option>)}</select></div>
-          <div><label className="admin-label" htmlFor="node-parent">Induk</label><select id="node-parent" className="admin-input mt-2" value={form.parent_id ?? ""} disabled={readOnly} onChange={(event) => set("parent_id", event.target.value || null)}><option value="">Akar struktur</option>{flat.filter(({ node: item }) => item.id !== node?.id && !descendants.has(item.id) && item.status === "active").map(({ node: item, path }) => <option key={item.id} value={item.id}>{path}</option>)}</select></div>
-          <div><label className="admin-label" htmlFor="node-order">Urutan *</label><input id="node-order" className="admin-input mt-2" type="number" required min={1} max={Math.max(1, siblings.length + 1)} value={form.sort_order} disabled={readOnly} onChange={(event) => set("sort_order", event.target.value)} /></div>
-          <div className="sm:col-span-2"><label className="admin-label" htmlFor="node-description">Deskripsi</label><textarea id="node-description" className="admin-input mt-2" rows={3} maxLength={1000} value={form.description} disabled={readOnly} onChange={(event) => set("description", event.target.value)} /></div>
+  return (
+    <div>
+      {!readOnly ? (
+        <DraftStatus
+          state={autoSave.state}
+          message={autoSave.message}
+          lastSavedAt={autoSave.lastSavedAt}
+          recovery={autoSave.recovery}
+          onRecover={autoSave.recoverFrom}
+          onKeepCurrent={autoSave.keepCurrent}
+          onDiscard={autoSave.discard}
+          onStartNew={autoSave.startNew}
+          onRetry={autoSave.saveNow}
+          allowStartNew={!node}
+        />
+      ) : null}
+      <form
+        onSubmit={submit}
+        className="admin-card rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 sm:p-7 space-y-6 shadow-sm mt-4"
+      >
+        <div className="border-b border-slate-100 dark:border-slate-800 pb-4">
+          <h2 className="text-base font-extrabold text-slate-900 dark:text-white">
+            {node ? "Edit Node Hierarki" : "Node Hierarki Baru"}
+          </h2>
+          <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+            Metadata, induk hierarki, dan urutan divalidasi kembali oleh server.
+          </p>
         </div>
-      </div>
-      <div className="admin-form-footer"><div className="flex gap-2">{node && !readOnly && node.status === "active" ? <button type="button" className="admin-button-secondary !text-rose-700" onClick={() => void archive()} disabled={saving}>Arsipkan</button> : null}<button type="button" className="admin-button-secondary" onClick={onCancel}>Tutup</button></div>{!readOnly ? <button className="admin-button" disabled={saving}>{saving ? "Menyimpan…" : node ? "Simpan perubahan" : "Buat node"}</button> : <span className="admin-status bg-slate-100 text-slate-600">Mode baca Peninjau</span>}</div>
-    </form>
-  </div>;
+        <div className="space-y-5">
+          {error ? <div role="alert" className="admin-alert-error">{error}</div> : null}
+          <div className="grid gap-5 sm:grid-cols-2">
+            <div>
+              <label className="admin-label font-bold text-slate-800 dark:text-slate-200" htmlFor="node-title">
+                Judul Node *
+              </label>
+              <input
+                id="node-title"
+                className="admin-input mt-2"
+                required
+                maxLength={200}
+                value={form.title}
+                disabled={readOnly}
+                onChange={(event) => {
+                  set("title", event.target.value);
+                  if (!node)
+                    set(
+                      "slug",
+                      event.target.value
+                        .toLowerCase()
+                        .replace(/[^a-z0-9]+/g, "-")
+                        .replace(/(^-|-$)/g, "")
+                    );
+                }}
+                placeholder="Contoh: Pemrograman Backend"
+              />
+            </div>
+            <div>
+              <label className="admin-label font-bold text-slate-800 dark:text-slate-200" htmlFor="node-slug">
+                Slug URL *
+              </label>
+              <input
+                id="node-slug"
+                className="admin-input mt-2"
+                required
+                maxLength={120}
+                pattern="[a-z0-9]+(?:-[a-z0-9]+)*"
+                value={form.slug}
+                disabled={readOnly}
+                onChange={(event) => set("slug", event.target.value)}
+                placeholder="pemrograman-backend"
+              />
+            </div>
+            <div>
+              <label className="admin-label font-bold text-slate-800 dark:text-slate-200" htmlFor="node-type">
+                Jenis Node *
+              </label>
+              <select
+                id="node-type"
+                className="admin-input mt-2"
+                required
+                value={form.type}
+                disabled={readOnly}
+                onChange={(event) =>
+                  set("type", event.target.value as KnowledgeNodeType)
+                }
+              >
+                {nodeTypes.map((type) => (
+                  <option key={type} value={type}>
+                    {knowledgeNodeTypeLabels[type]}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="admin-label font-bold text-slate-800 dark:text-slate-200" htmlFor="node-parent">
+                Induk Hierarki
+              </label>
+              <select
+                id="node-parent"
+                className="admin-input mt-2"
+                value={form.parent_id ?? ""}
+                disabled={readOnly}
+                onChange={(event) =>
+                  set("parent_id", event.target.value || null)
+                }
+              >
+                <option value="">Akar struktur (Root)</option>
+                {flat
+                  .filter(
+                    ({ node: item }) =>
+                      item.id !== node?.id &&
+                      !descendants.has(item.id) &&
+                      item.status === "active"
+                  )
+                  .map(({ node: item, path }) => (
+                    <option key={item.id} value={item.id}>
+                      {path}
+                    </option>
+                  ))}
+              </select>
+            </div>
+            <div>
+              <label className="admin-label font-bold text-slate-800 dark:text-slate-200" htmlFor="node-order">
+                Nomor Urutan *
+              </label>
+              <input
+                id="node-order"
+                className="admin-input mt-2"
+                type="number"
+                required
+                min={1}
+                max={Math.max(1, siblings.length + 1)}
+                value={form.sort_order}
+                disabled={readOnly}
+                onChange={(event) => set("sort_order", event.target.value)}
+              />
+            </div>
+            <div className="sm:col-span-2">
+              <label className="admin-label font-bold text-slate-800 dark:text-slate-200" htmlFor="node-description">
+                Deskripsi
+              </label>
+              <textarea
+                id="node-description"
+                className="admin-input mt-2"
+                rows={3}
+                maxLength={1000}
+                value={form.description}
+                disabled={readOnly}
+                onChange={(event) => set("description", event.target.value)}
+                placeholder="Penjelasan ringkas materi yang dicakup dalam topik/kategori ini..."
+              />
+            </div>
+          </div>
+        </div>
+        <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-slate-100 dark:border-slate-800">
+          <div className="flex items-center gap-2">
+            {node && !readOnly && node.status === "active" ? (
+              <button
+                type="button"
+                className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-1.5 text-xs font-bold text-rose-700 hover:bg-rose-100 dark:border-rose-900 dark:bg-rose-950/40 dark:text-rose-300"
+                onClick={() => void archive()}
+                disabled={saving}
+              >
+                Arsipkan
+              </button>
+            ) : null}
+            <button
+              type="button"
+              className="admin-button-secondary text-xs"
+              onClick={onCancel}
+            >
+              Tutup
+            </button>
+          </div>
+          {!readOnly ? (
+            <button className="admin-button text-xs font-bold" disabled={saving}>
+              {saving
+                ? "Menyimpan…"
+                : node
+                ? "Simpan perubahan"
+                : "Buat node"}
+            </button>
+          ) : (
+            <span className="admin-status bg-slate-100 text-slate-600">
+              Mode baca Peninjau
+            </span>
+          )}
+        </div>
+      </form>
+    </div>
+  );
 }
 
 export function KnowledgeHierarchyManager() {
@@ -123,32 +296,152 @@ export function KnowledgeHierarchyManager() {
   const [roles, setRoles] = useState<string[]>([]);
   const [state, setState] = useState<"loading" | "ready" | "error">("loading");
   const [message, setMessage] = useState("");
-  const readOnly = !roles.some((role) => role === "Portal Administrator" || role === "Content Editor");
+  const readOnly = !roles.some(
+    (role) => role === "Portal Administrator" || role === "Content Editor"
+  );
 
   const reload = useCallback(async () => {
     const result = await getKnowledgeHierarchyAction(true);
-    if (!result.success) { setMessage(result.error); setState("error"); return; }
-    setTree(result.data.data ?? []); setRoles(result.roles ?? []); setState("ready"); setMessage("");
+    if (!result.success) {
+      setMessage(result.error);
+      setState("error");
+      return;
+    }
+    setTree(result.data.data ?? []);
+    setRoles(result.roles ?? []);
+    setState("ready");
+    setMessage("");
   }, []);
+
   useEffect(() => {
-    const timer = window.setTimeout(() => { void reload(); }, 0);
+    const timer = window.setTimeout(() => {
+      void reload();
+    }, 0);
     return () => window.clearTimeout(timer);
   }, [reload]);
 
   const reorder = async (parentId: string | null, ordered: string[]) => {
     const result = await reorderKnowledgeNodesAction(parentId, ordered);
-    if (!result.success) { setMessage(result.error || "Urutan belum dapat diperbarui"); return; }
-    setSelected(null); await reload();
+    if (!result.success) {
+      setMessage(result.error || "Urutan belum dapat diperbarui");
+      return;
+    }
+    setSelected(null);
+    await reload();
   };
-  if (state === "loading") return <div className="admin-card animate-pulse p-8"><div className="h-7 w-60 rounded bg-slate-100" /><div className="mt-5 h-80 rounded-xl bg-slate-100" /></div>;
-  if (state === "error") return <div className="admin-alert-error" role="alert"><strong>Struktur pengetahuan tidak tersedia.</strong><p className="mt-1">{message}</p><button type="button" className="admin-button-secondary mt-4" onClick={() => { setState("loading"); void reload(); }}>Coba lagi</button></div>;
 
-  return <div className="grid gap-6 xl:grid-cols-[minmax(20rem,0.85fr)_minmax(30rem,1.15fr)]">
-    <section className="admin-card p-5" aria-labelledby="hierarchy-tree-title">
-      <div className="mb-5 flex items-center justify-between gap-4"><div><h2 id="hierarchy-tree-title" className="font-black text-slate-900">Pohon hierarchy</h2><p className="mt-1 text-xs text-slate-500">Maksimum 8 tingkat · urutan stabil</p></div>{!readOnly ? <button type="button" className="admin-button" onClick={() => { setSelected(null); setCreating(true); }}>+ Node</button> : null}</div>
-      {message ? <div className="admin-alert-error mb-4" role="alert">{message}</div> : null}
-      {tree.length ? <HierarchyTree nodes={tree} selectedId={selected?.id} onSelect={(node) => { setSelected(node); setCreating(false); }} onReorder={reorder} readOnly={readOnly} /> : <div className="admin-empty rounded-xl border border-dashed border-slate-300">Belum ada struktur. Buat node akar pertama.</div>}
-    </section>
-    <section aria-label="Editor node">{selected || creating ? <NodeEditor key={selected?.id ?? "create"} node={selected} tree={tree} readOnly={readOnly} onSaved={async () => { setSelected(null); setCreating(false); await reload(); }} onArchived={async () => { setSelected(null); await reload(); }} onCancel={() => { setSelected(null); setCreating(false); }} /> : <div className="admin-card p-10 text-center"><h2 className="text-xl font-black text-slate-900">Pilih node untuk melihat detail</h2><p className="mt-2 text-sm text-slate-500">Gunakan pohon di kiri atau buat node baru.</p></div>}</section>
-  </div>;
+  if (state === "loading")
+    return (
+      <div className="admin-card animate-pulse p-8">
+        <div className="h-7 w-60 rounded bg-slate-100 dark:bg-slate-800" />
+        <div className="mt-5 h-80 rounded-xl bg-slate-100 dark:bg-slate-800" />
+      </div>
+    );
+
+  if (state === "error")
+    return (
+      <div className="admin-alert-error" role="alert">
+        <strong>Struktur pengetahuan tidak tersedia.</strong>
+        <p className="mt-1">{message}</p>
+        <button
+          type="button"
+          className="admin-button-secondary mt-4"
+          onClick={() => {
+            setState("loading");
+            void reload();
+          }}
+        >
+          Coba lagi
+        </button>
+      </div>
+    );
+
+  return (
+    <div className="grid gap-6 xl:grid-cols-[minmax(20rem,0.85fr)_minmax(30rem,1.15fr)]">
+      <section
+        className="admin-card rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm self-start"
+        aria-labelledby="hierarchy-tree-title"
+      >
+        <div className="mb-5 flex items-center justify-between gap-4 border-b border-slate-100 dark:border-slate-800 pb-4">
+          <div>
+            <h2
+              id="hierarchy-tree-title"
+              className="text-base font-extrabold text-slate-900 dark:text-white"
+            >
+              Pohon Hierarki Pengetahuan
+            </h2>
+            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+              Maksimum 8 tingkat · urutan navigasi stabil
+            </p>
+          </div>
+          {!readOnly ? (
+            <button
+              type="button"
+              className="admin-button text-xs font-bold"
+              onClick={() => {
+                setSelected(null);
+                setCreating(true);
+              }}
+            >
+              + Node
+            </button>
+          ) : null}
+        </div>
+        {message ? (
+          <div className="admin-alert-error mb-4" role="alert">
+            {message}
+          </div>
+        ) : null}
+        {tree.length ? (
+          <HierarchyTree
+            nodes={tree}
+            selectedId={selected?.id}
+            onSelect={(node) => {
+              setSelected(node);
+              setCreating(false);
+            }}
+            onReorder={reorder}
+            readOnly={readOnly}
+          />
+        ) : (
+          <div className="admin-empty rounded-xl border border-dashed border-slate-300 p-8 text-center text-xs text-slate-500">
+            Belum ada struktur. Buat node akar pertama.
+          </div>
+        )}
+      </section>
+
+      <section aria-label="Editor node">
+        {selected || creating ? (
+          <NodeEditor
+            key={selected?.id ?? "create"}
+            node={selected}
+            tree={tree}
+            readOnly={readOnly}
+            onSaved={async () => {
+              setSelected(null);
+              setCreating(false);
+              await reload();
+            }}
+            onArchived={async () => {
+              setSelected(null);
+              await reload();
+            }}
+            onCancel={() => {
+              setSelected(null);
+              setCreating(false);
+            }}
+          />
+        ) : (
+          <div className="admin-card rounded-2xl border border-dashed border-slate-300 p-12 text-center dark:border-slate-800 bg-white dark:bg-slate-900">
+            <h2 className="text-lg font-bold text-slate-900 dark:text-white">
+              Pilih node untuk melihat detail
+            </h2>
+            <p className="mt-2 text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto">
+              Gunakan pohon di sebelah kiri untuk memilih node hierarki atau buat node baru.
+            </p>
+          </div>
+        )}
+      </section>
+    </div>
+  );
 }

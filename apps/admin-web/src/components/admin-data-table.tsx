@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { AdminIcon } from "@/components/admin-icon";
+import { AdminClientPagination } from "@/components/admin-pagination";
 
 export interface ColumnHeader {
   key?: string;
@@ -38,6 +39,14 @@ export interface AdminDataTableProps {
   isSomeSelected?: boolean;
   onToggleSelectAll?: (checked: boolean) => void;
   bulkActionBar?: ReactNode;
+  // Cuba Pagination & Count Utilities
+  page?: number;
+  pageSize?: number;
+  total?: number;
+  onPageChange?: (page: number) => void;
+  onPageSizeChange?: (pageSize: number) => void;
+  pageSizeOptions?: number[];
+  paginationSlot?: ReactNode;
 }
 
 export function AdminDataTable({
@@ -68,6 +77,13 @@ export function AdminDataTable({
   isSomeSelected = false,
   onToggleSelectAll,
   bulkActionBar,
+  page,
+  pageSize = 10,
+  total,
+  onPageChange,
+  onPageSizeChange,
+  pageSizeOptions = [10, 20, 50],
+  paginationSlot,
 }: AdminDataTableProps) {
   const tableId = `table-${title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
   const normalizedHeaders: ColumnHeader[] = headers.map((h) =>
@@ -275,6 +291,23 @@ export function AdminDataTable({
         </table>
       </div>
       {bulkActionBar}
+      {paginationSlot ? (
+        <div className="border-t border-slate-200 dark:border-slate-800 p-4 bg-slate-50/50 dark:bg-slate-800/40">
+          {paginationSlot}
+        </div>
+      ) : page && onPageChange ? (
+        <div className="border-t border-slate-200 dark:border-slate-800 p-4 bg-slate-50/50 dark:bg-slate-800/40">
+          <AdminClientPagination
+            page={page}
+            pages={Math.max(1, Math.ceil((total ?? itemCount) / pageSize))}
+            total={total ?? itemCount}
+            pageSize={pageSize}
+            onPageChange={onPageChange}
+            onPageSizeChange={onPageSizeChange}
+            pageSizeOptions={pageSizeOptions}
+          />
+        </div>
+      ) : null}
     </section>
   );
 }

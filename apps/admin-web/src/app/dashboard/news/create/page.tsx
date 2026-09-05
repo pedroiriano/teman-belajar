@@ -88,7 +88,7 @@ export default function CreateNewsPage() {
           />
         </div>
       <SeoDiscoverySection compact embedded value={seo} onChange={setSEO} contentTitle={title} contentSummary={excerpt} contentBody={body} routePrefix="/news/" />
-      <div className="admin-form-footer"><Link href="/dashboard/news" className="admin-button-secondary">Batal</Link><button type="submit" disabled={loading} className="admin-button">{loading ? "Menyimpan…" : "Simpan draf kanonis"}</button></div>
+      <div className="admin-form-footer"><Link href="/dashboard/news" className="admin-button-secondary">Batal</Link><button type="submit" disabled={loading} className="admin-button">{loading ? "Menyimpan…" : "Simpan draf berita"}</button></div>
     </form>
   </div>
   );

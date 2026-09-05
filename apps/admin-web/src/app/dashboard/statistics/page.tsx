@@ -4,8 +4,15 @@ import { StatisticsFilter } from "@/components/statistics-filter";
 import { CubaStatisticsCharts } from "@/components/statistics/cuba-statistics-charts";
 import { CubaEngagementMetrics } from "@/components/statistics/cuba-engagement-metrics";
 import { CubaStatisticsExport } from "@/components/statistics/cuba-statistics-export";
-import type { ContentDaily, PageDaily, PromValue, SearchDaily, SourceState, StatisticsResponse } from "@/types/analytics";
+import type { PromValue, SourceState, StatisticsResponse } from "@/types/analytics";
 import { AdminDataTable } from "@/components/admin-data-table";
+import {
+  CubaTrafficGroupedTable,
+  CubaContentGroupedTable,
+  CubaLearningCoursesTable,
+  CubaSearchStatsTable,
+  CubaSsoStatsTable,
+} from "@/components/statistics/cuba-statistics-grouped-table";
 
 const API_BASE = process.env.PORTAL_API_INTERNAL_URL || "http://api:8080";
 
@@ -126,12 +133,12 @@ export default async function StatisticsPage({ searchParams }: { searchParams: P
       </header>
 
       {/* Section Quick Jump Nav */}
-      <nav aria-label="Bagian statistik" className="admin-card flex gap-2 overflow-x-auto p-2 print:hidden">
+      <nav aria-label="Bagian statistik" className="admin-card flex flex-wrap gap-2 p-3 print:hidden">
         {nav.map(([href, label]) => (
           <a
             key={href}
             href={`#${href}`}
-            className="whitespace-nowrap rounded-xl px-3 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+            className="whitespace-nowrap rounded-xl px-3.5 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800 transition-colors"
           >
             {label}
           </a>
@@ -174,31 +181,12 @@ export default async function StatisticsPage({ searchParams }: { searchParams: P
 
       {/* 4. Pengunjung & Halaman */}
       <Section id="traffic" title="Pengunjung & Halaman" description="Lalu lintas Portal publik tanpa event Admin atau event konten sekunder.">
-        <DataTable headers={["Tanggal", "Path", "Tayangan", "Pengunjung Unik Harian"]} empty={!data.page_views?.length}>
-          {data.page_views?.map((row: PageDaily) => (
-            <tr key={`${row.date}:${row.path}`} className="hover:bg-slate-50/70 dark:hover:bg-slate-800/40">
-              <td className="px-5 py-4">{row.date}</td>
-              <td className="max-w-xs truncate px-5 py-4 font-semibold" title={row.path}>{row.path}</td>
-              <td className="px-5 py-4">{number(row.views)}</td>
-              <td className="px-5 py-4">{number(row.unique_visitors)}</td>
-            </tr>
-          ))}
-        </DataTable>
+        <CubaTrafficGroupedTable data={data.page_views || []} />
       </Section>
 
       {/* 5. Konten */}
       <Section id="content" title="Konten" description="content.viewed dikelompokkan ketat menurut jenis dan target; pengunjung unik ditampilkan per hari.">
-        <DataTable headers={["Tanggal", "Jenis", "Target", "Tayangan", "Pengunjung Unik Harian"]} empty={!content.length}>
-          {content.slice(0, 50).map((row: ContentDaily) => (
-            <tr key={`${row.date}:${row.content_type}:${row.target_id}`}>
-              <td className="px-5 py-4">{row.date}</td>
-              <td className="px-5 py-4 capitalize">{row.content_type}</td>
-              <td className="max-w-xs truncate px-5 py-4 font-semibold" title={row.target_id}>{row.target_id}</td>
-              <td className="px-5 py-4">{number(row.views)}</td>
-              <td className="px-5 py-4">{number(row.unique_visitors)}</td>
-            </tr>
-          ))}
-        </DataTable>
+        <CubaContentGroupedTable data={content} />
       </Section>
 
       {/* 6. Pembelajaran */}
@@ -209,15 +197,7 @@ export default async function StatisticsPage({ searchParams }: { searchParams: P
           <StatCard label="Pendaftaran Terkualifikasi" value={periodLearner ? number(periodLearner.eligible_enrolments) : "Tidak tersedia"} note="Denominator completion rate." />
           <StatCard label="Selesai" value={periodLearner ? number(periodLearner.completions) : "Tidak tersedia"} note="Enrolment eligible selesai sampai akhir periode." />
         </div>
-        <DataTable headers={["Kursus", "Akses", "Pembelajar Unik"]} empty={!periodLearner?.top_courses?.length}>
-          {periodLearner?.top_courses.map((course) => (
-            <tr key={course.course_id}>
-              <td className="px-5 py-4 font-semibold">{course.course_name}</td>
-              <td className="px-5 py-4">{number(course.accesses)}</td>
-              <td className="px-5 py-4">{number(course.unique_learners)}</td>
-            </tr>
-          ))}
-        </DataTable>
+        <CubaLearningCoursesTable courses={periodLearner?.top_courses || []} />
       </Section>
 
       {/* 7. API Observabilitas */}
@@ -246,29 +226,12 @@ export default async function StatisticsPage({ searchParams }: { searchParams: P
           <StatCard label="Sukses Pencarian" value={percent(searchSuccessRate)} note="(Search - zero result) / search." />
           <StatCard label="Rasio Klik Hasil" value={percent(searchClickRate)} note="Result clicks / total searches." />
         </div>
-        <DataTable headers={["Tanggal", "Pencarian", "Hasil Kosong", "Klik Hasil"]} empty={!data.search?.length}>
-          {data.search?.map((row: SearchDaily) => (
-            <tr key={row.date}>
-              <td className="px-5 py-4">{row.date}</td>
-              <td className="px-5 py-4">{number(row.total_searches)}</td>
-              <td className="px-5 py-4">{number(row.zero_results)}</td>
-              <td className="px-5 py-4">{number(row.result_clicks)}</td>
-            </tr>
-          ))}
-        </DataTable>
+        <CubaSearchStatsTable data={data.search || []} />
       </Section>
 
       {/* 9. Autentikasi SSO */}
       <Section id="auth" title="Autentikasi" description="Hanya auth.login dengan result success atau failure yang valid.">
-        <DataTable headers={["Tanggal", "Login Berhasil", "Login Gagal"]} empty={!data.sso?.length}>
-          {data.sso?.map((row) => (
-            <tr key={row.date}>
-              <td className="px-5 py-4">{row.date}</td>
-              <td className="px-5 py-4 text-emerald-600">{number(row.successful_logins)}</td>
-              <td className="px-5 py-4 text-rose-600">{number(row.failed_logins)}</td>
-            </tr>
-          ))}
-        </DataTable>
+        <CubaSsoStatsTable data={data.sso || []} />
       </Section>
     </div>
   );
