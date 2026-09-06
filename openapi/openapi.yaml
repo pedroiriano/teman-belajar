@@ -3645,7 +3645,7 @@ paths:
         '404': { $ref: '#/components/responses/NotFound' }
   /admin/review-notes:
     post:
-      tags: [Admin, Review Queue]
+      tags: [Admin, Review Queue, Editorial]
       operationId: createAdminReviewNote
       summary: Create an editorial review feedback note
       security: [{ bearerAuth: [] }]
@@ -3654,27 +3654,20 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              required: [entity_type, entity_id, notes]
-              properties:
-                entity_type: { type: string }
-                entity_id: { type: string }
-                action: { type: string }
-                notes: { type: string }
-                reviewer_id: { type: string }
-                reviewer_name: { type: string }
+              $ref: '#/components/schemas/CreateReviewNoteRequest'
       responses:
         '201':
-          description: Review note recorded
+          description: Review note recorded successfully
           content:
             application/json:
-              schema: { type: object }
+              schema:
+                $ref: '#/components/schemas/ReviewNote'
         '400': { $ref: '#/components/responses/ValidationError' }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '403': { $ref: '#/components/responses/Forbidden' }
   /admin/review-notes/{entityType}/{entityId}:
     get:
-      tags: [Admin, Review Queue]
+      tags: [Admin, Review Queue, Editorial]
       operationId: listAdminReviewNotes
       summary: List review feedback notes for an entity
       security: [{ bearerAuth: [] }]
@@ -3683,21 +3676,28 @@ paths:
           in: path
           required: true
           schema: { type: string }
+          description: Content module or entity type (news, announcements, knowledge, faqs, training, microlearning, learning_paths)
         - name: entityId
           in: path
           required: true
           schema: { type: string }
+          description: Target content entity identifier
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 50
+            minimum: 1
+            maximum: 100
+          description: Maximum number of notes to retrieve
       responses:
         '200':
           description: List of review notes
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  data:
-                    type: array
-                    items: { type: object }
+                $ref: '#/components/schemas/ReviewNoteListResponse'
         '401': { $ref: '#/components/responses/Unauthorized' }
         '403': { $ref: '#/components/responses/Forbidden' }
   /admin/batch-transitions:
@@ -4864,6 +4864,65 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/BatchItemError'
+    ReviewNote:
+      type: object
+      required:
+        - id
+        - entity_type
+        - entity_id
+        - action
+        - notes
+        - reviewer_name
+        - created_at
+      properties:
+        id:
+          type: string
+        entity_type:
+          type: string
+        entity_id:
+          type: string
+        action:
+          type: string
+          enum: [request_changes, reject, approved, published, note]
+        notes:
+          type: string
+        reviewer_id:
+          type: [string, "null"]
+        reviewer_name:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+    ReviewNoteListResponse:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReviewNote'
+    CreateReviewNoteRequest:
+      type: object
+      required:
+        - entity_type
+        - entity_id
+        - notes
+      properties:
+        entity_type:
+          type: string
+        entity_id:
+          type: string
+        action:
+          type: string
+          enum: [request_changes, reject, approved, published, note]
+          default: request_changes
+        notes:
+          type: string
+        reviewer_id:
+          type: string
+        reviewer_name:
+          type: string
     FaqStatus:
       type: string
       enum: [draft, in_review, approved, published, archived]
