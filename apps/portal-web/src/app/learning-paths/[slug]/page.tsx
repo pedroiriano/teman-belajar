@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { ContentCard, DetailHero, DetailSidebar, ErrorState, LearningPathCard, LearningPathStepCard, Progress, RelatedContentSection } from "@/components/techwind";
+import { PortalIcon } from "@/components/portal-icon";
 import { getLearningPath, getLearningPathProgress, getRelatedLearningPaths, isAllowedLearningPathUrl, isLearningPathSlug, type LearningPathItem } from "@/lib/learning-paths";
 
 const kindLabel = { course: "Course Moodle", knowledge: "Pengetahuan", microlearning: "Pembelajaran Singkat", webinar: "Webinar" } as const;
@@ -74,6 +75,30 @@ export default async function LearningPathDetailPage({ params }: { params: Promi
             </p>
           </ContentCard>
 
+          {learner.data?.next_step && (
+            <div className="mb-8 rounded-2xl border border-teal-200 dark:border-teal-800 bg-gradient-to-r from-teal-500/10 via-emerald-500/5 to-transparent p-6 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2">
+                  <span className="h-2.5 w-2.5 rounded-full bg-teal-500 animate-pulse" />
+                  <span className="text-xs font-bold uppercase tracking-wider text-teal-700 dark:text-teal-300">
+                    Langkah Anda Berikutnya
+                  </span>
+                </div>
+                <h3 className="mt-1.5 text-base sm:text-lg font-bold text-slate-900 dark:text-white">
+                  {learner.data.next_step.label}
+                </h3>
+                {learner.data.next_step.summary && (
+                  <p className="mt-1 text-xs text-slate-600 dark:text-slate-400 line-clamp-2">
+                    {learner.data.next_step.summary}
+                  </p>
+                )}
+              </div>
+              <div className="shrink-0">
+                <Action item={learner.data.next_step} label="Lanjut ke Materi Ini →" />
+              </div>
+            </div>
+          )}
+
           <div className="relative pl-1 sm:pl-2">
             <ol className="flex flex-col">
               {shown.version.items.map((item, index) => {
@@ -124,6 +149,23 @@ export default async function LearningPathDetailPage({ params }: { params: Promi
               })}
             </ol>
           </div>
+
+          {learner.data && learner.data.completed_items > 0 && learner.data.completed_items === learner.data.total_items && (
+            <div className="mt-8 rounded-2xl border border-emerald-200 dark:border-emerald-800 bg-emerald-50/70 dark:bg-emerald-950/40 p-6 text-center">
+              <div className="mx-auto grid h-12 w-12 place-items-center rounded-full bg-emerald-100 dark:bg-emerald-900/60 text-emerald-600 dark:text-emerald-300 mb-3">
+                <PortalIcon name="shield" className="h-6 w-6" />
+              </div>
+              <h3 className="text-lg font-bold text-emerald-900 dark:text-emerald-100">
+                Selamat! Anda Telah Menyelesaikan Jalur Belajar Ini
+              </h3>
+              <p className="mt-1 text-xs text-emerald-700 dark:text-emerald-300 max-w-md mx-auto">
+                Seluruh tahapan kurikulum telah tuntas. Terus kembangkan keahlian Anda dengan menelusuri jalur belajar lainnya.
+              </p>
+              <Link href="/learning-paths" className="portal-button-primary mt-4 inline-block text-xs py-2 px-5">
+                Jelajahi Jalur Lainnya →
+              </Link>
+            </div>
+          )}
         </section>
 
         <div className="self-start lg:sticky lg:top-24">

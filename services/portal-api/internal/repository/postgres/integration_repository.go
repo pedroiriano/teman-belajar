@@ -299,6 +299,7 @@ func (r *IntegrationRepository) ListEvents(ctx context.Context, filter integrati
 		offset = 0
 	}
 
+	// #nosec G201 -- whereSQL uses internal static conditions and query values are bound via args
 	selectSQL := fmt.Sprintf(`
 		SELECT id, event_id, event_type, source, subject_id, occurred_at,
 		       schema_version, payload, fingerprint, status, attempts,

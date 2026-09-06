@@ -2,13 +2,26 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { Breadcrumb, ContentCard, DetailSidebar, ErrorState, MicrolearningDetailHero, MicrolearningCard, RelatedContentSection } from "@/components/techwind";
+import { Breadcrumb, ContentCard, DetailHero, DetailSidebar, ErrorState, MicrolearningDetailHero, MicrolearningCard, RelatedContentSection } from "@/components/techwind";
 import { MicrolearningState } from "@/components/microlearning/microlearning-state";
+import { MicrolearningRating } from "@/components/microlearning/microlearning-rating";
 import { StructuredData } from "@/components/structured-data";
 import { absolutePublicUrl } from "@/lib/discovery/types";
 import { getMicrolearning, getMicrolearningLearnerState, isAllowedMicrolearningVideoUrl, isMicrolearningSlug } from "@/lib/microlearning";
 
 const labels = { article: "Artikel", video: "Video", quick: "Quick learning" } as const;
+
+async function getMicrolearningRatingSummary(itemId: string) {
+  const base = process.env.PORTAL_API_INTERNAL_URL;
+  if (!base) return { average: 0, count: 0 };
+  try {
+    const res = await fetch(`${base}/api/v1/ratings/microlearning/${itemId}`, { next: { revalidate: 60 } });
+    if (!res.ok) return { average: 0, count: 0 };
+    return (await res.json()) as { average: number; count: number };
+  } catch {
+    return { average: 0, count: 0 };
+  }
+}
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
@@ -26,7 +39,10 @@ export default async function MicrolearningDetailPage({ params }: { params: Prom
   let item;
   try { item = await getMicrolearning(slug); } catch { return <div className="portal-container py-16"><ErrorState title="Detail Pembelajaran Singkat belum dapat dimuat" /></div>; }
   if (!item) notFound();
-  const learner = await getMicrolearningLearnerState(item.id);
+  const [learner, ratingSummary] = await Promise.all([
+    getMicrolearningLearnerState(item.id),
+    getMicrolearningRatingSummary(item.id),
+  ]);
   const canonical = absolutePublicUrl(`/microlearning/${item.slug}`);
   const playableVideo = item.format === "video" && isAllowedMicrolearningVideoUrl(item.video_url) ? item.video_url : undefined;
 
@@ -95,6 +111,12 @@ export default async function MicrolearningDetailPage({ params }: { params: Prom
                 <Link href={`/api/auth/signin?callbackUrl=${encodeURIComponent(`/microlearning/${slug}`)}`} className="portal-button-primary mt-4 w-full text-center">Masuk</Link>
               </div>
             )}
+
+            <MicrolearningRating
+              itemId={item.id}
+              authenticated={learner.authenticated}
+              initialSummary={ratingSummary}
+            />
           </div>
         </DetailSidebar>
       </div>

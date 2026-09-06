@@ -2988,8 +2988,7 @@ paths:
                   data:
                     type: array
                     items: { $ref: '#/components/schemas/TaxonomyTerm' }
-        '404': { $ref: '#/components/responses/NotFoundError' }
-        '500': { $ref: '#/components/responses/InternalServerError' }
+        '404': { $ref: '#/components/responses/NotFound' }
   /discovery/{kind}/{slug}:
     get:
       tags: [Discovery]

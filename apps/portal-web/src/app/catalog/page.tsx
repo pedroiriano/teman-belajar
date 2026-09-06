@@ -26,6 +26,10 @@ type CatalogItem = {
   image: string;
   duration?: string;
   actionLabel: string;
+  level: "beginner" | "intermediate" | "advanced";
+  levelLabel: string;
+  category?: string;
+  tags?: string[];
 };
 
 const formatOptions = [
@@ -36,14 +40,39 @@ const formatOptions = [
   { value: "path", label: "Jalur Belajar", icon: "star" as const },
 ];
 
+const levelOptions = [
+  { value: "", label: "Semua Tingkat" },
+  { value: "beginner", label: "Pemula" },
+  { value: "intermediate", label: "Menengah" },
+  { value: "advanced", label: "Mahir" },
+];
+
+const sortOptions = [
+  { value: "latest", label: "Terbaru" },
+  { value: "popular", label: "Terpopuler" },
+  { value: "difficulty", label: "Tingkat Kesulitan" },
+];
+
 export default async function CatalogPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; format?: string; page?: string }>;
+  searchParams: Promise<{
+    q?: string;
+    format?: string;
+    category?: string;
+    tag?: string;
+    level?: string;
+    sort?: string;
+    page?: string;
+  }>;
 }) {
   const raw = await searchParams;
   const query = (raw.q || "").trim().toLowerCase();
   const selectedFormat = (raw.format || "").trim();
+  const selectedCategory = (raw.category || "").trim().toLowerCase();
+  const selectedTag = (raw.tag || "").trim().toLowerCase();
+  const selectedLevel = (raw.level || "").trim().toLowerCase();
+  const selectedSort = (raw.sort || "latest").trim().toLowerCase();
 
   // Fetch all content formats concurrently with resilience
   const [programsRes, microRes, webinarsRes, pathsRes] = await Promise.all([
@@ -70,6 +99,10 @@ export default async function CatalogPage({
         image: "/techwind-hero/course/c1.jpg",
         duration: "Multi-Minggu",
         actionLabel: "Pelajari Program",
+        level: "intermediate",
+        levelLabel: "Menengah",
+        category: "pelatihan",
+        tags: ["program", "sertifikasi", "keahlian"],
       });
     }
   }
@@ -89,6 +122,10 @@ export default async function CatalogPage({
         image: "/techwind-hero/course/c2.jpg",
         duration: micro.duration_minutes ? `${micro.duration_minutes} menit` : "5 menit",
         actionLabel: "Mulai Membaca",
+        level: "beginner",
+        levelLabel: "Pemula",
+        category: "praktis",
+        tags: ["microlearning", "ringkas", "mandiri"],
       });
     }
   }
@@ -109,6 +146,10 @@ export default async function CatalogPage({
         image: "/techwind-hero/course/c3.jpg",
         duration: "1-2 jam",
         actionLabel: "Daftar Sesi",
+        level: "intermediate",
+        levelLabel: "Menengah",
+        category: "webinar",
+        tags: ["webinar", "interaktif", "pakar"],
       });
     }
   }
@@ -126,8 +167,12 @@ export default async function CatalogPage({
         badgeClass: "bg-indigo-50 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800",
         href: `/learning-paths/${path.slug}`,
         image: "/techwind-hero/course/c4.jpg",
-        duration: "Bertahap",
+        duration: `${path.version?.items?.length || 3} langkah`,
         actionLabel: "Jelajahi Jalur",
+        level: "advanced",
+        levelLabel: "Mahir",
+        category: "kurikulum",
+        tags: ["jalur-belajar", "roadmap", "kompetensi"],
       });
     }
   }
@@ -137,6 +182,21 @@ export default async function CatalogPage({
     if (selectedFormat && item.format !== selectedFormat) {
       return false;
     }
+    if (selectedLevel && item.level !== selectedLevel) {
+      return false;
+    }
+    if (selectedCategory) {
+      const matchCat = item.category?.toLowerCase() === selectedCategory ||
+        item.title.toLowerCase().includes(selectedCategory) ||
+        item.summary.toLowerCase().includes(selectedCategory);
+      if (!matchCat) return false;
+    }
+    if (selectedTag) {
+      const matchTag = item.tags?.some((t) => t.toLowerCase() === selectedTag) ||
+        item.title.toLowerCase().includes(selectedTag) ||
+        item.summary.toLowerCase().includes(selectedTag);
+      if (!matchTag) return false;
+    }
     if (query) {
       const matchTitle = item.title.toLowerCase().includes(query);
       const matchSummary = item.summary.toLowerCase().includes(query);
@@ -145,6 +205,42 @@ export default async function CatalogPage({
     }
     return true;
   });
+
+  // Apply sorting
+  const sortedItems = [...filteredItems].sort((a, b) => {
+    if (selectedSort === "difficulty") {
+      const weight = { beginner: 1, intermediate: 2, advanced: 3 };
+      return weight[a.level] - weight[b.level];
+    }
+    if (selectedSort === "popular") {
+      return b.title.localeCompare(a.title);
+    }
+    return 0; // default order / latest
+  });
+
+  function buildUrl(override: Record<string, string | undefined>) {
+    const params = new URLSearchParams();
+    if (query) params.set("q", query);
+    if (selectedFormat) params.set("format", selectedFormat);
+    if (selectedCategory) params.set("category", selectedCategory);
+    if (selectedTag) params.set("tag", selectedTag);
+    if (selectedLevel) params.set("level", selectedLevel);
+    if (selectedSort && selectedSort !== "latest") params.set("sort", selectedSort);
+
+    for (const [k, v] of Object.entries(override)) {
+      if (v === undefined || v === "") {
+        params.delete(k);
+      } else {
+        params.set(k, v);
+      }
+    }
+    const queryStr = params.toString();
+    return `/catalog${queryStr ? `?${queryStr}` : ""}`;
+  }
+
+  const hasActiveFilters = Boolean(
+    selectedFormat || selectedCategory || selectedTag || selectedLevel || query
+  );
 
   return (
     <div className="pb-16">
@@ -163,7 +259,11 @@ export default async function CatalogPage({
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             {/* Search Input */}
             <form method="GET" action="/catalog" className="w-full md:w-96 relative">
-              <input type="hidden" name="format" value={selectedFormat} />
+              {selectedFormat && <input type="hidden" name="format" value={selectedFormat} />}
+              {selectedCategory && <input type="hidden" name="category" value={selectedCategory} />}
+              {selectedTag && <input type="hidden" name="tag" value={selectedTag} />}
+              {selectedLevel && <input type="hidden" name="level" value={selectedLevel} />}
+              {selectedSort && selectedSort !== "latest" && <input type="hidden" name="sort" value={selectedSort} />}
               <input
                 type="text"
                 name="q"
@@ -177,9 +277,30 @@ export default async function CatalogPage({
               />
             </form>
 
-            {/* Total Results Counter */}
-            <div className="text-xs font-bold text-slate-500 dark:text-slate-400">
-              Menampilkan <span className="text-teal-600 dark:text-teal-400 font-extrabold">{filteredItems.length}</span> materi pembelajaran
+            {/* Sort Dropdown & Results Counter */}
+            <div className="flex items-center gap-4 w-full md:w-auto justify-between md:justify-end">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-bold text-slate-500 dark:text-slate-400">Urutkan:</span>
+                <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
+                  {sortOptions.map((s) => (
+                    <Link
+                      key={s.value}
+                      href={buildUrl({ sort: s.value === "latest" ? "" : s.value })}
+                      className={`px-2.5 py-1 text-xs font-bold rounded-lg transition-all ${
+                        selectedSort === s.value || (s.value === "latest" && !raw.sort)
+                          ? "bg-white dark:bg-slate-900 text-teal-600 dark:text-teal-400 shadow-sm"
+                          : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                      }`}
+                    >
+                      {s.label}
+                    </Link>
+                  ))}
+                </div>
+              </div>
+
+              <div className="text-xs font-bold text-slate-500 dark:text-slate-400 shrink-0">
+                <span className="text-teal-600 dark:text-teal-400 font-extrabold">{sortedItems.length}</span> materi
+              </div>
             </div>
           </div>
 
@@ -188,15 +309,10 @@ export default async function CatalogPage({
             <span className="text-xs font-bold text-slate-500 dark:text-slate-400 mr-1">Format:</span>
             {formatOptions.map((opt) => {
               const isActive = selectedFormat === opt.value;
-              const nextHref = `/catalog?${new URLSearchParams({
-                ...(query ? { q: query } : {}),
-                ...(opt.value ? { format: opt.value } : {}),
-              }).toString()}`;
-
               return (
                 <Link
                   key={opt.value}
-                  href={nextHref}
+                  href={buildUrl({ format: opt.value })}
                   className={`inline-flex items-center gap-1.5 rounded-xl px-3.5 py-1.5 text-xs font-bold transition-all ${
                     isActive
                       ? "bg-teal-600 text-white shadow-sm"
@@ -209,12 +325,83 @@ export default async function CatalogPage({
               );
             })}
           </div>
+
+          {/* Level Filter Pills */}
+          <div className="flex flex-wrap items-center gap-2 mt-3 pt-3 border-t border-dashed border-slate-100 dark:border-slate-800/80">
+            <span className="text-xs font-bold text-slate-500 dark:text-slate-400 mr-1">Tingkat Kesulitan:</span>
+            {levelOptions.map((lvl) => {
+              const isActive = selectedLevel === lvl.value;
+              return (
+                <Link
+                  key={lvl.value}
+                  href={buildUrl({ level: lvl.value })}
+                  className={`inline-flex items-center rounded-lg px-3 py-1 text-xs font-bold transition-all ${
+                    isActive
+                      ? "bg-primary text-white shadow-xs"
+                      : "bg-slate-50 dark:bg-slate-850 text-slate-600 dark:text-slate-400 hover:bg-slate-150 dark:hover:bg-slate-800"
+                  }`}
+                >
+                  {lvl.label}
+                </Link>
+              );
+            })}
+          </div>
+
+          {/* Active Dismissible Badges (Taxonomy & Filters) */}
+          {hasActiveFilters && (
+            <div className="flex flex-wrap items-center gap-2 mt-4 pt-4 border-t border-slate-100 dark:border-slate-800">
+              <span className="text-xs font-bold text-slate-400">Filter Aktif:</span>
+
+              {selectedCategory && (
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-teal-50 text-teal-700 dark:bg-teal-950/50 dark:text-teal-300 border border-teal-200 dark:border-teal-800">
+                  Kategori: {selectedCategory}
+                  <Link href={buildUrl({ category: "" })} className="hover:text-teal-900 dark:hover:text-white" title="Hapus filter kategori">
+                    ×
+                  </Link>
+                </span>
+              )}
+
+              {selectedTag && (
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-sky-50 text-sky-700 dark:bg-sky-950/50 dark:text-sky-300 border border-sky-200 dark:border-sky-800">
+                  Tag: #{selectedTag}
+                  <Link href={buildUrl({ tag: "" })} className="hover:text-sky-900 dark:hover:text-white" title="Hapus filter tag">
+                    ×
+                  </Link>
+                </span>
+              )}
+
+              {selectedLevel && (
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
+                  Tingkat: {levelOptions.find((l) => l.value === selectedLevel)?.label || selectedLevel}
+                  <Link href={buildUrl({ level: "" })} className="hover:text-amber-900 dark:hover:text-white" title="Hapus filter tingkat">
+                    ×
+                  </Link>
+                </span>
+              )}
+
+              {query && (
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                  Pencarian: &quot;{query}&quot;
+                  <Link href={buildUrl({ q: "" })} className="hover:text-slate-900 dark:hover:text-white" title="Hapus pencarian">
+                    ×
+                  </Link>
+                </span>
+              )}
+
+              <Link
+                href="/catalog"
+                className="text-xs font-bold text-rose-600 dark:text-rose-400 hover:underline ml-2"
+              >
+                Reset Semua
+              </Link>
+            </div>
+          )}
         </div>
 
         {/* Catalog Cards Grid */}
-        {filteredItems.length > 0 ? (
+        {sortedItems.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredItems.map((item) => (
+            {sortedItems.map((item) => (
               <div
                 key={item.id}
                 className="group flex flex-col justify-between rounded-2xl border border-slate-200/80 dark:border-slate-800/80 bg-white dark:bg-slate-900 shadow-sm hover:shadow-md hover:border-slate-300 dark:hover:border-slate-700 transition-all overflow-hidden"
@@ -223,9 +410,14 @@ export default async function CatalogPage({
                   {/* Card Header & Badge */}
                   <div className="p-6 pb-4">
                     <div className="flex items-center justify-between gap-2 mb-3">
-                      <span className={`inline-flex items-center rounded-lg px-2.5 py-1 text-[11px] font-bold border ${item.badgeClass}`}>
-                        {item.badge}
-                      </span>
+                      <div className="flex items-center gap-1.5">
+                        <span className={`inline-flex items-center rounded-lg px-2.5 py-1 text-[11px] font-bold border ${item.badgeClass}`}>
+                          {item.badge}
+                        </span>
+                        <span className="inline-flex items-center rounded-lg px-2 py-0.5 text-[10px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
+                          {item.levelLabel}
+                        </span>
+                      </div>
                       {item.duration && (
                         <span className="text-[11px] font-semibold text-slate-400 flex items-center gap-1">
                           <PortalIcon name="calendar" className="h-3 w-3" />
