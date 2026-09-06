@@ -13,7 +13,70 @@ export async function getTaxonomyLanding(kind: "categories" | "tags", slug: stri
 }
 
 export async function TaxonomyLanding({ kind, slug }: { kind: "categories" | "tags"; slug: string }) {
-  const landing = await getTaxonomyLanding(kind, slug); if (!landing) notFound();
-  const label = kind === "categories" ? "Category" : "Tag";
-  return <div><PageHero eyebrow={`${label} Teman Belajar`} title={landing.term.name} description={landing.term.description || `Konten terbit yang dikelompokkan dalam ${label.toLowerCase()} ${landing.term.name}.`} /><section className="portal-container py-12 sm:py-16"><nav aria-label="Breadcrumb" className="mb-7 flex gap-2 text-sm text-slate-500"><Link href="/" className="font-bold text-teal-700">Beranda</Link><span aria-hidden="true">/</span><span>{label}</span><span aria-hidden="true">/</span><span aria-current="page">{landing.term.name}</span></nav>{landing.items.length === 0 ? <EmptyState title="Belum ada konten terbit" description="Landing ini tetap noindex sampai memiliki nilai konten yang memadai." /> : <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">{landing.items.map((item) => <article key={`${item.content_type}-${item.slug}`} className="portal-card flex min-h-60 flex-col p-6"><span className="portal-badge w-fit">{item.content_type === "knowledge" ? "Pengetahuan" : item.content_type === "announcement" ? "Pengumuman" : "Berita"}</span><h2 className="mt-5 text-xl font-extrabold text-slate-900"><Link href={item.url} className="hover:text-teal-700">{item.title}</Link></h2><p className="mt-3 line-clamp-3 text-sm leading-6 text-slate-600">{item.summary || "Buka konten untuk membaca informasi selengkapnya."}</p><p className="mt-auto pt-5 text-xs font-bold text-slate-500">Diperbarui {formatDate(item.updated_at)}</p></article>)}</div>} {!landing.indexable && <p className="mt-8 rounded-xl bg-sky-50 p-4 text-sm font-semibold text-sky-900">Landing ini tersedia untuk navigasi pengguna, tetapi tidak diindeks sampai memenuhi kebijakan kualitas konten.</p>}</section></div>;
+  const landing = await getTaxonomyLanding(kind, slug);
+  if (!landing) notFound();
+  const label = kind === "categories" ? "Kategori" : "Tag";
+
+  return (
+    <div>
+      <PageHero
+        eyebrow={`${label} Teman Belajar`}
+        title={landing.term.name}
+        description={landing.term.description || `Konten terbit yang dikelompokkan dalam ${label.toLowerCase()} ${landing.term.name}.`}
+      />
+      <section className="portal-container py-12 sm:py-16">
+        <div className="mb-7 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <nav aria-label="Breadcrumb" className="flex gap-2 text-sm text-slate-500">
+            <Link href="/" className="font-bold text-teal-700">Beranda</Link>
+            <span aria-hidden="true">/</span>
+            <span>{label}</span>
+            <span aria-hidden="true">/</span>
+            <span aria-current="page" className="font-semibold text-slate-800 dark:text-slate-200">{landing.term.name}</span>
+          </nav>
+
+          <Link
+            href={`/catalog?${kind === "categories" ? "category" : "tag"}=${encodeURIComponent(landing.term.slug)}`}
+            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold bg-teal-50 text-teal-700 dark:bg-teal-950/50 dark:text-teal-300 border border-teal-200 dark:border-teal-800 hover:bg-teal-100 dark:hover:bg-teal-900/60 transition-colors w-fit"
+          >
+            <span>Jelajahi di Katalog Terpadu</span>
+            <span aria-hidden="true">→</span>
+          </Link>
+        </div>
+
+        {landing.items.length === 0 ? (
+          <EmptyState
+            title="Belum ada konten terbit"
+            description="Landing ini tetap noindex sampai memiliki nilai konten yang memadai."
+          />
+        ) : (
+          <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+            {landing.items.map((item) => (
+              <article key={`${item.content_type}-${item.slug}`} className="portal-card flex min-h-60 flex-col p-6">
+                <span className="portal-badge w-fit">
+                  {item.content_type === "knowledge" ? "Pengetahuan" : item.content_type === "announcement" ? "Pengumuman" : "Berita"}
+                </span>
+                <h2 className="mt-5 text-xl font-extrabold text-slate-900 dark:text-white">
+                  <Link href={item.url} className="hover:text-teal-700 dark:hover:text-teal-400">
+                    {item.title}
+                  </Link>
+                </h2>
+                <p className="mt-3 line-clamp-3 text-sm leading-6 text-slate-600 dark:text-slate-400">
+                  {item.summary || "Buka konten untuk membaca informasi selengkapnya."}
+                </p>
+                <p className="mt-auto pt-5 text-xs font-bold text-slate-500 dark:text-slate-400">
+                  Diperbarui {formatDate(item.updated_at)}
+                </p>
+              </article>
+            ))}
+          </div>
+        )}
+
+        {!landing.indexable && (
+          <p className="mt-8 rounded-xl bg-sky-50 dark:bg-sky-950/40 p-4 text-sm font-semibold text-sky-900 dark:text-sky-200">
+            Landing ini tersedia untuk navigasi pengguna, tetapi tidak diindeks sampai memenuhi kebijakan kualitas konten.
+          </p>
+        )}
+      </section>
+    </div>
+  );
 }

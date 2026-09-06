@@ -47,10 +47,10 @@ export function CourseList({
   return (
     <>
       {continueCourse && (
-        <section aria-labelledby="continue-learning" className="mt-10">
+        <section id="continue-learning-section" aria-labelledby="continue-learning" className="mt-10">
           <div className="flex items-center gap-2">
             <span className="h-2.5 w-2.5 rounded-full bg-teal-500 animate-pulse" />
-            <p className="portal-eyebrow !mb-0">Lanjutkan Pembelajaran</p>
+            <p id="continue-learning" className="portal-eyebrow !mb-0">Lanjutkan Pembelajaran</p>
           </div>
           <div className="portal-card portal-course-card mt-4 flex flex-col sm:flex-row sm:items-center justify-between gap-5 p-6 border-l-4 border-l-primary rounded-xl shadow-sm hover:shadow-md transition-shadow">
             <div className="min-w-0 flex-1">

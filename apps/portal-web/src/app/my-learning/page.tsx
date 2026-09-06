@@ -1,6 +1,7 @@
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import { getBackendAccessToken } from "@/lib/server-auth";
 import { CourseList } from "@/components/learning/course-list";
 import { PortalIcon } from "@/components/portal-icon";
@@ -25,7 +26,7 @@ async function getLearningData(token: string) {
   if (meRes.status === 404 || meRes.status === 401 || meRes.status === 403) {
     return { error: "unmapped", status: meRes.status };
   }
-  
+
   if (!meRes.ok || !coursesRes.ok) {
     return { error: "unavailable", status: 503 };
   }
@@ -35,12 +36,28 @@ async function getLearningData(token: string) {
   return { me, courses: courses.data || [] };
 }
 
-function LearningHero({ firstName, total, inProgress, completed }: { firstName: string; total?: number; inProgress?: number; completed?: number }) {
-  const stats = total === undefined ? null : [
-    [String(total), "Total Kursus"],
-    [String(inProgress ?? 0), "Sedang Berjalan"],
-    [String(completed ?? 0), "Selesai"],
-  ];
+function LearningHero({
+  firstName,
+  total,
+  inProgress,
+  completed,
+  estimatedHours,
+}: {
+  firstName: string;
+  total?: number;
+  inProgress?: number;
+  completed?: number;
+  estimatedHours?: number;
+}) {
+  const stats =
+    total === undefined
+      ? null
+      : [
+          [String(total), "Total Kursus"],
+          [String(inProgress ?? 0), "Sedang Berjalan"],
+          [String(completed ?? 0), "Selesai"],
+          [`${estimatedHours ?? 0} Jam`, "Estimasi Waktu Belajar"],
+        ];
   return (
     <section className="portal-learning-hero rounded-2xl mb-8" data-techwind-pattern="course-dashboard-hero">
       <div className="relative z-10 max-w-2xl">
@@ -49,10 +66,10 @@ function LearningHero({ firstName, total, inProgress, completed }: { firstName: 
           Halo, {firstName}!
         </h1>
         <p className="mt-3 max-w-xl text-sm leading-relaxed text-slate-300">
-          Lanjutkan kursus formal Anda dari Moodle dan temukan wawasan pendukung yang relevan untuk mempercepat kompetensi Anda.
+          Lanjutkan kursus formal Anda dari Moodle, pantau pencapaian belajar, dan temukan wawasan mandiri yang relevan untuk mempercepat kompetensi Anda.
         </p>
         {stats && (
-          <div className="mt-7 grid grid-cols-3 gap-3 sm:gap-4">
+          <div className="mt-7 grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
             {stats.map(([value, label]) => (
               <div key={label} className="portal-learning-stat rounded-xl p-3 bg-white/10 backdrop-blur-sm border border-white/10 text-center">
                 <strong className="block text-2xl sm:text-3xl font-extrabold text-white">{value}</strong>
@@ -71,17 +88,30 @@ function LearningHero({ firstName, total, inProgress, completed }: { firstName: 
   );
 }
 
-function CertificateCard({ title, issuedAt, validUntil }: { title: string; issuedAt: string; validUntil?: string }) {
+function CertificateCard({
+  title,
+  issuedAt,
+  validUntil,
+}: {
+  title: string;
+  issuedAt: string;
+  validUntil?: string;
+}) {
   return (
     <div className="portal-card p-6 rounded-xl border border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-md transition-shadow flex items-start gap-4">
       <div className="h-12 w-12 rounded-xl bg-amber-50 dark:bg-amber-950/40 text-amber-600 flex items-center justify-center shrink-0">
         <PortalIcon name="star" className="h-6 w-6" />
       </div>
       <div className="min-w-0 flex-1">
-        <span className="text-xs font-bold uppercase tracking-wider text-amber-600">Sertifikat Kelulusan</span>
+        <div className="flex items-center justify-between gap-2">
+          <span className="text-xs font-bold uppercase tracking-wider text-amber-600">Sertifikat Kelulusan</span>
+          <span className="text-[11px] font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded-md border border-emerald-200 dark:border-emerald-800">
+            Terverifikasi
+          </span>
+        </div>
         <h3 className="mt-1 font-bold text-slate-900 dark:text-white leading-snug line-clamp-2">{title}</h3>
         <p className="mt-1.5 text-xs text-slate-500 dark:text-slate-400">
-          Diterbitkan: {new Date(issuedAt).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })}
+          Diterbitkan: {issuedAt !== "Belum ditentukan" ? new Date(issuedAt).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" }) : issuedAt}
         </p>
         {validUntil && (
           <p className="text-xs text-slate-400">
@@ -99,8 +129,6 @@ export default async function MyLearningDashboard() {
 
   const accessToken = await getBackendAccessToken();
   if (!accessToken) {
-    // If we have a session but no access token (e.g. stale cookie from old version),
-    // force a federated logout to clear the bad session and break the infinite loop.
     redirect("/api/auth/federated-logout");
   }
 
@@ -132,8 +160,8 @@ export default async function MyLearningDashboard() {
       </div>
     );
   }
-  const courses: EnrolledCourse[] = data.courses;
 
+  const courses: EnrolledCourse[] = data.courses;
   const inProgress = courses.filter((c) => !c.completed);
   const completed = courses.filter((c) => c.completed);
 
@@ -141,33 +169,84 @@ export default async function MyLearningDashboard() {
     return (b.last_access || 0) - (a.last_access || 0);
   })[0];
 
+  const estimatedHours = completed.length * 10 + inProgress.length * 4;
   const moodleBaseUrl = process.env.MOODLE_PUBLIC_BASE_URL || process.env.TB_MOODLE_URL || "http://localhost:8082";
 
   return (
     <div className="portal-container py-10 sm:py-14">
-      <LearningHero firstName={firstName} total={courses.length} inProgress={inProgress.length} completed={completed.length} />
+      <LearningHero
+        firstName={firstName}
+        total={courses.length}
+        inProgress={inProgress.length}
+        completed={completed.length}
+        estimatedHours={estimatedHours}
+      />
 
-      <CourseList 
-        courses={courses} 
-        continueCourse={continueCourse} 
+      {/* Dual-Track Quick Navigation */}
+      <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
+        <div className="flex flex-wrap items-center gap-2">
+          <a
+            href="#my-courses"
+            className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-bold bg-teal-50 text-teal-700 dark:bg-teal-950/50 dark:text-teal-300 border border-teal-200 dark:border-teal-800 hover:bg-teal-100 transition-colors"
+          >
+            <PortalIcon name="graduation" className="h-3.5 w-3.5" />
+            <span>Kursus Formal ({courses.length})</span>
+          </a>
+          <a
+            href="#engagement-koleksi-anda"
+            className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-750 transition-colors"
+          >
+            <PortalIcon name="bookmark" className="h-3.5 w-3.5" />
+            <span>Materi Mandiri & Bookmark</span>
+          </a>
+          {completed.length > 0 && (
+            <a
+              href="#certificates"
+              className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-bold bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800 hover:bg-amber-100 transition-colors"
+            >
+              <PortalIcon name="star" className="h-3.5 w-3.5" />
+              <span>Sertifikat ({completed.length})</span>
+            </a>
+          )}
+        </div>
+
+        <Link
+          href="/catalog"
+          className="inline-flex items-center gap-1.5 text-xs font-bold text-teal-600 dark:text-teal-400 hover:underline"
+        >
+          <span>Jelajahi Katalog Baru</span>
+          <PortalIcon name="chevron-right" className="h-3.5 w-3.5" />
+        </Link>
+      </div>
+
+      <CourseList
+        courses={courses}
+        continueCourse={continueCourse}
         moodleBaseUrl={moodleBaseUrl}
       />
-      
+
       {completed.length > 0 && (
-        <section className="mt-12">
-          <h2 className="portal-section-title">Sertifikat Anda</h2>
-          <div className="mt-6 grid gap-4 lg:grid-cols-2">
+        <section id="certificates" className="mt-12">
+          <div className="flex items-center justify-between gap-4 mb-6">
+            <div>
+              <h2 className="portal-section-title">Sertifikat Kelulusan Anda</h2>
+              <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                Pencapaian resmi dari kursus formal Moodle yang telah Anda selesaikan dengan sukses.
+              </p>
+            </div>
+          </div>
+          <div className="grid gap-4 lg:grid-cols-2">
             {completed.slice(0, 4).map((course) => (
-              <CertificateCard 
-                key={course.id} 
-                title={course.full_name || course.short_name} 
-                issuedAt={course.enrolled_at ? new Date(course.enrolled_at).toISOString() : "Belum ditentukan"} 
+              <CertificateCard
+                key={course.id}
+                title={course.full_name || course.short_name}
+                issuedAt={course.enrolled_at ? new Date(course.enrolled_at).toISOString() : "Belum ditentukan"}
               />
             ))}
           </div>
         </section>
       )}
-      
+
       <EngagementDiscovery />
     </div>
   );
