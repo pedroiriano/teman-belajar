@@ -2,6 +2,7 @@
 
 import React, { useState, useMemo, useTransition } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { AdminDataTable } from "@/components/admin-data-table";
 import { CubaBulkActionBar } from "@/components/bulk-actions/cuba-bulk-action-bar";
 import { CubaBulkConfirmModal } from "@/components/bulk-actions/cuba-bulk-confirm-modal";
@@ -75,6 +76,7 @@ export function CubaKnowledgeTable({
   const [progress, setProgress] = useState<BulkOperationProgress | null>(null);
   const [result, setResult] = useState<BulkOperationResult | null>(null);
   const [, startTransition] = useTransition();
+  const router = useRouter();
 
   const handleSortChange = (key: string) => {
     if (sortKey === key) {
@@ -191,7 +193,7 @@ export function CubaKnowledgeTable({
 
       setResult(res);
       startTransition(() => {
-        // Triggers UI refresh
+        router.refresh();
       });
     } catch (err: any) {
       setResult({

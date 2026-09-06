@@ -3711,39 +3711,14 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              required: [action, items]
-              properties:
-                action: { type: string, enum: [approve, publish, archive, delete, reject] }
-                items:
-                  type: array
-                  items:
-                    type: object
-                    required: [id, module]
-                    properties:
-                      id: { type: string }
-                      module: { type: string }
-                      title: { type: string }
-                notes: { type: string }
+              $ref: '#/components/schemas/BatchTransitionRequest'
       responses:
         '200':
           description: Aggregated batch operation outcome
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  total: { type: integer }
-                  succeeded: { type: integer }
-                  failed: { type: integer }
-                  errors:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        id: { type: string }
-                        title: { type: string }
-                        error: { type: string }
+                $ref: '#/components/schemas/BatchOperationResult'
         '400': { $ref: '#/components/responses/ValidationError' }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '403': { $ref: '#/components/responses/Forbidden' }
@@ -4828,6 +4803,67 @@ components:
           type: integer
           minimum: 1
           description: Target revision number to rollback to
+    BatchItemRequest:
+      type: object
+      required:
+        - id
+        - module
+      properties:
+        id:
+          type: string
+        module:
+          type: string
+          enum: [knowledge, news, announcements, announcement, faqs, faq, training, training-programs, microlearning, learning-paths, learning_paths, review-queue]
+        title:
+          type: string
+    BatchTransitionRequest:
+      type: object
+      required:
+        - action
+        - items
+      properties:
+        action:
+          type: string
+          enum: [approve, publish, archive, delete, reject]
+        items:
+          type: array
+          minItems: 1
+          maxItems: 100
+          items:
+            $ref: '#/components/schemas/BatchItemRequest'
+        notes:
+          type: string
+    BatchItemError:
+      type: object
+      required:
+        - id
+        - title
+        - error
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        error:
+          type: string
+    BatchOperationResult:
+      type: object
+      required:
+        - total
+        - succeeded
+        - failed
+        - errors
+      properties:
+        total:
+          type: integer
+        succeeded:
+          type: integer
+        failed:
+          type: integer
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/BatchItemError'
     FaqStatus:
       type: string
       enum: [draft, in_review, approved, published, archived]
