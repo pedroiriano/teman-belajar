@@ -301,6 +301,29 @@ func (r *CMSRepository) ListNewsRevisions(ctx context.Context, newsID string) ([
 	return revisions, nil
 }
 
+func (r *CMSRepository) GetNewsRevision(ctx context.Context, newsID string, revNo int) (*cms.NewsRevision, error) {
+	query := `SELECT id, news_id, revision_no, title, excerpt, body, author_id, created_at
+			  FROM news_revisions WHERE news_id = $1 AND revision_no = $2`
+	row := r.db.QueryRowContext(ctx, query, newsID, revNo)
+
+	var rev cms.NewsRevision
+	var authorID sql.NullString
+	var excerpt sql.NullString
+	if err := row.Scan(&rev.ID, &rev.NewsID, &rev.RevisionNo, &rev.Title, &excerpt, &rev.Body, &authorID, &rev.CreatedAt); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, cms.ErrNotFound
+		}
+		return nil, err
+	}
+	if authorID.Valid {
+		rev.AuthorID = &authorID.String
+	}
+	if excerpt.Valid {
+		rev.Excerpt = excerpt.String
+	}
+	return &rev, nil
+}
+
 func (r *CMSRepository) CreateAnnouncementRevision(ctx context.Context, rev *cms.AnnouncementRevision) error {
 	query := `INSERT INTO announcement_revisions (id, announcement_id, revision_no, title, body, author_id, created_at)
 			  VALUES ($1, $2, $3, $4, $5, $6, $7)
@@ -309,6 +332,25 @@ func (r *CMSRepository) CreateAnnouncementRevision(ctx context.Context, rev *cms
 		rev.ID, rev.AnnouncementID, rev.RevisionNo, rev.Title, rev.Body, rev.AuthorID, rev.CreatedAt,
 	)
 	return err
+}
+
+func (r *CMSRepository) GetAnnouncementRevision(ctx context.Context, announcementID string, revNo int) (*cms.AnnouncementRevision, error) {
+	query := `SELECT id, announcement_id, revision_no, title, body, author_id, created_at
+			  FROM announcement_revisions WHERE announcement_id = $1 AND revision_no = $2`
+	row := r.db.QueryRowContext(ctx, query, announcementID, revNo)
+
+	var rev cms.AnnouncementRevision
+	var authorID sql.NullString
+	if err := row.Scan(&rev.ID, &rev.AnnouncementID, &rev.RevisionNo, &rev.Title, &rev.Body, &authorID, &rev.CreatedAt); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, cms.ErrNotFound
+		}
+		return nil, err
+	}
+	if authorID.Valid {
+		rev.AuthorID = &authorID.String
+	}
+	return &rev, nil
 }
 
 func (r *CMSRepository) ListAnnouncementRevisions(ctx context.Context, announcementID string) ([]cms.AnnouncementRevision, error) {

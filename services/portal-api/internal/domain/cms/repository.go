@@ -21,7 +21,9 @@ type Repository interface {
 
 	// Revisions
 	CreateNewsRevision(ctx context.Context, rev *NewsRevision) error
+	GetNewsRevision(ctx context.Context, newsID string, revNo int) (*NewsRevision, error)
 	ListNewsRevisions(ctx context.Context, newsID string) ([]NewsRevision, error)
 	CreateAnnouncementRevision(ctx context.Context, rev *AnnouncementRevision) error
+	GetAnnouncementRevision(ctx context.Context, announcementID string, revNo int) (*AnnouncementRevision, error)
 	ListAnnouncementRevisions(ctx context.Context, announcementID string) ([]AnnouncementRevision, error)
 }

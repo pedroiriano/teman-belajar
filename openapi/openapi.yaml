@@ -3765,9 +3765,38 @@ paths:
             application/json:
               schema:
                 type: array
-                items: { type: object }
+                items: { $ref: '#/components/schemas/NewsRevision' }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '403': { $ref: '#/components/responses/Forbidden' }
+  /admin/news/{id}/rollback:
+    post:
+      tags: [Admin, CMS]
+      operationId: rollbackNewsRevision
+      summary: Rollback news article to a previous revision
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RollbackRevisionRequest'
+      responses:
+        '200':
+          description: News rolled back successfully into draft
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/News'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/ConflictError' }
+        '422': { $ref: '#/components/responses/ValidationError' }
   /admin/announcements/{id}/revisions:
     get:
       tags: [Admin, CMS]
@@ -3786,9 +3815,38 @@ paths:
             application/json:
               schema:
                 type: array
-                items: { type: object }
+                items: { $ref: '#/components/schemas/AnnouncementRevision' }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '403': { $ref: '#/components/responses/Forbidden' }
+  /admin/announcements/{id}/rollback:
+    post:
+      tags: [Admin, CMS]
+      operationId: rollbackAnnouncementRevision
+      summary: Rollback announcement to a previous revision
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RollbackRevisionRequest'
+      responses:
+        '200':
+          description: Announcement rolled back successfully into draft
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Announcement'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/ConflictError' }
+        '422': { $ref: '#/components/responses/ValidationError' }
   /recommendations:
     get:
       tags: [Recommendations, Engagement]
@@ -4703,6 +4761,73 @@ components:
         start_at: { type: [string, 'null'], format: date-time }
         end_at: { type: [string, 'null'], format: date-time }
         expected_version: { type: integer, format: int64, minimum: 1 }
+    NewsRevision:
+      type: object
+      required:
+        - id
+        - news_id
+        - revision_no
+        - title
+        - body
+        - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        news_id:
+          type: string
+          format: uuid
+        revision_no:
+          type: integer
+        title:
+          type: string
+        excerpt:
+          type: string
+        body:
+          type: string
+        author_id:
+          type: [string, 'null']
+          format: uuid
+        created_at:
+          type: string
+          format: date-time
+    AnnouncementRevision:
+      type: object
+      required:
+        - id
+        - announcement_id
+        - revision_no
+        - title
+        - body
+        - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        announcement_id:
+          type: string
+          format: uuid
+        revision_no:
+          type: integer
+        title:
+          type: string
+        body:
+          type: string
+        author_id:
+          type: [string, 'null']
+          format: uuid
+        created_at:
+          type: string
+          format: date-time
+    RollbackRevisionRequest:
+      type: object
+      required:
+        - target_revision_no
+      properties:
+        target_revision_no:
+          type: integer
+          minimum: 1
+          description: Target revision number to rollback to
     FaqStatus:
       type: string
       enum: [draft, in_review, approved, published, archived]

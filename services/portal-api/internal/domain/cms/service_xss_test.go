@@ -40,11 +40,17 @@ func (m *mockRepo) ListAdminAnnouncements(ctx context.Context, p, ps int) ([]cms
 	return nil, 0, nil
 }
 func (m *mockRepo) CreateNewsRevision(ctx context.Context, rev *cms.NewsRevision) error { return nil }
+func (m *mockRepo) GetNewsRevision(ctx context.Context, newsID string, revNo int) (*cms.NewsRevision, error) {
+	return nil, cms.ErrNotFound
+}
 func (m *mockRepo) ListNewsRevisions(ctx context.Context, newsID string) ([]cms.NewsRevision, error) {
 	return nil, nil
 }
 func (m *mockRepo) CreateAnnouncementRevision(ctx context.Context, rev *cms.AnnouncementRevision) error {
 	return nil
+}
+func (m *mockRepo) GetAnnouncementRevision(ctx context.Context, announcementID string, revNo int) (*cms.AnnouncementRevision, error) {
+	return nil, cms.ErrNotFound
 }
 func (m *mockRepo) ListAnnouncementRevisions(ctx context.Context, announcementID string) ([]cms.AnnouncementRevision, error) {
 	return nil, nil
