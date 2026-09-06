@@ -162,6 +162,68 @@ func (r *ScheduleRepository) GetByID(ctx context.Context, id string) (*schedule.
 	return &ev, nil
 }
 
+func (r *ScheduleRepository) GetCandidates(ctx context.Context, entityType string) ([]schedule.ScheduleCandidate, error) {
+	var candidates []schedule.ScheduleCandidate
+
+	queryItems := func(query string, entType string, moduleLabel string) error {
+		rows, err := r.db.QueryContext(ctx, query)
+		if err != nil {
+			return err
+		}
+		defer rows.Close()
+
+		for rows.Next() {
+			var c schedule.ScheduleCandidate
+			c.EntityType = entType
+			c.Module = moduleLabel
+			err := rows.Scan(&c.ID, &c.Title, &c.Status, &c.UpdatedAt)
+			if err != nil {
+				return err
+			}
+			c.AuthorName = "Editor Redaksi"
+			candidates = append(candidates, c)
+		}
+		return rows.Err()
+	}
+
+	if entityType == "" || entityType == "news" {
+		q := "SELECT id::text, title, status, updated_at FROM news WHERE status != 'published' ORDER BY updated_at DESC LIMIT 20"
+		if err := queryItems(q, "news", "Berita"); err != nil {
+			return nil, fmt.Errorf("query news candidates: %w", err)
+		}
+	}
+
+	if entityType == "" || entityType == "announcements" {
+		q := "SELECT id::text, title, status, updated_at FROM announcements WHERE status != 'published' ORDER BY updated_at DESC LIMIT 20"
+		if err := queryItems(q, "announcements", "Pengumuman"); err != nil {
+			return nil, fmt.Errorf("query announcement candidates: %w", err)
+		}
+	}
+
+	if entityType == "" || entityType == "knowledge" {
+		q := "SELECT id::text, title, status, updated_at FROM knowledge_articles WHERE status != 'published' ORDER BY updated_at DESC LIMIT 20"
+		if err := queryItems(q, "knowledge", "Pengetahuan"); err != nil {
+			return nil, fmt.Errorf("query knowledge candidates: %w", err)
+		}
+	}
+
+	if entityType == "" || entityType == "training_programs" {
+		q := "SELECT id::text, title, status, updated_at FROM training_programs WHERE status != 'published' ORDER BY updated_at DESC LIMIT 20"
+		if err := queryItems(q, "training_programs", "Pelatihan"); err != nil {
+			return nil, fmt.Errorf("query training candidates: %w", err)
+		}
+	}
+
+	if entityType == "" || entityType == "microlearning" {
+		q := "SELECT id::text, title, status, updated_at FROM microlearning_items WHERE status != 'published' ORDER BY updated_at DESC LIMIT 20"
+		if err := queryItems(q, "microlearning", "Microlearning"); err != nil {
+			return nil, fmt.Errorf("query microlearning candidates: %w", err)
+		}
+	}
+
+	return candidates, nil
+}
+
 func (r *ScheduleRepository) GetPendingExecution(ctx context.Context, cutoff time.Time, limit int) ([]schedule.ScheduleEvent, error) {
 	query := `
 		SELECT

@@ -1,4 +1,4 @@
-﻿package schedule
+package schedule
 
 import (
 	"context"
@@ -6,6 +6,11 @@ import (
 	"fmt"
 	"strings"
 	"time"
+
+	"github.com/google/uuid"
+
+	"teman-belajar-api/internal/domain/audit"
+	"teman-belajar-api/internal/domain/notification"
 )
 
 var (
@@ -18,9 +23,16 @@ type EntityPublisher interface {
 	PublishEntity(ctx context.Context, entityType string, entityID string) error
 }
 
+// EntityStatusUpdater defines the interface to set an underlying entity status to scheduled.
+type EntityStatusUpdater interface {
+	SetEntityScheduled(ctx context.Context, entityType string, entityID string) error
+}
+
 type Service struct {
 	repo      Repository
 	publisher EntityPublisher
+	auditRepo audit.Repository
+	notifRepo notification.Repository
 	loc       *time.Location
 }
 
@@ -34,6 +46,14 @@ func NewService(repo Repository, publisher EntityPublisher) *Service {
 		publisher: publisher,
 		loc:       loc,
 	}
+}
+
+func (s *Service) SetAuditRepo(a audit.Repository) {
+	s.auditRepo = a
+}
+
+func (s *Service) SetNotificationRepo(n notification.Repository) {
+	s.notifRepo = n
 }
 
 // Module mapping helpers
@@ -196,6 +216,13 @@ func (s *Service) Create(ctx context.Context, input CreateScheduleInput) (*Sched
 		return nil, fmt.Errorf("create schedule: %w", err)
 	}
 
+	// If the entityID is a real ID (not starting with "auto-") and publisher implements EntityStatusUpdater, set status to scheduled
+	if !strings.HasPrefix(event.EntityID, "auto-") {
+		if updater, ok := s.publisher.(EntityStatusUpdater); ok {
+			_ = updater.SetEntityScheduled(ctx, event.EntityType, event.EntityID)
+		}
+	}
+
 	created.Module = entityTypeToModuleLabel(created.EntityType)
 	created.StatusLabel = statusToLabel(created.Status)
 	return created, nil
@@ -218,14 +245,136 @@ func (s *Service) ExecutePending(ctx context.Context, cutoff time.Time) (int, er
 			pubErr = s.publisher.PublishEntity(ctx, item.EntityType, item.EntityID)
 		}
 
+		meta := map[string]string{
+			"schedule_id": item.ID,
+			"title":       item.Title,
+			"entity_type": item.EntityType,
+			"entity_id":   item.EntityID,
+		}
+
 		if pubErr != nil {
 			_ = s.repo.MarkFailed(ctx, item.ID, pubErr.Error())
+			s.recordAudit(ctx, "schedule.auto_publish_failed", item.EntityType, item.EntityID, "failure", meta)
+			s.recordNotification(ctx, "Gagal Publikasi Otomatis: "+item.Title, fmt.Sprintf("Gagal mempublikasikan otomatis konten %s (%s): %v", item.Title, item.EntityType, pubErr), "/dashboard/schedule")
 		} else {
 			if err := s.repo.MarkExecuted(ctx, item.ID, time.Now()); err == nil {
 				executedCount++
+				s.recordAudit(ctx, "schedule.auto_publish", item.EntityType, item.EntityID, "success", meta)
+				s.recordNotification(ctx, "Publikasi Otomatis Berhasil: "+item.Title, fmt.Sprintf("Konten %s (%s) telah berhasil dipublikasikan secara otomatis.", item.Title, item.EntityType), "/dashboard/schedule")
 			}
 		}
 	}
 
 	return executedCount, nil
+}
+
+func (s *Service) PublishNow(ctx context.Context, id string) (*ScheduleEvent, error) {
+	item, err := s.repo.GetByID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	if item.Status == "published" {
+		return nil, fmt.Errorf("schedule is already published")
+	}
+
+	var pubErr error
+	if s.publisher != nil {
+		pubErr = s.publisher.PublishEntity(ctx, item.EntityType, item.EntityID)
+	}
+
+	meta := map[string]string{
+		"schedule_id": item.ID,
+		"title":       item.Title,
+		"entity_type": item.EntityType,
+		"entity_id":   item.EntityID,
+		"mode":        "manual_publish_now",
+	}
+
+	if pubErr != nil {
+		_ = s.repo.MarkFailed(ctx, item.ID, pubErr.Error())
+		s.recordAudit(ctx, "schedule.publish_now_failed", item.EntityType, item.EntityID, "failure", meta)
+		s.recordNotification(ctx, "Gagal Publikasi: "+item.Title, fmt.Sprintf("Gagal mempublikasikan langsung konten %s (%s): %v", item.Title, item.EntityType, pubErr), "/dashboard/schedule")
+		return nil, pubErr
+	}
+
+	now := time.Now()
+	if err := s.repo.MarkExecuted(ctx, item.ID, now); err != nil {
+		return nil, fmt.Errorf("mark executed: %w", err)
+	}
+
+	s.recordAudit(ctx, "schedule.publish_now", item.EntityType, item.EntityID, "success", meta)
+	s.recordNotification(ctx, "Publikasi Berhasil: "+item.Title, fmt.Sprintf("Konten %s (%s) telah berhasil dipublikasikan.", item.Title, item.EntityType), "/dashboard/schedule")
+
+	item.Status = "published"
+	item.ExecutedAt = &now
+	item.Module = entityTypeToModuleLabel(item.EntityType)
+	item.StatusLabel = statusToLabel(item.Status)
+	return item, nil
+}
+
+func (s *Service) GetCandidates(ctx context.Context, moduleFilter string) ([]ScheduleCandidate, error) {
+	entityFilter := ""
+	if moduleFilter != "" && moduleFilter != "all" {
+		entityFilter = normalizeEntityType(moduleFilter)
+	}
+
+	candidates, err := s.repo.GetCandidates(ctx, entityFilter)
+	if err != nil {
+		return nil, fmt.Errorf("get schedule candidates: %w", err)
+	}
+
+	for i := range candidates {
+		candidates[i].Module = entityTypeToModuleLabel(candidates[i].EntityType)
+	}
+
+	return candidates, nil
+}
+
+func (s *Service) recordAudit(ctx context.Context, action string, targetType string, targetID string, result string, metadata map[string]string) {
+	if s.auditRepo == nil {
+		return
+	}
+	event := audit.AuditEvent{
+		ActorUserID: "system:scheduler",
+		Action:      action,
+		Module:      "schedule",
+		TargetType:  targetType,
+		TargetID:    targetID,
+		Result:      result,
+		Metadata:    metadata,
+		OccurredAt:  time.Now(),
+	}
+	_ = s.auditRepo.CreateEvent(ctx, &event)
+}
+
+func (s *Service) recordNotification(ctx context.Context, title string, body string, deepLink string) {
+	if s.notifRepo == nil {
+		return
+	}
+	notif := notification.Notification{
+		ID:          uuid.NewString(),
+		Audience:    notification.AudienceAdmin,
+		EventType:   notification.EventContentWorkflow,
+		Title:       title,
+		Body:        body,
+		DeepLink:    deepLink,
+		Priority:    notification.PriorityNormal,
+		AvailableAt: time.Now(),
+		ExpiresAt:   time.Now().Add(30 * 24 * time.Hour),
+		CreatedAt:   time.Now(),
+	}
+	delivery := notification.Delivery{
+		EventID:       uuid.NewString(),
+		SchemaVersion: notification.EventSchemaVersion,
+		Source:        "scheduler",
+		UserSubject:   "admin",
+		Audience:      notification.AudienceAdmin,
+		EventType:     notification.EventContentWorkflow,
+		Title:         title,
+		Body:          body,
+		DeepLink:      deepLink,
+		Priority:      notification.PriorityNormal,
+		AvailableAt:   time.Now(),
+	}
+	_, _ = s.notifRepo.Deliver(ctx, delivery, notif)
 }

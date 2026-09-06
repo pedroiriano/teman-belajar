@@ -10,7 +10,8 @@ export type ScheduleStatus =
   | "published"
   | "needs_review"
   | "ready"
-  | "cancelled";
+  | "cancelled"
+  | "failed";
 
 export interface ScheduleEvent {
   id: string;
@@ -21,11 +22,15 @@ export interface ScheduleEvent {
   status: ScheduleStatus;
   statusLabel: string;
   owner: string;
+  entityId?: string;
+  entityType?: string;
   cohortLabel?: string;
   participantsCount?: number;
   hasConflict?: boolean;
   conflictDetails?: string;
   description?: string;
+  executedAt?: string;
+  failureReason?: string;
 }
 
 export interface CreateScheduleInput {
@@ -34,7 +39,20 @@ export interface CreateScheduleInput {
   targetDate: string;
   targetTime: string;
   owner: string;
+  entityId?: string;
+  entityType?: string;
   cohortLabel?: string;
   participantsCount?: number;
   description?: string;
 }
+
+export interface ScheduleCandidate {
+  id: string;
+  title: string;
+  entity_type: string;
+  module: ScheduleModule;
+  status: string;
+  updated_at: string;
+  author_name?: string;
+}
+

@@ -2,8 +2,13 @@
 
 import { useId, useMemo, useState } from "react";
 import { AdminIcon } from "@/components/admin-icon";
-import type { CreateScheduleInput, ScheduleEvent, ScheduleModule } from "@/types/schedule";
-import { createScheduleEventAction, cancelScheduleEventAction } from "@/app/actions/schedule";
+import type { CreateScheduleInput, ScheduleCandidate, ScheduleEvent, ScheduleModule } from "@/types/schedule";
+import {
+  createScheduleEventAction,
+  cancelScheduleEventAction,
+  publishNowScheduleAction,
+  getScheduleCandidatesAction,
+} from "@/app/actions/schedule";
 
 interface CubaScheduleCalendarProps {
   initialEvents: ScheduleEvent[];
@@ -41,6 +46,13 @@ export function CubaScheduleCalendar({
   const [showModal, setShowModal] = useState<boolean>(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [busy, setBusy] = useState<boolean>(false);
+
+  // Candidate selection states
+  const [candidates, setCandidates] = useState<ScheduleCandidate[]>([]);
+  const [loadingCandidates, setLoadingCandidates] = useState<boolean>(false);
+  const [selectedCandidateId, setSelectedCandidateId] = useState<string>("");
+  const [formEntityId, setFormEntityId] = useState<string>("");
+  const [formEntityType, setFormEntityType] = useState<string>("");
 
   // Form states for creating new schedule
   const [formTitle, setFormTitle] = useState("");
@@ -182,6 +194,21 @@ export function CubaScheduleCalendar({
     setTimeout(() => setToastMessage(null), 3500);
   };
 
+  const openCreateModal = async () => {
+    setFormDate(selectedDate);
+    setSelectedCandidateId("");
+    setFormEntityId("");
+    setFormEntityType("");
+    setFormTitle("");
+    setShowModal(true);
+    setLoadingCandidates(true);
+    const res = await getScheduleCandidatesAction();
+    if (res.success && res.data) {
+      setCandidates(res.data);
+    }
+    setLoadingCandidates(false);
+  };
+
   const handleCreateSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormError("");
@@ -196,6 +223,8 @@ export function CubaScheduleCalendar({
       cohortLabel: formCohort || undefined,
       participantsCount: formParticipants,
       description: formDesc || undefined,
+      entityId: formEntityId || undefined,
+      entityType: formEntityType || undefined,
     };
 
     const res = await createScheduleEventAction(input);
@@ -207,6 +236,9 @@ export function CubaScheduleCalendar({
       setFormTitle("");
       setFormCohort("");
       setFormDesc("");
+      setSelectedCandidateId("");
+      setFormEntityId("");
+      setFormEntityType("");
       showToast(`Jadwal "${res.data.title}" berhasil ditambahkan!`);
     } else {
       setFormError(res.error || "Gagal menyimpan jadwal");
@@ -253,10 +285,7 @@ export function CubaScheduleCalendar({
           <button
             type="button"
             className="admin-button inline-flex items-center gap-2"
-            onClick={() => {
-              setFormDate(selectedDate);
-              setShowModal(true);
-            }}
+            onClick={openCreateModal}
           >
             <AdminIcon name="plus" className="h-4 w-4" />
             Jadwalkan konten
@@ -438,6 +467,16 @@ export function CubaScheduleCalendar({
                           {item.module} · {item.owner}
                           {item.cohortLabel ? ` · ${item.cohortLabel}` : ""}
                         </small>
+                        {item.executedAt && (
+                          <small className="block text-[9px] text-emerald-600 dark:text-emerald-400">
+                            Dieksekusi: {item.executedAt.slice(0, 16).replace("T", " ")}
+                          </small>
+                        )}
+                        {item.status === "failed" && item.failureReason && (
+                          <div className="mt-1 rounded border border-rose-200 bg-rose-50 px-2 py-0.5 text-[9px] text-rose-700 dark:border-rose-900 dark:bg-rose-950/40 dark:text-rose-300">
+                            Gagal: {item.failureReason}
+                          </div>
+                        )}
                         {item.hasConflict && (
                           <span className="mt-1 inline-flex items-center gap-1 text-[9px] font-bold text-yellow-700 dark:text-yellow-400">
                             <AdminIcon name="alert" className="h-3 w-3" /> Konflik slot waktu
@@ -451,34 +490,69 @@ export function CubaScheduleCalendar({
                           {item.statusLabel}
                         </span>
                         {item.status === "scheduled" && (
-                          <button
-                            type="button"
-                            className="rounded p-1 text-slate-400 hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950/40 dark:hover:text-rose-400"
-                            title="Batalkan jadwal"
-                            aria-label={`Batalkan jadwal ${item.title}`}
-                            disabled={busy}
-                            onClick={async (e) => {
-                              e.stopPropagation();
-                              if (!confirm(`Batalkan jadwal publikasi untuk "${item.title}"?`)) return;
-                              setBusy(true);
-                              const res = await cancelScheduleEventAction(item.id);
-                              setBusy(false);
-                              if (res.success) {
-                                setEvents((prev) =>
-                                  prev.map((ev) =>
-                                    ev.id === item.id
-                                      ? { ...ev, status: "cancelled", statusLabel: "Dibatalkan" }
-                                      : ev
-                                  )
-                                );
-                                showToast(`Jadwal "${item.title}" berhasil dibatalkan.`);
-                              } else {
-                                showToast(res.error || "Gagal membatalkan jadwal.");
-                              }
-                            }}
-                          >
-                            <AdminIcon name="x" className="h-3 w-3" />
-                          </button>
+                          <>
+                            <button
+                              type="button"
+                              className="rounded p-1 text-slate-400 hover:bg-sky-50 hover:text-sky-600 dark:hover:bg-sky-950/40 dark:hover:text-sky-400"
+                              title="Terbitkan sekarang"
+                              aria-label={`Terbitkan sekarang ${item.title}`}
+                              disabled={busy}
+                              onClick={async (e) => {
+                                e.stopPropagation();
+                                if (!confirm(`Terbitkan konten "${item.title}" sekarang tanpa menunggu jadwal?`)) return;
+                                setBusy(true);
+                                const res = await publishNowScheduleAction(item.id);
+                                setBusy(false);
+                                if (res.success && res.data) {
+                                  setEvents((prev) =>
+                                    prev.map((ev) =>
+                                      ev.id === item.id
+                                        ? {
+                                            ...ev,
+                                            status: "published",
+                                            statusLabel: "Terbit",
+                                            executedAt: res.data?.executedAt,
+                                          }
+                                        : ev
+                                    )
+                                  );
+                                  showToast(`Konten "${item.title}" berhasil dipublikasikan sekarang.`);
+                                } else {
+                                  showToast(res.error || "Gagal mempublikasikan konten sekarang.");
+                                }
+                              }}
+                            >
+                              <AdminIcon name="check" className="h-3 w-3" />
+                            </button>
+                            <button
+                              type="button"
+                              className="rounded p-1 text-slate-400 hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950/40 dark:hover:text-rose-400"
+                              title="Batalkan jadwal"
+                              aria-label={`Batalkan jadwal ${item.title}`}
+                              disabled={busy}
+                              onClick={async (e) => {
+                                e.stopPropagation();
+                                if (!confirm(`Batalkan jadwal publikasi untuk "${item.title}"?`)) return;
+                                setBusy(true);
+                                const res = await cancelScheduleEventAction(item.id);
+                                setBusy(false);
+                                if (res.success) {
+                                  setEvents((prev) =>
+                                    prev.map((ev) =>
+                                      ev.id === item.id
+                                        ? { ...ev, status: "cancelled", statusLabel: "Dibatalkan" }
+                                        : ev
+                                    )
+                                  );
+                                  showToast(`Jadwal "${item.title}" berhasil dibatalkan.`);
+                                } else {
+                                  showToast(res.error || "Gagal membatalkan jadwal.");
+                                }
+                              }}
+                            >
+                              <AdminIcon name="x" className="h-3 w-3" />
+                            </button>
+                          </>
                         )}
                       </div>
                     </li>
@@ -573,6 +647,44 @@ export function CubaScheduleCalendar({
             )}
 
             <form onSubmit={handleCreateSubmit} className="mt-5 space-y-4">
+              <div>
+                <label htmlFor="sched-candidate" className="admin-label">
+                  Pilih Draf / Materi Siap Terbit (Opsional)
+                </label>
+                <select
+                  id="sched-candidate"
+                  className="admin-input"
+                  disabled={loadingCandidates}
+                  value={selectedCandidateId}
+                  onChange={(e) => {
+                    const id = e.target.value;
+                    setSelectedCandidateId(id);
+                    if (!id) {
+                      setFormEntityId("");
+                      setFormEntityType("");
+                      return;
+                    }
+                    const cand = candidates.find((c) => c.id === id);
+                    if (cand) {
+                      setFormTitle(cand.title);
+                      setFormModule(cand.module);
+                      setFormEntityId(cand.id);
+                      setFormEntityType(cand.entity_type);
+                    }
+                  }}
+                >
+                  <option value="">-- Masukkan Manual / Agenda Umum --</option>
+                  {candidates.map((cand) => (
+                    <option key={cand.id} value={cand.id}>
+                      [{cand.module}] {cand.title} ({cand.status})
+                    </option>
+                  ))}
+                </select>
+                {loadingCandidates && (
+                  <p className="mt-1 text-[10px] text-slate-400">Memuat daftar draf materi...</p>
+                )}
+              </div>
+
               <div>
                 <label htmlFor="sched-title" className="admin-label">
                   Judul materi / cohort *

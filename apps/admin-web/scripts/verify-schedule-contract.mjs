@@ -26,6 +26,8 @@ for (const token of [
   "Jadwalkan Publikasi Konten",
   "Semua modul",
   "Asia/Jakarta",
+  "Pilih Draf / Materi Siap Terbit",
+  "Terbitkan sekarang",
 ]) {
   assert.ok(component.includes(token), `cuba-schedule-calendar.tsx missing: ${token}`);
 }
@@ -33,6 +35,8 @@ for (const token of [
 // 3. Action verification
 assert.match(action, /getScheduleEventsAction/);
 assert.match(action, /createScheduleEventAction/);
+assert.match(action, /publishNowScheduleAction/);
+assert.match(action, /getScheduleCandidatesAction/);
 assert.match(action, /hasConflict/);
 assert.match(action, /conflictDetails/);
 

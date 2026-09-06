@@ -3490,6 +3490,50 @@ paths:
         '401': { $ref: '#/components/responses/Unauthorized' }
         '403': { $ref: '#/components/responses/Forbidden' }
         '404': { $ref: '#/components/responses/NotFound' }
+  /admin/schedules/candidates:
+    get:
+      tags: [Admin, Schedule]
+      operationId: listAdminScheduleCandidates
+      summary: List draft and in-review content candidates available for scheduling
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: module
+          in: query
+          required: false
+          schema: { type: string, example: "all" }
+      responses:
+        '200':
+          description: List of content candidates
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items: { type: object }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+  /admin/schedules/{id}/publish-now:
+    post:
+      tags: [Admin, Schedule]
+      operationId: publishNowAdminSchedule
+      summary: Manually trigger immediate publication of a scheduled content item
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Schedule executed and published immediately
+          content:
+            application/json:
+              schema: { type: object }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
   /admin/rbac/roles:
     get:
       tags: [Admin, RBAC]

@@ -1,4 +1,4 @@
-﻿package main
+package main
 
 import (
 	"context"
@@ -88,6 +88,29 @@ func (p *CompositeEntityPublisher) PublishEntity(ctx context.Context, entityType
 
 	default:
 		return fmt.Errorf("unknown entity type for publication: %s", entityType)
+	}
+}
+
+func (p *CompositeEntityPublisher) SetEntityScheduled(ctx context.Context, entityType string, entityID string) error {
+	switch entityType {
+	case "knowledge":
+		query := `UPDATE knowledge_articles SET status = 'scheduled', updated_at = NOW() WHERE id = $1`
+		_, err := p.db.ExecContext(ctx, query, entityID)
+		return err
+	case "news":
+		query := `UPDATE news SET status = 'scheduled', updated_at = NOW() WHERE id = $1`
+		_, err := p.db.ExecContext(ctx, query, entityID)
+		return err
+	case "announcements":
+		query := `UPDATE announcements SET status = 'scheduled', updated_at = NOW() WHERE id = $1`
+		_, err := p.db.ExecContext(ctx, query, entityID)
+		return err
+	case "microlearning":
+		query := `UPDATE microlearning_items SET status = 'scheduled', updated_at = NOW() WHERE id = $1`
+		_, err := p.db.ExecContext(ctx, query, entityID)
+		return err
+	default:
+		return nil
 	}
 }
 
