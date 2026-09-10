@@ -14,12 +14,6 @@ import type {
 } from "@/types/content-versioning";
 import { emptySEOValue } from "@/components/seo/types";
 import { getAdminKnowledgeDetailAction, createKnowledgeRevisionAction } from "./knowledge";
-import {
-  updateNewsAction,
-  updateAnnouncementAction,
-  transitionNewsAction,
-  transitionAnnouncementAction,
-} from "./cms";
 
 const API_BASE = process.env.PORTAL_API_INTERNAL_URL || "http://api:8080";
 
@@ -312,29 +306,26 @@ export async function rollbackRevisionAction(
     }
 
     if (module === "news") {
-      if (currentRev && currentRev.status !== "draft") {
-        const transRes = await transitionNewsAction(articleId, "draft");
-        if (!transRes.success) {
-          return { success: false, error: transRes.error || "Gagal mengubah status berita ke draf sebelum pemulihan." };
-        }
-      }
-
-      const res = await updateNewsAction(articleId, {
-        title: targetRev.title,
-        slug: targetRev.title.toLowerCase().replace(/\s+/g, "-"),
-        excerpt: targetRev.summary || "",
-        body: targetRev.body,
-        expected_version: currentRev ? currentRev.revisionNo : 1,
-        seo: emptySEOValue(),
+      const accessToken = await getServerAccessToken();
+      const res = await fetch(`${API_BASE}/api/v1/admin/news/${articleId}/rollback`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({ target_revision_no: targetRevisionNo }),
       });
 
-      if (!res.success) {
-        return { success: false, error: res.error || "Gagal memulihkan versi berita." };
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        return { success: false, error: errData.detail || "Gagal memulihkan versi berita." };
       }
+
+      const updatedNews = await res.json();
 
       broadcastEditorialUpdate({
         id: articleId,
-        title: targetRev.title,
+        title: updatedNews.title || targetRev.title,
         module: "news",
         module_label: "Berita",
         action: "draft",
@@ -349,35 +340,32 @@ export async function rollbackRevisionAction(
 
       return {
         success: true,
+        newRevisionNo: updatedNews.version,
         message: `Berita berhasil dipulihkan ke versi #${targetRevisionNo}.`,
       };
     }
 
     if (module === "announcements") {
-      if (currentRev && currentRev.status !== "draft") {
-        const transRes = await transitionAnnouncementAction(articleId, "draft");
-        if (!transRes.success) {
-          return { success: false, error: transRes.error || "Gagal mengubah status pengumuman ke draf sebelum pemulihan." };
-        }
-      }
-
-      const res = await updateAnnouncementAction(articleId, {
-        title: targetRev.title,
-        slug: targetRev.title.toLowerCase().replace(/\s+/g, "-"),
-        body: targetRev.body,
-        start_at: null,
-        end_at: null,
-        expected_version: currentRev ? currentRev.revisionNo : 1,
-        seo: emptySEOValue(),
+      const accessToken = await getServerAccessToken();
+      const res = await fetch(`${API_BASE}/api/v1/admin/announcements/${articleId}/rollback`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({ target_revision_no: targetRevisionNo }),
       });
 
-      if (!res.success) {
-        return { success: false, error: res.error || "Gagal memulihkan versi pengumuman." };
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        return { success: false, error: errData.detail || "Gagal memulihkan versi pengumuman." };
       }
+
+      const updatedAnn = await res.json();
 
       broadcastEditorialUpdate({
         id: articleId,
-        title: targetRev.title,
+        title: updatedAnn.title || targetRev.title,
         module: "announcements",
         module_label: "Pengumuman",
         action: "draft",
@@ -392,6 +380,7 @@ export async function rollbackRevisionAction(
 
       return {
         success: true,
+        newRevisionNo: updatedAnn.version,
         message: `Pengumuman berhasil dipulihkan ke versi #${targetRevisionNo}.`,
       };
     }

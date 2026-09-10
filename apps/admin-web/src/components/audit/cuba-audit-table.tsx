@@ -61,6 +61,7 @@ export function CubaAuditTable({
 }: CubaAuditTableProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [moduleFilter, setModuleFilter] = useState("all");
   const [sortKey, setSortKey] = useState<string>("occurred_at");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
 
@@ -71,6 +72,12 @@ export function CubaAuditTable({
     if (statusFilter !== "all") {
       const filterUpper = statusFilter.toUpperCase();
       result = result.filter((item) => item.result.toUpperCase() === filterUpper);
+    }
+
+    // Module quick filter
+    if (moduleFilter !== "all") {
+      const modLower = moduleFilter.toLowerCase();
+      result = result.filter((item) => item.module.toLowerCase().includes(modLower));
     }
 
     // Live search query filter
@@ -106,7 +113,7 @@ export function CubaAuditTable({
     });
 
     return result;
-  }, [items, searchQuery, statusFilter, sortKey, sortDirection]);
+  }, [items, searchQuery, statusFilter, moduleFilter, sortKey, sortDirection]);
 
   const handleSortChange = (key: string) => {
     if (sortKey === key) {
@@ -116,6 +123,17 @@ export function CubaAuditTable({
       setSortDirection("asc");
     }
   };
+
+  const quickModules = [
+    { value: "all", label: "Semua" },
+    { value: "recommendations", label: "Rekomendasi" },
+    { value: "webinars", label: "Webinar" },
+    { value: "batch", label: "Batch" },
+    { value: "platform_config", label: "Konfigurasi" },
+    { value: "media", label: "Media" },
+    { value: "knowledge", label: "Pengetahuan" },
+    { value: "audit", label: "Audit" },
+  ];
 
   const headerActions = (
     <div className="flex items-center gap-2">
@@ -141,6 +159,25 @@ export function CubaAuditTable({
 
   return (
     <div className="space-y-3">
+      {/* Quick Module Filter Chips */}
+      <div className="flex flex-wrap items-center gap-1.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-4 py-2.5 shadow-sm">
+        <span className="text-xs font-bold text-slate-500 dark:text-slate-400 mr-1">Filter Cepat Modul:</span>
+        {quickModules.map((m) => (
+          <button
+            key={m.value}
+            type="button"
+            onClick={() => setModuleFilter(m.value)}
+            className={`rounded-lg px-2.5 py-1 text-xs font-bold transition ${
+              moduleFilter === m.value
+                ? "bg-sky-600 text-white shadow-sm"
+                : "bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+            }`}
+          >
+            {m.label}
+          </button>
+        ))}
+      </div>
+
       <AdminDataTable
         title="Catatan Audit Sistem"
         description="Audit trail tersanitasi dengan retention 365 hari. Maksimal 25 catatan per halaman dengan cursor deterministik."

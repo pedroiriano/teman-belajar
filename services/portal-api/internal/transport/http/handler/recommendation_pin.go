@@ -5,17 +5,30 @@ import (
 	"errors"
 	"net/http"
 	"strconv"
+	"time"
 
+	"github.com/google/uuid"
+
+	"teman-belajar-api/internal/domain/audit"
 	"teman-belajar-api/internal/domain/recommendationpin"
 	"teman-belajar-api/internal/transport/http/middleware"
 )
 
 type RecommendationPinHandler struct {
-	svc *recommendationpin.Service
+	svc       *recommendationpin.Service
+	auditRepo audit.Repository
 }
 
-func NewRecommendationPinHandler(svc *recommendationpin.Service) *RecommendationPinHandler {
-	return &RecommendationPinHandler{svc: svc}
+func NewRecommendationPinHandler(svc *recommendationpin.Service, auditRepo ...audit.Repository) *RecommendationPinHandler {
+	var repo audit.Repository
+	if len(auditRepo) > 0 {
+		repo = auditRepo[0]
+	}
+	return &RecommendationPinHandler{svc: svc, auditRepo: repo}
+}
+
+func (h *RecommendationPinHandler) SetAuditRepo(repo audit.Repository) {
+	h.auditRepo = repo
 }
 
 func (h *RecommendationPinHandler) List(w http.ResponseWriter, r *http.Request) {
@@ -53,7 +66,13 @@ func (h *RecommendationPinHandler) Create(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	actor := claims.Subject
+	actor := claims.PreferredUsername
+	if actor == "" {
+		actor = claims.Name
+	}
+	if actor == "" {
+		actor = claims.Subject
+	}
 	pin, err := h.svc.Create(r.Context(), req, actor)
 	if err != nil {
 		if errors.Is(err, recommendationpin.ErrInvalidInput) {
@@ -62,6 +81,24 @@ func (h *RecommendationPinHandler) Create(w http.ResponseWriter, r *http.Request
 		}
 		respondProblem(w, http.StatusInternalServerError, "Internal Server Error", "Unable to create recommendation pin")
 		return
+	}
+
+	if h.auditRepo != nil {
+		_ = h.auditRepo.CreateEvent(r.Context(), &audit.AuditEvent{
+			ID:          uuid.NewString(),
+			ActorUserID: actor,
+			Action:      "RECOMMENDATION_PIN_CREATED",
+			Module:      "recommendations",
+			TargetType:  req.TargetType,
+			TargetID:    pin.TargetID,
+			Result:      "SUCCESS",
+			Metadata: map[string]string{
+				"pin_id": pin.ID,
+				"title":  pin.Title,
+				"weight": strconv.Itoa(pin.Weight),
+			},
+			OccurredAt: time.Now().UTC(),
+		})
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -79,6 +116,28 @@ func (h *RecommendationPinHandler) Delete(w http.ResponseWriter, r *http.Request
 	if err := h.svc.Delete(r.Context(), id); err != nil {
 		respondProblem(w, http.StatusInternalServerError, "Internal Server Error", "Unable to delete recommendation pin")
 		return
+	}
+
+	claims, _ := r.Context().Value(middleware.ClaimsContextKey).(middleware.CustomClaims)
+	actor := claims.PreferredUsername
+	if actor == "" {
+		actor = claims.Name
+	}
+	if actor == "" {
+		actor = claims.Subject
+	}
+
+	if h.auditRepo != nil {
+		_ = h.auditRepo.CreateEvent(r.Context(), &audit.AuditEvent{
+			ID:          uuid.NewString(),
+			ActorUserID: actor,
+			Action:      "RECOMMENDATION_PIN_DELETED",
+			Module:      "recommendations",
+			TargetType:  "pin",
+			TargetID:    id,
+			Result:      "SUCCESS",
+			OccurredAt:  time.Now().UTC(),
+		})
 	}
 
 	w.WriteHeader(http.StatusNoContent)

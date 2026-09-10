@@ -1,8 +1,19 @@
-﻿package schedule
+package schedule
 
 import (
 	"time"
 )
+
+// ScheduleCandidate represents an unreleased draft or in-review item ready for scheduling.
+type ScheduleCandidate struct {
+	ID         string    `json:"id"`
+	Title      string    `json:"title"`
+	EntityType string    `json:"entity_type"`
+	Module     string    `json:"module"`
+	Status     string    `json:"status"`
+	UpdatedAt  time.Time `json:"updated_at"`
+	AuthorName string    `json:"author_name"`
+}
 
 // ScheduleEvent represents a scheduled publication entry in the database.
 type ScheduleEvent struct {

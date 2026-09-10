@@ -1,4 +1,4 @@
-﻿package schedule
+package schedule
 
 import (
 	"context"
@@ -10,6 +10,7 @@ type Repository interface {
 	List(ctx context.Context, month string, entityType string) ([]ScheduleEvent, error)
 	Create(ctx context.Context, event ScheduleEvent) (*ScheduleEvent, error)
 	GetByID(ctx context.Context, id string) (*ScheduleEvent, error)
+	GetCandidates(ctx context.Context, entityType string) ([]ScheduleCandidate, error)
 	GetPendingExecution(ctx context.Context, cutoff time.Time, limit int) ([]ScheduleEvent, error)
 	MarkExecuted(ctx context.Context, id string, executedAt time.Time) error
 	MarkFailed(ctx context.Context, id string, reason string) error

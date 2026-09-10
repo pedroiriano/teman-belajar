@@ -1,4 +1,4 @@
-﻿package handler
+package handler
 
 import (
 	"encoding/json"
@@ -80,3 +80,47 @@ func (h *ScheduleHandler) Cancel(w http.ResponseWriter, r *http.Request) {
 
 	respondJSON(w, http.StatusOK, map[string]string{"message": "Schedule cancelled successfully"})
 }
+
+// PublishNow handles POST /api/v1/admin/schedules/{id}/publish-now
+func (h *ScheduleHandler) PublishNow(w http.ResponseWriter, r *http.Request) {
+	id := r.PathValue("id")
+	if id == "" {
+		parts := strings.Split(strings.Trim(r.URL.Path, "/"), "/")
+		if len(parts) >= 4 {
+			id = parts[3]
+		}
+	}
+
+	if id == "" {
+		respondProblem(w, http.StatusBadRequest, "Bad Request", "Missing schedule ID")
+		return
+	}
+
+	event, err := h.svc.PublishNow(r.Context(), id)
+	if err != nil {
+		if errors.Is(err, schedule.ErrNotFound) {
+			respondProblem(w, http.StatusNotFound, "Not Found", "Schedule not found")
+			return
+		}
+		respondProblem(w, http.StatusInternalServerError, "Internal Error", err.Error())
+		return
+	}
+
+	respondJSON(w, http.StatusOK, event)
+}
+
+// Candidates handles GET /api/v1/admin/schedules/candidates
+func (h *ScheduleHandler) Candidates(w http.ResponseWriter, r *http.Request) {
+	module := strings.TrimSpace(r.URL.Query().Get("module"))
+
+	candidates, err := h.svc.GetCandidates(r.Context(), module)
+	if err != nil {
+		respondProblem(w, http.StatusInternalServerError, "Internal Error", "Failed to retrieve candidates")
+		return
+	}
+
+	respondJSON(w, http.StatusOK, map[string]interface{}{
+		"data": candidates,
+	})
+}
+

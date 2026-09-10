@@ -81,3 +81,59 @@ func TestWebinarMutationRequiresIdempotencyKey(t *testing.T) {
 		t.Fatalf("status=%d calls=%d", recorder.Code, provider.calls)
 	}
 }
+
+func TestWebinarHandler_AuditLogging(t *testing.T) {
+	provider := &webinarProviderStub{}
+	auditR := &mockAuditRepo{}
+	handler := NewWebinarHandler(webinar.NewService(provider, nil), auditR)
+
+	// Register
+	recorder := httptest.NewRecorder()
+	req := webinarRequest(http.MethodPost, "/api/v1/webinars/9/registrations", true)
+	req.SetPathValue("id", "9")
+	req.Header.Set("Idempotency-Key", "register:audit:01")
+	handler.Register(recorder, req)
+	if recorder.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", recorder.Code)
+	}
+	if len(auditR.events) != 1 {
+		t.Fatalf("expected 1 audit event, got %d", len(auditR.events))
+	}
+	if auditR.events[0].Action != "WEBINAR_REGISTERED" {
+		t.Errorf("expected WEBINAR_REGISTERED, got %s", auditR.events[0].Action)
+	}
+	if auditR.events[0].Module != "webinars" {
+		t.Errorf("expected module webinars, got %s", auditR.events[0].Module)
+	}
+
+	// Cancel
+	recCancel := httptest.NewRecorder()
+	reqCancel := webinarRequest(http.MethodDelete, "/api/v1/webinars/9/registrations", true)
+	reqCancel.SetPathValue("id", "9")
+	reqCancel.Header.Set("Idempotency-Key", "cancel:audit:01")
+	handler.Cancel(recCancel, reqCancel)
+	if recCancel.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", recCancel.Code)
+	}
+	if len(auditR.events) != 2 {
+		t.Fatalf("expected 2 audit events, got %d", len(auditR.events))
+	}
+	if auditR.events[1].Action != "WEBINAR_CANCELLED" {
+		t.Errorf("expected WEBINAR_CANCELLED, got %s", auditR.events[1].Action)
+	}
+
+	// Admin Get Detail
+	recAdmin := httptest.NewRecorder()
+	reqAdmin := webinarRequest(http.MethodGet, "/api/v1/admin/webinars/9", true)
+	reqAdmin.SetPathValue("id", "9")
+	handler.AdminGet(recAdmin, reqAdmin)
+	if recAdmin.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", recAdmin.Code)
+	}
+	if len(auditR.events) != 3 {
+		t.Fatalf("expected 3 audit events, got %d", len(auditR.events))
+	}
+	if auditR.events[2].Action != "WEBINAR_DETAIL_VIEWED" {
+		t.Errorf("expected WEBINAR_DETAIL_VIEWED, got %s", auditR.events[2].Action)
+	}
+}

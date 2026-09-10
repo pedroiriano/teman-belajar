@@ -155,6 +155,49 @@ func (s *Service) ListNewsRevisions(ctx context.Context, newsID string) ([]NewsR
 	return s.repo.ListNewsRevisions(ctx, newsID)
 }
 
+func (s *Service) RollbackNews(ctx context.Context, id string, targetRevNo int, userID *string) (*News, error) {
+	n, err := s.repo.GetNewsByID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	targetRev, err := s.repo.GetNewsRevision(ctx, id, targetRevNo)
+	if err != nil {
+		return nil, err
+	}
+
+	n.Title = targetRev.Title
+	n.Excerpt = targetRev.Excerpt
+	n.Body = targetRev.Body
+	n.Status = StatusDraft
+	n.UpdatedAt = time.Now().UTC()
+	n.UpdatedBy = userID
+
+	if err := n.Validate(); err != nil {
+		return nil, err
+	}
+
+	expectedVersion := n.Version
+	n.Version++
+	if err := s.repo.UpdateNews(ctx, n, expectedVersion); err != nil {
+		return nil, err
+	}
+
+	_ = s.repo.CreateNewsRevision(ctx, &NewsRevision{
+		ID:         uuid.NewString(),
+		NewsID:     n.ID,
+		RevisionNo: int(n.Version),
+		Title:      n.Title,
+		Excerpt:    n.Excerpt,
+		Body:       n.Body,
+		AuthorID:   userID,
+		CreatedAt:  n.UpdatedAt,
+	})
+
+	s.logCMSAudit(ctx, userID, "ROLLBACK_NEWS", "News", n.ID)
+	return n, nil
+}
+
 func (s *Service) GetAdminNewsByID(ctx context.Context, id string) (*News, error) {
 	return s.repo.GetNewsByID(ctx, id)
 }
@@ -369,6 +412,47 @@ func (s *Service) UpdateDraftAnnouncement(ctx context.Context, id, title, slug, 
 
 func (s *Service) ListAnnouncementRevisions(ctx context.Context, announcementID string) ([]AnnouncementRevision, error) {
 	return s.repo.ListAnnouncementRevisions(ctx, announcementID)
+}
+
+func (s *Service) RollbackAnnouncement(ctx context.Context, id string, targetRevNo int, userID *string) (*Announcement, error) {
+	a, err := s.repo.GetAnnouncementByID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	targetRev, err := s.repo.GetAnnouncementRevision(ctx, id, targetRevNo)
+	if err != nil {
+		return nil, err
+	}
+
+	a.Title = targetRev.Title
+	a.Body = targetRev.Body
+	a.Status = StatusDraft
+	a.UpdatedAt = time.Now().UTC()
+	a.UpdatedBy = userID
+
+	if err := a.Validate(); err != nil {
+		return nil, err
+	}
+
+	expectedVersion := a.Version
+	a.Version++
+	if err := s.repo.UpdateAnnouncement(ctx, a, expectedVersion); err != nil {
+		return nil, err
+	}
+
+	_ = s.repo.CreateAnnouncementRevision(ctx, &AnnouncementRevision{
+		ID:             uuid.NewString(),
+		AnnouncementID: a.ID,
+		RevisionNo:     int(a.Version),
+		Title:          a.Title,
+		Body:           a.Body,
+		AuthorID:       userID,
+		CreatedAt:      a.UpdatedAt,
+	})
+
+	s.logCMSAudit(ctx, userID, "ROLLBACK_ANNOUNCEMENT", "Announcement", a.ID)
+	return a, nil
 }
 
 func (s *Service) GetAdminAnnouncementByID(ctx context.Context, id string) (*Announcement, error) {

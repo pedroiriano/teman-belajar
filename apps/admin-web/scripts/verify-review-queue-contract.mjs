@@ -63,13 +63,31 @@ assert.match(nav, /\/dashboard\/review-queue/);
 assert.match(nav, /icon: "check"/);
 assert.match(nav, /"review-queue": "Antrean Peninjauan"/);
 
-// 7. No-Orange verification on all review queue files
+// 7. Review Notes Actions & Component verification
+const reviewNotesAction = read("src/app/actions/review-notes.ts");
+assert.match(reviewNotesAction, /getReviewNotesAction/);
+assert.match(reviewNotesAction, /createReviewNoteAction/);
+assert.match(reviewNotesAction, /notificationStreamHub/);
+assert.match(reviewNotesAction, /revalidatePath/);
+
+const reviewNotesCard = read("src/components/review-notes/cuba-review-notes-card.tsx");
+assert.match(reviewNotesCard, /export function CubaReviewNotesCard/);
+assert.match(reviewNotesCard, /data-cuba-component="review-notes-card"/);
+assert.match(reviewNotesCard, /Catatan Peninjauan & Editorial/);
+assert.match(reviewNotesCard, /actionBadges/);
+
+assert.match(component, /useRouter/);
+assert.match(component, /router\.refresh/);
+
+// 8. No-Orange verification on all review queue and feedback files
 for (const [name, content] of [
   ["page.tsx", page],
   ["cuba-review-queue.tsx", component],
   ["review-queue.ts (action)", action],
   ["route.ts (bff)", bffRoute],
   ["review-queue.ts (types)", types],
+  ["review-notes.ts (action)", reviewNotesAction],
+  ["cuba-review-notes-card.tsx", reviewNotesCard],
 ]) {
   assert.ok(
     !/\borange\b/i.test(content),
@@ -81,4 +99,4 @@ for (const [name, content] of [
   );
 }
 
-console.log("Dedicated Review Queue (/dashboard/review-queue) contract PASS");
+console.log("Dedicated Review Queue & Editorial Feedback Threading (/dashboard/review-queue) contract PASS");

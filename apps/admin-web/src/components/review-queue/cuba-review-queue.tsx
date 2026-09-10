@@ -2,6 +2,7 @@
 
 import { useMemo, useState, useTransition } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { AdminIcon } from "@/components/admin-icon";
 import { AdminDataTable } from "@/components/admin-data-table";
 import { AdminClientPagination } from "@/components/admin-pagination";
@@ -55,6 +56,7 @@ export function CubaReviewQueue({ initialItems, roles }: CubaReviewQueueProps) {
   const [notesForItem, setNotesForItem] = useState<ReviewNote[]>([]);
   const [isLoadingNotes, setIsLoadingNotes] = useState(false);
   const [isPending, startTransition] = useTransition();
+  const router = useRouter();
 
   // Multi-item selection state
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -181,6 +183,11 @@ export function CubaReviewQueue({ initialItems, roles }: CubaReviewQueueProps) {
     if (!confirmModal) return;
     const { item, targetStatus, notes } = confirmModal;
 
+    if (targetStatus === "draft" && !notes.trim()) {
+      setError("Wajib menyertakan catatan peninjau saat mengembalikan konten ke draf.");
+      return;
+    }
+
     startTransition(async () => {
       setError("");
       const result = await transitionReviewItemAction({
@@ -209,6 +216,7 @@ export function CubaReviewQueue({ initialItems, roles }: CubaReviewQueueProps) {
         `Berhasil: Konten "${item.title}" dipindahkan ke status ${targetLabel}.`
       );
       setConfirmModal(null);
+      router.refresh();
     });
   };
 
@@ -309,6 +317,9 @@ export function CubaReviewQueue({ initialItems, roles }: CubaReviewQueueProps) {
           )
         );
         setNotice(`${res.succeeded} konten berhasil diperbarui secara massal.`);
+        startTransition(() => {
+          router.refresh();
+        });
       }
     } catch (err: any) {
       setBulkResult({
@@ -932,8 +943,11 @@ export function CubaReviewQueue({ initialItems, roles }: CubaReviewQueueProps) {
               <button
                 type="button"
                 onClick={executeTransition}
-                disabled={isPending}
-                className="admin-button text-xs !min-h-9"
+                disabled={
+                  isPending ||
+                  (confirmModal.targetStatus === "draft" && !confirmModal.notes.trim())
+                }
+                className="admin-button text-xs !min-h-9 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isPending
                   ? "Memproses…"

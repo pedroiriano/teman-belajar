@@ -1,4 +1,4 @@
-﻿package schedule
+package schedule
 
 import (
 	"context"
@@ -25,6 +25,9 @@ func (m *mockRepo) GetByID(ctx context.Context, id string) (*ScheduleEvent, erro
 		}
 	}
 	return nil, ErrNotFound
+}
+func (m *mockRepo) GetCandidates(ctx context.Context, entityType string) ([]ScheduleCandidate, error) {
+	return nil, nil
 }
 func (m *mockRepo) GetPendingExecution(ctx context.Context, cutoff time.Time, limit int) ([]ScheduleEvent, error) {
 	var pending []ScheduleEvent

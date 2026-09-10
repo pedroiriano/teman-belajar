@@ -181,6 +181,7 @@ export function CubaRecommendationWorkspace({ initialPins }: CubaRecommendationW
                 <option value="knowledge">Pusat Pengetahuan</option>
                 <option value="microlearning">Pembelajaran Singkat</option>
                 <option value="course">Kursus Pelatihan</option>
+                <option value="learning_path">Jalur Belajar</option>
                 <option value="news">Berita Penting</option>
               </select>
             </div>
@@ -290,7 +291,7 @@ export function CubaRecommendationWorkspace({ initialPins }: CubaRecommendationW
             }}
             actions={
               <div className="flex flex-wrap gap-1.5">
-                {["all", "knowledge", "microlearning", "course", "news"].map((t) => (
+                {["all", "knowledge", "microlearning", "course", "learning_path", "news"].map((t) => (
                   <button
                     key={t}
                     type="button"
@@ -304,7 +305,7 @@ export function CubaRecommendationWorkspace({ initialPins }: CubaRecommendationW
                         : "bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300"
                     }`}
                   >
-                    {t === "all" ? "Semua" : t === "knowledge" ? "Pengetahuan" : t === "microlearning" ? "Mikro" : t === "course" ? "Kursus" : "Berita"}
+                    {t === "all" ? "Semua" : t === "knowledge" ? "Pengetahuan" : t === "microlearning" ? "Mikro" : t === "course" ? "Kursus" : t === "learning_path" ? "Jalur" : "Berita"}
                   </button>
                 ))}
               </div>

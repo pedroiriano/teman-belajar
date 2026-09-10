@@ -7,18 +7,34 @@ import (
 	"strings"
 	"time"
 
+	"github.com/google/uuid"
+
+	"teman-belajar-api/internal/domain/audit"
 	"teman-belajar-api/internal/domain/webinar"
 	"teman-belajar-api/internal/observability"
 	"teman-belajar-api/internal/transport/http/middleware"
 )
 
 type WebinarHandler struct {
-	service *webinar.Service
-	limiter *notificationActionLimiter
+	service   *webinar.Service
+	limiter   *notificationActionLimiter
+	auditRepo audit.Repository
 }
 
-func NewWebinarHandler(service *webinar.Service) *WebinarHandler {
-	return &WebinarHandler{service: service, limiter: newNotificationActionLimiter(20, time.Minute)}
+func NewWebinarHandler(service *webinar.Service, auditRepo ...audit.Repository) *WebinarHandler {
+	var repo audit.Repository
+	if len(auditRepo) > 0 {
+		repo = auditRepo[0]
+	}
+	return &WebinarHandler{
+		service:   service,
+		limiter:   newNotificationActionLimiter(20, time.Minute),
+		auditRepo: repo,
+	}
+}
+
+func (h *WebinarHandler) SetAuditRepo(repo audit.Repository) {
+	h.auditRepo = repo
 }
 
 func webinarIdentity(w http.ResponseWriter, r *http.Request) (webinar.Identity, bool) {
@@ -128,6 +144,27 @@ func (h *WebinarHandler) mutate(w http.ResponseWriter, r *http.Request, operatio
 		h.error(w, operation, err)
 		return
 	}
+
+	if h.auditRepo != nil {
+		action := "WEBINAR_REGISTERED"
+		if operation == "cancel" {
+			action = "WEBINAR_CANCELLED"
+		}
+		_ = h.auditRepo.CreateEvent(r.Context(), &audit.AuditEvent{
+			ID:          uuid.NewString(),
+			ActorUserID: identity.Subject,
+			Action:      action,
+			Module:      "webinars",
+			TargetType:  "webinar_session",
+			TargetID:    strconv.Itoa(id),
+			Result:      "SUCCESS",
+			Metadata: map[string]string{
+				"session_title": result.Title,
+			},
+			OccurredAt: time.Now().UTC(),
+		})
+	}
+
 	w.Header().Set("Cache-Control", "private, no-store")
 	observability.RecordWebinarAction(operation, "success")
 	respondJSON(w, http.StatusOK, result)
@@ -172,6 +209,23 @@ func (h *WebinarHandler) AdminGet(w http.ResponseWriter, r *http.Request) {
 		h.error(w, "admin_get", err)
 		return
 	}
+
+	if h.auditRepo != nil {
+		_ = h.auditRepo.CreateEvent(r.Context(), &audit.AuditEvent{
+			ID:          uuid.NewString(),
+			ActorUserID: identity.Subject,
+			Action:      "WEBINAR_DETAIL_VIEWED",
+			Module:      "webinars",
+			TargetType:  "webinar_session",
+			TargetID:    strconv.Itoa(id),
+			Result:      "SUCCESS",
+			Metadata: map[string]string{
+				"session_title": session.Title,
+			},
+			OccurredAt: time.Now().UTC(),
+		})
+	}
+
 	respondJSON(w, http.StatusOK, session)
 }
 

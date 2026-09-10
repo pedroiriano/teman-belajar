@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 	"strconv"
 	"time"
@@ -519,4 +520,106 @@ func (h *CMSHandler) ListAnnouncementRevisions(w http.ResponseWriter, r *http.Re
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(revisions) // #nosec G104
+}
+
+func (h *CMSHandler) RollbackNews(w http.ResponseWriter, r *http.Request) {
+	claims, ok := r.Context().Value(middleware.ClaimsContextKey).(middleware.CustomClaims)
+	if !ok {
+		respondProblem(w, http.StatusUnauthorized, "Unauthorized", "Missing claims")
+		return
+	}
+	if !hasAnyRole(claims.RealmAccess.Roles, "Portal Administrator", "Content Editor") {
+		respondProblem(w, http.StatusForbidden, "Forbidden", "Content Editor role required")
+		return
+	}
+
+	id := r.PathValue("id")
+	if id == "" {
+		respondProblem(w, http.StatusBadRequest, "Bad Request", "Missing ID")
+		return
+	}
+
+	var req struct {
+		TargetRevisionNo int `json:"target_revision_no"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		respondProblem(w, http.StatusUnprocessableEntity, "Validation Error", "Invalid JSON body")
+		return
+	}
+	if req.TargetRevisionNo < 1 {
+		respondProblem(w, http.StatusUnprocessableEntity, "Validation Error", "target_revision_no must be positive")
+		return
+	}
+
+	res, err := h.svc.RollbackNews(r.Context(), id, req.TargetRevisionNo, &claims.Subject)
+	if err != nil {
+		if errors.Is(err, cms.ErrNotFound) {
+			respondProblem(w, http.StatusNotFound, "Not Found", "News or target revision not found")
+			return
+		}
+		if errors.Is(err, cms.ErrConflict) {
+			respondProblem(w, http.StatusConflict, "Conflict", err.Error())
+			return
+		}
+		if errors.Is(err, cms.ErrValidationFailed) {
+			respondProblem(w, http.StatusUnprocessableEntity, "Validation Error", err.Error())
+			return
+		}
+		respondProblem(w, http.StatusInternalServerError, "Internal Server Error", err.Error())
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(res) // #nosec G104
+}
+
+func (h *CMSHandler) RollbackAnnouncement(w http.ResponseWriter, r *http.Request) {
+	claims, ok := r.Context().Value(middleware.ClaimsContextKey).(middleware.CustomClaims)
+	if !ok {
+		respondProblem(w, http.StatusUnauthorized, "Unauthorized", "Missing claims")
+		return
+	}
+	if !hasAnyRole(claims.RealmAccess.Roles, "Portal Administrator", "Content Editor") {
+		respondProblem(w, http.StatusForbidden, "Forbidden", "Content Editor role required")
+		return
+	}
+
+	id := r.PathValue("id")
+	if id == "" {
+		respondProblem(w, http.StatusBadRequest, "Bad Request", "Missing ID")
+		return
+	}
+
+	var req struct {
+		TargetRevisionNo int `json:"target_revision_no"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		respondProblem(w, http.StatusUnprocessableEntity, "Validation Error", "Invalid JSON body")
+		return
+	}
+	if req.TargetRevisionNo < 1 {
+		respondProblem(w, http.StatusUnprocessableEntity, "Validation Error", "target_revision_no must be positive")
+		return
+	}
+
+	res, err := h.svc.RollbackAnnouncement(r.Context(), id, req.TargetRevisionNo, &claims.Subject)
+	if err != nil {
+		if errors.Is(err, cms.ErrNotFound) {
+			respondProblem(w, http.StatusNotFound, "Not Found", "Announcement or target revision not found")
+			return
+		}
+		if errors.Is(err, cms.ErrConflict) {
+			respondProblem(w, http.StatusConflict, "Conflict", err.Error())
+			return
+		}
+		if errors.Is(err, cms.ErrValidationFailed) {
+			respondProblem(w, http.StatusUnprocessableEntity, "Validation Error", err.Error())
+			return
+		}
+		respondProblem(w, http.StatusInternalServerError, "Internal Server Error", err.Error())
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(res) // #nosec G104
 }

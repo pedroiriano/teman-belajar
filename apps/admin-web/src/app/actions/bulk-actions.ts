@@ -61,7 +61,7 @@ export async function executeBulkActionAction(
     approve: "approved",
     publish: "published",
     archive: "archived",
-    delete: "rejected",
+    delete: "draft",
   };
   const targetStatus = targetStatusMap[action] || "draft";
 

@@ -3490,6 +3490,50 @@ paths:
         '401': { $ref: '#/components/responses/Unauthorized' }
         '403': { $ref: '#/components/responses/Forbidden' }
         '404': { $ref: '#/components/responses/NotFound' }
+  /admin/schedules/candidates:
+    get:
+      tags: [Admin, Schedule]
+      operationId: listAdminScheduleCandidates
+      summary: List draft and in-review content candidates available for scheduling
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: module
+          in: query
+          required: false
+          schema: { type: string, example: "all" }
+      responses:
+        '200':
+          description: List of content candidates
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items: { type: object }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+  /admin/schedules/{id}/publish-now:
+    post:
+      tags: [Admin, Schedule]
+      operationId: publishNowAdminSchedule
+      summary: Manually trigger immediate publication of a scheduled content item
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Schedule executed and published immediately
+          content:
+            application/json:
+              schema: { type: object }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
   /admin/rbac/roles:
     get:
       tags: [Admin, RBAC]
@@ -3601,7 +3645,7 @@ paths:
         '404': { $ref: '#/components/responses/NotFound' }
   /admin/review-notes:
     post:
-      tags: [Admin, Review Queue]
+      tags: [Admin, Review Queue, Editorial]
       operationId: createAdminReviewNote
       summary: Create an editorial review feedback note
       security: [{ bearerAuth: [] }]
@@ -3610,27 +3654,20 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              required: [entity_type, entity_id, notes]
-              properties:
-                entity_type: { type: string }
-                entity_id: { type: string }
-                action: { type: string }
-                notes: { type: string }
-                reviewer_id: { type: string }
-                reviewer_name: { type: string }
+              $ref: '#/components/schemas/CreateReviewNoteRequest'
       responses:
         '201':
-          description: Review note recorded
+          description: Review note recorded successfully
           content:
             application/json:
-              schema: { type: object }
+              schema:
+                $ref: '#/components/schemas/ReviewNote'
         '400': { $ref: '#/components/responses/ValidationError' }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '403': { $ref: '#/components/responses/Forbidden' }
   /admin/review-notes/{entityType}/{entityId}:
     get:
-      tags: [Admin, Review Queue]
+      tags: [Admin, Review Queue, Editorial]
       operationId: listAdminReviewNotes
       summary: List review feedback notes for an entity
       security: [{ bearerAuth: [] }]
@@ -3639,21 +3676,28 @@ paths:
           in: path
           required: true
           schema: { type: string }
+          description: Content module or entity type (news, announcements, knowledge, faqs, training, microlearning, learning_paths)
         - name: entityId
           in: path
           required: true
           schema: { type: string }
+          description: Target content entity identifier
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 50
+            minimum: 1
+            maximum: 100
+          description: Maximum number of notes to retrieve
       responses:
         '200':
           description: List of review notes
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  data:
-                    type: array
-                    items: { type: object }
+                $ref: '#/components/schemas/ReviewNoteListResponse'
         '401': { $ref: '#/components/responses/Unauthorized' }
         '403': { $ref: '#/components/responses/Forbidden' }
   /admin/batch-transitions:
@@ -3667,39 +3711,14 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              required: [action, items]
-              properties:
-                action: { type: string, enum: [approve, publish, archive, delete, reject] }
-                items:
-                  type: array
-                  items:
-                    type: object
-                    required: [id, module]
-                    properties:
-                      id: { type: string }
-                      module: { type: string }
-                      title: { type: string }
-                notes: { type: string }
+              $ref: '#/components/schemas/BatchTransitionRequest'
       responses:
         '200':
           description: Aggregated batch operation outcome
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  total: { type: integer }
-                  succeeded: { type: integer }
-                  failed: { type: integer }
-                  errors:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        id: { type: string }
-                        title: { type: string }
-                        error: { type: string }
+                $ref: '#/components/schemas/BatchOperationResult'
         '400': { $ref: '#/components/responses/ValidationError' }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '403': { $ref: '#/components/responses/Forbidden' }
@@ -3721,9 +3740,38 @@ paths:
             application/json:
               schema:
                 type: array
-                items: { type: object }
+                items: { $ref: '#/components/schemas/NewsRevision' }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '403': { $ref: '#/components/responses/Forbidden' }
+  /admin/news/{id}/rollback:
+    post:
+      tags: [Admin, CMS]
+      operationId: rollbackNewsRevision
+      summary: Rollback news article to a previous revision
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RollbackRevisionRequest'
+      responses:
+        '200':
+          description: News rolled back successfully into draft
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/News'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/ConflictError' }
+        '422': { $ref: '#/components/responses/ValidationError' }
   /admin/announcements/{id}/revisions:
     get:
       tags: [Admin, CMS]
@@ -3742,9 +3790,38 @@ paths:
             application/json:
               schema:
                 type: array
-                items: { type: object }
+                items: { $ref: '#/components/schemas/AnnouncementRevision' }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '403': { $ref: '#/components/responses/Forbidden' }
+  /admin/announcements/{id}/rollback:
+    post:
+      tags: [Admin, CMS]
+      operationId: rollbackAnnouncementRevision
+      summary: Rollback announcement to a previous revision
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RollbackRevisionRequest'
+      responses:
+        '200':
+          description: Announcement rolled back successfully into draft
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Announcement'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/ConflictError' }
+        '422': { $ref: '#/components/responses/ValidationError' }
   /recommendations:
     get:
       tags: [Recommendations, Engagement]
@@ -4659,6 +4736,193 @@ components:
         start_at: { type: [string, 'null'], format: date-time }
         end_at: { type: [string, 'null'], format: date-time }
         expected_version: { type: integer, format: int64, minimum: 1 }
+    NewsRevision:
+      type: object
+      required:
+        - id
+        - news_id
+        - revision_no
+        - title
+        - body
+        - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        news_id:
+          type: string
+          format: uuid
+        revision_no:
+          type: integer
+        title:
+          type: string
+        excerpt:
+          type: string
+        body:
+          type: string
+        author_id:
+          type: [string, 'null']
+          format: uuid
+        created_at:
+          type: string
+          format: date-time
+    AnnouncementRevision:
+      type: object
+      required:
+        - id
+        - announcement_id
+        - revision_no
+        - title
+        - body
+        - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        announcement_id:
+          type: string
+          format: uuid
+        revision_no:
+          type: integer
+        title:
+          type: string
+        body:
+          type: string
+        author_id:
+          type: [string, 'null']
+          format: uuid
+        created_at:
+          type: string
+          format: date-time
+    RollbackRevisionRequest:
+      type: object
+      required:
+        - target_revision_no
+      properties:
+        target_revision_no:
+          type: integer
+          minimum: 1
+          description: Target revision number to rollback to
+    BatchItemRequest:
+      type: object
+      required:
+        - id
+        - module
+      properties:
+        id:
+          type: string
+        module:
+          type: string
+          enum: [knowledge, news, announcements, announcement, faqs, faq, training, training-programs, microlearning, learning-paths, learning_paths, review-queue]
+        title:
+          type: string
+    BatchTransitionRequest:
+      type: object
+      required:
+        - action
+        - items
+      properties:
+        action:
+          type: string
+          enum: [approve, publish, archive, delete, reject]
+        items:
+          type: array
+          minItems: 1
+          maxItems: 100
+          items:
+            $ref: '#/components/schemas/BatchItemRequest'
+        notes:
+          type: string
+    BatchItemError:
+      type: object
+      required:
+        - id
+        - title
+        - error
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        error:
+          type: string
+    BatchOperationResult:
+      type: object
+      required:
+        - total
+        - succeeded
+        - failed
+        - errors
+      properties:
+        total:
+          type: integer
+        succeeded:
+          type: integer
+        failed:
+          type: integer
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/BatchItemError'
+    ReviewNote:
+      type: object
+      required:
+        - id
+        - entity_type
+        - entity_id
+        - action
+        - notes
+        - reviewer_name
+        - created_at
+      properties:
+        id:
+          type: string
+        entity_type:
+          type: string
+        entity_id:
+          type: string
+        action:
+          type: string
+          enum: [request_changes, reject, approved, published, note]
+        notes:
+          type: string
+        reviewer_id:
+          type: [string, "null"]
+        reviewer_name:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+    ReviewNoteListResponse:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReviewNote'
+    CreateReviewNoteRequest:
+      type: object
+      required:
+        - entity_type
+        - entity_id
+        - notes
+      properties:
+        entity_type:
+          type: string
+        entity_id:
+          type: string
+        action:
+          type: string
+          enum: [request_changes, reject, approved, published, note]
+          default: request_changes
+        notes:
+          type: string
+        reviewer_id:
+          type: string
+        reviewer_name:
+          type: string
     FaqStatus:
       type: string
       enum: [draft, in_review, approved, published, archived]

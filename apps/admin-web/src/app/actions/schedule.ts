@@ -1,4 +1,4 @@
-﻿"use server";
+"use server";
 
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
@@ -98,6 +98,8 @@ export async function createScheduleEventAction(
         cohort_label: input.cohortLabel?.trim() || undefined,
         participants_count: input.participantsCount || 0,
         description: input.description?.trim() || undefined,
+        entity_id: input.entityId || undefined,
+        entity_type: input.entityType || undefined,
       }),
     });
 
@@ -143,3 +145,74 @@ export async function cancelScheduleEventAction(id: string): Promise<{ success: 
     return { success: false, error: "Gagal menghubungi layanan pembatalan jadwal" };
   }
 }
+
+/**
+ * Immediately publishes a scheduled event without waiting for the scheduled time.
+ */
+export async function publishNowScheduleAction(
+  id: string
+): Promise<{ success: boolean; data?: ScheduleEvent; error?: string }> {
+  const session = await getServerSession(authOptions);
+  const token = await getServerAccessToken();
+
+  if (!session || !token) {
+    return { success: false, error: "Unauthorized" };
+  }
+
+  try {
+    const res = await fetch(`${API_BASE}/api/v1/admin/schedules/${id}/publish-now`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      return { success: false, error: err.detail || err.title || "Gagal mempublikasikan jadwal sekarang" };
+    }
+
+    const data = await res.json();
+    return { success: true, data };
+  } catch {
+    return { success: false, error: "Gagal menghubungi layanan publikasi instan" };
+  }
+}
+
+/**
+ * Fetches eligible draft and in-review content candidates for scheduling.
+ */
+export async function getScheduleCandidatesAction(
+  module?: string
+): Promise<{ success: boolean; data?: import("@/types/schedule").ScheduleCandidate[]; error?: string }> {
+  const session = await getServerSession(authOptions);
+  const token = await getServerAccessToken();
+
+  if (!session || !token) {
+    return { success: false, error: "Unauthorized" };
+  }
+
+  const params = new URLSearchParams();
+  if (module && module !== "all") params.set("module", module);
+
+  try {
+    const res = await fetch(`${API_BASE}/api/v1/admin/schedules/candidates?${params.toString()}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      cache: "no-store",
+    });
+
+    if (!res.ok) {
+      return { success: false, error: "Gagal memuat kandidat konten" };
+    }
+
+    const payload = await res.json();
+    return { success: true, data: payload.data || [] };
+  } catch {
+    return { success: false, error: "Gagal menghubungi layanan kandidat jadwal" };
+  }
+}
+

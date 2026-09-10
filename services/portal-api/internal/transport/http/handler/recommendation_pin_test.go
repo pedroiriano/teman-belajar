@@ -85,3 +85,61 @@ func TestRecommendationPinHandler_ListCreateDelete(t *testing.T) {
 		t.Fatalf("expected 204, got %d", w3.Code)
 	}
 }
+
+func TestRecommendationPinHandler_AuditLogging(t *testing.T) {
+	repo := &mockRecPinRepo{}
+	auditR := &mockAuditRepo{}
+	svc := recommendationpin.NewService(repo)
+	h := NewRecommendationPinHandler(svc, auditR)
+
+	// Create
+	body, _ := json.Marshal(recommendationpin.CreatePinInput{
+		TargetType: "knowledge",
+		TargetID:   "art-2",
+		Title:      "Pengantar Audit",
+		Weight:     50,
+	})
+	req := httptest.NewRequest("POST", "/api/v1/admin/recommendations/pins", bytes.NewReader(body))
+	claims := middleware.CustomClaims{
+		Subject: "admin-2",
+		PreferredUsername: "admin_tester",
+		RealmAccess: middleware.RealmAccess{
+			Roles: []string{"Portal Administrator"},
+		},
+	}
+	ctx := context.WithValue(req.Context(), middleware.ClaimsContextKey, claims)
+	req = req.WithContext(ctx)
+
+	w1 := httptest.NewRecorder()
+	h.Create(w1, req)
+	if w1.Code != http.StatusCreated {
+		t.Fatalf("expected 201, got %d", w1.Code)
+	}
+
+	if len(auditR.events) != 1 {
+		t.Fatalf("expected 1 audit event, got %d", len(auditR.events))
+	}
+	if auditR.events[0].Action != "RECOMMENDATION_PIN_CREATED" {
+		t.Errorf("expected RECOMMENDATION_PIN_CREATED, got %s", auditR.events[0].Action)
+	}
+	if auditR.events[0].ActorUserID != "admin_tester" {
+		t.Errorf("expected admin_tester, got %s", auditR.events[0].ActorUserID)
+	}
+
+	// Delete
+	delReq := httptest.NewRequest("DELETE", "/api/v1/admin/recommendations/pins/pin-123", nil)
+	delReq = delReq.WithContext(ctx)
+	delReq.SetPathValue("id", "pin-123")
+	w2 := httptest.NewRecorder()
+	h.Delete(w2, delReq)
+	if w2.Code != http.StatusNoContent {
+		t.Fatalf("expected 204, got %d", w2.Code)
+	}
+
+	if len(auditR.events) != 2 {
+		t.Fatalf("expected 2 audit events, got %d", len(auditR.events))
+	}
+	if auditR.events[1].Action != "RECOMMENDATION_PIN_DELETED" {
+		t.Errorf("expected RECOMMENDATION_PIN_DELETED, got %s", auditR.events[1].Action)
+	}
+}

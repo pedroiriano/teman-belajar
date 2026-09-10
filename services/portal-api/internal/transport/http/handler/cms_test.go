@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 
@@ -88,12 +89,30 @@ func (m *mockCMSRepo) CreateNewsRevision(ctx context.Context, rev *cms.NewsRevis
 	m.newsRevs[rev.NewsID] = append(m.newsRevs[rev.NewsID], *rev)
 	return nil
 }
+func (m *mockCMSRepo) GetNewsRevision(ctx context.Context, newsID string, revNo int) (*cms.NewsRevision, error) {
+	for _, r := range m.newsRevs[newsID] {
+		if r.RevisionNo == revNo {
+			cp := r
+			return &cp, nil
+		}
+	}
+	return nil, cms.ErrNotFound
+}
 func (m *mockCMSRepo) ListNewsRevisions(ctx context.Context, newsID string) ([]cms.NewsRevision, error) {
 	return m.newsRevs[newsID], nil
 }
 func (m *mockCMSRepo) CreateAnnouncementRevision(ctx context.Context, rev *cms.AnnouncementRevision) error {
 	m.annRevs[rev.AnnouncementID] = append(m.annRevs[rev.AnnouncementID], *rev)
 	return nil
+}
+func (m *mockCMSRepo) GetAnnouncementRevision(ctx context.Context, announcementID string, revNo int) (*cms.AnnouncementRevision, error) {
+	for _, r := range m.annRevs[announcementID] {
+		if r.RevisionNo == revNo {
+			cp := r
+			return &cp, nil
+		}
+	}
+	return nil, cms.ErrNotFound
 }
 func (m *mockCMSRepo) ListAnnouncementRevisions(ctx context.Context, announcementID string) ([]cms.AnnouncementRevision, error) {
 	return m.annRevs[announcementID], nil
@@ -236,5 +255,133 @@ func TestCMSHandler_ListRevisions(t *testing.T) {
 	_ = json.Unmarshal(wAnn.Body.Bytes(), &annRevs)
 	if len(annRevs) != 1 {
 		t.Fatalf("expected 1 announcement revision, got %d", len(annRevs))
+	}
+}
+
+func TestCMSHandler_RollbackNews(t *testing.T) {
+	repo := newMockCMSRepo()
+	repo.news["news-123"] = &cms.News{
+		ID:        "news-123",
+		Slug:      "test-news",
+		Title:     "Version 2 Title",
+		Excerpt:   "Version 2 Excerpt",
+		Body:      "Version 2 Body",
+		Status:    cms.StatusDraft,
+		CreatedAt: time.Now(),
+		Version:   2,
+	}
+	repo.newsRevs["news-123"] = []cms.NewsRevision{
+		{ID: "rev-1", NewsID: "news-123", RevisionNo: 1, Title: "Original Title", Excerpt: "Original Excerpt", Body: "Original Body", CreatedAt: time.Now()},
+		{ID: "rev-2", NewsID: "news-123", RevisionNo: 2, Title: "Version 2 Title", Excerpt: "Version 2 Excerpt", Body: "Version 2 Body", CreatedAt: time.Now()},
+	}
+	svc := cms.NewService(repo, nil)
+	h := NewCMSHandler(svc, nil)
+
+	// 1. Unauthorized
+	reqUnauth := httptest.NewRequest("POST", "/api/v1/admin/news/news-123/rollback", strings.NewReader(`{"target_revision_no": 1}`))
+	wUnauth := httptest.NewRecorder()
+	h.RollbackNews(wUnauth, reqUnauth)
+	if wUnauth.Code != http.StatusUnauthorized {
+		t.Fatalf("expected 401, got %d", wUnauth.Code)
+	}
+
+	// 2. Forbidden
+	reqForbidden := httptest.NewRequest("POST", "/api/v1/admin/news/news-123/rollback", strings.NewReader(`{"target_revision_no": 1}`))
+	reqForbidden.SetPathValue("id", "news-123")
+	claimsLearner := middleware.CustomClaims{
+		Subject: "learner-1",
+		RealmAccess: middleware.RealmAccess{
+			Roles: []string{"Learner"},
+		},
+	}
+	ctxLearner := context.WithValue(reqForbidden.Context(), middleware.ClaimsContextKey, claimsLearner)
+	wForbidden := httptest.NewRecorder()
+	h.RollbackNews(wForbidden, reqForbidden.WithContext(ctxLearner))
+	if wForbidden.Code != http.StatusForbidden {
+		t.Fatalf("expected 403, got %d", wForbidden.Code)
+	}
+
+	// 3. Invalid target_revision_no
+	reqInvalid := httptest.NewRequest("POST", "/api/v1/admin/news/news-123/rollback", strings.NewReader(`{"target_revision_no": 0}`))
+	reqInvalid.SetPathValue("id", "news-123")
+	claimsEditor := middleware.CustomClaims{
+		Subject: "editor-1",
+		RealmAccess: middleware.RealmAccess{
+			Roles: []string{"Content Editor"},
+		},
+	}
+	ctxEditor := context.WithValue(reqInvalid.Context(), middleware.ClaimsContextKey, claimsEditor)
+	wInvalid := httptest.NewRecorder()
+	h.RollbackNews(wInvalid, reqInvalid.WithContext(ctxEditor))
+	if wInvalid.Code != http.StatusUnprocessableEntity {
+		t.Fatalf("expected 422 for target_revision_no <= 0, got %d", wInvalid.Code)
+	}
+
+	// 4. Target revision not found
+	reqMissing := httptest.NewRequest("POST", "/api/v1/admin/news/news-123/rollback", strings.NewReader(`{"target_revision_no": 99}`))
+	reqMissing.SetPathValue("id", "news-123")
+	wMissing := httptest.NewRecorder()
+	h.RollbackNews(wMissing, reqMissing.WithContext(ctxEditor))
+	if wMissing.Code != http.StatusNotFound {
+		t.Fatalf("expected 404 for missing target revision, got %d", wMissing.Code)
+	}
+
+	// 5. Success
+	reqSuccess := httptest.NewRequest("POST", "/api/v1/admin/news/news-123/rollback", strings.NewReader(`{"target_revision_no": 1}`))
+	reqSuccess.SetPathValue("id", "news-123")
+	wSuccess := httptest.NewRecorder()
+	h.RollbackNews(wSuccess, reqSuccess.WithContext(ctxEditor))
+	if wSuccess.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d: %s", wSuccess.Code, wSuccess.Body.String())
+	}
+	var res cms.News
+	_ = json.Unmarshal(wSuccess.Body.Bytes(), &res)
+	if res.Title != "Original Title" || res.Excerpt != "Original Excerpt" || res.Body != "Original Body" {
+		t.Fatalf("unexpected rolled back content: %+v", res)
+	}
+	if res.Version != 3 {
+		t.Fatalf("expected bumped version 3, got %d", res.Version)
+	}
+}
+
+func TestCMSHandler_RollbackAnnouncement(t *testing.T) {
+	repo := newMockCMSRepo()
+	repo.announcement["ann-123"] = &cms.Announcement{
+		ID:        "ann-123",
+		Slug:      "test-ann",
+		Title:     "Version 2 Ann Title",
+		Body:      "Version 2 Ann Body",
+		Status:    cms.StatusDraft,
+		CreatedAt: time.Now(),
+		Version:   2,
+	}
+	repo.annRevs["ann-123"] = []cms.AnnouncementRevision{
+		{ID: "arev-1", AnnouncementID: "ann-123", RevisionNo: 1, Title: "Original Ann Title", Body: "Original Ann Body", CreatedAt: time.Now()},
+		{ID: "arev-2", AnnouncementID: "ann-123", RevisionNo: 2, Title: "Version 2 Ann Title", Body: "Version 2 Ann Body", CreatedAt: time.Now()},
+	}
+	svc := cms.NewService(repo, nil)
+	h := NewCMSHandler(svc, nil)
+
+	claimsAdmin := middleware.CustomClaims{
+		Subject: "admin-1",
+		RealmAccess: middleware.RealmAccess{
+			Roles: []string{"Portal Administrator"},
+		},
+	}
+	reqSuccess := httptest.NewRequest("POST", "/api/v1/admin/announcements/ann-123/rollback", strings.NewReader(`{"target_revision_no": 1}`))
+	reqSuccess.SetPathValue("id", "ann-123")
+	ctxAdmin := context.WithValue(reqSuccess.Context(), middleware.ClaimsContextKey, claimsAdmin)
+	wSuccess := httptest.NewRecorder()
+	h.RollbackAnnouncement(wSuccess, reqSuccess.WithContext(ctxAdmin))
+	if wSuccess.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d: %s", wSuccess.Code, wSuccess.Body.String())
+	}
+	var res cms.Announcement
+	_ = json.Unmarshal(wSuccess.Body.Bytes(), &res)
+	if res.Title != "Original Ann Title" || res.Body != "Original Ann Body" {
+		t.Fatalf("unexpected rolled back announcement: %+v", res)
+	}
+	if res.Version != 3 {
+		t.Fatalf("expected bumped version 3, got %d", res.Version)
 	}
 }
