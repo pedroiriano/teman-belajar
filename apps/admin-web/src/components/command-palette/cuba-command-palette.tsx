@@ -1,6 +1,9 @@
 "use client";
 
-import { useState, useEffect, useMemo, useRef, useCallback } from "react";
+import { useState, useEffect, useMemo, useRef, useCallback, useSyncExternalStore } from "react";
+import { createPortal } from "react-dom";
+
+const emptySubscribe = () => () => {};
 import { useRouter } from "next/navigation";
 import { AdminIcon, type AdminIconName } from "@/components/admin-icon";
 import { navigationGroups, canAccessItem, type NavigationItem } from "@/lib/navigation";
@@ -148,6 +151,7 @@ export function CubaCommandPalette({
   onClose: controlledOnClose,
 }: CubaCommandPaletteProps) {
   const router = useRouter();
+  const mounted = useSyncExternalStore(emptySubscribe, () => true, () => false);
   const [internalIsOpen, setInternalIsOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [activeIndex, setActiveIndex] = useState(0);
@@ -229,13 +233,21 @@ export function CubaCommandPalette({
     };
   }, [isOpen, handleClose]);
 
-  // Focus input on open
+  // Focus input on open & scroll lock
   useEffect(() => {
     if (isOpen) {
+      const prevBody = document.body.style.overflow;
+      const prevHtml = document.documentElement.style.overflow;
+      document.body.style.overflow = "hidden";
+      document.documentElement.style.overflow = "hidden";
       const timer = setTimeout(() => {
         inputRef.current?.focus();
       }, 50);
-      return () => clearTimeout(timer);
+      return () => {
+        clearTimeout(timer);
+        document.body.style.overflow = prevBody;
+        document.documentElement.style.overflow = prevHtml;
+      };
     }
   }, [isOpen]);
 
@@ -333,12 +345,15 @@ export function CubaCommandPalette({
     }
   }, [activeIndex, filteredResults]);
 
-  if (!isOpen) return null;
+  if (!isOpen || !mounted) return null;
 
-  return (
+  return createPortal(
     <div
-      className="cuba-command-palette-backdrop fixed inset-0 z-50 flex items-start justify-center bg-slate-950/60 p-4 pt-[10vh] backdrop-blur-sm sm:pt-[12vh]"
+      className="cuba-command-palette-backdrop fixed inset-0 z-[100] flex items-start justify-center bg-slate-950/70 p-4 pt-[10vh] backdrop-blur-md overflow-y-auto sm:pt-[12vh] animate-in fade-in duration-150"
       onClick={handleClose}
+      onMouseDown={(e) => {
+        if (e.target === e.currentTarget) handleClose();
+      }}
       role="dialog"
       aria-modal="true"
       aria-label="Command Palette Global"
@@ -346,6 +361,7 @@ export function CubaCommandPalette({
       <div
         className="cuba-command-palette-card relative flex w-full max-w-2xl flex-col overflow-hidden rounded-[15px] border border-slate-200 bg-white shadow-2xl transition-all dark:border-slate-800 dark:bg-slate-900"
         onClick={(e) => e.stopPropagation()}
+        onMouseDown={(e) => e.stopPropagation()}
       >
         {/* Top Search Input Bar */}
         <div className="flex items-center border-b border-slate-200 px-4 py-3.5 dark:border-slate-800">
@@ -512,6 +528,7 @@ export function CubaCommandPalette({
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

@@ -1,7 +1,10 @@
 "use client";
 
-import { useId, useMemo, useState } from "react";
+import { useEffect, useId, useMemo, useState, useSyncExternalStore } from "react";
+import { createPortal } from "react-dom";
 import { AdminIcon } from "@/components/admin-icon";
+
+const emptySubscribe = () => () => {};
 import type { CreateScheduleInput, ScheduleCandidate, ScheduleEvent, ScheduleModule } from "@/types/schedule";
 import {
   createScheduleEventAction,
@@ -46,6 +49,27 @@ export function CubaScheduleCalendar({
   const [showModal, setShowModal] = useState<boolean>(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [busy, setBusy] = useState<boolean>(false);
+  const mounted = useSyncExternalStore(emptySubscribe, () => true, () => false);
+
+  useEffect(() => {
+    if (!showModal) return;
+    const prevBody = document.body.style.overflow;
+    const prevHtml = document.documentElement.style.overflow;
+    document.body.style.overflow = "hidden";
+    document.documentElement.style.overflow = "hidden";
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && !busy) {
+        e.preventDefault();
+        setShowModal(false);
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+      document.body.style.overflow = prevBody;
+      document.documentElement.style.overflow = prevHtml;
+    };
+  }, [showModal, busy]);
 
   // Candidate selection states
   const [candidates, setCandidates] = useState<ScheduleCandidate[]>([]);
@@ -616,14 +640,24 @@ export function CubaScheduleCalendar({
       </section>
 
       {/* Modal Dialog: Jadwalkan Konten Baru */}
-      {showModal && (
+      {showModal && mounted && createPortal(
         <div
           role="dialog"
           aria-modal="true"
           aria-labelledby={`${dialogId}-title`}
-          className="fixed inset-0 z-50 grid place-items-center bg-slate-950/60 p-4 backdrop-blur-sm animate-in fade-in duration-200"
+          className="fixed inset-0 z-[100] grid place-items-center bg-slate-950/70 p-4 backdrop-blur-md overflow-y-auto animate-in fade-in duration-200"
+          onClick={(e) => {
+            if (!busy && e.target === e.currentTarget) setShowModal(false);
+          }}
+          onMouseDown={(e) => {
+            if (!busy && e.target === e.currentTarget) setShowModal(false);
+          }}
         >
-          <div className="cuba-card max-h-[90vh] w-full max-w-lg overflow-y-auto p-6 shadow-2xl">
+          <div
+            className="cuba-card max-h-[90vh] w-full max-w-lg overflow-y-auto p-6 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+            onMouseDown={(e) => e.stopPropagation()}
+          >
             <div className="flex items-center justify-between border-b border-slate-100 pb-3 dark:border-slate-800">
               <div>
                 <p className="text-xs font-bold text-sky-600 dark:text-sky-400">Manajemen Rilis</p>
@@ -795,7 +829,8 @@ export function CubaScheduleCalendar({
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

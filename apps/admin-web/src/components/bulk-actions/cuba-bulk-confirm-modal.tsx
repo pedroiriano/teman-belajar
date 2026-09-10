@@ -1,6 +1,7 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useSyncExternalStore } from "react";
+import { createPortal } from "react-dom";
 import { AdminIcon } from "@/components/admin-icon";
 import {
   BULK_ACTION_CONFIGS,
@@ -9,6 +10,8 @@ import {
   type BulkOperationProgress,
   type BulkOperationResult,
 } from "@/types/bulk-actions";
+
+const emptySubscribe = () => () => {};
 
 interface CubaBulkConfirmModalProps {
   isOpen: boolean;
@@ -31,18 +34,50 @@ export function CubaBulkConfirmModal({
   onConfirm,
   onClose,
 }: CubaBulkConfirmModalProps) {
-  if (!isOpen || !action) return null;
+  const mounted = useSyncExternalStore(emptySubscribe, () => true, () => false);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const prevBody = document.body.style.overflow;
+    const prevHtml = document.documentElement.style.overflow;
+    document.body.style.overflow = "hidden";
+    document.documentElement.style.overflow = "hidden";
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && !isProcessing) {
+        e.preventDefault();
+        onClose();
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+      document.body.style.overflow = prevBody;
+      document.documentElement.style.overflow = prevHtml;
+    };
+  }, [isOpen, isProcessing, onClose]);
+
+  if (!isOpen || !action || !mounted) return null;
 
   const config = BULK_ACTION_CONFIGS[action];
 
-  return (
+  return createPortal(
     <div
       role="dialog"
       aria-modal="true"
       aria-labelledby="cuba-bulk-modal-title"
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200"
+      className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-md overflow-y-auto animate-in fade-in duration-200"
+      onClick={(e) => {
+        if (!isProcessing && e.target === e.currentTarget) onClose();
+      }}
+      onMouseDown={(e) => {
+        if (!isProcessing && e.target === e.currentTarget) onClose();
+      }}
     >
-      <div className="w-full max-w-lg rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xl overflow-hidden transition-all">
+      <div
+        className="w-full max-w-lg rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xl overflow-hidden transition-all"
+        onClick={(e) => e.stopPropagation()}
+        onMouseDown={(e) => e.stopPropagation()}
+      >
         {/* Modal Header */}
         <div className="border-b border-slate-100 dark:border-slate-800 p-5 flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -216,6 +251,7 @@ export function CubaBulkConfirmModal({
           )}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

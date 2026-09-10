@@ -1,7 +1,10 @@
 "use client";
 
-import { useEffect, useCallback } from "react";
+import { useEffect, useCallback, useSyncExternalStore } from "react";
+import { createPortal } from "react-dom";
 import { PortalIcon } from "@/components/portal-icon";
+
+const emptySubscribe = () => () => {};
 
 export interface LightboxItem {
   id: string;
@@ -26,6 +29,7 @@ export function MediaLightbox({
   currentIndex,
   onIndexChange,
 }: MediaLightboxProps) {
+  const mounted = useSyncExternalStore(emptySubscribe, () => true, () => false);
   const currentItem = items[currentIndex];
 
   const handlePrev = useCallback(() => {
@@ -52,24 +56,36 @@ export function MediaLightbox({
     };
 
     window.addEventListener("keydown", handleKeyDown);
-    const originalOverflow = document.body.style.overflow;
+    const originalBodyOverflow = document.body.style.overflow;
+    const originalHtmlOverflow = document.documentElement.style.overflow;
     document.body.style.overflow = "hidden";
+    document.documentElement.style.overflow = "hidden";
 
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
-      document.body.style.overflow = originalOverflow;
+      document.body.style.overflow = originalBodyOverflow;
+      document.documentElement.style.overflow = originalHtmlOverflow;
     };
   }, [isOpen, onClose, handlePrev, handleNext]);
 
-  if (!isOpen || !currentItem) return null;
+  if (!mounted || !isOpen || !currentItem) return null;
 
-  return (
+  return createPortal(
     <div
       role="dialog"
       aria-modal="true"
       aria-label={currentItem.title || "Pratinjau media"}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-sm p-4 sm:p-6 md:p-10 transition-opacity duration-300"
-      onClick={onClose}
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 backdrop-blur-md p-4 sm:p-6 md:p-10 transition-opacity duration-300"
+      onMouseDown={(e) => {
+        if (e.target === e.currentTarget) {
+          onClose();
+        }
+      }}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) {
+          onClose();
+        }
+      }}
     >
       {/* Close button */}
       <button
@@ -151,6 +167,7 @@ export function MediaLightbox({
           )}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

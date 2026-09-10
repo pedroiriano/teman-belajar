@@ -1,6 +1,9 @@
 "use client";
 
-import { useState, useTransition, useMemo } from "react";
+import { useEffect, useMemo, useState, useSyncExternalStore, useTransition } from "react";
+import { createPortal } from "react-dom";
+
+const emptySubscribe = () => () => {};
 import type {
   MoodleEventSummary,
   MoodleInboxEvent,
@@ -38,6 +41,27 @@ export function CubaMoodleEventsWorkspace({
   const [requeuingId, setRequeuingId] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<{ type: "success" | "error"; message: string } | null>(null);
   const [isPending, startTransition] = useTransition();
+  const mounted = useSyncExternalStore(emptySubscribe, () => true, () => false);
+
+  useEffect(() => {
+    if (!selectedEvent) return;
+    const prevBody = document.body.style.overflow;
+    const prevHtml = document.documentElement.style.overflow;
+    document.body.style.overflow = "hidden";
+    document.documentElement.style.overflow = "hidden";
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        setSelectedEvent(null);
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+      document.body.style.overflow = prevBody;
+      document.documentElement.style.overflow = prevHtml;
+    };
+  }, [selectedEvent]);
 
   const handleSortChange = (key: string) => {
     if (sortKey === key) {
@@ -432,9 +456,23 @@ export function CubaMoodleEventsWorkspace({
       </AdminDataTable>
 
       {/* Event Detail Modal */}
-      {selectedEvent && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-          <div className="admin-card w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden shadow-2xl">
+      {selectedEvent && mounted && createPortal(
+        <div
+          role="dialog"
+          aria-modal="true"
+          className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-md overflow-y-auto animate-in fade-in duration-150"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setSelectedEvent(null);
+          }}
+          onMouseDown={(e) => {
+            if (e.target === e.currentTarget) setSelectedEvent(null);
+          }}
+        >
+          <div
+            className="admin-card w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+            onMouseDown={(e) => e.stopPropagation()}
+          >
             {/* Modal Header */}
             <div className="px-5 py-4 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between bg-slate-50/50 dark:bg-slate-900/30">
               <div>
@@ -533,7 +571,8 @@ export function CubaMoodleEventsWorkspace({
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

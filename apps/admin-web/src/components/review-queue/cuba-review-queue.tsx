@@ -1,6 +1,9 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useSyncExternalStore, useTransition } from "react";
+import { createPortal } from "react-dom";
+
+const emptySubscribe = () => () => {};
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { AdminIcon } from "@/components/admin-icon";
@@ -57,6 +60,32 @@ export function CubaReviewQueue({ initialItems, roles }: CubaReviewQueueProps) {
   const [isLoadingNotes, setIsLoadingNotes] = useState(false);
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
+  const mounted = useSyncExternalStore(emptySubscribe, () => true, () => false);
+
+  useEffect(() => {
+    if (!confirmModal && !viewNotesItem) return;
+    const prevBody = document.body.style.overflow;
+    const prevHtml = document.documentElement.style.overflow;
+    document.body.style.overflow = "hidden";
+    document.documentElement.style.overflow = "hidden";
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        if (confirmModal && !isPending) {
+          e.preventDefault();
+          setConfirmModal(null);
+        } else if (viewNotesItem) {
+          e.preventDefault();
+          setViewNotesItem(null);
+        }
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+      document.body.style.overflow = prevBody;
+      document.documentElement.style.overflow = prevHtml;
+    };
+  }, [confirmModal, viewNotesItem, isPending]);
 
   // Multi-item selection state
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -797,13 +826,23 @@ export function CubaReviewQueue({ initialItems, roles }: CubaReviewQueueProps) {
       />
 
       {/* Cuba Workflow Confirmation Modal */}
-      {confirmModal && (
+      {confirmModal && mounted && createPortal(
         <div
           role="dialog"
           aria-modal="true"
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200"
+          className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-md overflow-y-auto animate-in fade-in duration-200"
+          onClick={(e) => {
+            if (!isPending && e.target === e.currentTarget) setConfirmModal(null);
+          }}
+          onMouseDown={(e) => {
+            if (!isPending && e.target === e.currentTarget) setConfirmModal(null);
+          }}
         >
-          <div className="w-full max-w-lg rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xl overflow-hidden">
+          <div
+            className="w-full max-w-lg rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xl overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+            onMouseDown={(e) => e.stopPropagation()}
+          >
             {/* Header Dialog */}
             <div className="border-b border-slate-100 dark:border-slate-800 p-5 flex items-center justify-between">
               <div className="flex items-center gap-3">
@@ -962,17 +1001,28 @@ export function CubaReviewQueue({ initialItems, roles }: CubaReviewQueueProps) {
 
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Cuba Quick Review Notes Modal Dialog */}
-      {viewNotesItem && (
+      {viewNotesItem && mounted && createPortal(
         <div
           role="dialog"
           aria-modal="true"
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200"
+          className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-md overflow-y-auto animate-in fade-in duration-200"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setViewNotesItem(null);
+          }}
+          onMouseDown={(e) => {
+            if (e.target === e.currentTarget) setViewNotesItem(null);
+          }}
         >
-          <div className="w-full max-w-2xl max-h-[85vh] rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xl flex flex-col overflow-hidden">
+          <div
+            className="w-full max-w-2xl max-h-[85vh] rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xl flex flex-col overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+            onMouseDown={(e) => e.stopPropagation()}
+          >
             {/* Header Dialog */}
             <div className="border-b border-slate-100 dark:border-slate-800 p-5 flex items-center justify-between shrink-0">
               <div className="flex items-center gap-3">
@@ -1034,7 +1084,8 @@ export function CubaReviewQueue({ initialItems, roles }: CubaReviewQueueProps) {
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Cuba Bulk Confirm Modal with Progress Indicator */}

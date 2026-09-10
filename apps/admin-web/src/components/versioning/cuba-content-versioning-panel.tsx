@@ -1,7 +1,10 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useSyncExternalStore } from "react";
+import { createPortal } from "react-dom";
 import { AdminIcon } from "@/components/admin-icon";
+
+const emptySubscribe = () => () => {};
 import {
   getContentRevisionsAction,
   getRevisionDiffAction,
@@ -37,8 +40,29 @@ export function CubaContentVersioningPanel({
   const [diffLoading, setDiffLoading] = useState(false);
 
   // Rollback confirmation dialog state
+  const mounted = useSyncExternalStore(emptySubscribe, () => true, () => false);
   const [rollbackTarget, setRollbackTarget] = useState<number | null>(null);
   const [rollbackLoading, setRollbackLoading] = useState(false);
+
+  useEffect(() => {
+    if (rollbackTarget === null) return;
+    const prevBody = document.body.style.overflow;
+    const prevHtml = document.documentElement.style.overflow;
+    document.body.style.overflow = "hidden";
+    document.documentElement.style.overflow = "hidden";
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && !rollbackLoading) {
+        e.preventDefault();
+        setRollbackTarget(null);
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+      document.body.style.overflow = prevBody;
+      document.documentElement.style.overflow = prevHtml;
+    };
+  }, [rollbackTarget, rollbackLoading]);
 
   // Load initial revisions
   const loadRevisions = async () => {
@@ -240,13 +264,23 @@ export function CubaContentVersioningPanel({
       </div>
 
       {/* Rollback Confirmation Modal */}
-      {rollbackTarget !== null && (
+      {rollbackTarget !== null && mounted && createPortal(
         <div
           role="dialog"
           aria-modal="true"
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm"
+          className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-md overflow-y-auto animate-in fade-in duration-200"
+          onClick={(e) => {
+            if (!rollbackLoading && e.target === e.currentTarget) setRollbackTarget(null);
+          }}
+          onMouseDown={(e) => {
+            if (!rollbackLoading && e.target === e.currentTarget) setRollbackTarget(null);
+          }}
         >
-          <div className="w-full max-w-md rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-2xl space-y-4">
+          <div
+            className="w-full max-w-md rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-2xl space-y-4"
+            onClick={(e) => e.stopPropagation()}
+            onMouseDown={(e) => e.stopPropagation()}
+          >
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-rose-600 text-white shadow-sm font-bold">
                 <AdminIcon name="refresh" className="h-5 w-5" />
@@ -286,7 +320,8 @@ export function CubaContentVersioningPanel({
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

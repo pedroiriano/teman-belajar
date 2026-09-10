@@ -1,6 +1,9 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
+import { createPortal } from "react-dom";
+
+const emptySubscribe = () => () => {};
 import type {
   AdminWebinarItem,
   AdminWebinarDetailItem,
@@ -49,6 +52,33 @@ export function CubaWebinarWorkspace({ initialWebinars }: CubaWebinarWorkspacePr
     capacity: 100,
     join_url: "",
   });
+
+  const mounted = useSyncExternalStore(emptySubscribe, () => true, () => false);
+
+  useEffect(() => {
+    if (!isCreateModalOpen && !selectedWebinar) return;
+    const prevBody = document.body.style.overflow;
+    const prevHtml = document.documentElement.style.overflow;
+    document.body.style.overflow = "hidden";
+    document.documentElement.style.overflow = "hidden";
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        if (isCreateModalOpen && !isSubmitting) {
+          e.preventDefault();
+          setIsCreateModalOpen(false);
+        } else if (selectedWebinar) {
+          e.preventDefault();
+          setSelectedWebinar(null);
+        }
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+      document.body.style.overflow = prevBody;
+      document.documentElement.style.overflow = prevHtml;
+    };
+  }, [isCreateModalOpen, selectedWebinar, isSubmitting]);
 
   const speakerOptions = useMemo(() => {
     const list = Array.from(new Set(webinars.map((w) => w.speaker).filter(Boolean)));
@@ -357,9 +387,23 @@ export function CubaWebinarWorkspace({ initialWebinars }: CubaWebinarWorkspacePr
       </AdminDataTable>
 
       {/* Create Webinar Modal */}
-      {isCreateModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
-          <div className="admin-card max-w-xl w-full p-6 space-y-4 shadow-xl max-h-[90vh] overflow-y-auto">
+      {isCreateModalOpen && mounted && createPortal(
+        <div
+          role="dialog"
+          aria-modal="true"
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/70 p-4 backdrop-blur-md overflow-y-auto animate-in fade-in duration-150"
+          onClick={(e) => {
+            if (!isSubmitting && e.target === e.currentTarget) setIsCreateModalOpen(false);
+          }}
+          onMouseDown={(e) => {
+            if (!isSubmitting && e.target === e.currentTarget) setIsCreateModalOpen(false);
+          }}
+        >
+          <div
+            className="admin-card max-w-xl w-full p-6 space-y-4 shadow-xl max-h-[90vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+            onMouseDown={(e) => e.stopPropagation()}
+          >
             <div className="flex items-start justify-between">
               <div>
                 <p className="admin-kicker">Jadwal Sesi Baru</p>
@@ -503,13 +547,28 @@ export function CubaWebinarWorkspace({ initialWebinars }: CubaWebinarWorkspacePr
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Enhanced Detail Modal */}
-      {selectedWebinar && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
-          <div className="admin-card max-w-xl w-full p-6 space-y-4 shadow-xl max-h-[90vh] overflow-y-auto">
+      {selectedWebinar && mounted && createPortal(
+        <div
+          role="dialog"
+          aria-modal="true"
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/70 p-4 backdrop-blur-md overflow-y-auto animate-in fade-in duration-150"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setSelectedWebinar(null);
+          }}
+          onMouseDown={(e) => {
+            if (e.target === e.currentTarget) setSelectedWebinar(null);
+          }}
+        >
+          <div
+            className="admin-card max-w-xl w-full p-6 space-y-4 shadow-xl max-h-[90vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+            onMouseDown={(e) => e.stopPropagation()}
+          >
             <div className="flex items-start justify-between">
               <div>
                 <span className="text-xs font-bold text-sky-600 dark:text-sky-400">
@@ -691,7 +750,8 @@ export function CubaWebinarWorkspace({ initialWebinars }: CubaWebinarWorkspacePr
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

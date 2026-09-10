@@ -1,9 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useSyncExternalStore } from "react";
+import { createPortal } from "react-dom";
 import { AdminIcon } from "@/components/admin-icon";
 import { RolePolicy } from "@/types/rbac";
 import { createCustomRoleAction } from "@/app/actions/rbac";
+
+const emptySubscribe = () => () => {};
 
 interface CubaCreateRoleModalProps {
   isOpen: boolean;
@@ -18,18 +21,39 @@ export function CubaCreateRoleModal({
   roles,
   onRoleCreated,
 }: CubaCreateRoleModalProps) {
+  const mounted = useSyncExternalStore(emptySubscribe, () => true, () => false);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [templateRoleId, setTemplateRoleId] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  if (!isOpen) return null;
+  useEffect(() => {
+    if (!isOpen) return;
+    const prevBody = document.body.style.overflow;
+    const prevHtml = document.documentElement.style.overflow;
+    document.body.style.overflow = "hidden";
+    document.documentElement.style.overflow = "hidden";
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && !isSubmitting) {
+        e.preventDefault();
+        onClose();
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+      document.body.style.overflow = prevBody;
+      document.documentElement.style.overflow = prevHtml;
+    };
+  }, [isOpen, isSubmitting, onClose]);
+
+  if (!isOpen || !mounted) return null;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) {
-      setError("Nama peran wajib diisi.");
+      setError("Nama Peran wajib diisi.");
       return;
     }
 
@@ -61,10 +85,15 @@ export function CubaCreateRoleModal({
     }
   };
 
-  return (
+  return createPortal(
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-4 backdrop-blur-sm animate-in fade-in duration-150"
-      onClick={onClose}
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/70 p-4 backdrop-blur-md overflow-y-auto animate-in fade-in duration-150"
+      onClick={(e) => {
+        if (!isSubmitting && e.target === e.currentTarget) onClose();
+      }}
+      onMouseDown={(e) => {
+        if (!isSubmitting && e.target === e.currentTarget) onClose();
+      }}
       role="dialog"
       aria-modal="true"
       aria-labelledby="create-role-title"
@@ -72,6 +101,7 @@ export function CubaCreateRoleModal({
       <div
         className="relative w-full max-w-lg overflow-hidden rounded-[15px] border border-slate-200 bg-white p-6 shadow-2xl dark:border-slate-800 dark:bg-slate-900"
         onClick={(e) => e.stopPropagation()}
+        onMouseDown={(e) => e.stopPropagation()}
       >
         {/* Header */}
         <div className="flex items-center justify-between border-b border-slate-100 pb-4 dark:border-slate-800">
@@ -181,6 +211,7 @@ export function CubaCreateRoleModal({
           </div>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
