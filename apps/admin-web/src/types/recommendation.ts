@@ -1,6 +1,6 @@
 export interface RecommendationPinItem {
   id: string;
-  target_type: "knowledge" | "microlearning" | "course" | "news";
+  target_type: "knowledge" | "microlearning" | "course" | "news" | "learning_path";
   target_id: string;
   title: string;
   pinned: boolean;
@@ -11,7 +11,7 @@ export interface RecommendationPinItem {
 }
 
 export interface CreateRecommendationPinInput {
-  target_type: "knowledge" | "microlearning" | "course" | "news";
+  target_type: "knowledge" | "microlearning" | "course" | "news" | "learning_path";
   target_id: string;
   title: string;
   weight: number;

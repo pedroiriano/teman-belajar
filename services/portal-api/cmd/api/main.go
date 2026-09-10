@@ -457,8 +457,6 @@ func main() {
 	mux.Handle("GET /api/v1/admin/microlearning/{id}", adminAuthMiddleware(http.HandlerFunc(microlearningHandler.AdminGet)))
 	mux.Handle("PATCH /api/v1/admin/microlearning/{id}", adminAuthMiddleware(http.HandlerFunc(microlearningHandler.AdminUpdate)))
 	mux.Handle("POST /api/v1/admin/microlearning/{id}/transition", adminAuthMiddleware(http.HandlerFunc(microlearningHandler.AdminTransition)))
-	mux.Handle("GET /api/v1/admin/webinars", adminAuthMiddleware(http.HandlerFunc(webinarHandler.AdminList)))
-	mux.Handle("GET /api/v1/admin/webinars/{id}", adminAuthMiddleware(http.HandlerFunc(webinarHandler.AdminGet)))
 
 	mux.HandleFunc("GET /api/v1/knowledge", knowledgeHandler.ListPublicArticles)
 	mux.HandleFunc("GET /api/v1/knowledge/tree", hierarchyHandler.PublicTree)

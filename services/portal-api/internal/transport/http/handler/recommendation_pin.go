@@ -53,7 +53,13 @@ func (h *RecommendationPinHandler) Create(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	actor := claims.Subject
+	actor := claims.PreferredUsername
+	if actor == "" {
+		actor = claims.Name
+	}
+	if actor == "" {
+		actor = claims.Subject
+	}
 	pin, err := h.svc.Create(r.Context(), req, actor)
 	if err != nil {
 		if errors.Is(err, recommendationpin.ErrInvalidInput) {
