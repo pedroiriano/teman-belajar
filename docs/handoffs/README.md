@@ -127,3 +127,10 @@ For Learning Paths, read `TASK-016-HANDOFF.md`, migration 024, its threat model,
 and operations runbook. Published versions and learner bindings are stable;
 source-owned progress retains provenance. TASK-015 Webinar remains optional and
 degraded at capacity 0, so TASK-016 is `IMPLEMENTED_BLOCKED_TASK015`.
+
+For the comprehensive Tahap 1 through Tahap 4 full expansion (Post-TASK-012/024
+closure), read `TAHAP-1-4-EXPANSION-CLOSURE-HANDOFF.md` and the formal release
+notes in `docs/releases/RELEASE-NOTES-TAHAP-1-4.md`. It consolidates persistent
+publication scheduling, revision history & diff viewing, batch transitions,
+review feedback threading, webinar management with fail-closed safety,
+recommendations 2.0 editorial pinning, and cross-platform audit logging.
