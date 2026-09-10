@@ -158,7 +158,7 @@ func main() {
 	microlearningHandler := handler.NewMicrolearningHandler(microlearningSvc)
 	notificationHandler := handler.NewNotificationHandler(notificationSvc)
 	webinarSvc := webinar.NewService(moodleClient, notificationSvc)
-	webinarHandler := handler.NewWebinarHandler(webinarSvc)
+	webinarHandler := handler.NewWebinarHandler(webinarSvc, auditRepo)
 	learningPathRepo := postgres.NewLearningPathRepository(db)
 	learningPathSources := learningpathapplication.NewSourceAdapter(moodleClient, knowledgeRepo, microlearningRepo, webinarSvc, engagementRepo, moodlePublicBaseURL)
 	learningPathSvc := learningpath.NewService(learningPathRepo, learningPathSources, auditRepo)
@@ -251,7 +251,7 @@ func main() {
 
 	recommendationPinRepo := postgres.NewRecommendationPinRepository(db)
 	recommendationPinSvc := recommendationpin.NewService(recommendationPinRepo)
-	recommendationPinHandler := handler.NewRecommendationPinHandler(recommendationPinSvc)
+	recommendationPinHandler := handler.NewRecommendationPinHandler(recommendationPinSvc, auditRepo)
 	engagementService.SetPinProvider(&recommendationPinAdapter{repo: recommendationPinRepo})
 
 	issuerURL := os.Getenv("KEYCLOAK_ISSUER_URL")

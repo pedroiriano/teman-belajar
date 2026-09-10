@@ -22,6 +22,7 @@ export const defaultPlatformConfiguration: PlatformConfiguration = {
     { label: "Pelatihan Penuh", description: "Program terstruktur melalui Moodle.", href: "/training-programs", visible: true },
     { label: "Pembelajaran Singkat", description: "Materi editorial 3–15 menit.", href: "/microlearning", visible: true },
     { label: "Jalur Belajar", description: "Rangkaian kompetensi yang terarah.", href: "/learning-paths", visible: true },
+    { label: "Galeri Media", description: "Foto dan video terkurasi.", href: "/media-gallery", visible: true },
     { label: "Pusat Pengetahuan", description: "Panduan terkurasi.", href: "/knowledge", visible: true },
   ],
   banner: { enabled: false, title: "", body: "", href: "" },
@@ -32,8 +33,12 @@ export const defaultPlatformConfiguration: PlatformConfiguration = {
     { key: "training_programs", label: "Pelatihan Penuh", visible: true },
     { key: "microlearning", label: "Pembelajaran Singkat", visible: true },
     { key: "learning_paths", label: "Jalur Belajar", visible: true },
+    { key: "media_gallery", label: "Galeri Media", visible: true },
     { key: "knowledge", label: "Pusat Pengetahuan", visible: true },
+    { key: "news", label: "Warta & Berita", visible: true },
+    { key: "announcements", label: "Pengumuman", visible: true },
     { key: "faq", label: "FAQ", visible: true },
+    { key: "search", label: "Pencarian Terpadu", visible: true },
   ],
 };
 
