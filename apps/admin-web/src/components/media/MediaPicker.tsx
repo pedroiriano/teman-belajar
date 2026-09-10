@@ -2,15 +2,19 @@
 
 /* eslint-disable @next/next/no-img-element -- authenticated BFF media previews have runtime MIME types */
 
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState, useSyncExternalStore } from "react";
+import { createPortal } from "react-dom";
 import { AdminIcon } from "@/components/admin-icon";
 import MediaUploadPanel from "./MediaUploadPanel";
 import type { MediaAsset, MediaPolicy, MediaSelection } from "./types";
+
+const emptySubscribe = () => () => {};
 
 type Props = { onSelect: (media: MediaSelection) => void; buttonLabel?: string; imageOnly?: boolean; videoOnly?: boolean };
 
 export default function MediaPicker({ onSelect, buttonLabel = "Pilih media", imageOnly = false, videoOnly = false }: Props) {
   const titleId = useId();
+  const mounted = useSyncExternalStore(emptySubscribe, () => true, () => false);
   const [isOpen, setIsOpen] = useState(false);
   const [tab, setTab] = useState<"library" | "upload">("library");
   const [media, setMedia] = useState<MediaAsset[]>([]);
@@ -43,8 +47,18 @@ export default function MediaPicker({ onSelect, buttonLabel = "Pilih media", ima
       if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
       else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
     };
-    document.body.style.overflow = "hidden"; window.addEventListener("keydown", onKeyDown);
-    return () => { cancelAnimationFrame(frame); window.removeEventListener("keydown", onKeyDown); document.body.style.overflow = ""; trigger?.focus(); };
+    const prevBodyOverflow = document.body.style.overflow;
+    const prevHtmlOverflow = document.documentElement.style.overflow;
+    document.body.style.overflow = "hidden";
+    document.documentElement.style.overflow = "hidden";
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener("keydown", onKeyDown);
+      document.body.style.overflow = prevBodyOverflow;
+      document.documentElement.style.overflow = prevHtmlOverflow;
+      trigger?.focus();
+    };
   }, [isOpen]);
 
   useEffect(() => {
@@ -79,23 +93,128 @@ export default function MediaPicker({ onSelect, buttonLabel = "Pilih media", ima
   const uploadComplete = (selection: MediaSelection) => { if ((imageOnly && !selection.detected_mime_type.startsWith("image/")) || (videoOnly && !selection.detected_mime_type.startsWith("video/"))) { setError(videoOnly ? "Pilih aset video MP4 atau WEBM." : "Pilih aset gambar."); setTab("library"); return; } onSelect(selection); setIsOpen(false); };
   const pages = Math.max(1, Math.ceil(total / 12));
 
-  return <>
-    <button ref={triggerRef} type="button" onClick={() => { setIsOpen(true); setSelected(null); setPage(1); setError(""); }} className="admin-button-secondary"><AdminIcon name="media" className="mr-2 h-4 w-4" />{buttonLabel}</button>
-    {isOpen && <div className="admin-modal-overlay" onMouseDown={(event) => { if (event.target === event.currentTarget) setIsOpen(false); }}>
-      <section ref={modalRef} className="admin-modal" role="dialog" aria-modal="true" aria-labelledby={titleId}>
-        <header className="flex items-center justify-between border-b p-5 sm:px-6"><div><p className="admin-kicker">Integrated Media Manager</p><h2 id={titleId} className="mt-1 text-xl font-black text-slate-900">Sisipkan media</h2></div><button ref={closeRef} type="button" onClick={() => setIsOpen(false)} className="admin-icon-button grid" aria-label="Tutup pengelola media"><AdminIcon name="close" className="h-5 w-5" /></button></header>
-        <div className="border-b px-5 pt-3 sm:px-6" role="tablist" aria-label="Sumber media"><button type="button" role="tab" aria-selected={tab === "library"} className={`admin-accent-control border-b-2 px-4 py-3 text-sm font-black ${tab === "library" ? "" : "!border-transparent !text-slate-500"}`} onClick={() => setTab("library")}>Pustaka Media</button><button type="button" role="tab" aria-selected={tab === "upload"} className={`admin-accent-control border-b-2 px-4 py-3 text-sm font-black ${tab === "upload" ? "" : "!border-transparent !text-slate-500"}`} onClick={() => setTab("upload")}>Unggah Baru</button></div>
-        <div className="flex-1 overflow-y-auto p-5 sm:p-6">
-          {error && <div className="admin-alert-error mb-4" role="alert">{error}</div>}
-          {tab === "upload" ? <MediaUploadPanel compact policy={policy} requireInsertionAlt onUploaded={uploadComplete} /> : <>
-            <div className={`mb-5 grid gap-3 ${restrictedKind ? "" : "sm:grid-cols-[1fr_180px]"}`}><div><label htmlFor={`${titleId}-search`} className="sr-only">Cari media</label><input id={`${titleId}-search`} className="admin-input" placeholder="Cari nama atau judul media…" value={query} onChange={(event) => { setQuery(event.target.value); setPage(1); }} /></div>{!restrictedKind && <div><label htmlFor={`${titleId}-kind`} className="sr-only">Jenis media</label><select id={`${titleId}-kind`} className="admin-input" value={kind} onChange={(event) => { setKind(event.target.value); setPage(1); }}><option value="all">Semua jenis</option><option value="image">Gambar</option><option value="video">Video</option><option value="document">Dokumen PDF</option></select></div>}</div>
-            {loading ? <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4" aria-label="Memuat media">{Array.from({ length: 8 }, (_, index) => <div key={index} className="aspect-square animate-pulse rounded-xl bg-slate-100" />)}</div> : media.length === 0 ? <div className="admin-empty"><h3 className="font-black text-slate-900">Media tidak ditemukan</h3><p className="mt-2 text-sm">Ubah pencarian atau unggah aset baru.</p></div> : <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">{media.map((asset) => <button key={asset.id} type="button" disabled={asset.status !== "active"} aria-pressed={selected?.id === asset.id} className="admin-accent-control group overflow-hidden rounded-xl border text-left transition focus-visible:outline focus-visible:outline-2" onClick={() => choose(asset)}><span className="flex aspect-square items-center justify-center overflow-hidden bg-slate-100">{asset.detected_mime_type.startsWith("image/") ? <img src={`/api/bff/media/${asset.id}/content`} alt="" className="h-full w-full object-cover transition group-hover:scale-105" /> : <span className="text-xs font-black text-slate-500">{asset.detected_mime_type.startsWith("video/") ? "VIDEO" : "PDF"}</span>}</span><span className="block truncate p-3 text-xs font-bold text-slate-700" title={asset.display_filename ?? asset.original_filename ?? "Media"}>{asset.display_filename ?? asset.original_filename ?? "Media"}</span></button>)}</div>}
-            <div className="mt-5 flex items-center justify-between"><p className="text-xs text-slate-500">{total} aset · halaman {page} dari {pages}</p><div className="flex gap-2"><button type="button" className="admin-button-secondary" disabled={page <= 1} onClick={() => setPage((value) => value - 1)}>Sebelumnya</button><button type="button" className="admin-button-secondary" disabled={page >= pages} onClick={() => setPage((value) => value + 1)}>Berikutnya</button></div></div>
-            {selected?.detected_mime_type.startsWith("image/") && <div className="mt-5 rounded-xl border p-4"><label className="admin-label" htmlFor={`${titleId}-alt`}>Teks alternatif untuk penyisipan</label><input id={`${titleId}-alt`} className="admin-input" value={altText} disabled={decorative} onChange={(event) => setAltText(event.target.value)} maxLength={255} /><label className="mt-3 flex items-center gap-2 text-sm font-bold text-slate-700"><input type="checkbox" checked={decorative} onChange={(event) => setDecorative(event.target.checked)} /> Dekoratif</label></div>}
-          </>}
-        </div>
-        <footer className="flex justify-end gap-2 border-t bg-slate-50 px-5 py-4"><button type="button" className="admin-button-secondary" onClick={() => setIsOpen(false)}>Batal</button>{tab === "library" && <button type="button" className="admin-button" disabled={!selected} onClick={confirm}>Sisipkan media</button>}</footer>
-      </section>
-    </div>}
-  </>;
+  return (
+    <>
+      <button ref={triggerRef} type="button" onClick={() => { setIsOpen(true); setSelected(null); setPage(1); setError(""); }} className="admin-button-secondary">
+        <AdminIcon name="media" className="mr-2 h-4 w-4" />
+        {buttonLabel}
+      </button>
+      {isOpen && mounted && createPortal(
+        <div
+          className="admin-modal-overlay z-[100] fixed inset-0 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-md overflow-y-auto animate-in fade-in duration-150"
+          onMouseDown={(event) => { if (event.target === event.currentTarget) setIsOpen(false); }}
+          onClick={(event) => { if (event.target === event.currentTarget) setIsOpen(false); }}
+        >
+          <section
+            ref={modalRef}
+            className="admin-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby={titleId}
+            onMouseDown={(e) => e.stopPropagation()}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <header className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 p-5 sm:px-6">
+              <div>
+                <p className="admin-kicker">Integrated Media Manager</p>
+                <h2 id={titleId} className="mt-1 text-xl font-black text-slate-900 dark:text-slate-100">Sisipkan media</h2>
+              </div>
+              <button ref={closeRef} type="button" onClick={() => setIsOpen(false)} className="admin-icon-button grid" aria-label="Tutup pengelola media">
+                <AdminIcon name="close" className="h-5 w-5" />
+              </button>
+            </header>
+            <div className="border-b border-slate-200 dark:border-slate-800 px-5 pt-3 sm:px-6" role="tablist" aria-label="Sumber media">
+              <button type="button" role="tab" aria-selected={tab === "library"} className={`admin-accent-control border-b-2 px-4 py-3 text-sm font-black ${tab === "library" ? "" : "!border-transparent !text-slate-500"}`} onClick={() => setTab("library")}>Pustaka Media</button>
+              <button type="button" role="tab" aria-selected={tab === "upload"} className={`admin-accent-control border-b-2 px-4 py-3 text-sm font-black ${tab === "upload" ? "" : "!border-transparent !text-slate-500"}`} onClick={() => setTab("upload")}>Unggah Baru</button>
+            </div>
+            <div className="flex-1 overflow-y-auto p-5 sm:p-6">
+              {error && <div className="admin-alert-error mb-4" role="alert">{error}</div>}
+              {tab === "upload" ? (
+                <MediaUploadPanel compact policy={policy} requireInsertionAlt onUploaded={uploadComplete} />
+              ) : (
+                <>
+                  <div className={`mb-5 grid gap-3 ${restrictedKind ? "" : "sm:grid-cols-[1fr_180px]"}`}>
+                    <div>
+                      <label htmlFor={`${titleId}-search`} className="sr-only">Cari media</label>
+                      <input id={`${titleId}-search`} className="admin-input" placeholder="Cari nama atau judul media…" value={query} onChange={(event) => { setQuery(event.target.value); setPage(1); }} />
+                    </div>
+                    {!restrictedKind && (
+                      <div>
+                        <label htmlFor={`${titleId}-kind`} className="sr-only">Jenis media</label>
+                        <select id={`${titleId}-kind`} className="admin-input" value={kind} onChange={(event) => { setKind(event.target.value); setPage(1); }}>
+                          <option value="all">Semua jenis</option>
+                          <option value="image">Gambar</option>
+                          <option value="video">Video</option>
+                          <option value="document">Dokumen PDF</option>
+                        </select>
+                      </div>
+                    )}
+                  </div>
+                  {loading ? (
+                    <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4" aria-label="Memuat media">
+                      {Array.from({ length: 8 }, (_, index) => (
+                        <div key={index} className="aspect-square animate-pulse rounded-xl bg-slate-100 dark:bg-slate-800" />
+                      ))}
+                    </div>
+                  ) : media.length === 0 ? (
+                    <div className="admin-empty">
+                      <h3 className="font-black text-slate-900 dark:text-slate-100">Media tidak ditemukan</h3>
+                      <p className="mt-2 text-sm">Ubah pencarian atau unggah aset baru.</p>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+                      {media.map((asset) => (
+                        <button
+                          key={asset.id}
+                          type="button"
+                          disabled={asset.status !== "active"}
+                          aria-pressed={selected?.id === asset.id}
+                          className="admin-accent-control group overflow-hidden rounded-xl border border-slate-200 dark:border-slate-800 text-left transition focus-visible:outline focus-visible:outline-2"
+                          onClick={() => choose(asset)}
+                        >
+                          <span className="flex aspect-square items-center justify-center overflow-hidden bg-slate-100 dark:bg-slate-800">
+                            {asset.detected_mime_type.startsWith("image/") ? (
+                              <img src={`/api/bff/media/${asset.id}/content`} alt="" className="h-full w-full object-cover transition group-hover:scale-105" />
+                            ) : (
+                              <span className="text-xs font-black text-slate-500">{asset.detected_mime_type.startsWith("video/") ? "VIDEO" : "PDF"}</span>
+                            )}
+                          </span>
+                          <span className="block truncate p-3 text-xs font-bold text-slate-700 dark:text-slate-300" title={asset.display_filename ?? asset.original_filename ?? "Media"}>
+                            {asset.display_filename ?? asset.original_filename ?? "Media"}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  <div className="mt-5 flex items-center justify-between">
+                    <p className="text-xs text-slate-500">{total} aset · halaman {page} dari {pages}</p>
+                    <div className="flex gap-2">
+                      <button type="button" className="admin-button-secondary" disabled={page <= 1} onClick={() => setPage((value) => value - 1)}>Sebelumnya</button>
+                      <button type="button" className="admin-button-secondary" disabled={page >= pages} onClick={() => setPage((value) => value + 1)}>Berikutnya</button>
+                    </div>
+                  </div>
+                  {selected?.detected_mime_type.startsWith("image/") && (
+                    <div className="mt-5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/40 p-4">
+                      <label className="admin-label" htmlFor={`${titleId}-alt`}>Teks alternatif untuk penyisipan</label>
+                      <input id={`${titleId}-alt`} className="admin-input" value={altText} disabled={decorative} onChange={(event) => setAltText(event.target.value)} maxLength={255} />
+                      <label className="mt-3 flex items-center gap-2 text-sm font-bold text-slate-700 dark:text-slate-300">
+                        <input type="checkbox" checked={decorative} onChange={(event) => setDecorative(event.target.checked)} /> Dekoratif
+                      </label>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+            <footer className="flex justify-end gap-2 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50 px-5 py-4">
+              <button type="button" className="admin-button-secondary" onClick={() => setIsOpen(false)}>Batal</button>
+              {tab === "library" && (
+                <button type="button" className="admin-button" disabled={!selected} onClick={confirm}>Sisipkan media</button>
+              )}
+            </footer>
+          </section>
+        </div>,
+        document.body
+      )}
+    </>
+  );
 }
