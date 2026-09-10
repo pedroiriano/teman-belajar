@@ -27,7 +27,7 @@ export function CubaDiffViewer({
   return (
     <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm overflow-hidden">
       {/* Diff Toolbar */}
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-850/60 p-4">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/80 p-4">
         <div className="flex items-center gap-3">
           <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-sky-600 text-white shadow-sm font-bold">
             <AdminIcon name="code" className="h-4 w-4" />
@@ -53,19 +53,19 @@ export function CubaDiffViewer({
             <span className="rounded-md bg-rose-50 dark:bg-rose-950/50 px-2 py-0.5 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800">
               -{removedCount} baris
             </span>
-            <span className="rounded-md bg-slate-100 dark:bg-slate-800 px-2 py-0.5 text-slate-600 dark:text-slate-400">
+            <span className="rounded-md bg-slate-100 dark:bg-slate-800 px-2 py-0.5 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
               {unchangedCount} sama
             </span>
           </div>
 
           {/* Toggle Switch */}
-          <div className="inline-flex rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 p-0.5">
+          <div className="inline-flex rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800/80 p-0.5">
             <button
               type="button"
               onClick={() => setViewMode("side-by-side")}
               className={`rounded-lg px-2.5 py-1 text-xs font-bold transition-colors ${
                 viewMode === "side-by-side"
-                  ? "bg-white dark:bg-slate-900 text-sky-600 dark:text-sky-400 shadow-sm"
+                  ? "bg-white dark:bg-slate-900 text-sky-600 dark:text-sky-400 shadow-sm border border-slate-200/60 dark:border-slate-700/60"
                   : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
               }`}
             >
@@ -76,7 +76,7 @@ export function CubaDiffViewer({
               onClick={() => setViewMode("unified")}
               className={`rounded-lg px-2.5 py-1 text-xs font-bold transition-colors ${
                 viewMode === "unified"
-                  ? "bg-white dark:bg-slate-900 text-sky-600 dark:text-sky-400 shadow-sm"
+                  ? "bg-white dark:bg-slate-900 text-sky-600 dark:text-sky-400 shadow-sm border border-slate-200/60 dark:border-slate-700/60"
                   : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
               }`}
             >
@@ -91,7 +91,7 @@ export function CubaDiffViewer({
         {viewMode === "side-by-side" ? (
           <table className="w-full border-collapse">
             <thead>
-              <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-100/70 dark:bg-slate-800/60 text-slate-500 dark:text-slate-400 text-left">
+              <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-100/80 dark:bg-slate-800/90 text-slate-700 dark:text-slate-300 text-left">
                 <th className="w-12 px-2 py-1.5 text-center font-normal">#</th>
                 <th className="w-1/2 px-3 py-1.5 font-bold">Revisi #{diffResult.baseRevisionNo} (Asal)</th>
                 <th className="w-12 px-2 py-1.5 text-center font-normal border-l border-slate-200 dark:border-slate-800">#</th>
@@ -105,25 +105,25 @@ export function CubaDiffViewer({
 
                 const leftBg =
                   leftType === "removed"
-                    ? "bg-rose-50/80 dark:bg-rose-950/30 text-rose-900 dark:text-rose-200"
+                    ? "bg-rose-50 dark:bg-rose-950/40 text-rose-900 dark:text-rose-200 border-l-2 border-rose-500"
                     : leftType === "empty"
-                    ? "bg-slate-100/30 dark:bg-slate-900/50"
+                    ? "bg-slate-100/40 dark:bg-slate-900/60"
                     : "text-slate-800 dark:text-slate-200";
 
                 const rightBg =
                   rightType === "added"
-                    ? "bg-emerald-50/80 dark:bg-emerald-950/30 text-emerald-900 dark:text-emerald-200"
+                    ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-900 dark:text-emerald-200 border-l-2 border-emerald-500"
                     : rightType === "empty"
-                    ? "bg-slate-100/30 dark:bg-slate-900/50"
+                    ? "bg-slate-100/40 dark:bg-slate-900/60"
                     : "text-slate-800 dark:text-slate-200";
 
                 return (
                   <tr
                     key={rIdx}
-                    className="border-b border-slate-100 dark:border-slate-850 hover:bg-slate-50/50 dark:hover:bg-slate-800/30"
+                    className="border-b border-slate-100 dark:border-slate-800/60 hover:bg-slate-50/50 dark:hover:bg-slate-800/40"
                   >
                     {/* Left Gutter */}
-                    <td className="select-none px-2 py-1 text-center text-slate-400 dark:text-slate-600 bg-slate-50/50 dark:bg-slate-900/50">
+                    <td className="select-none px-2 py-1 text-center text-slate-400 dark:text-slate-400 bg-slate-50/80 dark:bg-slate-900/80">
                       {row.left?.lineNo ?? ""}
                     </td>
                     {/* Left Content */}
@@ -141,7 +141,7 @@ export function CubaDiffViewer({
                     </td>
 
                     {/* Right Gutter */}
-                    <td className="select-none px-2 py-1 text-center text-slate-400 dark:text-slate-600 bg-slate-50/50 dark:bg-slate-900/50 border-l border-slate-200 dark:border-slate-800">
+                    <td className="select-none px-2 py-1 text-center text-slate-400 dark:text-slate-400 bg-slate-50/80 dark:bg-slate-900/80 border-l border-slate-200 dark:border-slate-800">
                       {row.right?.lineNo ?? ""}
                     </td>
                     {/* Right Content */}
@@ -166,7 +166,7 @@ export function CubaDiffViewer({
           /* Unified Diff View */
           <table className="w-full border-collapse">
             <thead>
-              <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-100/70 dark:bg-slate-800/60 text-slate-500 dark:text-slate-400 text-left">
+              <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-100/80 dark:bg-slate-800/90 text-slate-700 dark:text-slate-300 text-left">
                 <th className="w-12 px-2 py-1.5 text-center font-normal">L</th>
                 <th className="w-12 px-2 py-1.5 text-center font-normal">R</th>
                 <th className="px-3 py-1.5 font-bold">Baris Konten</th>
@@ -178,20 +178,20 @@ export function CubaDiffViewer({
                 const isRemoved = line.type === "removed";
 
                 const lineBg = isAdded
-                  ? "bg-emerald-50/80 dark:bg-emerald-950/30 text-emerald-900 dark:text-emerald-200"
+                  ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-900 dark:text-emerald-200 border-l-2 border-emerald-500"
                   : isRemoved
-                  ? "bg-rose-50/80 dark:bg-rose-950/30 text-rose-900 dark:text-rose-200"
+                  ? "bg-rose-50 dark:bg-rose-950/40 text-rose-900 dark:text-rose-200 border-l-2 border-rose-500"
                   : "text-slate-800 dark:text-slate-200";
 
                 return (
                   <tr
                     key={idx}
-                    className={`border-b border-slate-100 dark:border-slate-850 hover:bg-slate-50/50 dark:hover:bg-slate-800/30 ${lineBg}`}
+                    className={`border-b border-slate-100 dark:border-slate-800/60 hover:bg-slate-50/50 dark:hover:bg-slate-800/40 ${lineBg}`}
                   >
-                    <td className="select-none px-2 py-1 text-center text-slate-400 dark:text-slate-600 bg-slate-50/50 dark:bg-slate-900/50">
+                    <td className="select-none px-2 py-1 text-center text-slate-400 dark:text-slate-400 bg-slate-50/80 dark:bg-slate-900/80">
                       {line.leftLineNo ?? ""}
                     </td>
-                    <td className="select-none px-2 py-1 text-center text-slate-400 dark:text-slate-600 bg-slate-50/50 dark:bg-slate-900/50">
+                    <td className="select-none px-2 py-1 text-center text-slate-400 dark:text-slate-400 bg-slate-50/80 dark:bg-slate-900/80">
                       {line.rightLineNo ?? ""}
                     </td>
                     <td className="px-3 py-1 whitespace-pre-wrap break-all">

@@ -158,7 +158,7 @@ export function CubaContentVersioningPanel({
 
   if (loading) {
     return (
-      <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-12 text-center text-slate-500">
+      <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-12 text-center text-slate-500 dark:text-slate-400">
         <div className="inline-block h-6 w-6 animate-spin rounded-full border-2 border-sky-600 border-t-transparent mb-2" />
         <p className="text-xs font-semibold">Memuat riwayat revisi dan linimasa perubahan...</p>
       </div>
@@ -232,7 +232,7 @@ export function CubaContentVersioningPanel({
               compareRevisionTitle={`Revisi #${compareRevNo}`}
             />
           ) : (
-            <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-8 text-center text-slate-400">
+            <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-8 text-center text-slate-500 dark:text-slate-400">
               Pilih dua versi pada linimasa untuk melihat perbandingan perubahannya.
             </div>
           )}
@@ -244,7 +244,7 @@ export function CubaContentVersioningPanel({
         <div
           role="dialog"
           aria-modal="true"
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm"
         >
           <div className="w-full max-w-md rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-2xl space-y-4">
             <div className="flex items-center gap-3">
@@ -261,9 +261,9 @@ export function CubaContentVersioningPanel({
               </div>
             </div>
 
-            <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+            <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
               Tindakan ini akan membuat revisi draf baru dengan isi yang sama persis seperti
-              pada <strong>Revisi #{rollbackTarget}</strong>. Konten revisi yang ada saat ini
+              pada <strong className="font-bold text-slate-900 dark:text-white">Revisi #{rollbackTarget}</strong>. Konten revisi yang ada saat ini
               tetap tersimpan dalam riwayat dan tidak akan terhapus.
             </p>
 
@@ -272,7 +272,7 @@ export function CubaContentVersioningPanel({
                 type="button"
                 disabled={rollbackLoading}
                 onClick={() => setRollbackTarget(null)}
-                className="rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-4 py-2 text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
+                className="rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-4 py-2 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
               >
                 Batal
               </button>

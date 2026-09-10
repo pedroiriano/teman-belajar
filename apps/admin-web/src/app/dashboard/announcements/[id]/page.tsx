@@ -263,7 +263,7 @@ export default function AdminAnnouncementDetailPage() {
                   </>
                 ) : (
                   <>
-                    <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-850/50 p-4">
+                    <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50 p-4">
                       <div className="grid grid-cols-2 gap-4">
                         <div>
                           <span className="text-slate-500 dark:text-slate-400 block text-xs uppercase font-bold">Mulai</span>

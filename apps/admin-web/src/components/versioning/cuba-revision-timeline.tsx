@@ -35,20 +35,20 @@ export function CubaRevisionTimeline({
   return (
     <div className="space-y-4">
       {/* Revision Comparison Selection Bar */}
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-850/60 p-4">
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/80 p-4">
         <div className="flex items-center gap-2">
-          <AdminIcon name="filter" className="h-4 w-4 text-sky-600" />
-          <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
+          <AdminIcon name="filter" className="h-4 w-4 text-sky-500" />
+          <span className="text-xs font-bold text-slate-800 dark:text-slate-100">
             Pilih Versi untuk Dibandingkan:
           </span>
         </div>
         <div className="flex flex-wrap items-center gap-2 text-xs">
-          <label className="flex items-center gap-1.5 font-medium text-slate-600 dark:text-slate-400">
+          <label className="flex items-center gap-1.5 font-medium text-slate-600 dark:text-slate-300">
             <span>Dasar (Asal):</span>
             <select
               value={selectedBaseRev}
               onChange={(e) => onSelectBaseRev(Number(e.target.value))}
-              className="rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-2 py-1 font-bold text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-sky-500"
+              className="rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-2 py-1 font-bold text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-sky-500"
             >
               {revisions.map((rev) => (
                 <option key={`base-${rev.revisionNo}`} value={rev.revisionNo}>
@@ -58,14 +58,14 @@ export function CubaRevisionTimeline({
             </select>
           </label>
 
-          <span className="text-slate-400">&rarr;</span>
+          <span className="text-slate-400 dark:text-slate-500">&rarr;</span>
 
-          <label className="flex items-center gap-1.5 font-medium text-slate-600 dark:text-slate-400">
+          <label className="flex items-center gap-1.5 font-medium text-slate-600 dark:text-slate-300">
             <span>Tujuan:</span>
             <select
               value={selectedCompareRev}
               onChange={(e) => onSelectCompareRev(Number(e.target.value))}
-              className="rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-2 py-1 font-bold text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-sky-500"
+              className="rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-2 py-1 font-bold text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-sky-500"
             >
               {revisions.map((rev) => (
                 <option key={`comp-${rev.revisionNo}`} value={rev.revisionNo}>
@@ -123,12 +123,12 @@ export function CubaRevisionTimeline({
                         </span>
                       )}
                       {isBase && (
-                        <span className="rounded-md bg-slate-200 dark:bg-slate-800 px-2 py-0.5 text-[10px] font-bold text-slate-700 dark:text-slate-300">
+                        <span className="rounded-md bg-slate-200 dark:bg-slate-800 px-2 py-0.5 text-[10px] font-bold text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-700">
                           Dipilih sebagai Dasar
                         </span>
                       )}
                       {isCompare && (
-                        <span className="rounded-md bg-slate-200 dark:bg-slate-800 px-2 py-0.5 text-[10px] font-bold text-slate-700 dark:text-slate-300">
+                        <span className="rounded-md bg-slate-200 dark:bg-slate-800 px-2 py-0.5 text-[10px] font-bold text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-700">
                           Dipilih sebagai Tujuan
                         </span>
                       )}
@@ -150,7 +150,7 @@ export function CubaRevisionTimeline({
                     <button
                       type="button"
                       onClick={() => onSelectBaseRev(rev.revisionNo)}
-                      className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-2.5 py-1 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-750 transition-colors"
+                      className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-2.5 py-1 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
                       title="Tetapkan revisi ini sebagai versi pembanding dasar"
                     >
                       Bandingkan
@@ -171,7 +171,7 @@ export function CubaRevisionTimeline({
                 </div>
 
                 {/* Excerpt / Summary preview */}
-                <div className="mt-3 rounded-xl bg-slate-50 dark:bg-slate-850/50 p-2.5 text-xs text-slate-600 dark:text-slate-400 line-clamp-2 font-mono">
+                <div className="mt-3 rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700/80 p-2.5 text-xs text-slate-700 dark:text-slate-200 line-clamp-2 font-mono">
                   {rev.body.slice(0, 200)}...
                 </div>
               </div>
