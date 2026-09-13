@@ -30,6 +30,8 @@ for (const token of [
   "Pratinjau Data Laporan",
   "flex-wrap",
   "justify-center",
+  "AdminDataTable",
+  "responsiveCards",
 ]) {
   assert.ok(workspace.includes(token), `cuba-reports-workspace.tsx missing token: ${token}`);
 }

@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { AdminIcon } from "@/components/admin-icon";
+import { AdminDataTable, type ColumnHeader } from "@/components/admin-data-table";
 import type {
   ExecutiveReportData,
   LearnerReportItem,
@@ -25,7 +26,19 @@ export function CubaReportsWorkspace({ initialData }: CubaReportsWorkspaceProps)
   const [timeRange, setTimeRange] = useState("all");
   const [isExporting, setIsExporting] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const pageSize = 10;
+  const [pageSize, setPageSize] = useState(10);
+  const [sortKey, setSortKey] = useState<string>("");
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
+
+  const handleSortChange = (key: string) => {
+    if (sortKey === key) {
+      setSortDirection((prev) => (prev === "asc" ? "desc" : "asc"));
+    } else {
+      setSortKey(key);
+      setSortDirection("asc");
+    }
+    setCurrentPage(1);
+  };
 
   // Filtered Learners
   const filteredLearners = useMemo(() => {
@@ -411,12 +424,184 @@ export function CubaReportsWorkspace({ initialData }: CubaReportsWorkspaceProps)
     }
   };
 
+  // Sorted items
+  const sortedLearners = useMemo(() => {
+    if (!sortKey) return filteredLearners;
+    return [...filteredLearners].sort((a, b) => {
+      const aVal = (a as any)[sortKey] ?? "";
+      const bVal = (b as any)[sortKey] ?? "";
+      if (typeof aVal === "number" && typeof bVal === "number") {
+        return sortDirection === "asc" ? aVal - bVal : bVal - aVal;
+      }
+      return sortDirection === "asc"
+        ? String(aVal).localeCompare(String(bVal), "id-ID")
+        : String(bVal).localeCompare(String(aVal), "id-ID");
+    });
+  }, [filteredLearners, sortKey, sortDirection]);
+
+  const sortedCourses = useMemo(() => {
+    if (!sortKey) return filteredCourses;
+    return [...filteredCourses].sort((a, b) => {
+      const aVal = (a as any)[sortKey] ?? "";
+      const bVal = (b as any)[sortKey] ?? "";
+      if (typeof aVal === "number" && typeof bVal === "number") {
+        return sortDirection === "asc" ? aVal - bVal : bVal - aVal;
+      }
+      return sortDirection === "asc"
+        ? String(aVal).localeCompare(String(bVal), "id-ID")
+        : String(bVal).localeCompare(String(aVal), "id-ID");
+    });
+  }, [filteredCourses, sortKey, sortDirection]);
+
+  const sortedCertificates = useMemo(() => {
+    if (!sortKey) return filteredCertificates;
+    return [...filteredCertificates].sort((a, b) => {
+      const aVal = (a as any)[sortKey] ?? "";
+      const bVal = (b as any)[sortKey] ?? "";
+      return sortDirection === "asc"
+        ? String(aVal).localeCompare(String(bVal), "id-ID")
+        : String(bVal).localeCompare(String(aVal), "id-ID");
+    });
+  }, [filteredCertificates, sortKey, sortDirection]);
+
+  const sortedContent = useMemo(() => {
+    if (!sortKey) return filteredContent;
+    return [...filteredContent].sort((a, b) => {
+      const aVal = (a as any)[sortKey] ?? "";
+      const bVal = (b as any)[sortKey] ?? "";
+      if (typeof aVal === "number" && typeof bVal === "number") {
+        return sortDirection === "asc" ? aVal - bVal : bVal - aVal;
+      }
+      return sortDirection === "asc"
+        ? String(aVal).localeCompare(String(bVal), "id-ID")
+        : String(bVal).localeCompare(String(aVal), "id-ID");
+    });
+  }, [filteredContent, sortKey, sortDirection]);
+
+  const sortedAudit = useMemo(() => {
+    if (!sortKey) return filteredAudit;
+    return [...filteredAudit].sort((a, b) => {
+      const aVal = (a as any)[sortKey] ?? "";
+      const bVal = (b as any)[sortKey] ?? "";
+      return sortDirection === "asc"
+        ? String(aVal).localeCompare(String(bVal), "id-ID")
+        : String(bVal).localeCompare(String(aVal), "id-ID");
+    });
+  }, [filteredAudit, sortKey, sortDirection]);
+
   // Slice paginated items
-  const paginatedLearners = filteredLearners.slice((safePage - 1) * pageSize, safePage * pageSize);
-  const paginatedCourses = filteredCourses.slice((safePage - 1) * pageSize, safePage * pageSize);
-  const paginatedCertificates = filteredCertificates.slice((safePage - 1) * pageSize, safePage * pageSize);
-  const paginatedContent = filteredContent.slice((safePage - 1) * pageSize, safePage * pageSize);
-  const paginatedAudit = filteredAudit.slice((safePage - 1) * pageSize, safePage * pageSize);
+  const paginatedLearners = sortedLearners.slice((safePage - 1) * pageSize, safePage * pageSize);
+  const paginatedCourses = sortedCourses.slice((safePage - 1) * pageSize, safePage * pageSize);
+  const paginatedCertificates = sortedCertificates.slice((safePage - 1) * pageSize, safePage * pageSize);
+  const paginatedContent = sortedContent.slice((safePage - 1) * pageSize, safePage * pageSize);
+  const paginatedAudit = sortedAudit.slice((safePage - 1) * pageSize, safePage * pageSize);
+
+  const moduleConfig: Record<
+    ReportModule,
+    {
+      title: string;
+      description: string;
+      headers: (string | ColumnHeader)[];
+      statusOptions: { value: string; label: string }[];
+      searchPlaceholder: string;
+      emptyState: string;
+    }
+  > = {
+    learners: {
+      title: "Pratinjau Data Laporan — Rekap Pembelajar & Progres",
+      description: "Data capaian silabus, akun pengguna, kursus terdaftar, dan status kelulusan peserta.",
+      headers: [
+        { key: "name", label: "Nama Pembelajar", sortable: true },
+        { key: "email", label: "Email & Akun", sortable: true },
+        { key: "courseName", label: "Kursus Terdaftar", sortable: true },
+        { key: "progress", label: "Progres", sortable: true },
+        { key: "status", label: "Status", sortable: true },
+        { key: "completedAt", label: "Tgl Selesai", sortable: true },
+      ],
+      statusOptions: [
+        { value: "all", label: "Semua Status" },
+        { value: "completed", label: "Lulus (100%)" },
+        { value: "in_progress", label: "Sedang Belajar" },
+      ],
+      searchPlaceholder: "Cari nama, email, akun, kursus…",
+      emptyState: "Tidak ada data pembelajar yang cocok dengan kriteria pencarian atau filter.",
+    },
+    courses: {
+      title: "Pratinjau Data Laporan — Partisipasi Kursus Moodle",
+      description: "Katalog kursus aktif, akumulasi peserta terdaftar, dan rasio penyelesaian materi.",
+      headers: [
+        { key: "shortName", label: "ID / Kode", sortable: true },
+        { key: "fullName", label: "Nama Lengkap Kursus", sortable: true },
+        { key: "category", label: "Kategori", sortable: true },
+        { key: "totalEnrolled", label: "Peserta", align: "center", sortable: true },
+        { key: "completionRate", label: "Kelulusan", align: "center", sortable: true },
+        { key: "status", label: "Status" },
+      ],
+      statusOptions: [
+        { value: "all", label: "Semua Status" },
+        { value: "high_completion", label: "Kelulusan Tinggi (≥70%)" },
+        { value: "visible", label: "Tayang di Katalog" },
+      ],
+      searchPlaceholder: "Cari kode, nama kursus, kategori…",
+      emptyState: "Tidak ada data kursus yang cocok dengan kriteria pencarian atau filter.",
+    },
+    certificates: {
+      title: "Pratinjau Data Laporan — Sertifikat Kelulusan Resmi",
+      description: "Daftar sertifikat kelulusan mod_customcert resmi dengan kode unik verifikasi Moodle.",
+      headers: [
+        { key: "id", label: "ID Sertifikat", sortable: true },
+        { key: "recipientName", label: "Penerima & Email", sortable: true },
+        { key: "courseName", label: "Pelatihan Asal", sortable: true },
+        { key: "code", label: "Kode Unik Moodle", sortable: true },
+        { key: "issuedAt", label: "Tanggal Terbit", sortable: true },
+        { key: "status", label: "Status" },
+      ],
+      statusOptions: [
+        { value: "all", label: "Semua Status" },
+        { value: "verified", label: "Terverifikasi Sah" },
+      ],
+      searchPlaceholder: "Cari nama penerima, email, kode sertifikat, judul pelatihan…",
+      emptyState: "Tidak ada data sertifikat yang cocok dengan kriteria pencarian atau filter.",
+    },
+    content: {
+      title: "Pratinjau Data Laporan — Katalog Konten Editorial & Informasi",
+      description: "Rekapitulasi artikel pengetahuan, berita, pengumuman, dan FAQ publik.",
+      headers: [
+        { key: "type", label: "Tipe", sortable: true },
+        { key: "title", label: "Judul Konten", sortable: true },
+        { key: "author", label: "Penulis / Kurator", sortable: true },
+        { key: "category", label: "Kategori", sortable: true },
+        { key: "views", label: "Tayangan", align: "center", sortable: true },
+        { key: "status", label: "Status" },
+      ],
+      statusOptions: [
+        { value: "all", label: "Semua Status" },
+        { value: "published", label: "Terbit Resmi" },
+        { value: "draft", label: "Draf Redaksi" },
+      ],
+      searchPlaceholder: "Cari judul, penulis, kategori, tipe…",
+      emptyState: "Tidak ada konten yang cocok dengan kriteria pencarian atau filter.",
+    },
+    audit: {
+      title: "Pratinjau Data Laporan — Jejak Audit & Keamanan Sistem",
+      description: "Log aktivitas administratif, integritas data, dan keamanan akses platform.",
+      headers: [
+        { key: "timestamp", label: "Waktu Peristiwa", sortable: true },
+        { key: "actor", label: "Aktor Pengguna", sortable: true },
+        { key: "action", label: "Aksi / Event", sortable: true },
+        { key: "module", label: "Modul", sortable: true },
+        { key: "status", label: "Status" },
+        { key: "details", label: "Keterangan" },
+      ],
+      statusOptions: [
+        { value: "all", label: "Semua Status" },
+        { value: "success", label: "Berhasil" },
+        { value: "failed", label: "Gagal / Ditolak" },
+      ],
+      searchPlaceholder: "Cari aktor, event, modul, keterangan…",
+      emptyState: "Tidak ada catatan audit yang cocok dengan kriteria pencarian atau filter.",
+    },
+  };
 
   return (
     <div className="space-y-6">
@@ -538,83 +723,45 @@ export function CubaReportsWorkspace({ initialData }: CubaReportsWorkspaceProps)
         </nav>
       </div>
 
-      {/* 4. Filter & Search Controls */}
-      <div className="admin-card p-4 border border-slate-200 dark:border-slate-800 print:hidden">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="relative flex-1 max-w-md">
-            <AdminIcon
-              name="search"
-              className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400"
-            />
-            <input
-              type="text"
-              value={searchQuery}
+      {/* 4. Unified Cuba AdminDataTable Presentation */}
+      <AdminDataTable
+        title={moduleConfig[activeModule].title}
+        description={moduleConfig[activeModule].description}
+        itemCount={currentTotal}
+        headers={moduleConfig[activeModule].headers}
+        searchQuery={searchQuery}
+        onSearchChange={(q) => {
+          setSearchQuery(q);
+          setCurrentPage(1);
+        }}
+        searchPlaceholder={moduleConfig[activeModule].searchPlaceholder}
+        statusFilter={statusFilter}
+        statusOptions={moduleConfig[activeModule].statusOptions}
+        onStatusFilterChange={(s) => {
+          setStatusFilter(s);
+          setCurrentPage(1);
+        }}
+        sortKey={sortKey}
+        sortDirection={sortDirection}
+        onSortChange={handleSortChange}
+        actions={
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 sr-only sm:not-sr-only">Rentang:</span>
+            <select
+              value={timeRange}
               onChange={(e) => {
-                setSearchQuery(e.target.value);
+                setTimeRange(e.target.value);
                 setCurrentPage(1);
               }}
-              placeholder={`Cari dalam data ${activeModule}...`}
-              className="w-full rounded-xl border border-slate-200 bg-slate-50/50 dark:bg-slate-900/50 py-2 pl-10 pr-4 text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500 dark:border-slate-700"
-            />
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2">
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">Status:</span>
-              <select
-                value={statusFilter}
-                onChange={(e) => {
-                  setStatusFilter(e.target.value);
-                  setCurrentPage(1);
-                }}
-                className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-1.5 text-xs font-medium text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-sky-500"
-              >
-                <option value="all">Semua Status</option>
-                {activeModule === "learners" && (
-                  <>
-                    <option value="completed">Lulus (100%)</option>
-                    <option value="in_progress">Sedang Belajar</option>
-                  </>
-                )}
-                {activeModule === "courses" && (
-                  <>
-                    <option value="high_completion">Kelulusan Tinggi (&ge;70%)</option>
-                    <option value="visible">Tayang di Katalog</option>
-                  </>
-                )}
-                {activeModule === "certificates" && (
-                  <option value="verified">Terverifikasi Sah</option>
-                )}
-                {activeModule === "content" && (
-                  <>
-                    <option value="published">Terbit Resmi</option>
-                    <option value="draft">Draf Redaksi</option>
-                  </>
-                )}
-                {activeModule === "audit" && (
-                  <>
-                    <option value="success">Berhasil</option>
-                    <option value="failed">Gagal / Ditolak</option>
-                  </>
-                )}
-              </select>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">Rentang:</span>
-              <select
-                value={timeRange}
-                onChange={(e) => setTimeRange(e.target.value)}
-                className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-1.5 text-xs font-medium text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-sky-500"
-              >
-                <option value="all">Semua Waktu</option>
-                <option value="7_days">7 Hari Terakhir</option>
-                <option value="30_days">30 Hari Terakhir</option>
-                <option value="90_days">90 Hari Terakhir</option>
-                <option value="1_year">1 Tahun Terakhir</option>
-              </select>
-            </div>
-
+              className="admin-input !h-9 !w-auto !py-1 text-xs"
+              aria-label="Filter rentang waktu"
+            >
+              <option value="all">Semua Waktu</option>
+              <option value="7_days">7 Hari Terakhir</option>
+              <option value="30_days">30 Hari Terakhir</option>
+              <option value="90_days">90 Hari Terakhir</option>
+              <option value="1_year">1 Tahun Terakhir</option>
+            </select>
             {(searchQuery || statusFilter !== "all" || timeRange !== "all") && (
               <button
                 type="button"
@@ -622,326 +769,195 @@ export function CubaReportsWorkspace({ initialData }: CubaReportsWorkspaceProps)
                   setSearchQuery("");
                   setStatusFilter("all");
                   setTimeRange("all");
+                  setSortKey("");
                   setCurrentPage(1);
                 }}
-                className="text-xs text-sky-600 dark:text-sky-400 hover:underline px-2 py-1"
+                className="text-xs font-semibold text-sky-600 dark:text-sky-400 hover:underline px-2 py-1 whitespace-nowrap"
               >
                 Reset Filter
               </button>
             )}
           </div>
-        </div>
-      </div>
-
-      {/* 5. Live Data Preview Table */}
-      <div className="admin-card overflow-hidden border border-slate-200 dark:border-slate-800 shadow-sm">
-        <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4 dark:border-slate-800">
-          <div>
-            <h3 className="text-sm font-bold text-slate-900 dark:text-white">
-              Pratinjau Data Laporan ({currentTotal} Baris Ditemukan)
-            </h3>
-            <p className="mt-0.5 text-xs text-slate-400 dark:text-slate-500">
-              Data yang tampil di bawah ini adalah data yang akan disertakan dalam file unduhan ekspor.
-            </p>
-          </div>
-          <div className="text-xs font-medium text-slate-500 dark:text-slate-400">
-            Halaman {safePage} dari {totalPages}
-          </div>
-        </div>
-
-        <div className="overflow-x-auto">
-          {/* Module 1: Learners Table */}
-          {activeModule === "learners" && (
-            <table className="w-full text-left text-xs">
-              <thead className="border-b border-slate-200 bg-slate-50 font-bold uppercase tracking-wider text-slate-500 dark:border-slate-800 dark:bg-slate-900/60 dark:text-slate-400">
-                <tr>
-                  <th className="px-6 py-3.5">Nama Pembelajar</th>
-                  <th className="px-6 py-3.5">Email & Akun</th>
-                  <th className="px-6 py-3.5">Kursus Terdaftar</th>
-                  <th className="px-6 py-3.5">Progres</th>
-                  <th className="px-6 py-3.5">Status</th>
-                  <th className="px-6 py-3.5">Tgl Selesai</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60">
-                {paginatedLearners.length > 0 ? (
-                  paginatedLearners.map((row) => (
-                    <tr key={row.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition-colors">
-                      <td className="px-6 py-4 font-bold text-slate-900 dark:text-white">{row.name}</td>
-                      <td className="px-6 py-4 text-slate-500 dark:text-slate-400">
-                        <div>{row.email}</div>
-                        <div className="text-[11px] text-slate-400 dark:text-slate-500">@{row.username}</div>
-                      </td>
-                      <td className="px-6 py-4 text-slate-700 dark:text-slate-300 max-w-xs truncate" title={row.courseName}>
-                        {row.courseName}
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-2">
-                          <div className="h-2 w-20 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
-                            <div
-                              className={`h-full ${row.progress === 100 ? "bg-emerald-500" : "bg-sky-500"}`}
-                              style={{ width: `${row.progress}%` }}
-                            />
-                          </div>
-                          <span className="font-semibold text-slate-700 dark:text-slate-300">{row.progress}%</span>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <span
-                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold ${
-                            row.status === "Lulus"
-                              ? "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800"
-                              : "bg-sky-50 dark:bg-sky-950/60 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-800"
-                          }`}
-                        >
-                          {row.status}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 text-slate-500 dark:text-slate-400">
-                        {row.completedAt || "-"}
-                      </td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan={6} className="px-6 py-8 text-center text-slate-400">
-                      Tidak ada data pembelajar yang cocok dengan filter.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          )}
-
-          {/* Module 2: Courses Table */}
-          {activeModule === "courses" && (
-            <table className="w-full text-left text-xs">
-              <thead className="border-b border-slate-200 bg-slate-50 font-bold uppercase tracking-wider text-slate-500 dark:border-slate-800 dark:bg-slate-900/60 dark:text-slate-400">
-                <tr>
-                  <th className="px-6 py-3.5">ID / Kode</th>
-                  <th className="px-6 py-3.5">Nama Lengkap Kursus</th>
-                  <th className="px-6 py-3.5">Kategori</th>
-                  <th className="px-6 py-3.5 text-center">Peserta</th>
-                  <th className="px-6 py-3.5 text-center">Kelulusan</th>
-                  <th className="px-6 py-3.5">Status</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60">
-                {paginatedCourses.length > 0 ? (
-                  paginatedCourses.map((row) => (
-                    <tr key={row.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition-colors">
-                      <td className="px-6 py-4 font-mono font-bold text-sky-600 dark:text-sky-400">
-                        {row.shortName}
-                      </td>
-                      <td className="px-6 py-4 font-bold text-slate-900 dark:text-white">{row.fullName}</td>
-                      <td className="px-6 py-4 text-slate-500 dark:text-slate-400">{row.category}</td>
-                      <td className="px-6 py-4 text-center font-semibold text-slate-700 dark:text-slate-300">
-                        {row.totalEnrolled} orang
-                      </td>
-                      <td className="px-6 py-4 text-center">
-                        <span className="font-bold text-emerald-600 dark:text-emerald-400">
-                          {row.completionRate}%
-                        </span>{" "}
-                        ({row.totalCompleted} lulus)
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className="cuba-badge cuba-badge-success">Aktif Tayang</span>
-                      </td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan={6} className="px-6 py-8 text-center text-slate-400">
-                      Tidak ada data kursus yang cocok dengan filter.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          )}
-
-          {/* Module 3: Certificates Table */}
-          {activeModule === "certificates" && (
-            <table className="w-full text-left text-xs">
-              <thead className="border-b border-slate-200 bg-slate-50 font-bold uppercase tracking-wider text-slate-500 dark:border-slate-800 dark:bg-slate-900/60 dark:text-slate-400">
-                <tr>
-                  <th className="px-6 py-3.5">ID Sertifikat</th>
-                  <th className="px-6 py-3.5">Penerima & Email</th>
-                  <th className="px-6 py-3.5">Pelatihan Asal</th>
-                  <th className="px-6 py-3.5">Kode Unik Moodle</th>
-                  <th className="px-6 py-3.5">Tanggal Terbit</th>
-                  <th className="px-6 py-3.5">Status</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60">
-                {paginatedCertificates.length > 0 ? (
-                  paginatedCertificates.map((row) => (
-                    <tr key={row.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition-colors">
-                      <td className="px-6 py-4 font-mono font-bold text-slate-900 dark:text-white">{row.id}</td>
-                      <td className="px-6 py-4">
-                        <div className="font-bold text-slate-900 dark:text-white">{row.recipientName}</div>
-                        <div className="text-[11px] text-slate-400 dark:text-slate-500">{row.recipientEmail}</div>
-                      </td>
-                      <td className="px-6 py-4 text-slate-700 dark:text-slate-300 max-w-xs truncate" title={row.courseName}>
-                        {row.courseName}
-                      </td>
-                      <td className="px-6 py-4 font-mono text-xs font-semibold text-sky-600 dark:text-sky-400">
-                        {row.code}
-                      </td>
-                      <td className="px-6 py-4 text-slate-500 dark:text-slate-400">{row.issuedAt}</td>
-                      <td className="px-6 py-4">
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
-                          <AdminIcon name="check" className="h-3 w-3" />
-                          <span>{row.status}</span>
-                        </span>
-                      </td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan={6} className="px-6 py-8 text-center text-slate-400">
-                      Tidak ada data sertifikat yang cocok dengan filter.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          )}
-
-          {/* Module 4: Content Table */}
-          {activeModule === "content" && (
-            <table className="w-full text-left text-xs">
-              <thead className="border-b border-slate-200 bg-slate-50 font-bold uppercase tracking-wider text-slate-500 dark:border-slate-800 dark:bg-slate-900/60 dark:text-slate-400">
-                <tr>
-                  <th className="px-6 py-3.5">Tipe</th>
-                  <th className="px-6 py-3.5">Judul Konten</th>
-                  <th className="px-6 py-3.5">Penulis / Kurator</th>
-                  <th className="px-6 py-3.5">Kategori</th>
-                  <th className="px-6 py-3.5 text-center">Tayangan</th>
-                  <th className="px-6 py-3.5">Status</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60">
-                {paginatedContent.length > 0 ? (
-                  paginatedContent.map((row) => (
-                    <tr key={row.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition-colors">
-                      <td className="px-6 py-4">
-                        <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-extrabold uppercase tracking-wide bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
-                          {row.type}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 font-bold text-slate-900 dark:text-white max-w-sm truncate" title={row.title}>
-                        {row.title}
-                      </td>
-                      <td className="px-6 py-4 text-slate-500 dark:text-slate-400">{row.author}</td>
-                      <td className="px-6 py-4 text-slate-500 dark:text-slate-400">{row.category}</td>
-                      <td className="px-6 py-4 text-center font-bold text-slate-700 dark:text-slate-300">
-                        {row.views.toLocaleString("id-ID")}
-                      </td>
-                      <td className="px-6 py-4">
-                        <span
-                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold ${
-                            row.status === "Terbit"
-                              ? "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800"
-                              : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400"
-                          }`}
-                        >
-                          {row.status}
-                        </span>
-                      </td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan={6} className="px-6 py-8 text-center text-slate-400">
-                      Tidak ada konten yang cocok dengan filter.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          )}
-
-          {/* Module 5: Audit Table */}
-          {activeModule === "audit" && (
-            <table className="w-full text-left text-xs">
-              <thead className="border-b border-slate-200 bg-slate-50 font-bold uppercase tracking-wider text-slate-500 dark:border-slate-800 dark:bg-slate-900/60 dark:text-slate-400">
-                <tr>
-                  <th className="px-6 py-3.5">Waktu Peristiwa</th>
-                  <th className="px-6 py-3.5">Aktor Pengguna</th>
-                  <th className="px-6 py-3.5">Aksi / Event</th>
-                  <th className="px-6 py-3.5">Modul</th>
-                  <th className="px-6 py-3.5">Status</th>
-                  <th className="px-6 py-3.5">Keterangan</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60">
-                {paginatedAudit.length > 0 ? (
-                  paginatedAudit.map((row) => (
-                    <tr key={row.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition-colors">
-                      <td className="px-6 py-4 font-mono text-slate-500 dark:text-slate-400 whitespace-nowrap">
-                        {row.timestamp}
-                      </td>
-                      <td className="px-6 py-4 font-bold text-slate-900 dark:text-white">{row.actor}</td>
-                      <td className="px-6 py-4 font-mono text-xs font-semibold text-sky-600 dark:text-sky-400">
-                        {row.action}
-                      </td>
-                      <td className="px-6 py-4 text-slate-500 dark:text-slate-400">{row.module}</td>
-                      <td className="px-6 py-4">
-                        <span
-                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold ${
-                            row.status === "Berhasil"
-                              ? "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800"
-                              : "bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800"
-                          }`}
-                        >
-                          {row.status}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 text-slate-500 dark:text-slate-400 max-w-sm truncate" title={row.details}>
-                        {row.details}
-                      </td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan={6} className="px-6 py-8 text-center text-slate-400">
-                      Tidak ada catatan audit yang cocok dengan filter.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          )}
-        </div>
-
-        {/* Pagination Controls */}
-        {totalPages > 1 && (
-          <div className="flex items-center justify-between border-t border-slate-200 px-6 py-3.5 dark:border-slate-800 print:hidden">
-            <span className="text-xs text-slate-500 dark:text-slate-400">
-              Menampilkan {((safePage - 1) * pageSize) + 1}–{Math.min(safePage * pageSize, currentTotal)} dari {currentTotal} baris
-            </span>
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                disabled={safePage <= 1}
-                className="rounded-lg border border-slate-200 dark:border-slate-700 px-3 py-1.5 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-50 transition"
-              >
-                Sebelumnya
-              </button>
-              <button
-                type="button"
-                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                disabled={safePage >= totalPages}
-                className="rounded-lg border border-slate-200 dark:border-slate-700 px-3 py-1.5 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-50 transition"
-              >
-                Selanjutnya
-              </button>
-            </div>
-          </div>
+        }
+        emptyState={moduleConfig[activeModule].emptyState}
+        responsiveCards={true}
+        page={safePage}
+        pageSize={pageSize}
+        total={currentTotal}
+        onPageChange={setCurrentPage}
+        onPageSizeChange={(sz) => {
+          setPageSize(sz);
+          setCurrentPage(1);
+        }}
+        pageSizeOptions={[10, 20, 50]}
+      >
+        {activeModule === "learners" && (
+          paginatedLearners.map((row) => (
+            <tr key={row.id} className="hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition-colors">
+              <td data-label="Nama Pembelajar" className="px-4 py-3.5 font-bold text-slate-900 dark:text-white">
+                {row.name}
+              </td>
+              <td data-label="Email & Akun" className="px-4 py-3.5 text-slate-500 dark:text-slate-400">
+                <div>{row.email}</div>
+                <div className="text-[11px] text-slate-400 dark:text-slate-500 font-mono">@{row.username}</div>
+              </td>
+              <td data-label="Kursus Terdaftar" className="px-4 py-3.5 text-slate-700 dark:text-slate-300 max-w-xs truncate" title={row.courseName}>
+                {row.courseName}
+              </td>
+              <td data-label="Progres" className="px-4 py-3.5">
+                <div className="flex items-center gap-2">
+                  <div className="h-2 w-20 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
+                    <div
+                      className={`h-full ${row.progress === 100 ? "bg-emerald-500" : "bg-sky-500"}`}
+                      style={{ width: `${row.progress}%` }}
+                    />
+                  </div>
+                  <span className="font-semibold text-slate-700 dark:text-slate-300 tabular-nums">{row.progress}%</span>
+                </div>
+              </td>
+              <td data-label="Status" className="px-4 py-3.5">
+                <span
+                  className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold ${
+                    row.status === "Lulus"
+                      ? "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800"
+                      : "bg-sky-50 dark:bg-sky-950/60 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-800"
+                  }`}
+                >
+                  {row.status}
+                </span>
+              </td>
+              <td data-label="Tgl Selesai" className="px-4 py-3.5 text-slate-500 dark:text-slate-400 whitespace-nowrap">
+                {row.completedAt || "-"}
+              </td>
+            </tr>
+          ))
         )}
-      </div>
+
+        {activeModule === "courses" && (
+          paginatedCourses.map((row) => (
+            <tr key={row.id} className="hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition-colors">
+              <td data-label="ID / Kode" className="px-4 py-3.5 font-mono font-bold text-sky-600 dark:text-sky-400">
+                {row.shortName}
+              </td>
+              <td data-label="Nama Lengkap Kursus" className="px-4 py-3.5 font-bold text-slate-900 dark:text-white max-w-sm truncate" title={row.fullName}>
+                {row.fullName}
+              </td>
+              <td data-label="Kategori" className="px-4 py-3.5 text-slate-500 dark:text-slate-400">
+                {row.category}
+              </td>
+              <td data-label="Peserta" className="px-4 py-3.5 text-center font-semibold text-slate-700 dark:text-slate-300">
+                {row.totalEnrolled} orang
+              </td>
+              <td data-label="Kelulusan" className="px-4 py-3.5 text-center">
+                <span className="font-bold text-emerald-600 dark:text-emerald-400">
+                  {row.completionRate}%
+                </span>{" "}
+                <span className="text-slate-500 dark:text-slate-400 text-[11px]">({row.totalCompleted} lulus)</span>
+              </td>
+              <td data-label="Status" className="px-4 py-3.5">
+                <span className="cuba-badge cuba-badge-success">Aktif Tayang</span>
+              </td>
+            </tr>
+          ))
+        )}
+
+        {activeModule === "certificates" && (
+          paginatedCertificates.map((row) => (
+            <tr key={row.id} className="hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition-colors">
+              <td data-label="ID Sertifikat" className="px-4 py-3.5 font-mono font-bold text-slate-900 dark:text-white">
+                {row.id}
+              </td>
+              <td data-label="Penerima & Email" className="px-4 py-3.5">
+                <div className="font-bold text-slate-900 dark:text-white">{row.recipientName}</div>
+                <div className="text-[11px] text-slate-400 dark:text-slate-500">{row.recipientEmail}</div>
+              </td>
+              <td data-label="Pelatihan Asal" className="px-4 py-3.5 text-slate-700 dark:text-slate-300 max-w-xs truncate" title={row.courseName}>
+                {row.courseName}
+              </td>
+              <td data-label="Kode Unik Moodle" className="px-4 py-3.5 font-mono text-xs font-semibold text-sky-600 dark:text-sky-400">
+                {row.code}
+              </td>
+              <td data-label="Tanggal Terbit" className="px-4 py-3.5 text-slate-500 dark:text-slate-400 whitespace-nowrap">
+                {row.issuedAt}
+              </td>
+              <td data-label="Status" className="px-4 py-3.5">
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+                  <AdminIcon name="check" className="h-3 w-3" />
+                  <span>{row.status}</span>
+                </span>
+              </td>
+            </tr>
+          ))
+        )}
+
+        {activeModule === "content" && (
+          paginatedContent.map((row) => (
+            <tr key={row.id} className="hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition-colors">
+              <td data-label="Tipe" className="px-4 py-3.5">
+                <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-extrabold uppercase tracking-wide bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+                  {row.type}
+                </span>
+              </td>
+              <td data-label="Judul Konten" className="px-4 py-3.5 font-bold text-slate-900 dark:text-white max-w-sm truncate" title={row.title}>
+                {row.title}
+              </td>
+              <td data-label="Penulis / Kurator" className="px-4 py-3.5 text-slate-500 dark:text-slate-400">
+                {row.author}
+              </td>
+              <td data-label="Kategori" className="px-4 py-3.5 text-slate-500 dark:text-slate-400">
+                {row.category}
+              </td>
+              <td data-label="Tayangan" className="px-4 py-3.5 text-center font-bold text-slate-700 dark:text-slate-300 tabular-nums">
+                {row.views.toLocaleString("id-ID")}
+              </td>
+              <td data-label="Status" className="px-4 py-3.5">
+                <span
+                  className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold ${
+                    row.status === "Terbit"
+                      ? "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800"
+                      : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400"
+                  }`}
+                >
+                  {row.status}
+                </span>
+              </td>
+            </tr>
+          ))
+        )}
+
+        {activeModule === "audit" && (
+          paginatedAudit.map((row) => (
+            <tr key={row.id} className="hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition-colors">
+              <td data-label="Waktu Peristiwa" className="px-4 py-3.5 font-mono text-slate-500 dark:text-slate-400 whitespace-nowrap">
+                {row.timestamp}
+              </td>
+              <td data-label="Aktor Pengguna" className="px-4 py-3.5 font-bold text-slate-900 dark:text-white">
+                {row.actor}
+              </td>
+              <td data-label="Aksi / Event" className="px-4 py-3.5 font-mono text-xs font-semibold text-sky-600 dark:text-sky-400">
+                {row.action}
+              </td>
+              <td data-label="Modul" className="px-4 py-3.5 text-slate-500 dark:text-slate-400">
+                {row.module}
+              </td>
+              <td data-label="Status" className="px-4 py-3.5">
+                <span
+                  className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold ${
+                    row.status === "Berhasil"
+                      ? "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800"
+                      : "bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800"
+                  }`}
+                >
+                  {row.status}
+                </span>
+              </td>
+              <td data-label="Keterangan" className="px-4 py-3.5 text-slate-500 dark:text-slate-400 max-w-sm truncate" title={row.details}>
+                {row.details}
+              </td>
+            </tr>
+          ))
+        )}
+      </AdminDataTable>
 
       {/* 6. Print Footer Stamp */}
       <div className="hidden print:block text-center pt-8 border-t border-slate-200 text-xs text-slate-500">
