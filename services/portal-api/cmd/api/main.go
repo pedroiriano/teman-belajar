@@ -28,6 +28,7 @@ import (
 	platformconfigapplication "teman-belajar-api/internal/application/platformconfig"
 	searchapplication "teman-belajar-api/internal/application/search"
 	"teman-belajar-api/internal/domain/analytics"
+	"teman-belajar-api/internal/domain/banner"
 	"teman-belajar-api/internal/domain/dashboard"
 	"teman-belajar-api/internal/domain/cms"
 	"teman-belajar-api/internal/domain/discoverability"
@@ -115,6 +116,8 @@ func main() {
 	faqSvc := faq.NewService(faqRepo, auditRepo)
 	notificationRepo := postgres.NewNotificationRepository(db)
 	notificationSvc := notificationapplication.NewService(notificationRepo, auditRepo, 90)
+	bannerRepo := postgres.NewBannerRepository(db)
+	bannerSvc := banner.NewService(bannerRepo, auditRepo)
 
 	moodleToken := os.Getenv("TB_MOODLE_WEBSERVICE_TOKEN")
 	moodleBaseURL := os.Getenv("MOODLE_INTERNAL_BASE_URL")
@@ -299,8 +302,16 @@ func main() {
 	auditCenterHandler := handler.NewAuditCenterHandler(auditCenterSvc, auditRepo)
 	platformConfigHandler := handler.NewPlatformConfigHandler(platformConfigSvc, auditRepo)
 	mediaGalleryHandler := handler.NewMediaGalleryHandler(mediaGallerySvc, auditRepo)
+	bannerHandler := handler.NewBannerHandler(bannerSvc)
 
 	mux.HandleFunc("/api/v1/health", handler.HealthCheck)
+	mux.HandleFunc("GET /api/v1/banners", bannerHandler.PublicList)
+	mux.Handle("GET /api/v1/admin/banners", adminAuthMiddleware(http.HandlerFunc(bannerHandler.AdminList)))
+	mux.Handle("POST /api/v1/admin/banners", adminAuthMiddleware(http.HandlerFunc(bannerHandler.AdminCreate)))
+	mux.Handle("GET /api/v1/admin/banners/{id}", adminAuthMiddleware(http.HandlerFunc(bannerHandler.AdminGet)))
+	mux.Handle("PUT /api/v1/admin/banners/{id}", adminAuthMiddleware(http.HandlerFunc(bannerHandler.AdminUpdate)))
+	mux.Handle("PATCH /api/v1/admin/banners/{id}/toggle-active", adminAuthMiddleware(http.HandlerFunc(bannerHandler.AdminToggleActive)))
+	mux.Handle("DELETE /api/v1/admin/banners/{id}", adminAuthMiddleware(http.HandlerFunc(bannerHandler.AdminDelete)))
 	mux.Handle("GET /api/v1/platform-configuration", http.HandlerFunc(platformConfigHandler.Public))
 	mux.Handle("GET /api/v1/admin/integration-health", authMiddleware(http.HandlerFunc(integrationHealthHandler.Summary)))
 	mux.Handle("GET /api/v1/admin/audit-events", authMiddleware(http.HandlerFunc(auditCenterHandler.List)))

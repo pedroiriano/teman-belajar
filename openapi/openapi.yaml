@@ -47,6 +47,8 @@ tags:
     description: User-partitioned in-app notification operations
   - name: Integration
     description: Operational integration inbox and outbox event management
+  - name: Banners
+    description: Hero banner management operations (maximum 3 active banners)
 paths:
   /health:
     get:
@@ -4099,6 +4101,234 @@ paths:
           content:
             application/problem+json:
               schema: { $ref: '#/components/schemas/Problem' }
+  /banners:
+    get:
+      tags:
+        - Banners
+      summary: List active hero banners for public portal
+      operationId: listPublicBanners
+      security: []
+      responses:
+        '200':
+          description: List of active hero banners (maximum 3)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Banner'
+        '500':
+          description: Internal server error
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problem' }
+  /admin/banners:
+    get:
+      tags:
+        - Banners
+        - Admin
+      summary: List all hero banners with pagination and filter
+      operationId: listAdminBanners
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+        - name: q
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [all, active, inactive]
+      responses:
+        '200':
+          description: Paginated list of hero banners
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BannerListResponse'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '500':
+          description: Internal server error
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problem' }
+    post:
+      tags:
+        - Banners
+        - Admin
+      summary: Create a new hero banner
+      operationId: createAdminBanner
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateBannerRequest'
+      responses:
+        '201':
+          description: Hero banner created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Banner'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '422':
+          description: Validation error or max 3 active banners exceeded
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problem' }
+        '500':
+          description: Internal server error
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problem' }
+  /admin/banners/{id}:
+    get:
+      tags:
+        - Banners
+        - Admin
+      summary: Get hero banner by ID
+      operationId: getAdminBanner
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Hero banner details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Banner'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '500':
+          description: Internal server error
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problem' }
+    put:
+      tags:
+        - Banners
+        - Admin
+      summary: Update hero banner
+      operationId: updateAdminBanner
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateBannerRequest'
+      responses:
+        '200':
+          description: Hero banner updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Banner'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '422':
+          description: Validation error or max 3 active banners exceeded
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problem' }
+        '500':
+          description: Internal server error
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problem' }
+    delete:
+      tags:
+        - Banners
+        - Admin
+      summary: Delete hero banner
+      operationId: deleteAdminBanner
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Hero banner deleted
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '500':
+          description: Internal server error
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problem' }
+  /admin/banners/{id}/toggle-active:
+    patch:
+      tags:
+        - Banners
+        - Admin
+      summary: Toggle active status of a hero banner
+      operationId: toggleAdminBannerActive
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Hero banner active status toggled
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Banner'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '422':
+          description: Max 3 active banners exceeded
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problem' }
+        '500':
+          description: Internal server error
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problem' }
 components:
   securitySchemes:
     oidc:
@@ -6497,4 +6727,122 @@ components:
         offset:
           type: integer
           minimum: 0
+    Banner:
+      type: object
+      required:
+        - id
+        - title
+        - description
+        - image_url
+        - align
+        - sort_order
+        - is_active
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        description:
+          type: string
+        image_url:
+          type: string
+        cta_label:
+          type: string
+        cta_href:
+          type: string
+        align:
+          type: string
+          enum: [left, center, right]
+        sort_order:
+          type: integer
+        is_active:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    BannerListResponse:
+      type: object
+      required:
+        - data
+        - total
+        - page
+        - page_size
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Banner'
+        total:
+          type: integer
+        page:
+          type: integer
+        page_size:
+          type: integer
+    CreateBannerRequest:
+      type: object
+      required:
+        - title
+        - description
+        - image_url
+      properties:
+        title:
+          type: string
+          maxLength: 255
+        description:
+          type: string
+          maxLength: 1000
+        image_url:
+          type: string
+          maxLength: 1024
+        cta_label:
+          type: string
+          maxLength: 100
+        cta_href:
+          type: string
+          maxLength: 1024
+        align:
+          type: string
+          enum: [left, center, right]
+          default: left
+        sort_order:
+          type: integer
+          default: 1
+        is_active:
+          type: boolean
+          default: false
+    UpdateBannerRequest:
+      type: object
+      required:
+        - title
+        - description
+        - image_url
+      properties:
+        title:
+          type: string
+          maxLength: 255
+        description:
+          type: string
+          maxLength: 1000
+        image_url:
+          type: string
+          maxLength: 1024
+        cta_label:
+          type: string
+          maxLength: 100
+        cta_href:
+          type: string
+          maxLength: 1024
+        align:
+          type: string
+          enum: [left, center, right]
+        sort_order:
+          type: integer
+        is_active:
+          type: boolean
 

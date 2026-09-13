@@ -73,6 +73,40 @@ const heroSlides: TechwindHeroSlide[] = [
   },
 ];
 
+interface PublicHeroBanner {
+  id: string;
+  title: string;
+  description: string;
+  image_url: string;
+  cta_label?: string;
+  cta_href?: string;
+  align: "left" | "center" | "right";
+  sort_order: number;
+  is_active: boolean;
+}
+
+async function getActiveBanners(): Promise<TechwindHeroSlide[]> {
+  const apiBase = process.env.PORTAL_API_INTERNAL_URL;
+  if (!apiBase) return heroSlides;
+  try {
+    const res = await fetch(`${apiBase}/api/v1/banners`, { next: { revalidate: 60 } });
+    if (!res.ok) return heroSlides;
+    const payload = await res.json();
+    const items: PublicHeroBanner[] = Array.isArray(payload.data) ? payload.data : [];
+    if (items.length === 0) return heroSlides;
+    return items.map((b) => ({
+      image: b.image_url,
+      title: b.title,
+      description: b.description,
+      ctaLabel: b.cta_label || "Pelajari Lebih Lanjut",
+      ctaHref: b.cta_href || "/catalog",
+      align: (b.align === "center" || b.align === "right") ? b.align : "left",
+    }));
+  } catch {
+    return heroSlides;
+  }
+}
+
 const fallbackCourses = [
   {
     id: "fb-1",
@@ -204,6 +238,7 @@ export default async function Home() {
     announcementsResult,
     mediaResult,
     recommendationsResult,
+    activeBanners,
   ] = await Promise.all([
     getPublicFAQs(),
     getPublicPlatformConfiguration(),
@@ -214,6 +249,7 @@ export default async function Home() {
     getAnnouncements(8),
     listMediaCollections("", "", 1),
     getCuratedRecommendations(6),
+    getActiveBanners(),
   ]);
 
   const curatedRecommendations = recommendationsResult.data;
@@ -420,7 +456,7 @@ export default async function Home() {
 
       {/* 1. HERO SLIDER (#beranda) */}
       <div {...sectionProps("hero", 1)} data-techwind-pattern="index-course-hero" id="beranda">
-        <TechwindHeroSlider slides={heroSlides} />
+        <TechwindHeroSlider slides={activeBanners.length > 0 ? activeBanners : heroSlides} />
       </div>
 
       {/* 2. PEMBELAJARAN SAYA (#pembelajaran-saya) */}

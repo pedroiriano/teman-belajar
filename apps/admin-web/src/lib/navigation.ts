@@ -48,6 +48,7 @@ export const navigationGroups: NavigationGroup[] = [
       { id: "news", href: "/dashboard/news", label: "Berita", icon: "news" },
       { id: "announcements", href: "/dashboard/announcements", label: "Pengumuman", icon: "announcement" },
       { id: "faqs", href: "/dashboard/faqs", label: "FAQ", icon: "help" },
+      { id: "banners", href: "/dashboard/banners", label: "Manajemen Banner", icon: "media" },
       { id: "recommendations", href: "/dashboard/recommendations", label: "Kurasi Rekomendasi", icon: "check" },
     ],
   },

@@ -38,6 +38,7 @@
     "test:content-versioning": "node scripts/verify-content-versioning-contract.mjs",
     "test:moodle-events": "node scripts/verify-moodle-events-contract.mjs",
     "test:reports": "node scripts/verify-reports-contract.mjs",
+    "test:banners": "node scripts/verify-banners-contract.mjs",
     "test:vendor-foundation": "node ../../scripts/verify-ui-foundation-contract.mjs admin"
   },
   "dependencies": {
