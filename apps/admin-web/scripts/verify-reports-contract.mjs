@@ -28,6 +28,8 @@ for (const token of [
   "urn:schemas-microsoft-com:office:spreadsheet",
   "window.print",
   "Pratinjau Data Laporan",
+  "flex-wrap",
+  "justify-center",
 ]) {
   assert.ok(workspace.includes(token), `cuba-reports-workspace.tsx missing token: ${token}`);
 }

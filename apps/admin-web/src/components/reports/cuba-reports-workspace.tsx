@@ -492,8 +492,8 @@ export function CubaReportsWorkspace({ initialData }: CubaReportsWorkspaceProps)
       </div>
 
       {/* 3. Module Selector Tabs */}
-      <div className="border-b border-slate-200 dark:border-slate-800 print:hidden">
-        <nav className="flex space-x-2 overflow-x-auto pb-px" aria-label="Modul Laporan">
+      <div className="border-b border-slate-200 dark:border-slate-800 pb-3 print:hidden">
+        <nav className="flex flex-wrap items-center justify-center gap-2" aria-label="Modul Laporan">
           {[
             { id: "learners", label: "Rekap Pembelajar", icon: "users", count: data.learners.length },
             { id: "courses", label: "Partisipasi Kursus Moodle", icon: "book", count: data.courses.length },
@@ -512,19 +512,22 @@ export function CubaReportsWorkspace({ initialData }: CubaReportsWorkspaceProps)
                   setSearchQuery("");
                   setStatusFilter("all");
                 }}
-                className={`inline-flex items-center gap-2 whitespace-nowrap border-b-2 px-4 py-3 text-xs font-bold transition-colors ${
+                className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-bold transition-all ${
                   isActive
-                    ? "border-sky-600 text-sky-600 dark:border-sky-400 dark:text-sky-400"
-                    : "border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
+                    ? "bg-sky-50 dark:bg-sky-950/60 text-sky-700 dark:text-sky-300 border border-sky-300 dark:border-sky-700 shadow-sm"
+                    : "bg-white dark:bg-slate-800/80 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-750 hover:text-slate-900 dark:hover:text-slate-200"
                 }`}
               >
-                <AdminIcon name={tab.icon as any} className="h-4 w-4" />
+                <AdminIcon
+                  name={tab.icon as any}
+                  className={`h-4 w-4 ${isActive ? "text-sky-600 dark:text-sky-400" : "text-slate-400 dark:text-slate-500"}`}
+                />
                 <span>{tab.label}</span>
                 <span
                   className={`ml-1 rounded-full px-2 py-0.5 text-[10px] font-extrabold ${
                     isActive
-                      ? "bg-sky-100 text-sky-700 dark:bg-sky-950 dark:text-sky-300"
-                      : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400"
+                      ? "bg-sky-600 text-white dark:bg-sky-500"
+                      : "bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300"
                   }`}
                 >
                   {tab.count}
