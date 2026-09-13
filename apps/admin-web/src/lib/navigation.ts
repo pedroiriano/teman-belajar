@@ -27,6 +27,7 @@ export const navigationGroups: NavigationGroup[] = [
       { id: "review-queue", href: "/dashboard/review-queue", label: "Antrean Peninjauan", icon: "check" },
       { id: "schedule", href: "/dashboard/schedule", label: "Jadwal Publikasi", icon: "calendar" },
       { id: "statistics", href: "/dashboard/statistics", label: "Statistik", icon: "grid" },
+      { id: "reports", href: "/dashboard/reports", label: "Pusat Pelaporan", icon: "file" },
     ],
   },
   {
@@ -115,6 +116,7 @@ export const titleBySegment: Record<string, string> = {
   "review-queue": "Antrean Peninjauan",
   schedule: "Jadwal Publikasi",
   statistics: "Statistik",
+  reports: "Pusat Pelaporan",
   "integration-health": "Kesehatan Integrasi",
   "moodle-events": "Moodle Event Inbox",
   audit: "Audit",
