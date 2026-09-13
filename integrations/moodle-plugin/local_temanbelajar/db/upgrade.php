@@ -146,5 +146,11 @@ function xmldb_local_temanbelajar_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2026091400, 'local', 'temanbelajar');
     }
 
+    if ($oldversion < 2026091401) {
+        // Broaden federated user identity resolution with username/email fallback.
+        // No schema change required.
+        upgrade_plugin_savepoint(true, 2026091401, 'local', 'temanbelajar');
+    }
+
     return true;
 }

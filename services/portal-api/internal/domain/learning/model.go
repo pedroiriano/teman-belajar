@@ -18,8 +18,9 @@ var (
 
 // FederatedIdentity represents the authenticated user from Keycloak
 type FederatedIdentity struct {
-	Subject string // The Keycloak `sub` claim
-	Email   string
+	Subject  string // The Keycloak `sub` claim
+	Username string // The Keycloak `preferred_username` claim
+	Email    string
 }
 
 // LearningUser represents a resolved user in the LMS (Moodle)

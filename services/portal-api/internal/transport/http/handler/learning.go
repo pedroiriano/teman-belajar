@@ -26,8 +26,9 @@ func (h *LearningHandler) getIdentity(r *http.Request) (learning.FederatedIdenti
 		return learning.FederatedIdentity{}, errors.New("unauthorized: missing stable federated identity subject")
 	}
 	return learning.FederatedIdentity{
-		Subject: claims.Subject,
-		Email:   claims.Email,
+		Subject:  claims.Subject,
+		Username: claims.PreferredUsername,
+		Email:    claims.Email,
 	}, nil
 }
 

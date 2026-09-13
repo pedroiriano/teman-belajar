@@ -60,6 +60,15 @@ class resolve_federated_user extends external_api {
                  
         $user = $DB->get_record_sql($sql, array('subject' => $subject), IGNORE_MISSING);
 
+        // Fallback: match by Moodle username or email if not explicitly in linked_login
+        if (!$user) {
+            $fallbackSql = "SELECT u.id, u.username, u.email
+                              FROM {user} u
+                             WHERE (u.username = :subj_user OR u.email = :subj_email)
+                               AND u.deleted = 0";
+            $user = $DB->get_record_sql($fallbackSql, array('subj_user' => $subject, 'subj_email' => $subject), IGNORE_MULTIPLE);
+        }
+
         if (!$user) {
             throw new moodle_exception('usernotmapped', 'local_temanbelajar', '', null, 'Federated identity not mapped to any local Moodle user');
         }

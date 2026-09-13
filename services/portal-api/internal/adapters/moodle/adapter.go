@@ -56,32 +56,44 @@ func (c *Client) ListCourses(ctx context.Context, filter learning.CourseFilter) 
 	return courses, nil
 }
 
-// ResolveCurrentUser calls core_user_get_users_by_field to find user by Keycloak sub or email.
+// ResolveCurrentUser calls local_temanbelajar_resolve_federated_user to find user by Keycloak sub, username, or email.
 func (c *Client) ResolveCurrentUser(ctx context.Context, identity learning.FederatedIdentity) (*learning.LearningUser, error) {
-	if identity.Subject == "" {
+	if identity.Subject == "" && identity.Username == "" && identity.Email == "" {
 		return nil, learning.ErrLearningUserNotMapped
 	}
 
-	params := url.Values{}
-	params.Set("subject", identity.Subject)
-
-	var response struct {
-		ID       int    `json:"id"`
-		Username string `json:"username"`
-		Email    string `json:"email"`
+	candidates := make([]string, 0, 3)
+	if identity.Subject != "" {
+		candidates = append(candidates, identity.Subject)
+	}
+	if identity.Username != "" && identity.Username != identity.Subject {
+		candidates = append(candidates, identity.Username)
+	}
+	if identity.Email != "" && identity.Email != identity.Username && identity.Email != identity.Subject {
+		candidates = append(candidates, identity.Email)
 	}
 
-	err := c.callWS(ctx, "local_temanbelajar_resolve_federated_user", params, &response)
-	if err != nil {
-		// Moodle exception is thrown if not mapped, which our client parses into error
-		return nil, learning.ErrLearningUserNotMapped
+	for _, candidate := range candidates {
+		params := url.Values{}
+		params.Set("subject", candidate)
+
+		var response struct {
+			ID       int    `json:"id"`
+			Username string `json:"username"`
+			Email    string `json:"email"`
+		}
+
+		err := c.callWS(ctx, "local_temanbelajar_resolve_federated_user", params, &response)
+		if err == nil && response.ID > 0 {
+			return &learning.LearningUser{
+				ID:       response.ID,
+				Username: response.Username,
+				Email:    response.Email,
+			}, nil
+		}
 	}
 
-	return &learning.LearningUser{
-		ID:       response.ID,
-		Username: response.Username,
-		Email:    response.Email,
-	}, nil
+	return nil, learning.ErrLearningUserNotMapped
 }
 
 // ListUserCourses calls core_enrol_get_users_courses
