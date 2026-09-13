@@ -75,6 +75,20 @@ type GradeItem struct {
 	Hidden         bool     `json:"hidden"`
 }
 
+// UserCertificate represents an issued certificate from mod_customcert
+type UserCertificate struct {
+	ID              int64  `json:"id"`
+	CustomCertID    int64  `json:"customcert_id"`
+	CourseID        int    `json:"course_id"`
+	CourseName      string `json:"course_name"`
+	CourseShortName string `json:"course_shortname"`
+	CertificateName string `json:"certificate_name"`
+	Code            string `json:"code"`
+	TimeCreated     int64  `json:"timecreated"`
+	DownloadURL     string `json:"download_url"`
+	VerifyURL       string `json:"verify_url"`
+}
+
 // LearningProvider defines the port for communicating with the LMS
 type LearningProvider interface {
 	ListCourses(ctx context.Context, filter CourseFilter) ([]LearningCourse, error)
@@ -82,4 +96,6 @@ type LearningProvider interface {
 	ListUserCourses(ctx context.Context, user *LearningUser) ([]EnrolledCourse, error)
 	GetCourseCompletion(ctx context.Context, user *LearningUser, courseID int) (*CourseCompletion, error)
 	GetCourseGrades(ctx context.Context, user *LearningUser, courseID int) ([]GradeItem, error)
+	GetUserCertificates(ctx context.Context, user *LearningUser) ([]UserCertificate, error)
 }
+

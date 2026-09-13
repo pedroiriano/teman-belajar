@@ -33,6 +33,23 @@ func (m *MockProvider) GetCourseCompletion(ctx context.Context, user *learning.L
 func (m *MockProvider) GetCourseGrades(ctx context.Context, user *learning.LearningUser, courseID int) ([]learning.GradeItem, error) {
 	return []learning.GradeItem{}, nil
 }
+func (m *MockProvider) GetUserCertificates(ctx context.Context, user *learning.LearningUser) ([]learning.UserCertificate, error) {
+	return []learning.UserCertificate{
+		{
+			ID:              1,
+			CustomCertID:    10,
+			CourseID:        1,
+			CourseName:      "Test Course",
+			CourseShortName: "TC",
+			CertificateName: "Sertifikat Kelulusan",
+			Code:            "TB-TEST-1234",
+			TimeCreated:     1726000000,
+			DownloadURL:     "http://localhost:8082/mod/customcert/my_certificates.php?downloadcert=1",
+			VerifyURL:       "http://localhost:8082/mod/customcert/verify_certificate.php?code=TB-TEST-1234",
+		},
+	}, nil
+}
+
 
 func TestIDORGetMyCourseCompletion(t *testing.T) {
 	svc := learning.NewService(&MockProvider{})
@@ -90,3 +107,21 @@ func TestGetMyCourseCompletion_Allowed(t *testing.T) {
 		t.Errorf("expected 200 for enrolled course, got %d", w.Code)
 	}
 }
+
+func TestListMyCertificates(t *testing.T) {
+	svc := learning.NewService(&MockProvider{})
+	h := handler.NewLearningHandler(svc)
+
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/learning/me/certificates", nil)
+	claims := middleware.CustomClaims{Subject: "mapped"}
+	ctx := context.WithValue(req.Context(), middleware.ClaimsContextKey, claims)
+	req = req.WithContext(ctx)
+
+	w := httptest.NewRecorder()
+	h.ListMyCertificates(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Errorf("expected 200 for certificates, got %d", w.Code)
+	}
+}
+

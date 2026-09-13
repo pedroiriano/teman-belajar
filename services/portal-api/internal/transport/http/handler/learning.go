@@ -225,3 +225,34 @@ func (h *LearningHandler) GetMyCourseGrades(w http.ResponseWriter, r *http.Reque
 		"data": grades,
 	})
 }
+
+func (h *LearningHandler) ListMyCertificates(w http.ResponseWriter, r *http.Request) {
+	identity, err := h.getIdentity(r)
+	if err != nil {
+		w.Header().Set("Content-Type", "application/problem+json")
+		w.WriteHeader(http.StatusUnauthorized)
+		json.NewEncoder(w).Encode(map[string]interface{}{ // #nosec G104 -- response writer error after commit is non-actionable in HTTP handler
+			"type":   "about:blank",
+			"title":  "Unauthorized",
+			"status": http.StatusUnauthorized,
+			"detail": err.Error(),
+		})
+		return
+	}
+
+	certs, err := h.svc.ListMyCertificates(r.Context(), identity)
+	if err != nil {
+		h.writeError(w, err)
+		return
+	}
+
+	if certs == nil {
+		certs = []learning.UserCertificate{}
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]interface{}{ // #nosec G104 -- response writer error after commit is non-actionable in HTTP handler
+		"data": certs,
+	})
+}
+

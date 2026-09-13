@@ -66,6 +66,15 @@ $functions = array(
         'ajax' => false,
         'services' => array('teman_belajar_integration'),
     ),
+    'local_temanbelajar_get_user_certificates' => array(
+        'classname' => 'local_temanbelajar\external\get_user_certificates',
+        'methodname' => 'execute',
+        'classpath' => 'local/temanbelajar/classes/external/get_user_certificates.php',
+        'description' => 'Gets user certificates issued by mod_customcert.',
+        'type' => 'read',
+        'ajax' => false,
+        'services' => array('teman_belajar_integration'),
+    ),
 );
 
 $services = array(
@@ -81,6 +90,7 @@ $services = array(
             'local_temanbelajar_get_webinar',
             'local_temanbelajar_register_webinar',
             'local_temanbelajar_cancel_webinar',
+            'local_temanbelajar_get_user_certificates',
         ),
         'restrictedusers' => 1,
         'enabled' => 1,

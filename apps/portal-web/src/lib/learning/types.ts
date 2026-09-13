@@ -41,3 +41,17 @@ export interface GradeItem {
   feedback: string;
   hidden: boolean;
 }
+
+export interface UserCertificate {
+  id: number;
+  customcert_id: number;
+  course_id: number;
+  course_name: string;
+  course_shortname: string;
+  certificate_name: string;
+  code: string;
+  timecreated: number;
+  download_url: string;
+  verify_url: string;
+}
+

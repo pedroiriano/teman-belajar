@@ -7,11 +7,13 @@ export type PortalIconName =
   | "bookmark"
   | "briefcase"
   | "calendar"
+  | "check"
   | "chevron-down"
   | "chevron-left"
   | "chevron-right"
   | "close"
   | "compass"
+  | "document"
   | "gallery"
   | "graduation"
   | "grid"
@@ -36,11 +38,13 @@ const paths: Record<PortalIconName, string> = {
   bookmark: "M6 3h12v18l-6-4-6 4V3Z",
   briefcase: "M9 6V4h6v2m5 4v9H4v-9m-1-3h18v5H3V7Zm7 5h4",
   calendar: "M6 3v3m12-3v3M4 9h16M5 5h14a1 1 0 0 1 1 1v14H4V6a1 1 0 0 1 1-1Z",
+  check: "M20 6 9 17l-5-5",
   "chevron-down": "m7 10 5 5 5-5",
   "chevron-left": "m15 19-7-7 7-7",
   "chevron-right": "m9 5 7 7-7 7",
   close: "M6 6l12 12M18 6 6 18",
   compass: "M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20Zm4-14-2.5 5.5L8 16l2.5-5.5L16 8Z",
+  document: "M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z M14 2v6h6",
   gallery: "M4 5h16v14H4V5Zm3 10 3-3 2 2 3-4 3 5M8 9h.01",
   graduation: "m3 9 9-5 9 5-9 5-9-5Zm4 3v4.5c2.8 2 7.2 2 10 0V12m4-3v6",
   grid: "M4 4h6v6H4V4Zm10 0h6v6h-6V4ZM4 14h6v6H4v-6Zm10 0h6v6h-6v-6Z",

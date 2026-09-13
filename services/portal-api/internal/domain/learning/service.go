@@ -73,3 +73,12 @@ func (s *Service) GetMyCourseGrades(ctx context.Context, identity FederatedIdent
 	}
 	return s.provider.GetCourseGrades(ctx, user, courseID)
 }
+
+func (s *Service) ListMyCertificates(ctx context.Context, identity FederatedIdentity) ([]UserCertificate, error) {
+	user, err := s.provider.ResolveCurrentUser(ctx, identity)
+	if err != nil {
+		return nil, err
+	}
+	return s.provider.GetUserCertificates(ctx, user)
+}
+

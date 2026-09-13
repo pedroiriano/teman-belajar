@@ -244,3 +244,46 @@ func (c *Client) GetLearningAnalytics(ctx context.Context, startDate, endDate st
 
 	return &res, nil
 }
+
+// GetUserCertificates calls local_temanbelajar_get_user_certificates
+func (c *Client) GetUserCertificates(ctx context.Context, user *learning.LearningUser) ([]learning.UserCertificate, error) {
+	params := url.Values{}
+	params.Set("userid", strconv.Itoa(user.ID))
+
+	var response []struct {
+		ID              int64  `json:"id"`
+		CustomCertID    int64  `json:"customcertid"`
+		CourseID        int    `json:"courseid"`
+		CourseName      string `json:"coursename"`
+		CourseShortName string `json:"courseshortname"`
+		CertificateName string `json:"certificatename"`
+		Code            string `json:"code"`
+		TimeCreated     int64  `json:"timecreated"`
+		DownloadURL     string `json:"downloadurl"`
+		VerifyURL       string `json:"verifyurl"`
+	}
+
+	err := c.callWS(ctx, "local_temanbelajar_get_user_certificates", params, &response)
+	if err != nil {
+		return nil, err
+	}
+
+	certs := make([]learning.UserCertificate, 0, len(response))
+	for _, r := range response {
+		certs = append(certs, learning.UserCertificate{
+			ID:              r.ID,
+			CustomCertID:    r.CustomCertID,
+			CourseID:        r.CourseID,
+			CourseName:      r.CourseName,
+			CourseShortName: r.CourseShortName,
+			CertificateName: r.CertificateName,
+			Code:            r.Code,
+			TimeCreated:     r.TimeCreated,
+			DownloadURL:     r.DownloadURL,
+			VerifyURL:       r.VerifyURL,
+		})
+	}
+
+	return certs, nil
+}
+

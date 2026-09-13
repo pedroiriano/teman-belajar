@@ -399,6 +399,7 @@ func main() {
 	mux.Handle("GET /api/v1/learning/courses", authMiddleware(http.HandlerFunc(learningHandler.ListCourses)))
 	mux.Handle("GET /api/v1/learning/me", authMiddleware(http.HandlerFunc(learningHandler.GetMe)))
 	mux.Handle("GET /api/v1/learning/me/courses", authMiddleware(http.HandlerFunc(learningHandler.ListMyCourses)))
+	mux.Handle("GET /api/v1/learning/me/certificates", authMiddleware(http.HandlerFunc(learningHandler.ListMyCertificates)))
 	mux.Handle("GET /api/v1/learning/me/courses/{courseId}/completion", authMiddleware(http.HandlerFunc(learningHandler.GetMyCourseCompletion)))
 	mux.Handle("GET /api/v1/learning/me/courses/{courseId}/grades", authMiddleware(http.HandlerFunc(learningHandler.GetMyCourseGrades)))
 	mux.Handle("GET /api/v1/learning/me/training-programs/{slug}", authMiddleware(http.HandlerFunc(trainingHandler.MyProgress)))

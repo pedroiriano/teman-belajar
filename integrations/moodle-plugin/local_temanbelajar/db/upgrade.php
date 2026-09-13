@@ -140,5 +140,11 @@ function xmldb_local_temanbelajar_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2026083100, 'local', 'temanbelajar');
     }
 
+    if ($oldversion < 2026091400) {
+        // Refresh external-service definitions for mod_customcert integration.
+        // No schema change required.
+        upgrade_plugin_savepoint(true, 2026091400, 'local', 'temanbelajar');
+    }
+
     return true;
 }

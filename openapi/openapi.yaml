@@ -389,6 +389,28 @@ paths:
               schema: { $ref: '#/components/schemas/TrainingProgramProgress' }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '404': { $ref: '#/components/responses/NotFound' }
+  /learning/me/certificates:
+    get:
+      tags: [Learning, Me]
+      operationId: listMyCertificates
+      summary: List learner certificates issued by Moodle mod_customcert
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: List of issued certificates with verification and download details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/UserCertificate'
+                required: [data]
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '503': { $ref: '#/components/responses/ServiceUnavailableError' }
   /admin/training-programs:
     get:
       tags: [Admin, Training Programs]
@@ -4203,6 +4225,51 @@ components:
           schema:
             $ref: '#/components/schemas/Problem'
   schemas:
+    UserCertificate:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - customcert_id
+        - course_id
+        - course_name
+        - course_shortname
+        - certificate_name
+        - code
+        - timecreated
+        - download_url
+        - verify_url
+      properties:
+        id:
+          type: integer
+          description: Certificate issue record ID
+        customcert_id:
+          type: integer
+          description: Moodle customcert activity ID
+        course_id:
+          type: integer
+          description: Associated Moodle course ID
+        course_name:
+          type: string
+          description: Full name of the course
+        course_shortname:
+          type: string
+          description: Short name of the course
+        certificate_name:
+          type: string
+          description: Name of the certificate activity
+        code:
+          type: string
+          description: Unique certificate verification code
+        timecreated:
+          type: integer
+          description: Epoch timestamp when certificate was issued
+        download_url:
+          type: string
+          description: URL to download the certificate PDF
+        verify_url:
+          type: string
+          description: URL to verify the certificate authenticity
     PlatformNavigationItem:
       type: object
       additionalProperties: false
