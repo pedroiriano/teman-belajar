@@ -1,7 +1,8 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
-import Image from "next/image";
+/* eslint-disable @next/next/no-img-element -- authenticated BFF media previews have runtime URLs */
+
+import { useEffect, useMemo, useState, useTransition } from "react";
 import type { HeroBanner, CreateBannerPayload, UpdateBannerPayload, BannerAlign } from "@/types/banner";
 import {
   createAdminBannerAction,
@@ -11,9 +12,19 @@ import {
 } from "@/app/actions/banners";
 import { AdminDataTable, type ColumnHeader } from "@/components/admin-data-table";
 import { AdminIcon } from "@/components/admin-icon";
+import MediaPicker from "@/components/media/MediaPicker";
 
 interface CubaBannersWorkspaceProps {
   initialBanners: HeroBanner[];
+}
+
+function getAdminImageUrl(url: string): string {
+  if (!url) return "";
+  const match = url.match(/\/api\/v1\/media\/([0-9a-f-]{36})\/content/i);
+  if (match) {
+    return `/api/bff/media/${match[1]}/content`;
+  }
+  return url;
 }
 
 export function CubaBannersWorkspace({ initialBanners }: CubaBannersWorkspaceProps) {
@@ -47,6 +58,27 @@ export function CubaBannersWorkspace({ initialBanners }: CubaBannersWorkspacePro
   const [generalError, setGeneralError] = useState<string | null>(null);
   const [generalSuccess, setGeneralSuccess] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+
+  // Escape key & body scroll lock for modals
+  useEffect(() => {
+    if (!isModalOpen && !isDeleteModalOpen) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && !isPending) {
+        setIsModalOpen(false);
+        setIsDeleteModalOpen(false);
+      }
+    };
+
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      document.body.style.overflow = prevOverflow;
+    };
+  }, [isModalOpen, isDeleteModalOpen, isPending]);
 
   // Metrics
   const totalBanners = banners.length;
@@ -147,7 +179,7 @@ export function CubaBannersWorkspace({ initialBanners }: CubaBannersWorkspacePro
       return;
     }
     if (!formData.image_url.trim()) {
-      setFormError("URL gambar banner wajib diisi.");
+      setFormError("Gambar banner wajib dipilih dari Pustaka Media atau diunggah terlebih dahulu.");
       return;
     }
 
@@ -248,7 +280,7 @@ export function CubaBannersWorkspace({ initialBanners }: CubaBannersWorkspacePro
   };
 
   const tableHeaders: (string | ColumnHeader)[] = [
-    { label: "Pratinjau", width: "w-28", align: "center" },
+    { label: "Pratinjau Gambar", width: "w-28", align: "center" },
     { key: "title", label: "Judul & Deskripsi", sortable: true },
     { label: "Call to Action", width: "w-44" },
     { label: "Posisi", width: "w-24", align: "center" },
@@ -376,129 +408,134 @@ export function CubaBannersWorkspace({ initialBanners }: CubaBannersWorkspacePro
             </td>
           </tr>
         ) : (
-          pagedBanners.map((banner) => (
-            <tr
-              key={banner.id}
-              className="border-b border-slate-100 transition-colors hover:bg-slate-50/60 dark:border-slate-800 dark:hover:bg-slate-800/40"
-            >
-              {/* Pratinjau Gambar */}
-              <td className="px-4 py-3 text-center">
-                <div className="relative mx-auto h-14 w-24 overflow-hidden rounded-lg border border-slate-200 bg-slate-100 dark:border-slate-700 dark:bg-slate-800">
-                  <Image
-                    src={banner.image_url}
-                    alt={banner.title}
-                    fill
-                    sizes="96px"
-                    className="object-cover"
-                    onError={(e) => {
-                      // Fallback visual jika link gambar rusak
-                      (e.target as HTMLElement).style.display = "none";
-                    }}
-                  />
-                </div>
-              </td>
-
-              {/* Judul & Deskripsi */}
-              <td className="px-4 py-3">
-                <div className="max-w-md">
-                  <div className="font-semibold text-slate-900 dark:text-white line-clamp-1">
-                    {banner.title}
-                  </div>
-                  <div className="mt-0.5 text-xs text-slate-500 dark:text-slate-400 line-clamp-2">
-                    {banner.description}
-                  </div>
-                </div>
-              </td>
-
-              {/* Call to Action */}
-              <td className="px-4 py-3">
-                {banner.cta_label ? (
-                  <div className="text-xs">
-                    <span className="font-medium text-slate-800 dark:text-slate-200">
-                      {banner.cta_label}
-                    </span>
-                    {banner.cta_href && (
-                      <div className="mt-0.5 text-[11px] text-sky-600 dark:text-sky-400 truncate max-w-[150px]">
-                        {banner.cta_href}
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <span className="text-xs text-slate-400 italic">Tidak ada CTA</span>
-                )}
-              </td>
-
-              {/* Posisi Teks */}
-              <td className="px-4 py-3 text-center">
-                <span className="inline-flex rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-700 dark:bg-slate-800 dark:text-slate-300 capitalize">
-                  {banner.align === "left" ? "Kiri" : banner.align === "center" ? "Tengah" : "Kanan"}
-                </span>
-              </td>
-
-              {/* Urutan */}
-              <td className="px-4 py-3 text-center font-mono text-xs text-slate-700 dark:text-slate-300">
-                #{banner.sort_order}
-              </td>
-
-              {/* Switch Status Aktif */}
-              <td className="px-4 py-3 text-center">
-                <div className="flex flex-col items-center gap-1">
-                  <button
-                    type="button"
-                    role="switch"
-                    aria-checked={banner.is_active}
-                    disabled={isPending}
-                    onClick={() => handleToggleActive(banner)}
-                    className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2 dark:focus:ring-offset-slate-900 ${
-                      banner.is_active ? "bg-sky-500" : "bg-slate-300 dark:bg-slate-700"
-                    }`}
-                  >
-                    <span
-                      aria-hidden="true"
-                      className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                        banner.is_active ? "translate-x-4" : "translate-x-0"
-                      }`}
+          pagedBanners.map((banner) => {
+            const adminImgSrc = getAdminImageUrl(banner.image_url);
+            return (
+              <tr
+                key={banner.id}
+                className="border-b border-slate-100 transition-colors hover:bg-slate-50/60 dark:border-slate-800 dark:hover:bg-slate-800/40"
+              >
+                {/* Pratinjau Gambar */}
+                <td className="px-4 py-3 text-center">
+                  <div className="relative mx-auto h-14 w-24 overflow-hidden rounded-lg border border-slate-200 bg-slate-100 dark:border-slate-700 dark:bg-slate-800">
+                    <img
+                      src={adminImgSrc}
+                      alt={banner.title}
+                      className="h-full w-full object-cover"
+                      loading="lazy"
                     />
-                  </button>
-                  <span
-                    className={`text-[10px] font-medium ${
-                      banner.is_active ? "text-sky-600 dark:text-sky-400" : "text-slate-400"
-                    }`}
-                  >
-                    {banner.is_active ? "Aktif" : "Nonaktif"}
-                  </span>
-                </div>
-              </td>
+                  </div>
+                </td>
 
-              {/* Aksi */}
-              <td className="px-4 py-3 text-center">
-                <div className="flex items-center justify-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => openEditModal(banner)}
-                    className="rounded-lg p-1.5 text-slate-500 hover:bg-slate-100 hover:text-sky-600 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-sky-400 transition"
-                    title="Edit Banner"
-                  >
-                    <AdminIcon name="edit" className="h-4 w-4" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => openDeleteModal(banner)}
-                    className="rounded-lg p-1.5 text-slate-500 hover:bg-rose-50 hover:text-rose-600 dark:text-slate-400 dark:hover:bg-rose-950/40 dark:hover:text-rose-400 transition"
-                    title="Hapus Banner"
-                  >
-                    <AdminIcon name="close" className="h-4 w-4" />
-                  </button>
-                </div>
-              </td>
-            </tr>
-          ))
+                {/* Judul & Deskripsi */}
+                <td className="px-4 py-3">
+                  <div className="max-w-md">
+                    <div className="font-semibold text-slate-900 dark:text-white line-clamp-1">
+                      {banner.title}
+                    </div>
+                    <div className="mt-0.5 text-xs text-slate-500 dark:text-slate-400 line-clamp-2">
+                      {banner.description}
+                    </div>
+                  </div>
+                </td>
+
+                {/* Call to Action */}
+                <td className="px-4 py-3">
+                  {banner.cta_label ? (
+                    <div className="text-xs">
+                      <span className="font-medium text-slate-800 dark:text-slate-200">
+                        {banner.cta_label}
+                      </span>
+                      {banner.cta_href && (
+                        <div className="mt-0.5 text-[11px] text-sky-600 dark:text-sky-400 truncate max-w-[150px]">
+                          {banner.cta_href}
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <span className="text-xs text-slate-400 italic">Tidak ada CTA</span>
+                  )}
+                </td>
+
+                {/* Posisi Teks */}
+                <td className="px-4 py-3 text-center">
+                  <span className="inline-flex rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-700 dark:bg-slate-800 dark:text-slate-300 capitalize">
+                    {banner.align === "left" ? "Kiri" : banner.align === "center" ? "Tengah" : "Kanan"}
+                  </span>
+                </td>
+
+                {/* Urutan */}
+                <td className="px-4 py-3 text-center font-mono text-xs text-slate-700 dark:text-slate-300">
+                  #{banner.sort_order}
+                </td>
+
+                {/* Switch Status Aktif */}
+                <td className="px-4 py-3 text-center">
+                  <div className="flex flex-col items-center gap-1">
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={banner.is_active}
+                      disabled={isPending}
+                      onClick={() => handleToggleActive(banner)}
+                      className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2 dark:focus:ring-offset-slate-900 ${
+                        banner.is_active ? "bg-sky-500" : "bg-slate-300 dark:bg-slate-700"
+                      }`}
+                    >
+                      <span
+                        aria-hidden="true"
+                        className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                          banner.is_active ? "translate-x-4" : "translate-x-0"
+                        }`}
+                      />
+                    </button>
+                    <span
+                      className={`text-[10px] font-medium ${
+                        banner.is_active ? "text-sky-600 dark:text-sky-400" : "text-slate-400"
+                      }`}
+                    >
+                      {banner.is_active ? "Aktif" : "Nonaktif"}
+                    </span>
+                  </div>
+                </td>
+
+                {/* Aksi */}
+                <td className="px-4 py-3 text-center">
+                  <div className="flex items-center justify-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => openEditModal(banner)}
+                      className="rounded-lg p-1.5 text-slate-500 hover:bg-slate-100 hover:text-sky-600 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-sky-400 transition"
+                      title="Edit Banner"
+                    >
+                      <AdminIcon name="edit" className="h-4 w-4" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => openDeleteModal(banner)}
+                      className="rounded-lg p-1.5 text-slate-500 hover:bg-rose-50 hover:text-rose-600 dark:text-slate-400 dark:hover:bg-rose-950/40 dark:hover:text-rose-400 transition"
+                      title="Hapus Banner"
+                    >
+                      <AdminIcon name="close" className="h-4 w-4" />
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            );
+          })
         )}
       </AdminDataTable>
 
       {/* Modal Tambah / Edit */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-slate-900/60 p-4 backdrop-blur-sm">
+        <div
+          role="dialog"
+          aria-modal="true"
+          onClick={(e) => {
+            if (!isPending && e.target === e.currentTarget) setIsModalOpen(false);
+          }}
+          className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-slate-900/60 p-4 backdrop-blur-sm"
+        >
           <div className="relative w-full max-w-2xl rounded-2xl bg-white p-6 shadow-2xl dark:bg-slate-900 border border-slate-200 dark:border-slate-800 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between border-b border-slate-100 pb-4 dark:border-slate-800">
               <div>
@@ -506,7 +543,7 @@ export function CubaBannersWorkspace({ initialBanners }: CubaBannersWorkspacePro
                   {editingBanner ? "Edit Hero Banner" : "Tambah Hero Banner Baru"}
                 </h3>
                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                  Isi informasi banner slide beranda Web Publik.
+                  Isi informasi banner slide beranda Web Publik dan pilih gambar dari Pustaka Media.
                 </p>
               </div>
               <button
@@ -558,42 +595,75 @@ export function CubaBannersWorkspace({ initialBanners }: CubaBannersWorkspacePro
                 />
               </div>
 
-              {/* URL Gambar & Live Preview */}
+              {/* Pemilihan Gambar via Pustaka Media */}
               <div>
                 <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                  URL Gambar Banner <span className="text-rose-500">*</span>
+                  Gambar Banner dari Pustaka Media <span className="text-rose-500">*</span>
                 </label>
-                <input
-                  type="text"
-                  required
-                  maxLength={1024}
-                  value={formData.image_url}
-                  onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
-                  placeholder="/techwind/hero/bg01.jpg atau URL MinIO"
-                  className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-slate-900 placeholder:text-slate-400 focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white font-mono text-[11px]"
-                />
-                <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
-                  Dapat menggunakan aset lokal (contoh: <code>/techwind/hero/bg01.jpg</code>) atau URL pustaka media.
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 mb-2">
+                  Ambil dari aset yang telah tersedia di Pustaka Media atau unggah aset gambar baru secara langsung.
                 </p>
 
-                {/* Pratinjau langsung */}
-                {formData.image_url.trim() && (
-                  <div className="mt-2 rounded-xl border border-slate-200 bg-slate-50 p-2 dark:border-slate-700 dark:bg-slate-800/50">
-                    <div className="text-[11px] font-medium text-slate-500 dark:text-slate-400 mb-1">
-                      Pratinjau Gambar:
+                {formData.image_url ? (
+                  <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-800/60">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                      <div className="relative h-20 w-36 overflow-hidden rounded-lg border border-slate-200 bg-slate-200 dark:border-slate-700 dark:bg-slate-700 shrink-0">
+                        <img
+                          src={getAdminImageUrl(formData.image_url)}
+                          alt="Banner Preview"
+                          className="h-full w-full object-cover"
+                        />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="font-semibold text-slate-800 dark:text-slate-200 text-xs truncate">
+                          Gambar Terpilih
+                        </div>
+                        <div className="mt-0.5 text-[11px] font-mono text-slate-500 dark:text-slate-400 truncate">
+                          {formData.image_url}
+                        </div>
+                        <div className="mt-2 flex items-center gap-2">
+                          <MediaPicker
+                            imageOnly
+                            buttonLabel="Ganti Gambar"
+                            onSelect={(selection) => {
+                              setFormData((prev) => ({
+                                ...prev,
+                                image_url: `/api/v1/media/${selection.id}/content`,
+                              }));
+                            }}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setFormData((prev) => ({ ...prev, image_url: "" }))}
+                            className="inline-flex items-center rounded-xl border border-rose-200 bg-white px-3 py-1.5 text-xs font-semibold text-rose-600 hover:bg-rose-50 dark:border-rose-900/50 dark:bg-slate-800 dark:text-rose-400 dark:hover:bg-rose-950/30 transition"
+                          >
+                            Hapus
+                          </button>
+                        </div>
+                      </div>
                     </div>
-                    <div className="relative h-28 w-full overflow-hidden rounded-lg bg-slate-200 dark:bg-slate-700">
-                      <Image
-                        src={formData.image_url}
-                        alt="Live Preview"
-                        fill
-                        sizes="(max-width: 768px) 100vw, 500px"
-                        className="object-cover"
-                        onError={(e) => {
-                          (e.target as HTMLElement).style.display = "none";
-                        }}
-                      />
+                  </div>
+                ) : (
+                  <div className="rounded-xl border-2 border-dashed border-slate-300 p-6 text-center hover:border-sky-400 dark:border-slate-700 dark:hover:border-sky-500 transition">
+                    <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-sky-50 text-sky-600 dark:bg-sky-950/50 dark:text-sky-400 mb-2">
+                      <AdminIcon name="media" className="h-5 w-5" />
                     </div>
+                    <div className="text-xs font-semibold text-slate-800 dark:text-slate-200">
+                      Belum ada gambar yang dipilih
+                    </div>
+                    <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400 max-w-sm mx-auto mb-3">
+                      Pilih gambar beresolusi lanskap dari Pustaka Media atau unggah berkas baru secara langsung.
+                    </p>
+                    <MediaPicker
+                      imageOnly
+                      buttonLabel="Pilih atau Unggah dari Pustaka Media"
+                      onSelect={(selection) => {
+                        setFormData((prev) => ({
+                          ...prev,
+                          image_url: `/api/v1/media/${selection.id}/content`,
+                        }));
+                      }}
+                    />
                   </div>
                 )}
               </div>
@@ -709,7 +779,14 @@ export function CubaBannersWorkspace({ initialBanners }: CubaBannersWorkspacePro
 
       {/* Modal Konfirmasi Hapus */}
       {isDeleteModalOpen && bannerToDelete && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-slate-900/60 p-4 backdrop-blur-sm">
+        <div
+          role="dialog"
+          aria-modal="true"
+          onClick={(e) => {
+            if (!isPending && e.target === e.currentTarget) setIsDeleteModalOpen(false);
+          }}
+          className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-slate-900/60 p-4 backdrop-blur-sm"
+        >
           <div className="relative w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
             <div className="flex items-center gap-3 text-rose-600 dark:text-rose-400">
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-rose-50 dark:bg-rose-950/50">

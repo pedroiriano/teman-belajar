@@ -155,6 +155,11 @@ func (r *MediaRepository) CheckIsPubliclyEligible(ctx context.Context, assetID s
 				configuration.config->'banner'->>'media_id',
 				configuration.config->'seo'->>'social_media_id'
 			)
+		) OR EXISTS (
+			SELECT 1 FROM hero_banners hb
+			WHERE hb.is_active AND (
+				hb.image_url LIKE '%' || $1::text || '%'
+			)
 		)
 	`
 	var isEligible bool
@@ -170,7 +175,8 @@ func (r *MediaRepository) HasActiveUsages(ctx context.Context, assetID string) (
 			WHERE gallery_item.media_id=$1::uuid AND gallery.status<>'archived'
 		)
 		OR EXISTS(SELECT 1 FROM platform_config_versions configuration WHERE configuration.status IN ('draft','published') AND $1::text IN (
-			configuration.config->'identity'->>'logo_media_id', configuration.config->'banner'->>'media_id', configuration.config->'seo'->>'social_media_id'))`
+			configuration.config->'identity'->>'logo_media_id', configuration.config->'banner'->>'media_id', configuration.config->'seo'->>'social_media_id'))
+		OR EXISTS(SELECT 1 FROM hero_banners WHERE image_url LIKE '%' || $1::text || '%')`
 	var exists bool
 	err := r.db.QueryRowContext(ctx, query, assetID).Scan(&exists)
 	return exists, err
