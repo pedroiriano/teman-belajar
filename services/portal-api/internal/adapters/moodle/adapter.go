@@ -2,6 +2,7 @@ package moodle
 
 import (
 	"context"
+	"fmt"
 	"net/url"
 	"strconv"
 	"strings"
@@ -298,4 +299,47 @@ func (c *Client) GetUserCertificates(ctx context.Context, user *learning.Learnin
 
 	return certs, nil
 }
+
+// VerifyCertificate calls local_temanbelajar_verify_certificate or returns nil if unavailable
+func (c *Client) VerifyCertificate(ctx context.Context, code string) (*learning.CertificateVerificationResult, error) {
+	params := url.Values{}
+	params.Set("code", code)
+
+	var response struct {
+		Valid           bool   `json:"valid"`
+		Code            string `json:"code"`
+		RecipientName   string `json:"recipient_name"`
+		CourseName      string `json:"course_name"`
+		CertificateName string `json:"certificate_name"`
+		IssuedAt        int64  `json:"issued_at"`
+		Message         string `json:"message"`
+	}
+
+	err := c.callWS(ctx, "local_temanbelajar_verify_certificate", params, &response)
+	if err != nil {
+		// Moodle WS not implemented or unreachable: degrade gracefully
+		return nil, err
+	}
+
+	if !response.Valid {
+		return &learning.CertificateVerificationResult{
+			Valid:   false,
+			Message: response.Message,
+		}, nil
+	}
+
+	return &learning.CertificateVerificationResult{
+		Valid: true,
+		Certificate: &learning.VerifiedCertificate{
+			Code:            response.Code,
+			RecipientName:   response.RecipientName,
+			CourseName:      response.CourseName,
+			CertificateName: response.CertificateName,
+			IssuedAt:        response.IssuedAt,
+			Issuer:          "Teman Belajar LXP",
+			VerificationURL: fmt.Sprintf("http://localhost:3100/certificates/verify?code=%s", url.QueryEscape(response.Code)),
+		},
+	}, nil
+}
+
 

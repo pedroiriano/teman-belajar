@@ -38,8 +38,11 @@ function resultBadgeStyle(result: string) {
   if (upper === "SUCCESS") {
     return "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/50";
   }
-  if (upper === "DENIED" || upper === "FAILED" || upper === "FAILURE") {
+  if (upper === "DENIED" || upper === "FAILED" || upper === "FAILURE" || upper === "ERROR") {
     return "bg-rose-50 text-rose-700 dark:bg-rose-500/15 dark:text-rose-300 border border-rose-200 dark:border-rose-800/50";
+  }
+  if (upper === "NOT_FOUND" || upper === "INVALID_INPUT") {
+    return "bg-yellow-50 text-yellow-800 dark:bg-yellow-500/15 dark:text-yellow-300 border border-yellow-200 dark:border-yellow-800/50";
   }
   return "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border border-slate-200 dark:border-slate-700";
 }
@@ -105,7 +108,7 @@ export function CubaAuditTable({
       } else if (sortKey === "actor_user_id") {
         comparison = (a.actor_user_id || "").localeCompare(b.actor_user_id || "");
       } else if (sortKey === "target_id") {
-        comparison = (a.target_id || "").localeCompare(b.target_id || "");
+        comparison = a.target_id.localeCompare(b.target_id);
       } else if (sortKey === "result") {
         comparison = a.result.localeCompare(b.result);
       }
@@ -113,26 +116,27 @@ export function CubaAuditTable({
     });
 
     return result;
-  }, [items, searchQuery, statusFilter, moduleFilter, sortKey, sortDirection]);
+  }, [items, statusFilter, moduleFilter, searchQuery, sortKey, sortDirection]);
 
   const handleSortChange = (key: string) => {
     if (sortKey === key) {
       setSortDirection((prev) => (prev === "asc" ? "desc" : "asc"));
     } else {
       setSortKey(key);
-      setSortDirection("asc");
+      setSortDirection("desc");
     }
   };
 
   const quickModules = [
     { value: "all", label: "Semua" },
-    { value: "recommendations", label: "Rekomendasi" },
-    { value: "webinars", label: "Webinar" },
-    { value: "batch", label: "Batch" },
-    { value: "platform_config", label: "Konfigurasi" },
-    { value: "media", label: "Media" },
-    { value: "knowledge", label: "Pengetahuan" },
+    { value: "verification", label: "Verifikasi" },
+    { value: "training", label: "Pelatihan & Ulasan" },
+    { value: "integration_health", label: "Kesehatan Integrasi" },
+    { value: "moodle_event_inbox", label: "Moodle Event" },
     { value: "audit", label: "Audit" },
+    { value: "knowledge", label: "Pengetahuan" },
+    { value: "media", label: "Media" },
+    { value: "platform_config", label: "Konfigurasi" },
   ];
 
   const headerActions = (

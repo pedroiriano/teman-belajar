@@ -198,6 +198,7 @@ export function AdminShell({
   const pathname = usePathname();
   const [desktopSidebarOpen, setDesktopSidebarOpen] = useState(true);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const [showBackToTop, setShowBackToTop] = useState(false);
   const [query, setQuery] = useState("");
   const mobileDrawerRef = useRef<HTMLElement>(null);
   const mobileMenuButtonRef = useRef<HTMLButtonElement>(null);
@@ -248,13 +249,22 @@ export function AdminShell({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
+  useEffect(() => {
+    const onScroll = () => {
+      setShowBackToTop(window.scrollY > 300);
+    };
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
   return (
     <CubaToastProvider>
       <div
         id="pageWrapper"
         data-cuba-template="dashboard-03"
-        className={`page-wrapper compact-wrapper dashboard-03-layout cuba-foundation min-h-screen lg:grid ${
-          desktopSidebarOpen ? "lg:grid-cols-[255px_1fr]" : "lg:grid-cols-[1fr]"
+        className={`page-wrapper compact-wrapper dashboard-03-layout cuba-foundation min-h-screen max-w-full overflow-x-clip lg:grid ${
+          desktopSidebarOpen ? "lg:grid-cols-[255px_minmax(0,1fr)]" : "lg:grid-cols-[minmax(0,1fr)]"
         }`}
       >
       {desktopSidebarOpen && (
@@ -308,7 +318,7 @@ export function AdminShell({
           </aside>
         </div>
       )}
-      <div className={`page-body-wrapper min-w-0 ${desktopSidebarOpen ? "lg:col-start-2" : "lg:col-start-1"}`}>
+      <div className={`page-body-wrapper min-w-0 max-w-full overflow-x-clip ${desktopSidebarOpen ? "lg:col-start-2" : "lg:col-start-1"}`}>
         <header className="page-header admin-topbar sticky top-0 z-30 border-b backdrop-blur">
           {/* Bar 1: Topbar (h-[76px]) */}
           <div className="flex h-[76px] items-center gap-3 px-4 sm:px-6 lg:px-8">
@@ -432,7 +442,7 @@ export function AdminShell({
 
         <main
           id="admin-content"
-          className="page-body container-fluid min-h-[calc(100vh-196px)] p-4 sm:p-6 lg:p-8"
+          className="page-body container-fluid min-h-[calc(100vh-196px)] min-w-0 max-w-full p-4 sm:p-6 lg:p-8"
         >
           {children}
         </main>
@@ -444,6 +454,16 @@ export function AdminShell({
         </footer>
       </div>
       <CubaCommandPalette role={role} roles={roles} />
+      <button
+        type="button"
+        id="admin-back-to-top"
+        className={`admin-back-to-top cuba-tap-top ${showBackToTop ? "is-visible" : ""}`}
+        onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+        aria-label="Kembali ke atas"
+        title="Kembali ke atas"
+      >
+        <AdminIcon name="arrow-up" className="h-5 w-5" />
+      </button>
     </div>
     </CubaToastProvider>
   );

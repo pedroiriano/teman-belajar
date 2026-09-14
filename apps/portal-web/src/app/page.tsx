@@ -7,6 +7,7 @@ import {
   BrowseCategoriesSection,
   CommunityTestimonialsSection,
   HomepageCtaSection,
+  HomepageMediaSection,
   HomepageSearchSection,
   ImpactCounterSection,
   TechwindCourseCard,
@@ -418,7 +419,7 @@ export default async function Home() {
   ];
 
   // Media gallery list
-  const mediaItems = mediaResult.data.length ? mediaResult.data.slice(0, 5).map((col, idx) => {
+  const mediaItems = mediaResult.data.length ? mediaResult.data.map((col, idx) => {
     const cover = col.items.find((it) => it.featured) || col.items[0];
     return {
       id: col.id,
@@ -430,9 +431,9 @@ export default async function Home() {
   }) : [
     { id: "med-1", slug: "pemeliharaan-layanan-pembelajaran", title: "Pemeliharaan Layanan Pembelajaran", kind: "image_gallery", image: "/techwind-hero/portfolio/10.jpg" },
     { id: "med-2", slug: "pendaftaran-pelatihan-kepemimpinan", title: "Pendaftaran Pelatihan Kepemimpinan", kind: "image_gallery", image: "/techwind-hero/portfolio/2.jpg" },
-    { id: "med-3", slug: "perubahan-jadwal-webinar-nasional", title: "Perubahan Jadwal Webinar Nasional", kind: "image_gallery", image: "/techwind-hero/portfolio/11.jpg" },
+    { id: "med-3", slug: "perubahan-jadwal-webinar-nasional", title: "Perubahan Jadwal Webinar Nasional", kind: "video_hub", image: "/techwind-hero/portfolio/11.jpg" },
     { id: "med-4", slug: "sosialisasi-platform-teman-belajar", title: "Sosialisasi Platform Teman Belajar", kind: "image_gallery", image: "/techwind-hero/portfolio/4.jpg" },
-    { id: "med-5", slug: "peluncuran-kurikulum-digital", title: "Peluncuran Kurikulum Digital", kind: "image_gallery", image: "/techwind-hero/portfolio/5.jpg" },
+    { id: "med-5", slug: "peluncuran-kurikulum-digital", title: "Peluncuran Kurikulum Digital", kind: "video_hub", image: "/techwind-hero/portfolio/5.jpg" },
   ];
 
   // Search preview items across all content domains for Section 3
@@ -957,59 +958,10 @@ export default async function Home() {
       />
 
       {/* 10. MEDIA & GALERI (#media) */}
-      <section
-        {...sectionProps("media", 10)}
-        className="relative md:py-24 py-16 bg-white dark:bg-slate-900"
-        id="media"
-      >
-        <div className="container relative">
-          <div className="grid grid-cols-1 pb-8 text-center">
-            <h2 className="mb-4 md:text-3xl md:leading-normal text-2xl leading-normal font-bold text-slate-900 dark:text-white">
-              Media &amp; Galeri
-            </h2>
-            <p className="text-slate-400 max-w-xl mx-auto text-base">
-              Dokumentasi kegiatan dan galeri media kami.
-            </p>
-          </div>
-
-          <div className="flex justify-center mb-6">
-            <ul className="mb-0 list-none flex items-center gap-4">
-              <li className="inline-block font-semibold text-base cursor-pointer relative text-primary border-b-2 border-primary pb-1">
-                <Link href="/media-gallery">Semua</Link>
-              </li>
-              <li className="inline-block font-semibold text-base cursor-pointer relative text-slate-400 hover:text-primary duration-500 pb-1">
-                <Link href="/media-gallery?kind=image_gallery">Foto</Link>
-              </li>
-              <li className="inline-block font-semibold text-base cursor-pointer relative text-slate-400 hover:text-primary duration-500 pb-1">
-                <Link href="/media-gallery?kind=video_hub">Video</Link>
-              </li>
-            </ul>
-          </div>
-
-          <div className="grid lg:grid-cols-5 md:grid-cols-3 grid-cols-2 gap-4 mt-6">
-            {mediaItems.map((media) => (
-              <TechwindPortfolioCard
-                key={media.id}
-                href={`/media-gallery/${media.slug}`}
-                image={media.image}
-                title={media.title}
-                subtitle={media.kind === "video_hub" ? "Video Hub" : "Galeri Foto"}
-                aspect="aspect-square"
-              />
-            ))}
-          </div>
-
-          <div className="mt-8 text-center">
-            <Link
-              className="py-2 px-5 inline-flex items-center justify-center gap-1.5 font-semibold tracking-wide border align-middle duration-500 text-base text-center bg-transparent hover:bg-primary border-primary text-primary hover:text-white rounded-md transition-all shadow-sm"
-              href="/media-gallery"
-            >
-              <span>Selengkapnya</span>
-              <i className="ri-arrow-right-line align-middle text-lg" aria-hidden="true" />
-            </Link>
-          </div>
-        </div>
-      </section>
+      <HomepageMediaSection
+        mediaItems={mediaItems}
+        sectionProps={sectionProps("media", 10)}
+      />
 
       {/* 11. AJAKAN BELAJAR (CTA BANNER) (#ajakan-belajar) */}
       <HomepageCtaSection

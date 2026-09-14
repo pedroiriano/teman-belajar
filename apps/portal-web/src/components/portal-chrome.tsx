@@ -67,10 +67,11 @@ const navigationGroups: NavigationGroup[] = [
         ],
       },
       {
-        label: "Bantuan",
+        label: "Bantuan & Layanan",
         items: [
           { href: "/media-gallery", label: "Media", description: "Galeri kegiatan dan dokumentasi." },
           { href: "/help", label: "FAQ", description: "Pertanyaan yang sering diajukan." },
+          { href: "/certificates/verify", label: "Verifikasi Sertifikat", description: "Validasi keaslian sertifikat kelulusan." },
         ],
       },
     ],

@@ -9,7 +9,7 @@ export const authOptions: NextAuthOptions = {
     KeycloakProvider({
       clientId: process.env.KEYCLOAK_ID || "teman-belajar-web",
       clientSecret: process.env.KEYCLOAK_SECRET || "",
-      issuer: process.env.KEYCLOAK_ISSUER || "http://keycloak.teman-belajar.localhost:8081/realms/teman-belajar",
+      issuer: process.env.KEYCLOAK_ISSUER || "http://keycloak.teman-belajar.localhost:8181/realms/teman-belajar",
       authorization: {
         params: {
           scope: "openid profile email",

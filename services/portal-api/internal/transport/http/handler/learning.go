@@ -5,18 +5,26 @@ import (
 	"errors"
 	"net/http"
 	"strconv"
+	"strings"
 
+	"time"
+
+	"github.com/google/uuid"
+
+	"teman-belajar-api/internal/domain/audit"
 	"teman-belajar-api/internal/domain/learning"
 	"teman-belajar-api/internal/transport/http/middleware"
 )
 
 type LearningHandler struct {
-	svc *learning.Service
+	svc       *learning.Service
+	auditRepo audit.Repository
 }
 
-func NewLearningHandler(svc *learning.Service) *LearningHandler {
+func NewLearningHandler(svc *learning.Service, auditRepo audit.Repository) *LearningHandler {
 	return &LearningHandler{
-		svc: svc,
+		svc:       svc,
+		auditRepo: auditRepo,
 	}
 }
 
@@ -29,6 +37,7 @@ func (h *LearningHandler) getIdentity(r *http.Request) (learning.FederatedIdenti
 		Subject:  claims.Subject,
 		Username: claims.PreferredUsername,
 		Email:    claims.Email,
+		Name:     claims.Name,
 	}, nil
 }
 
@@ -254,6 +263,158 @@ func (h *LearningHandler) ListMyCertificates(w http.ResponseWriter, r *http.Requ
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]interface{}{ // #nosec G104 -- response writer error after commit is non-actionable in HTTP handler
 		"data": certs,
+	})
+}
+
+func (h *LearningHandler) VerifyCertificate(w http.ResponseWriter, r *http.Request) {
+	code := strings.TrimSpace(r.URL.Query().Get("code"))
+	correlationID := r.Header.Get("X-Correlation-ID")
+	if correlationID == "" {
+		correlationID = r.Header.Get("X-Request-ID")
+	}
+	var actorID string
+	if claims, ok := middleware.ClaimsFromContext(r.Context()); ok && claims.Subject != "" {
+		actorID = claims.Subject
+	}
+
+	if code == "" || len(code) > 64 {
+		if h.auditRepo != nil {
+			_ = h.auditRepo.CreateEvent(r.Context(), &audit.AuditEvent{
+				ID:          uuid.NewString(),
+				ActorUserID: actorID,
+				Action:      "CERTIFICATE_VERIFY_INVALID",
+				Module:      "verification",
+				TargetType:  "certificate",
+				TargetID:    code,
+				Result:      "INVALID_INPUT",
+				TraceID:     correlationID,
+				IPMasked:    audit.MaskIP(r.RemoteAddr),
+				OccurredAt:  time.Now().UTC(),
+			})
+		}
+		w.Header().Set("Content-Type", "application/problem+json")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]interface{}{ // #nosec G104 -- response writer error after commit is non-actionable in HTTP handler
+			"type":   "about:blank",
+			"title":  "Bad Request",
+			"status": http.StatusBadRequest,
+			"detail": "Kode sertifikat wajib diisi dan maksimal 64 karakter",
+		})
+		return
+	}
+
+	result, err := h.svc.VerifyCertificate(r.Context(), code)
+	if err != nil {
+		if h.auditRepo != nil {
+			_ = h.auditRepo.CreateEvent(r.Context(), &audit.AuditEvent{
+				ID:          uuid.NewString(),
+				ActorUserID: actorID,
+				Action:      "CERTIFICATE_VERIFY_ERROR",
+				Module:      "verification",
+				TargetType:  "certificate",
+				TargetID:    code,
+				Result:      "ERROR",
+				TraceID:     correlationID,
+				IPMasked:    audit.MaskIP(r.RemoteAddr),
+				OccurredAt:  time.Now().UTC(),
+			})
+		}
+		h.writeError(w, err)
+		return
+	}
+
+	if !result.Valid || result.Certificate == nil {
+		if h.auditRepo != nil {
+			_ = h.auditRepo.CreateEvent(r.Context(), &audit.AuditEvent{
+				ID:          uuid.NewString(),
+				ActorUserID: actorID,
+				Action:      "CERTIFICATE_VERIFY_FAILED",
+				Module:      "verification",
+				TargetType:  "certificate",
+				TargetID:    code,
+				Result:      "NOT_FOUND",
+				TraceID:     correlationID,
+				IPMasked:    audit.MaskIP(r.RemoteAddr),
+				OccurredAt:  time.Now().UTC(),
+			})
+		}
+		msg := result.Message
+		if msg == "" {
+			msg = "Sertifikat dengan kode tersebut tidak ditemukan atau tidak valid."
+		}
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusNotFound)
+		json.NewEncoder(w).Encode(map[string]interface{}{ // #nosec G104 -- response writer error after commit is non-actionable in HTTP handler
+			"valid":   false,
+			"message": msg,
+		})
+		return
+	}
+
+	if h.auditRepo != nil {
+		_ = h.auditRepo.CreateEvent(r.Context(), &audit.AuditEvent{
+			ID:          uuid.NewString(),
+			ActorUserID: actorID,
+			Action:      "CERTIFICATE_VERIFIED",
+			Module:      "verification",
+			TargetType:  "certificate",
+			TargetID:    code,
+			Result:      "SUCCESS",
+			TraceID:     correlationID,
+			IPMasked:    audit.MaskIP(r.RemoteAddr),
+			OccurredAt:  time.Now().UTC(),
+		})
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]interface{}{ // #nosec G104 -- response writer error after commit is non-actionable in HTTP handler
+		"valid":       true,
+		"certificate": result.Certificate,
+	})
+}
+
+func (h *LearningHandler) GetMyTranscript(w http.ResponseWriter, r *http.Request) {
+	identity, err := h.getIdentity(r)
+	if err != nil {
+		w.Header().Set("Content-Type", "application/problem+json")
+		w.WriteHeader(http.StatusUnauthorized)
+		json.NewEncoder(w).Encode(map[string]interface{}{ // #nosec G104 -- response writer error after commit is non-actionable in HTTP handler
+			"type":   "about:blank",
+			"title":  "Unauthorized",
+			"status": http.StatusUnauthorized,
+			"detail": err.Error(),
+		})
+		return
+	}
+
+	transcript, err := h.svc.GetMyTranscript(r.Context(), identity)
+	if err != nil {
+		h.writeError(w, err)
+		return
+	}
+
+	if h.auditRepo != nil {
+		correlationID := r.Header.Get("X-Correlation-ID")
+		if correlationID == "" {
+			correlationID = r.Header.Get("X-Request-ID")
+		}
+		_ = h.auditRepo.CreateEvent(r.Context(), &audit.AuditEvent{
+			ID:          uuid.NewString(),
+			ActorUserID: identity.Subject,
+			Action:      "TRANSCRIPT_ACCESSED",
+			Module:      "verification",
+			TargetType:  "transcript",
+			TargetID:    identity.Subject,
+			Result:      "SUCCESS",
+			TraceID:     correlationID,
+			IPMasked:    audit.MaskIP(r.RemoteAddr),
+			OccurredAt:  time.Now().UTC(),
+		})
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]interface{}{ // #nosec G104 -- response writer error after commit is non-actionable in HTTP handler
+		"data": transcript,
 	})
 }
 

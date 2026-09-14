@@ -76,11 +76,35 @@
 }
 
 * { box-sizing: border-box; }
-html { background: var(--admin-surface); }
-body { margin: 0; color: var(--admin-ink); background: var(--admin-surface); transition: color 180ms ease, background-color 180ms ease; }
+html {
+  scroll-behavior: smooth;
+  background: var(--admin-surface);
+  max-width: 100%;
+  overflow-x: clip;
+}
+body {
+  margin: 0;
+  color: var(--admin-ink);
+  background: var(--admin-surface);
+  max-width: 100%;
+  overflow-x: clip;
+  transition: color 180ms ease, background-color 180ms ease;
+}
 a, button, input, textarea, select { outline-offset: 3px; }
 a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible { outline: 3px solid var(--admin-focus); }
 ::selection { color: var(--admin-ink); background: var(--admin-accent-soft); }
+
+/* Custom scrollbar matching Teman Belajar design system and Web Publik */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: var(--admin-surface); }
+::-webkit-scrollbar-thumb { background: var(--admin-border); border-radius: 9999px; }
+::-webkit-scrollbar-thumb:hover { background: var(--admin-muted); }
+
+/* Firefox standard scrollbar support */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--admin-border) var(--admin-surface);
+}
 
 @layer components {
   .admin-card { @apply rounded-xl border; color: var(--admin-ink); background: var(--admin-panel); border-color: color-mix(in srgb, var(--admin-border) 78%, transparent); box-shadow: var(--admin-shadow); transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease; }
@@ -88,7 +112,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visib
   .admin-button:hover { background: var(--admin-primary-hover); }
   .admin-button-secondary { @apply inline-flex min-h-10 items-center justify-center rounded-lg border px-4 py-2 text-sm font-bold transition; color: var(--admin-copy); background: var(--admin-panel); border-color: var(--admin-border); }
   .admin-button-secondary:hover { color: var(--admin-accent-text); border-color: var(--admin-accent-border); }
-  .admin-input { @apply w-full rounded-lg border px-4 py-3 text-sm focus:ring-2; min-height: 44px; color: var(--admin-ink); -webkit-text-fill-color: var(--admin-ink); caret-color: var(--admin-accent-text); background-color: var(--admin-field); border-color: var(--admin-border); --tw-ring-color: var(--admin-focus); }
+  .admin-input { @apply w-full min-w-0 rounded-lg border px-4 py-3 text-sm focus:ring-2; min-height: 44px; color: var(--admin-ink); -webkit-text-fill-color: var(--admin-ink); caret-color: var(--admin-accent-text); background-color: var(--admin-field); border-color: var(--admin-border); --tw-ring-color: var(--admin-focus); }
   .admin-input::placeholder { color: var(--admin-muted); }
   .admin-input:focus { border-color: var(--admin-accent-border); }
   .admin-input[readonly] { background-color: var(--admin-field-readonly); }
@@ -107,7 +131,22 @@ a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visib
   .admin-checkbox { @apply h-4 w-4 rounded border; color: var(--admin-accent-border); accent-color: var(--admin-accent-border); border-color: var(--admin-border); }
   .admin-checkbox:disabled { cursor: not-allowed; opacity: .55; }
   .admin-label { @apply mb-2 block text-sm font-bold; color: var(--admin-copy); }
-  .admin-page { @apply mx-auto w-full max-w-[1500px]; }
+  .admin-page { @apply mx-auto w-full max-w-[1500px] min-w-0; }
+
+  .admin-back-to-top, .cuba-tap-top {
+    @apply pointer-events-none fixed bottom-5 right-5 z-40 grid h-11 w-11 translate-y-4 place-items-center rounded-full opacity-0 shadow-xl transition-all duration-300;
+    background: var(--admin-primary);
+    color: var(--admin-on-primary);
+    box-shadow: 0 10px 24px var(--admin-accent-soft);
+  }
+  .admin-back-to-top:hover, .cuba-tap-top:hover {
+    background: var(--admin-primary-hover);
+    transform: translateY(-2px);
+    box-shadow: 0 14px 28px rgba(56, 189, 248, 0.4);
+  }
+  .admin-back-to-top.is-visible, .cuba-tap-top.is-visible {
+    @apply pointer-events-auto translate-y-0 opacity-100;
+  }
   
   .admin-sidebar { color: var(--admin-sidebar-text); background: var(--admin-sidebar); border-right: 1px solid var(--admin-sidebar-border); }
   .admin-sidebar-border { border-color: var(--admin-sidebar-border) !important; }

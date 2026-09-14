@@ -10,6 +10,31 @@ export type TrainingProvenance = { source: "moodle"; checked_at: string; state: 
 export type TrainingDetail = { program: TrainingProgram; courses: TrainingCourse[]; provenance: TrainingProvenance };
 export type TrainingProgress = { program_slug: string; courses: TrainingCourse[]; completed_courses: number; enrolled_courses: number; total_courses: number; progress_percent?: number; eligibility: { status: "confirmed" | "partial" | "unverified"; message: string }; cta: { kind: "start" | "review" | "check_access" | "unavailable"; label: string; url?: string }; provenance: TrainingProvenance };
 export type TrainingList = { data: TrainingProgram[]; pagination: { page: number; page_size: number; total: number; total_pages: number }; error?: true };
+export type CourseStarDistribution = { count: number; percentage: number };
+export type CourseRatingSummary = {
+  average_rating: number;
+  total_reviews: number;
+  distribution: Record<number, CourseStarDistribution>;
+};
+export type CourseReview = {
+  id: string;
+  program_id: string;
+  program_slug: string;
+  moodle_course_id?: number;
+  user_subject: string;
+  author_name: string;
+  rating: number;
+  title: string;
+  content: string;
+  status: "published" | "hidden" | "flagged";
+  created_at: string;
+  updated_at: string;
+};
+export type CourseReviewListResult = {
+  summary: CourseRatingSummary;
+  reviews: CourseReview[];
+  pagination: { page: number; page_size: number; total: number; total_pages: number };
+};
 
 function apiBase() { return process.env.PORTAL_API_INTERNAL_URL; }
 
@@ -161,5 +186,138 @@ export function getProgramEnrollmentSummary(cohorts?: TrainingCohort[], now = ne
     hasOpenCohort: false,
     label: "Pendaftaran Ditutup",
     className: "bg-slate-100 text-slate-600 border border-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700",
+  };
+}
+
+export async function getTrainingProgramReviews(slug: string, page = 1): Promise<CourseReviewListResult | null> {
+  const base = apiBase();
+  if (!base) return null;
+  try {
+    const response = await fetch(`${base}/api/v1/training-programs/${encodeURIComponent(slug)}/reviews?page=${page}`, {
+      cache: "no-store",
+    });
+    if (!response.ok) return null;
+    return response.json() as Promise<CourseReviewListResult>;
+  } catch {
+    return null;
+  }
+}
+
+export async function getMyTrainingProgramReview(slug: string): Promise<CourseReview | null> {
+  const [base, token] = [apiBase(), await getBackendAccessToken()];
+  if (!base || !token) return null;
+  try {
+    const response = await fetch(`${base}/api/v1/training-programs/${encodeURIComponent(slug)}/reviews/my`, {
+      headers: { Authorization: `Bearer ${token}` },
+      cache: "no-store",
+    });
+    if (!response.ok) return null;
+    return response.json() as Promise<CourseReview>;
+  } catch {
+    return null;
+  }
+}
+
+export type ProgramVisualMetadata = {
+  image: string;
+  category: string;
+  level: "Pemula" | "Menengah" | "Mahir";
+  instructor: { name: string; avatar?: string; role?: string };
+  durationLabel: string;
+};
+
+const visualMetadataMap: Record<string, ProgramVisualMetadata> = {
+  "arsitektur-cloud-enterprise": {
+    image: "/techwind-hero/course/c1.jpg",
+    category: "Cloud & DevOps",
+    level: "Mahir",
+    instructor: { name: "Tim Arsitek Cloud", avatar: "/techwind-hero/client/01.jpg", role: "Principal Cloud Engineer" },
+    durationLabel: "8 Minggu",
+  },
+  "fullstack-modern-web": {
+    image: "/techwind-hero/course/c2.jpg",
+    category: "Software Engineering",
+    level: "Menengah",
+    instructor: { name: "Budi Pratama", avatar: "/techwind-hero/client/02.jpg", role: "Staff Software Engineer" },
+    durationLabel: "10 Minggu",
+  },
+  "data-science-ai-enterprise": {
+    image: "/techwind-hero/course/c3.jpg",
+    category: "Data & AI",
+    level: "Menengah",
+    instructor: { name: "Dr. Citra Kirana", avatar: "/techwind-hero/client/03.jpg", role: "Lead Data Scientist" },
+    durationLabel: "12 Minggu",
+  },
+  "cybersecurity-incident-defense": {
+    image: "/techwind-hero/course/c4.jpg",
+    category: "Keamanan Siber",
+    level: "Mahir",
+    instructor: { name: "Ir. Kurniawan", avatar: "/techwind-hero/client/04.jpg", role: "Head of Security Ops" },
+    durationLabel: "6 Minggu",
+  },
+  "ui-ux-design-system-mastery": {
+    image: "/techwind-hero/course/c5.jpg",
+    category: "UI/UX & Desain",
+    level: "Pemula",
+    instructor: { name: "Siti Rahmawati", avatar: "/techwind-hero/client/05.jpg", role: "Design Systems Lead" },
+    durationLabel: "8 Minggu",
+  },
+  "manajemen-proyek-agile": {
+    image: "/techwind-hero/course/c6.jpg",
+    category: "Manajemen Proyek",
+    level: "Menengah",
+    instructor: { name: "Hendro Susanto, PMP", avatar: "/techwind-hero/client/06.jpg", role: "Agile Delivery Coach" },
+    durationLabel: "6 Minggu",
+  },
+};
+
+export function getProgramVisualMetadata(slug: string): ProgramVisualMetadata {
+  return (
+    visualMetadataMap[slug] || {
+      image: "/techwind-hero/course/c1.jpg",
+      category: "Program Pelatihan",
+      level: "Menengah",
+      instructor: { name: "Fasilitator Teman Belajar", avatar: "/techwind-hero/client/01.jpg", role: "Instruktur Resmi" },
+      durationLabel: "8 Minggu",
+    }
+  );
+}
+
+export type EnrichedTrainingProgram = TrainingProgram & {
+  visual: ProgramVisualMetadata;
+  rating?: { average: number; totalReviews: number };
+};
+
+export type EnrichedTrainingList = {
+  data: EnrichedTrainingProgram[];
+  pagination: { page: number; page_size: number; total: number; total_pages: number };
+  error?: true;
+};
+
+export async function listTrainingProgramsWithReviews(query: string, page: number): Promise<EnrichedTrainingList> {
+  const list = await listTrainingPrograms(query, page);
+  if (!list.data || list.data.length === 0) {
+    return { data: [], pagination: list.pagination, error: list.error };
+  }
+
+  const enrichedData: EnrichedTrainingProgram[] = await Promise.all(
+    list.data.map(async (program) => {
+      const visual = getProgramVisualMetadata(program.slug);
+      try {
+        const reviewData = await getTrainingProgramReviews(program.slug);
+        const rating = reviewData?.summary?.total_reviews
+          ? { average: reviewData.summary.average_rating, totalReviews: reviewData.summary.total_reviews }
+          : undefined;
+        return { ...program, visual, rating };
+      } catch {
+        return { ...program, visual };
+      }
+    })
+  );
+
+  return {
+    data: enrichedData,
+    pagination: list.pagination,
+    error: list.error,
   };
 }

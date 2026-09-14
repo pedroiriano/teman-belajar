@@ -4,6 +4,7 @@ export type AdminIconName =
   | "alert"
   | "announcement"
   | "arrow"
+  | "arrow-up"
   | "audit"
   | "bell"
   | "book"
@@ -49,6 +50,7 @@ const paths: Record<AdminIconName, string> = {
   alert: "M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z M12 9v4 M12 17h.01",
   announcement: "M5 13V9l12-5v14L5 13Zm0 0 2 7h4l-2-6m6-9 4-2",
   arrow: "M5 12h14m-5-5 5 5-5 5",
+  "arrow-up": "M12 19V5m0 0-6 6m6-6 6 6",
   audit: "M6 3h9l3 3v15H6V3Zm8 0v4h4M9 12h6m-6 4h6M9 8h2",
   bell: "M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9Zm-8 12h4",
   book: "M4 19.5A2.5 2.5 0 0 1 6.5 17H20 M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z",

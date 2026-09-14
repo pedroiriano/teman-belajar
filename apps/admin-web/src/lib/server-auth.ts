@@ -33,7 +33,7 @@ export async function getServerAccessToken(): Promise<string | null> {
 
     if (typeof token.refreshToken !== "string") return null;
     const issuer = process.env.KEYCLOAK_ISSUER
-      || "http://keycloak.teman-belajar.localhost:8081/realms/teman-belajar";
+      || "http://keycloak.teman-belajar.localhost:8181/realms/teman-belajar";
     const response = await fetch(`${issuer}/protocol/openid-connect/token`, {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },

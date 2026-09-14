@@ -50,6 +50,7 @@ export function TabFilters({
           <Link
             key={option.value}
             href={href}
+            scroll={false}
             className={`px-4 py-2 text-xs sm:text-sm font-semibold rounded-full border transition-all duration-300 ${
               isActive
                 ? "bg-primary text-white border-primary shadow-sm"

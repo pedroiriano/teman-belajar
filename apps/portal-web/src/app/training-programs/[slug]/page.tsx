@@ -3,18 +3,27 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { Breadcrumb, CourseCard, CourseDetailHero, ContentCard, DetailSidebar, Progress, RelatedContentSection, TrainingProgramCard, formatDate } from "@/components/techwind";
-import { getCohortEnrollmentState, getProgramEnrollmentSummary, getRelatedTrainingPrograms, getTrainingProgram, getTrainingProgress, isTrainingProgramSlug } from "@/lib/training-programs";
+import { CourseReviewsSection } from "@/components/training-programs/course-reviews-section";
+import { getCohortEnrollmentState, getProgramEnrollmentSummary, getRelatedTrainingPrograms, getTrainingProgram, getTrainingProgress, getTrainingProgramReviews, getMyTrainingProgramReview, isTrainingProgramSlug } from "@/lib/training-programs";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
-  const { slug } = await params; if (!isTrainingProgramSlug(slug)) return { title: "Program tidak ditemukan" }; const detail = await getTrainingProgram(slug);
-  if (!detail) return { title: "Program tidak ditemukan" };
+  const { slug } = await params;
+  if (!isTrainingProgramSlug(slug)) notFound();
+  const detail = await getTrainingProgram(slug);
+  if (!detail) notFound();
   return { title: detail.program.title, description: detail.program.summary, alternates: { canonical: `/training-programs/${detail.program.slug}` } };
 }
 
 export default async function TrainingProgramDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   if (!isTrainingProgramSlug(slug)) notFound();
-  const [detail, learner, related] = await Promise.all([getTrainingProgram(slug), getTrainingProgress(slug), getRelatedTrainingPrograms(slug, 3)]);
+  const [detail, learner, related, reviewsResult, myReview] = await Promise.all([
+    getTrainingProgram(slug),
+    getTrainingProgress(slug),
+    getRelatedTrainingPrograms(slug, 3),
+    getTrainingProgramReviews(slug),
+    getMyTrainingProgramReview(slug),
+  ]);
   if (!detail) notFound();
   const progress = learner.data;
   const courses = progress?.courses || detail.courses;
@@ -40,6 +49,11 @@ export default async function TrainingProgramDetailPage({ params }: { params: Pr
           <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-bold uppercase tracking-wider">{courses.length} course terstruktur</span>
           <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-bold uppercase tracking-wider">State formal Moodle</span>
           <span className="rounded-full bg-teal-500/20 text-teal-200 px-3 py-1 text-xs font-bold uppercase tracking-wider">Jadwal cohort transparan</span>
+          {reviewsResult && reviewsResult.summary.total_reviews > 0 ? (
+            <span className="rounded-full bg-amber-500/20 text-amber-200 px-3 py-1 text-xs font-bold uppercase tracking-wider flex items-center gap-1">
+              ★ {reviewsResult.summary.average_rating.toFixed(1)} ({reviewsResult.summary.total_reviews} ulasan)
+            </span>
+          ) : null}
         </>
       }
       aside={
@@ -52,6 +66,13 @@ export default async function TrainingProgramDetailPage({ params }: { params: Pr
             { icon: "graduation", label: "Platform Belajar", value: "Moodle LMS" },
             { icon: "calendar", label: "Status Pendaftaran", value: enrollmentSummary.label },
             { icon: "shield", label: "Status Akses", value: learner.authenticated ? "Terhubung SSO" : "Perlu Masuk" },
+            {
+              icon: "check",
+              label: "Rating & Ulasan",
+              value: reviewsResult && reviewsResult.summary.total_reviews > 0
+                ? `★ ${reviewsResult.summary.average_rating.toFixed(1)} (${reviewsResult.summary.total_reviews})`
+                : "Belum Ada Rating",
+            },
           ]}
           progress={progress ? {
             percent: progress.progress_percent || 0,
@@ -200,6 +221,24 @@ export default async function TrainingProgramDetailPage({ params }: { params: Pr
         </p>
       </div>
     </section>
+
+    <CourseReviewsSection
+      slug={slug}
+      initialSummary={reviewsResult?.summary || {
+        average_rating: 0,
+        total_reviews: 0,
+        distribution: {
+          1: { count: 0, percentage: 0 },
+          2: { count: 0, percentage: 0 },
+          3: { count: 0, percentage: 0 },
+          4: { count: 0, percentage: 0 },
+          5: { count: 0, percentage: 0 },
+        },
+      }}
+      initialReviews={reviewsResult?.reviews || []}
+      myReview={myReview}
+      authenticated={learner.authenticated}
+    />
 
     {related && related.length > 0 ? (
       <RelatedContentSection

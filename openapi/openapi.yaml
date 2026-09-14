@@ -35,6 +35,8 @@ tags:
     description: Versioned Portal composition with source-owned progress and provenance
   - name: Webinars
     description: Moodle mod_zoom-authoritative live learning operations
+  - name: Certificates
+    description: Public certificate verification and credential operations
   - name: Me
     description: Me operations
   - name: Engagement
@@ -374,6 +376,78 @@ paths:
               schema: { $ref: '#/components/schemas/TrainingProgramDetail' }
         '404': { $ref: '#/components/responses/NotFound' }
         '422': { $ref: '#/components/responses/ValidationError' }
+  /training-programs/{slug}/reviews:
+    get:
+      tags: [Training Programs]
+      operationId: listTrainingProgramReviews
+      summary: List public reviews and rating summary for a published training program
+      security: []
+      parameters:
+        - { name: slug, in: path, required: true, schema: { type: string } }
+        - { name: page, in: query, schema: { type: integer, minimum: 1, default: 1 } }
+        - { name: page_size, in: query, schema: { type: integer, minimum: 1, maximum: 50, default: 10 } }
+        - { name: rating, in: query, schema: { type: integer, minimum: 1, maximum: 5 } }
+        - { name: sort, in: query, schema: { type: string, enum: [newest, highest, lowest] } }
+      responses:
+        '200':
+          description: Public reviews and rating summary
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CourseReviewListResult' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '422': { $ref: '#/components/responses/ValidationError' }
+    post:
+      tags: [Training Programs]
+      operationId: submitTrainingProgramReview
+      summary: Submit or update learner review and rating for a training program
+      security:
+        - bearerAuth: []
+      parameters:
+        - { name: slug, in: path, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CourseReviewInput' }
+      responses:
+        '200':
+          description: Review created or updated
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CourseReview' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '422': { $ref: '#/components/responses/ValidationError' }
+  /training-programs/{slug}/reviews/my:
+    get:
+      tags: [Training Programs]
+      operationId: getMyTrainingProgramReview
+      summary: Get the authenticated learner's review for a training program
+      security:
+        - bearerAuth: []
+      parameters:
+        - { name: slug, in: path, required: true, schema: { type: string } }
+      responses:
+        '200':
+          description: Learner review
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CourseReview' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    delete:
+      tags: [Training Programs]
+      operationId: deleteMyTrainingProgramReview
+      summary: Delete the authenticated learner's review for a training program
+      security:
+        - bearerAuth: []
+      parameters:
+        - { name: slug, in: path, required: true, schema: { type: string } }
+      responses:
+        '204':
+          description: Review deleted
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
   /learning/me/training-programs/{slug}:
     get:
       tags: [Learning, Training Programs]
@@ -413,6 +487,53 @@ paths:
                 required: [data]
         '401': { $ref: '#/components/responses/Unauthorized' }
         '503': { $ref: '#/components/responses/ServiceUnavailableError' }
+  /learning/me/transcript:
+    get:
+      tags: [Learning, Me]
+      operationId: getMyTranscript
+      summary: Retrieve official learning transcript and competency portfolio summary
+      description: Returns verified course completion records, final grades, issued certificates, and cumulative metrics for the authenticated learner.
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Learner official transcript and portfolio summary
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LearnerTranscriptResponse'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '503': { $ref: '#/components/responses/ServiceUnavailableError' }
+  /certificates/verify:
+    get:
+      tags: [Certificates]
+      operationId: verifyCertificate
+      summary: Verify authenticity of an issued certificate by its unique code
+      description: Public unauthenticated endpoint to verify learner certificate authenticity.
+      parameters:
+        - name: code
+          in: query
+          required: true
+          description: Unique certificate verification code
+          schema:
+            type: string
+            pattern: '^[A-Za-z0-9_-]{3,64}$'
+            example: TB-2026-X8K9L
+      responses:
+        '200':
+          description: Certificate verification result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CertificateVerificationResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          description: Certificate not found or invalid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CertificateVerificationFailure'
   /admin/training-programs:
     get:
       tags: [Admin, Training Programs]
@@ -468,6 +589,61 @@ paths:
         '401': { $ref: '#/components/responses/Unauthorized' }
         '403': { $ref: '#/components/responses/Forbidden' }
         '503': { $ref: '#/components/responses/DependencyUnavailable' }
+  /admin/training-programs/reviews:
+    get:
+      tags: [Admin, Training Programs]
+      operationId: listAdminCourseReviews
+      summary: List all training program reviews for administrative moderation
+      security:
+        - oidc: [content:read]
+      parameters:
+        - { name: program_slug, in: query, schema: { type: string } }
+        - { name: status, in: query, schema: { type: string, enum: [all, published, hidden, flagged] } }
+        - { name: rating, in: query, schema: { type: integer, minimum: 1, maximum: 5 } }
+        - { name: q, in: query, schema: { type: string } }
+        - { name: page, in: query, schema: { type: integer, minimum: 1, default: 1 } }
+        - { name: page_size, in: query, schema: { type: integer, minimum: 1, maximum: 100, default: 20 } }
+      responses:
+        '200':
+          description: Admin review list
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CourseReviewAdminListResult' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+  /admin/training-programs/reviews/{id}/status:
+    patch:
+      tags: [Admin, Training Programs]
+      operationId: updateCourseReviewStatus
+      summary: Update review moderation status
+      security:
+        - oidc: [content:write]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status]
+              properties:
+                status: { type: string, enum: [published, hidden, flagged] }
+      responses:
+        '200':
+          description: Status updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  id: { type: string }
+                  status: { type: string }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '422': { $ref: '#/components/responses/ValidationError' }
   /admin/training-programs/{id}:
     get:
       tags: [Admin, Training Programs]
@@ -4500,6 +4676,196 @@ components:
         verify_url:
           type: string
           description: URL to verify the certificate authenticity
+    VerifiedCertificate:
+      type: object
+      additionalProperties: false
+      required:
+        - code
+        - recipient_name
+        - course_name
+        - certificate_name
+        - issued_at
+        - issuer
+        - verification_url
+      properties:
+        code:
+          type: string
+          description: Unique certificate verification code
+          example: TB-2026-X8K9L
+        recipient_name:
+          type: string
+          description: Full name of the certificate recipient
+          example: Budi Pratama
+        course_name:
+          type: string
+          description: Title of the completed course or training
+          example: Dasar Pemrograman Go Modern
+        certificate_name:
+          type: string
+          description: Type or title of the certificate
+          example: Sertifikat Kelulusan
+        issued_at:
+          type: integer
+          description: Epoch timestamp when certificate was issued
+          example: 1726200000
+        issuer:
+          type: string
+          description: Name of the issuing organization
+          example: Teman Belajar LXP
+        verification_url:
+          type: string
+          description: Permanent canonical URL to verify this certificate
+          example: http://localhost:3100/certificates/verify?code=TB-2026-X8K9L
+    CertificateVerificationResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - valid
+        - certificate
+      properties:
+        valid:
+          type: boolean
+          example: true
+        certificate:
+          $ref: '#/components/schemas/VerifiedCertificate'
+    CertificateVerificationFailure:
+      type: object
+      additionalProperties: false
+      required:
+        - valid
+        - message
+      properties:
+        valid:
+          type: boolean
+          example: false
+        message:
+          type: string
+          example: Sertifikat dengan kode tersebut tidak ditemukan atau tidak valid.
+    TranscriptSummary:
+      type: object
+      additionalProperties: false
+      required:
+        - total_courses
+        - completed_courses
+        - in_progress_courses
+        - total_learning_hours
+        - average_score
+        - total_certificates
+      properties:
+        total_courses:
+          type: integer
+          example: 5
+        completed_courses:
+          type: integer
+          example: 3
+        in_progress_courses:
+          type: integer
+          example: 2
+        total_learning_hours:
+          type: number
+          format: float
+          example: 42.5
+        average_score:
+          type: number
+          format: float
+          example: 87.5
+        total_certificates:
+          type: integer
+          example: 2
+    TranscriptCourseItem:
+      type: object
+      additionalProperties: false
+      required:
+        - course_id
+        - course_name
+        - short_name
+        - category
+        - completed
+        - progress
+        - final_grade
+      properties:
+        course_id:
+          type: integer
+          example: 101
+        course_name:
+          type: string
+          example: Dasar Pemrograman Go Modern
+        short_name:
+          type: string
+          example: GO-101
+        category:
+          type: string
+          example: Teknologi & Pemrograman
+        completed:
+          type: boolean
+          example: true
+        progress:
+          type: number
+          format: float
+          example: 100.0
+        final_grade:
+          type: string
+          example: "92.00"
+        certificate_code:
+          type: string
+          example: TB-TEST-1234
+        verification_url:
+          type: string
+          example: http://localhost:3100/certificates/verify?code=TB-TEST-1234
+        completed_at:
+          type: integer
+          example: 1726200000
+    LearnerTranscript:
+      type: object
+      additionalProperties: false
+      required:
+        - document_number
+        - issued_at
+        - institution
+        - learner
+        - summary
+        - courses
+      properties:
+        document_number:
+          type: string
+          example: TB-TRX-2026-88192
+        issued_at:
+          type: integer
+          example: 1726300000
+        institution:
+          type: string
+          example: Teman Belajar LXP
+        learner:
+          type: object
+          additionalProperties: false
+          required:
+            - name
+            - username
+            - email
+          properties:
+            name:
+              type: string
+              example: Budi Pratama
+            username:
+              type: string
+              example: budi.pratama
+            email:
+              type: string
+              example: budi@teman-belajar.local
+        summary:
+          $ref: '#/components/schemas/TranscriptSummary'
+        courses:
+          type: array
+          items:
+            $ref: '#/components/schemas/TranscriptCourseItem'
+    LearnerTranscriptResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - data
+      properties:
+        data:
+          $ref: '#/components/schemas/LearnerTranscript'
     PlatformNavigationItem:
       type: object
       additionalProperties: false
@@ -6069,6 +6435,57 @@ components:
       required: [data, pagination]
       properties:
         data: { type: array, items: { $ref: '#/components/schemas/TrainingProgram' } }
+        pagination: { $ref: '#/components/schemas/Pagination' }
+    CourseReview:
+      type: object
+      required: [id, program_id, program_slug, user_subject, author_name, rating, content, status, created_at, updated_at]
+      properties:
+        id: { type: string, format: uuid }
+        program_id: { type: string, format: uuid }
+        program_slug: { type: string }
+        moodle_course_id: { type: integer, nullable: true }
+        user_subject: { type: string }
+        author_name: { type: string }
+        rating: { type: integer, minimum: 1, maximum: 5 }
+        title: { type: string }
+        content: { type: string }
+        status: { type: string, enum: [published, hidden, flagged] }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+    CourseReviewInput:
+      type: object
+      required: [rating, content]
+      properties:
+        rating: { type: integer, minimum: 1, maximum: 5 }
+        title: { type: string, maxLength: 200 }
+        content: { type: string, minLength: 5, maxLength: 2000 }
+    CourseStarDistribution:
+      type: object
+      required: [count, percentage]
+      properties:
+        count: { type: integer, minimum: 0 }
+        percentage: { type: number, minimum: 0, maximum: 100 }
+    CourseRatingSummary:
+      type: object
+      required: [average_rating, total_reviews, distribution]
+      properties:
+        average_rating: { type: number, minimum: 0, maximum: 5 }
+        total_reviews: { type: integer, minimum: 0 }
+        distribution:
+          type: object
+          additionalProperties: { $ref: '#/components/schemas/CourseStarDistribution' }
+    CourseReviewListResult:
+      type: object
+      required: [summary, reviews, pagination]
+      properties:
+        summary: { $ref: '#/components/schemas/CourseRatingSummary' }
+        reviews: { type: array, items: { $ref: '#/components/schemas/CourseReview' } }
+        pagination: { $ref: '#/components/schemas/Pagination' }
+    CourseReviewAdminListResult:
+      type: object
+      required: [reviews, pagination]
+      properties:
+        reviews: { type: array, items: { $ref: '#/components/schemas/CourseReview' } }
         pagination: { $ref: '#/components/schemas/Pagination' }
     TrainingProvenance:
       type: object

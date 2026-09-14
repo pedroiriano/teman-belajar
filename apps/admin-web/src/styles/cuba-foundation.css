@@ -19,6 +19,8 @@
 .page-wrapper {
   min-height: 100vh;
   width: 100%;
+  max-width: 100%;
+  overflow-x: clip;
 }
 
 .page-header,
@@ -27,6 +29,7 @@
 .page-body,
 .footer {
   min-width: 0;
+  max-width: 100%;
 }
 
 .page-header {
@@ -41,10 +44,15 @@
   display: flex;
   min-height: 100vh;
   flex-direction: column;
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: clip;
 }
 
 .page-body {
   flex: 1 1 auto;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .cuba-card,

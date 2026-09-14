@@ -21,6 +21,7 @@ type FederatedIdentity struct {
 	Subject  string // The Keycloak `sub` claim
 	Username string // The Keycloak `preferred_username` claim
 	Email    string
+	Name     string // The Keycloak `name` claim
 }
 
 // LearningUser represents a resolved user in the LMS (Moodle)
@@ -90,6 +91,65 @@ type UserCertificate struct {
 	VerifyURL       string `json:"verify_url"`
 }
 
+// VerifiedCertificate represents verified public certificate details
+type VerifiedCertificate struct {
+	Code            string `json:"code"`
+	RecipientName   string `json:"recipient_name"`
+	CourseName      string `json:"course_name"`
+	CertificateName string `json:"certificate_name"`
+	IssuedAt        int64  `json:"issued_at"`
+	Issuer          string `json:"issuer"`
+	VerificationURL string `json:"verification_url"`
+}
+
+// CertificateVerificationResult represents the result of certificate verification
+type CertificateVerificationResult struct {
+	Valid       bool                 `json:"valid"`
+	Certificate *VerifiedCertificate `json:"certificate,omitempty"`
+	Message     string               `json:"message,omitempty"`
+}
+
+// TranscriptSummary represents cumulative metrics for a learner's transcript
+type TranscriptSummary struct {
+	TotalCourses       int     `json:"total_courses"`
+	CompletedCourses   int     `json:"completed_courses"`
+	InProgressCourses  int     `json:"in_progress_courses"`
+	TotalLearningHours float64 `json:"total_learning_hours"`
+	AverageScore       float64 `json:"average_score"`
+	TotalCertificates  int     `json:"total_certificates"`
+}
+
+// TranscriptCourseItem represents an evaluated course record in a learner's transcript
+type TranscriptCourseItem struct {
+	CourseID        int     `json:"course_id"`
+	CourseName      string  `json:"course_name"`
+	ShortName       string  `json:"short_name"`
+	Category        string  `json:"category"`
+	Completed       bool    `json:"completed"`
+	Progress        float64 `json:"progress"`
+	FinalGrade      string  `json:"final_grade"`
+	CertificateCode string  `json:"certificate_code,omitempty"`
+	VerificationURL string  `json:"verification_url,omitempty"`
+	CompletedAt     *int64  `json:"completed_at,omitempty"`
+}
+
+// TranscriptLearnerInfo represents user identity on the official transcript
+type TranscriptLearnerInfo struct {
+	Name     string `json:"name"`
+	Username string `json:"username"`
+	Email    string `json:"email"`
+}
+
+// LearnerTranscript represents the official aggregated transcript and competency record
+type LearnerTranscript struct {
+	DocumentNumber string                 `json:"document_number"`
+	IssuedAt       int64                  `json:"issued_at"`
+	Institution    string                 `json:"institution"`
+	Learner        TranscriptLearnerInfo  `json:"learner"`
+	Summary        TranscriptSummary      `json:"summary"`
+	Courses        []TranscriptCourseItem `json:"courses"`
+}
+
 // LearningProvider defines the port for communicating with the LMS
 type LearningProvider interface {
 	ListCourses(ctx context.Context, filter CourseFilter) ([]LearningCourse, error)
@@ -98,5 +158,7 @@ type LearningProvider interface {
 	GetCourseCompletion(ctx context.Context, user *LearningUser, courseID int) (*CourseCompletion, error)
 	GetCourseGrades(ctx context.Context, user *LearningUser, courseID int) ([]GradeItem, error)
 	GetUserCertificates(ctx context.Context, user *LearningUser) ([]UserCertificate, error)
+	VerifyCertificate(ctx context.Context, code string) (*CertificateVerificationResult, error)
 }
+
 

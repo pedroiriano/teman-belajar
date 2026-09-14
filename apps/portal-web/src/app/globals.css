@@ -52,6 +52,12 @@ a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visib
 ::-webkit-scrollbar-thumb { background: var(--portal-border); border-radius: 9999px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--portal-muted); }
 
+/* Firefox standard scrollbar support */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--portal-border) var(--portal-surface);
+}
+
 @layer components {
   .portal-container { @apply mx-auto w-full max-w-[1140px] px-4 sm:px-6 lg:px-8; }
   .portal-card { @apply relative overflow-hidden rounded-xl border; color: var(--portal-ink); background: var(--portal-panel); border-color: var(--portal-border); box-shadow: var(--portal-shadow); transition: transform 250ms ease, box-shadow 250ms ease, border-color 250ms ease; }

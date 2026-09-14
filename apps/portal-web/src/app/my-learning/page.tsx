@@ -142,7 +142,15 @@ function CertificateCard({ cert }: { cert: UserCertificate }) {
       </div>
 
       <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex flex-wrap items-center justify-between gap-2">
-        {cert.verify_url ? (
+        {cert.code ? (
+          <Link
+            href={`/certificates/verify?code=${encodeURIComponent(cert.code)}`}
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-primary transition-colors"
+          >
+            <PortalIcon name="check" className="h-4 w-4 text-emerald-500" />
+            <span>Verifikasi Keaslian</span>
+          </Link>
+        ) : cert.verify_url ? (
           <a
             href={cert.verify_url}
             target="_blank"

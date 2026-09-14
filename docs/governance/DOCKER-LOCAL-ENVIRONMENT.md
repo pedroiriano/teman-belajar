@@ -45,18 +45,18 @@ Nama lama `portal-web`, `admin-web`, `portal-api`, `portal-migrate`, `postgres-p
 
 | Service | Variabel | Default host | Port internal | Tujuan |
 |---|---|---:|---:|---|
-| Portal Web | `TB_WEB_PORT` | `3000` | `3000` | browser |
-| Admin Web | `TB_ADMIN_PORT` | `3001` | `3000` | browser |
-| Portal API | `TB_API_PORT` | `8080` | `8080` | API/smoke test |
-| Keycloak | `TB_KEYCLOAK_PORT` | `8081` | `8080` | OIDC/browser |
-| Moodle | `TB_MOODLE_PORT` | `8082` | `80` | browser |
-| Portal PostgreSQL | `TB_PORTAL_DB_PORT` | `15432` | `5432` | client DB host |
-| Moodle PostgreSQL | `TB_MOODLE_DB_PORT` | `15433` | `5432` | client DB host |
-| Redis | `TB_REDIS_PORT` | `16379` | `6379` | debug lokal |
-| MinIO API | `TB_MINIO_API_PORT` | `19000` | `9000` | S3 API |
-| MinIO Console | `TB_MINIO_CONSOLE_PORT` | `19001` | `9001` | browser |
-| Meilisearch | `TB_MEILI_PORT` | `7700` | `7700` | health/debug lokal |
-| Grafana | `TB_GRAFANA_PORT` | `3002` | `3000` | UI observability teknis |
+| Portal Web | `TB_WEB_PORT` | `3100` | `3000` | browser |
+| Admin Web | `TB_ADMIN_PORT` | `3101` | `3000` | browser |
+| Portal API | `TB_API_PORT` | `8180` | `8080` | API/smoke test |
+| Keycloak | `TB_KEYCLOAK_PORT` | `8181` | `8080` | OIDC/browser |
+| Moodle | `TB_MOODLE_PORT` | `8182` | `80` | browser |
+| Portal PostgreSQL | `TB_PORTAL_DB_PORT` | `25432` | `5432` | client DB host |
+| Moodle PostgreSQL | `TB_MOODLE_DB_PORT` | `25433` | `5432` | client DB host |
+| Redis | `TB_REDIS_PORT` | `26379` | `6379` | debug lokal |
+| MinIO API | `TB_MINIO_API_PORT` | `19100` | `9000` | S3 API |
+| MinIO Console | `TB_MINIO_CONSOLE_PORT` | `19101` | `9001` | browser |
+| Meilisearch | `TB_MEILI_PORT` | `7710` | `7700` | health/debug lokal |
+| Grafana | `TB_GRAFANA_PORT` | `3102` | `3000` | UI observability teknis |
 
 Aturan:
 
@@ -85,7 +85,7 @@ Compose tidak menyediakan fallback untuk published port. Semua nilai host wajib 
 - `TB_MEILI_ENV` wajib `development` untuk Compose lokal dan master key tidak pernah dikirim ke browser.
 - Perbedaan local/test/production diatur lebih rinci dalam `ENVIRONMENT-SECURITY-MATRIX.md`.
 
-Issuer Keycloak lokal adalah `http://keycloak.teman-belajar.localhost:8081/realms/teman-belajar`. Nama `*.localhost` menuju loopback pada host; Compose memetakannya ke host gateway pada container aplikasi. Jangan mengganti issuer API dengan DNS internal `http://keycloak:8080`, karena nilai `iss` token harus identik bagi browser dan API.
+Issuer Keycloak lokal adalah `http://keycloak.teman-belajar.localhost:8181/realms/teman-belajar`. Nama `*.localhost` menuju loopback pada host; Compose memetakannya ke host gateway pada container aplikasi. Jangan mengganti issuer API dengan DNS internal `http://keycloak:8080`, karena nilai `iss` token harus identik bagi browser dan API.
 
 ## 5. Network, Volume, dan Data Ownership
 

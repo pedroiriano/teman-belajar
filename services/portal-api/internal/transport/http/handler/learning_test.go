@@ -4,12 +4,23 @@ import (
 	"context"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
+	"teman-belajar-api/internal/domain/audit"
 	"teman-belajar-api/internal/domain/learning"
 	"teman-belajar-api/internal/transport/http/handler"
 	"teman-belajar-api/internal/transport/http/middleware"
 )
+
+type mockLearningAuditRepo struct {
+	events []*audit.AuditEvent
+}
+
+func (m *mockLearningAuditRepo) CreateEvent(_ context.Context, event *audit.AuditEvent) error {
+	m.events = append(m.events, event)
+	return nil
+}
 
 type MockProvider struct{}
 
@@ -49,11 +60,31 @@ func (m *MockProvider) GetUserCertificates(ctx context.Context, user *learning.L
 		},
 	}, nil
 }
+func (m *MockProvider) VerifyCertificate(ctx context.Context, code string) (*learning.CertificateVerificationResult, error) {
+	if code == "PROVIDER-VALID" {
+		return &learning.CertificateVerificationResult{
+			Valid: true,
+			Certificate: &learning.VerifiedCertificate{
+				Code:            code,
+				RecipientName:   "Provider Student",
+				CourseName:      "Provider Course",
+				CertificateName: "Provider Certificate",
+				IssuedAt:        1726000000,
+				Issuer:          "Provider Issuer",
+				VerificationURL: "http://localhost:3100/certificates/verify?code=" + code,
+			},
+		}, nil
+	}
+	return &learning.CertificateVerificationResult{
+		Valid:   false,
+		Message: "Sertifikat tidak ditemukan",
+	}, nil
+}
 
 
 func TestIDORGetMyCourseCompletion(t *testing.T) {
 	svc := learning.NewService(&MockProvider{})
-	h := handler.NewLearningHandler(svc)
+	h := handler.NewLearningHandler(svc, &mockLearningAuditRepo{})
 
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/learning/me/courses/2/completion", nil)
 	req.SetPathValue("courseId", "2") // User is enrolled in course 1, not 2
@@ -72,7 +103,7 @@ func TestIDORGetMyCourseCompletion(t *testing.T) {
 
 func TestIDORGetMyCourseGrades(t *testing.T) {
 	svc := learning.NewService(&MockProvider{})
-	h := handler.NewLearningHandler(svc)
+	h := handler.NewLearningHandler(svc, &mockLearningAuditRepo{})
 
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/learning/me/courses/2/grades", nil)
 	req.SetPathValue("courseId", "2") // User is enrolled in course 1, not 2
@@ -91,7 +122,7 @@ func TestIDORGetMyCourseGrades(t *testing.T) {
 
 func TestGetMyCourseCompletion_Allowed(t *testing.T) {
 	svc := learning.NewService(&MockProvider{})
-	h := handler.NewLearningHandler(svc)
+	h := handler.NewLearningHandler(svc, &mockLearningAuditRepo{})
 
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/learning/me/courses/1/completion", nil)
 	req.SetPathValue("courseId", "1") // User is enrolled in course 1
@@ -110,7 +141,7 @@ func TestGetMyCourseCompletion_Allowed(t *testing.T) {
 
 func TestListMyCertificates(t *testing.T) {
 	svc := learning.NewService(&MockProvider{})
-	h := handler.NewLearningHandler(svc)
+	h := handler.NewLearningHandler(svc, &mockLearningAuditRepo{})
 
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/learning/me/certificates", nil)
 	claims := middleware.CustomClaims{Subject: "mapped"}
@@ -123,5 +154,138 @@ func TestListMyCertificates(t *testing.T) {
 	if w.Code != http.StatusOK {
 		t.Errorf("expected 200 for certificates, got %d", w.Code)
 	}
+}
+
+func TestVerifyCertificate(t *testing.T) {
+	svc := learning.NewService(&MockProvider{})
+	auditMock := &mockLearningAuditRepo{}
+	h := handler.NewLearningHandler(svc, auditMock)
+
+	tests := []struct {
+		name         string
+		code         string
+		expectedCode int
+		expectValid  bool
+	}{
+		{
+			name:         "Empty Code",
+			code:         "",
+			expectedCode: http.StatusBadRequest,
+			expectValid:  false,
+		},
+		{
+			name:         "Too Long Code",
+			code:         "a-very-long-code-that-exceeds-sixty-four-characters-limit-which-is-invalid-1234567890",
+			expectedCode: http.StatusBadRequest,
+			expectValid:  false,
+		},
+		{
+			name:         "Valid Canonical Code TB-TEST-1234",
+			code:         "TB-TEST-1234",
+			expectedCode: http.StatusOK,
+			expectValid:  true,
+		},
+		{
+			name:         "Valid Canonical Code TB-2026-X8K9L",
+			code:         "TB-2026-X8K9L",
+			expectedCode: http.StatusOK,
+			expectValid:  true,
+		},
+		{
+			name:         "Valid Provider Fallback Code",
+			code:         "PROVIDER-VALID",
+			expectedCode: http.StatusOK,
+			expectValid:  true,
+		},
+		{
+			name:         "Invalid Not Found Code",
+			code:         "NON-EXISTENT-CODE",
+			expectedCode: http.StatusNotFound,
+			expectValid:  false,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			url := "/api/v1/certificates/verify"
+			if tc.code != "" {
+				url += "?code=" + tc.code
+			}
+			req := httptest.NewRequest(http.MethodGet, url, nil)
+			w := httptest.NewRecorder()
+
+			h.VerifyCertificate(w, req)
+
+			if w.Code != tc.expectedCode {
+				t.Errorf("expected status %d, got %d. Body: %s", tc.expectedCode, w.Code, w.Body.String())
+			}
+		})
+	}
+}
+
+func TestGetMyTranscript(t *testing.T) {
+	svc := learning.NewService(&MockProvider{})
+	auditMock := &mockLearningAuditRepo{}
+	h := handler.NewLearningHandler(svc, auditMock)
+
+	t.Run("Unauthorized missing claims", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodGet, "/api/v1/learning/me/transcript", nil)
+		w := httptest.NewRecorder()
+		h.GetMyTranscript(w, req)
+
+		if w.Code != http.StatusUnauthorized {
+			t.Errorf("expected 401, got %d", w.Code)
+		}
+	})
+
+	t.Run("Unmapped user", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodGet, "/api/v1/learning/me/transcript", nil)
+		claims := middleware.CustomClaims{Subject: "unmapped"}
+		ctx := context.WithValue(req.Context(), middleware.ClaimsContextKey, claims)
+		req = req.WithContext(ctx)
+
+		w := httptest.NewRecorder()
+		h.GetMyTranscript(w, req)
+
+		if w.Code != http.StatusNotFound {
+			t.Errorf("expected 404, got %d", w.Code)
+		}
+	})
+
+	t.Run("Authorized mapped learner returns transcript", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodGet, "/api/v1/learning/me/transcript", nil)
+		claims := middleware.CustomClaims{
+			Subject:           "mapped",
+			PreferredUsername: "budi.pratama",
+			Email:             "budi@example.com",
+			Name:              "Budi Pratama",
+		}
+		ctx := context.WithValue(req.Context(), middleware.ClaimsContextKey, claims)
+		req = req.WithContext(ctx)
+
+		w := httptest.NewRecorder()
+		h.GetMyTranscript(w, req)
+
+		if w.Code != http.StatusOK {
+			t.Fatalf("expected 200, got %d. Body: %s", w.Code, w.Body.String())
+		}
+
+		if !strings.Contains(w.Body.String(), "TB-TRX-") {
+			t.Errorf("expected document number with TB-TRX- prefix in body: %s", w.Body.String())
+		}
+
+		if !strings.Contains(w.Body.String(), "Budi Pratama") {
+			t.Errorf("expected learner name Budi Pratama in body: %s", w.Body.String())
+		}
+
+		if len(auditMock.events) == 0 {
+			t.Errorf("expected audit event to be recorded for transcript access")
+		} else {
+			lastEvent := auditMock.events[len(auditMock.events)-1]
+			if lastEvent.Action != "TRANSCRIPT_ACCESSED" {
+				t.Errorf("expected TRANSCRIPT_ACCESSED, got %s", lastEvent.Action)
+			}
+		}
+	})
 }
 

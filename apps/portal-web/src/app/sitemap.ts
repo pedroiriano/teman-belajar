@@ -10,7 +10,22 @@ export const dynamic = "force-dynamic";
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const apiBase = process.env.PORTAL_API_INTERNAL_URL;
   const publicBase = (process.env.PORTAL_PUBLIC_BASE_URL || "http://localhost:3000").replace(/\/$/, "");
-  const staticEntries: MetadataRoute.Sitemap = ["/", "/news", "/announcements", "/knowledge", "/microlearning", "/help"].map((path) => ({ url: `${publicBase}${path}`, changeFrequency: path === "/" ? "daily" : "weekly", priority: path === "/" ? 1 : 0.8 }));
+  const staticEntries: MetadataRoute.Sitemap = [
+    "/",
+    "/training-programs",
+    "/microlearning",
+    "/learning-paths",
+    "/knowledge",
+    "/news",
+    "/announcements",
+    "/media-gallery",
+    "/help",
+    "/certificates/verify",
+  ].map((path) => ({
+    url: `${publicBase}${path}`,
+    changeFrequency: path === "/" ? "daily" : "weekly",
+    priority: path === "/" ? 1 : path === "/certificates/verify" ? 0.9 : 0.8,
+  }));
   if (!apiBase) return staticEntries;
   try {
     const response = await fetch(`${apiBase}/api/v1/discovery/sitemap`, { next: { revalidate: 300 } });

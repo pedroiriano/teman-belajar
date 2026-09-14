@@ -17,8 +17,8 @@ export async function GET(req: NextRequest) {
       return NextResponse.redirect(createWebLogoutBridgeUrl(adminBaseUrl, moodleBridgeUrl));
     }
     
-    const issuer = process.env.KEYCLOAK_ISSUER || "http://keycloak.teman-belajar.localhost:8081/realms/teman-belajar";
-    const baseUrl = process.env.POST_LOGOUT_REDIRECT_URL || process.env.NEXTAUTH_URL || "http://localhost:3000";
+    const issuer = process.env.KEYCLOAK_ISSUER || "http://keycloak.teman-belajar.localhost:8181/realms/teman-belajar";
+    const baseUrl = process.env.POST_LOGOUT_REDIRECT_URL || process.env.NEXTAUTH_URL || "http://localhost:3100";
     // Ensure the redirect URI matches the Keycloak wildcard pattern (e.g. http://localhost:3000/*)
     const postLogoutUrl = baseUrl.endsWith("/") ? baseUrl : `${baseUrl}/`;
     const logoutUrl = new URL(`${issuer}/protocol/openid-connect/logout`);

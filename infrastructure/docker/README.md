@@ -56,18 +56,18 @@ Alias Makefile: `make docker-config`, `make up`, `make status`, `make logs`, `ma
 
 ## URL Default
 
-- Portal: `http://localhost:3000`
-- Admin: `http://localhost:3001`
-- API health: `http://localhost:8080/api/v1/health`
-- Keycloak: `http://keycloak.teman-belajar.localhost:8081`
-- Moodle: `http://localhost:8082`
-- MinIO API: `http://localhost:19000`
-- MinIO Console: `http://localhost:19001`
-- Meilisearch: `http://localhost:7700`
-- Grafana teknis: `http://localhost:3002`
-- Portal PostgreSQL: `127.0.0.1:15432`
-- Moodle PostgreSQL: `127.0.0.1:15433`
-- Redis: `127.0.0.1:16379`
+- Portal: `http://localhost:3100`
+- Admin: `http://localhost:3101`
+- API health: `http://localhost:8180/api/v1/health`
+- Keycloak: `http://keycloak.teman-belajar.localhost:8181`
+- Moodle: `http://localhost:8182`
+- MinIO API: `http://localhost:19100`
+- MinIO Console: `http://localhost:19101`
+- Meilisearch: `http://localhost:7710`
+- Grafana teknis: `http://localhost:3102`
+- Portal PostgreSQL: `127.0.0.1:25432`
+- Moodle PostgreSQL: `127.0.0.1:25433`
+- Redis: `127.0.0.1:26379`
 
 ## Kondisi Status yang Benar
 

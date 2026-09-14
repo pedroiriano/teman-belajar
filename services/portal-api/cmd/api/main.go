@@ -31,6 +31,7 @@ import (
 	"teman-belajar-api/internal/domain/banner"
 	"teman-belajar-api/internal/domain/dashboard"
 	"teman-belajar-api/internal/domain/cms"
+	"teman-belajar-api/internal/domain/coursereview"
 	"teman-belajar-api/internal/domain/discoverability"
 	"teman-belajar-api/internal/domain/draft"
 	engagementdomain "teman-belajar-api/internal/domain/engagement"
@@ -148,6 +149,8 @@ func main() {
 	learningSvc := learning.NewService(moodleClient)
 	trainingRepo := postgres.NewTrainingRepository(db)
 	trainingSvc := training.NewService(trainingRepo, moodleClient, auditRepo, moodlePublicBaseURL)
+	courseReviewRepo := postgres.NewCourseReviewRepository(db)
+	courseReviewSvc := coursereview.NewService(courseReviewRepo)
 
 	// Handlers
 	cmsHandler := handler.NewCMSHandler(cmsSvc, discoverySvc)
@@ -156,8 +159,9 @@ func main() {
 	discoveryHandler := handler.NewDiscoverabilityHandler(discoverySvc)
 	faqHandler := handler.NewFAQHandler(faqSvc)
 	draftHandler := handler.NewDraftHandler(draftSvc)
-	learningHandler := handler.NewLearningHandler(learningSvc)
+	learningHandler := handler.NewLearningHandler(learningSvc, auditRepo)
 	trainingHandler := handler.NewTrainingHandler(trainingSvc)
+	courseReviewHandler := handler.NewCourseReviewHandler(courseReviewSvc, auditRepo)
 	microlearningHandler := handler.NewMicrolearningHandler(microlearningSvc)
 	notificationHandler := handler.NewNotificationHandler(notificationSvc)
 	webinarSvc := webinar.NewService(moodleClient, notificationSvc)
@@ -374,6 +378,7 @@ func main() {
 	mux.HandleFunc("GET /api/v1/faqs", faqHandler.PublicList)
 	mux.HandleFunc("GET /api/v1/training-programs", trainingHandler.PublicList)
 	mux.HandleFunc("GET /api/v1/training-programs/{slug}", trainingHandler.PublicDetail)
+	mux.HandleFunc("GET /api/v1/training-programs/{slug}/reviews", courseReviewHandler.PublicList)
 	mux.HandleFunc("GET /api/v1/learning-paths", learningPathHandler.PublicList)
 	mux.HandleFunc("GET /api/v1/learning-paths/{slug}", learningPathHandler.PublicDetail)
 	mux.HandleFunc("GET /api/v1/microlearning", microlearningHandler.PublicList)
@@ -382,6 +387,7 @@ func main() {
 	mux.HandleFunc("GET /api/v1/discovery/{kind}", discoveryHandler.PublicTerms)
 	mux.HandleFunc("GET /api/v1/discovery/{kind}/{slug}", discoveryHandler.Landing)
 	mux.HandleFunc("GET /api/v1/recommendations", engagementHandler.PublicRecommendations)
+	mux.HandleFunc("GET /api/v1/certificates/verify", learningHandler.VerifyCertificate)
 
 	if searchHandler != nil {
 		mux.HandleFunc("GET /api/v1/search", searchHandler.Search)
@@ -411,9 +417,13 @@ func main() {
 	mux.Handle("GET /api/v1/learning/me", authMiddleware(http.HandlerFunc(learningHandler.GetMe)))
 	mux.Handle("GET /api/v1/learning/me/courses", authMiddleware(http.HandlerFunc(learningHandler.ListMyCourses)))
 	mux.Handle("GET /api/v1/learning/me/certificates", authMiddleware(http.HandlerFunc(learningHandler.ListMyCertificates)))
+	mux.Handle("GET /api/v1/learning/me/transcript", authMiddleware(http.HandlerFunc(learningHandler.GetMyTranscript)))
 	mux.Handle("GET /api/v1/learning/me/courses/{courseId}/completion", authMiddleware(http.HandlerFunc(learningHandler.GetMyCourseCompletion)))
 	mux.Handle("GET /api/v1/learning/me/courses/{courseId}/grades", authMiddleware(http.HandlerFunc(learningHandler.GetMyCourseGrades)))
 	mux.Handle("GET /api/v1/learning/me/training-programs/{slug}", authMiddleware(http.HandlerFunc(trainingHandler.MyProgress)))
+	mux.Handle("GET /api/v1/training-programs/{slug}/reviews/my", authMiddleware(http.HandlerFunc(courseReviewHandler.GetMyReview)))
+	mux.Handle("POST /api/v1/training-programs/{slug}/reviews", authMiddleware(http.HandlerFunc(courseReviewHandler.SubmitReview)))
+	mux.Handle("DELETE /api/v1/training-programs/{slug}/reviews/my", authMiddleware(http.HandlerFunc(courseReviewHandler.DeleteMyReview)))
 	mux.Handle("GET /api/v1/learning/me/learning-paths/{slug}", authMiddleware(http.HandlerFunc(learningPathHandler.Progress)))
 	mux.Handle("GET /api/v1/webinars", authMiddleware(http.HandlerFunc(webinarHandler.List)))
 	mux.Handle("GET /api/v1/webinars/{id}", authMiddleware(http.HandlerFunc(webinarHandler.Get)))
@@ -454,6 +464,8 @@ func main() {
 	mux.Handle("GET /api/v1/admin/training-programs", adminAuthMiddleware(http.HandlerFunc(trainingHandler.AdminList)))
 	mux.Handle("POST /api/v1/admin/training-programs", adminAuthMiddleware(http.HandlerFunc(trainingHandler.AdminCreate)))
 	mux.Handle("GET /api/v1/admin/training-programs/course-options", adminAuthMiddleware(http.HandlerFunc(trainingHandler.CourseOptions)))
+	mux.Handle("GET /api/v1/admin/training-programs/reviews", adminAuthMiddleware(http.HandlerFunc(courseReviewHandler.AdminList)))
+	mux.Handle("PATCH /api/v1/admin/training-programs/reviews/{id}/status", adminAuthMiddleware(http.HandlerFunc(courseReviewHandler.AdminUpdateStatus)))
 	mux.Handle("GET /api/v1/admin/training-programs/{id}", adminAuthMiddleware(http.HandlerFunc(trainingHandler.AdminGet)))
 	mux.Handle("PATCH /api/v1/admin/training-programs/{id}", adminAuthMiddleware(http.HandlerFunc(trainingHandler.AdminUpdate)))
 	mux.Handle("POST /api/v1/admin/training-programs/{id}/transition", adminAuthMiddleware(http.HandlerFunc(trainingHandler.AdminTransition)))

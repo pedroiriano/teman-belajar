@@ -73,19 +73,19 @@ export default async function AuditCenterPage({
   return (
     <div className="admin-page space-y-6">
       {/* Header Cuba */}
-      <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
+      <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between min-w-0">
+        <div className="min-w-0">
           <p className="admin-kicker text-xs font-black uppercase tracking-wider text-sky-600 dark:text-sky-400">
-            INVESTIGASI READ-ONLY
+            KEAMANAN & PEMANTAUAN
           </p>
-          <h1 className="text-2xl font-black text-slate-900 dark:text-white sm:text-3xl">
+          <h1 className="text-2xl font-black text-slate-900 dark:text-white sm:text-3xl truncate">
             Audit Center
           </h1>
           <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-            Audit trail tersanitasi dengan retention 365 hari. Waktu ditampilkan dalam Asia/Jakarta.
+            Audit trail tersanitasi dengan retention 365 hari untuk investigasi keamanan, verifikasi integritas, dan pemantauan kepatuhan. Waktu ditampilkan dalam Asia/Jakarta.
           </p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 shrink-0">
           {canExport ? (
             <Link
               href={`/api/bff/audit/export?${exportParams}`}
@@ -109,19 +109,74 @@ export default async function AuditCenterPage({
 
       {/* Filter Form Panel Cuba */}
       <form
-        className="cuba-card admin-card rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-sm space-y-4"
+        className="cuba-card admin-card rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 sm:p-5 shadow-sm space-y-4 max-w-full"
         action="/dashboard/audit"
         method="get"
       >
-        <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
-          <div className="flex items-center gap-2">
-            <AdminIcon name="audit" className="h-4 w-4 text-sky-600 dark:text-sky-400" />
-            <h2 className="text-sm font-bold text-slate-900 dark:text-white">Filter Log Aktivitas</h2>
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 dark:border-slate-800 pb-3">
+          <div className="flex items-center gap-2 min-w-0">
+            <AdminIcon name="audit" className="h-4 w-4 text-sky-600 dark:text-sky-400 shrink-0" />
+            <h2 className="text-sm font-bold text-slate-900 dark:text-white truncate">Filter Log Aktivitas</h2>
           </div>
           <span className="text-[11px] text-slate-400 dark:text-slate-500">Maksimal 25 catatan per filter</span>
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {/* Quick Filter Presets */}
+        <div className="flex flex-wrap items-center gap-1.5 pb-1">
+          <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 mr-1">Preset Verifikasi:</span>
+          <Link
+            href="/dashboard/audit"
+            className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition ${
+              !input.event && !input.module
+                ? "bg-sky-50 text-sky-700 dark:bg-sky-950/50 dark:text-sky-300 border border-sky-200 dark:border-sky-800"
+                : "bg-slate-100 dark:bg-slate-800/80 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"
+            }`}
+          >
+            Semua
+          </Link>
+          <Link
+            href="/dashboard/audit?module=verification"
+            className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition ${
+              input.module === "verification"
+                ? "bg-sky-50 text-sky-700 dark:bg-sky-950/50 dark:text-sky-300 border border-sky-200 dark:border-sky-800"
+                : "bg-slate-100 dark:bg-slate-800/80 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"
+            }`}
+          >
+            Verifikasi Sertifikat & Dokumen
+          </Link>
+          <Link
+            href="/dashboard/audit?event=COURSE_REVIEW_MODERATED"
+            className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition ${
+              input.event === "COURSE_REVIEW_MODERATED"
+                ? "bg-sky-50 text-sky-700 dark:bg-sky-950/50 dark:text-sky-300 border border-sky-200 dark:border-sky-800"
+                : "bg-slate-100 dark:bg-slate-800/80 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"
+            }`}
+          >
+            Moderasi Ulasan
+          </Link>
+          <Link
+            href="/dashboard/audit?module=integration_health"
+            className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition ${
+              input.module === "integration_health"
+                ? "bg-sky-50 text-sky-700 dark:bg-sky-950/50 dark:text-sky-300 border border-sky-200 dark:border-sky-800"
+                : "bg-slate-100 dark:bg-slate-800/80 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"
+            }`}
+          >
+            Kesehatan Integrasi
+          </Link>
+          <Link
+            href="/dashboard/audit?module=audit"
+            className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition ${
+              input.module === "audit"
+                ? "bg-sky-50 text-sky-700 dark:bg-sky-950/50 dark:text-sky-300 border border-sky-200 dark:border-sky-800"
+                : "bg-slate-100 dark:bg-slate-800/80 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"
+            }`}
+          >
+            Akses Audit Center
+          </Link>
+        </div>
+
+        <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 min-w-0">
           <AuditInput name="event" label="Event" value={input.event} placeholder="CONTOH_EVENT" />
           <AuditInput name="module" label="Modul" value={input.module} placeholder="knowledge" />
           <AuditInput name="actor" label="Actor ID" value={input.actor} placeholder="UUID actor" />
@@ -129,7 +184,7 @@ export default async function AuditCenterPage({
           <AuditInput name="target_type" label="Tipe target" value={input.target_type} placeholder="knowledge_article" />
           <AuditInput name="target_id" label="ID target" value={input.target_id} placeholder="ID tepat" />
           <AuditInput name="correlation_id" label="Correlation ID" value={input.correlation_id} placeholder="Correlation ID" />
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 min-w-0">
             <AuditInput name="from" label="Dari (UTC)" value={input.from} type="date" />
             <AuditInput name="to" label="Sampai (UTC)" value={input.to} type="date" />
           </div>
@@ -153,7 +208,7 @@ export default async function AuditCenterPage({
 
       {/* Tabel Data Audit Cuba DataTables */}
       <section
-        className="overflow-x-auto"
+        className="overflow-x-auto max-w-full"
         aria-labelledby="audit-results"
       >
         <h2 id="audit-results" className="sr-only">
@@ -184,10 +239,10 @@ function AuditInput({
   type?: "text" | "date";
 }) {
   return (
-    <label className="grid gap-1.5 text-xs font-bold text-slate-700 dark:text-slate-200">
-      {label}
+    <label className="grid gap-1.5 text-xs font-bold text-slate-700 dark:text-slate-200 min-w-0">
+      <span className="truncate">{label}</span>
       <input
-        className="admin-input"
+        className="admin-input min-w-0 w-full text-xs sm:text-sm px-3 py-2 sm:px-4 sm:py-2.5"
         name={name}
         type={type}
         defaultValue={typeof value === "string" ? value : ""}

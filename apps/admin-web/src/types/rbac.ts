@@ -9,7 +9,7 @@ export const PERMISSION_ACTION_LABELS: Record<PermissionAction, { label: string;
   delete: { label: "Hapus", description: "Menghapus atau mengarsipkan data secara permanen" },
 };
 
-export type ModuleCategory = "Konten & Editorial" | "Pembelajaran" | "Ruang Kerja" | "Administrasi Platform";
+export type ModuleCategory = "Konten & Editorial" | "Pembelajaran" | "Ruang Kerja" | "Administrasi Platform" | "Keamanan & Pemantauan";
 
 export interface PermissionModule {
   id: string;
@@ -119,25 +119,34 @@ export const PLATFORM_MODULES: PermissionModule[] = [
     supportedActions: ["read", "create", "edit", "delete"],
   },
   {
-    id: "integration-health",
-    name: "Kesehatan Integrasi",
-    category: "Administrasi Platform",
-    description: "Pemantauan probe dependensi layanan dan SLA",
-    supportedActions: ["read"],
-  },
-  {
-    id: "audit",
-    name: "Pusat Audit Keamanan",
-    category: "Administrasi Platform",
-    description: "Log aktivitas forensik dan jejak perubahan sistem",
-    supportedActions: ["read"],
-  },
-  {
     id: "platform-configuration",
     name: "Konfigurasi Platform",
     category: "Administrasi Platform",
     description: "Pengaturan global, feature flags, dan mode pemeliharaan",
     supportedActions: ["read", "edit", "publish"],
+  },
+
+  // 5. Keamanan & Pemantauan
+  {
+    id: "integration-health",
+    name: "Kesehatan Integrasi",
+    category: "Keamanan & Pemantauan",
+    description: "Pemantauan probe dependensi layanan dan SLA",
+    supportedActions: ["read"],
+  },
+  {
+    id: "moodle-events",
+    name: "Moodle Event Inbox",
+    category: "Keamanan & Pemantauan",
+    description: "Pemantauan peristiwa asinkron dan verifikasi rekonsiliasi Moodle",
+    supportedActions: ["read", "edit"],
+  },
+  {
+    id: "audit",
+    name: "Pusat Audit Keamanan",
+    category: "Keamanan & Pemantauan",
+    description: "Log aktivitas forensik, jejak perubahan sistem, dan verifikasi keamanan",
+    supportedActions: ["read"],
   },
 ];
 

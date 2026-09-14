@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element -- licensed Techwind assets and local media */
 import Link from "next/link";
 import type { FormHTMLAttributes, HTMLAttributes, ReactNode } from "react";
 
@@ -19,6 +20,7 @@ export { BrowseCategoriesSection, type CategoryItem } from "./browse-categories-
 export { ImpactCounterSection, type ImpactStatItem } from "./impact-counter-section";
 export { CommunityTestimonialsSection, type TestimonialItem } from "./community-testimonials-section";
 export { HomepageCtaSection } from "./homepage-cta-section";
+export { HomepageMediaSection, type HomepageMediaItem } from "./homepage-media-section";
 export {
   TechwindCourseCardSkeleton,
   MicrolearningCardSkeleton,
@@ -306,6 +308,12 @@ export function TrainingProgramCard({
   progress,
   completed,
   headingLevel = "h2",
+  image,
+  instructor,
+  rating,
+  category,
+  level,
+  durationLabel,
 }: {
   href: string;
   title: string;
@@ -316,64 +324,155 @@ export function TrainingProgramCard({
   progress?: number;
   completed?: boolean;
   headingLevel?: "h2" | "h3";
+  image?: string;
+  instructor?: { name: string; avatar?: string; role?: string };
+  rating?: { average: number; totalReviews: number };
+  category?: string;
+  level?: string;
+  durationLabel?: string;
 }) {
   const Heading = headingLevel;
   const isDone = Boolean(completed || (progress !== undefined && progress >= 100));
   return (
-    <ContentCard className="portal-course-card p-6 flex flex-col h-full group hover:-translate-y-1.5 hover:shadow-xl dark:shadow-gray-800 transition-all duration-500 rounded-xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-slate-900">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="flex flex-wrap items-center gap-2">
-          <Badge className="bg-primary/10 text-primary font-bold text-xs uppercase tracking-wider">Program penuh</Badge>
-          {isDone ? (
-            <span className="text-xs font-bold px-2.5 py-0.5 rounded-full inline-flex items-center gap-1 bg-emerald-100 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300">
-              <span>✓</span> Selesai
+    <ContentCard className="portal-course-card flex flex-col h-full group hover:-translate-y-1.5 hover:shadow-xl dark:shadow-gray-800 transition-all duration-500 rounded-xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-slate-900 overflow-hidden">
+      {image ? (
+        <div className="relative overflow-hidden aspect-[16/9]">
+          <img
+            src={image}
+            alt={title}
+            className="w-full h-full object-cover group-hover:scale-110 duration-500 ease-in-out transition-transform"
+          />
+          <div className="absolute inset-0 bg-slate-950/40 opacity-0 group-hover:opacity-100 duration-500 ease-in-out transition-opacity" />
+
+          {/* Floating Badges on Top */}
+          <div className="absolute top-3 inset-x-3 flex items-center justify-between pointer-events-none">
+            <span className="inline-flex items-center rounded-lg px-2.5 py-1 text-xs font-bold bg-white/95 dark:bg-slate-900/95 text-primary shadow-sm backdrop-blur-sm">
+              {category || "Program Penuh"}
             </span>
-          ) : progress !== undefined && progress > 0 ? (
-            <span className="text-xs font-bold px-2.5 py-0.5 rounded-full inline-flex items-center gap-1 bg-teal-100 text-teal-800 dark:bg-teal-950/50 dark:text-teal-300">
-              <span>●</span> {progress}% Selesai
-            </span>
-          ) : cohortStatus ? (
-            <span className={cx("text-xs font-semibold px-2.5 py-0.5 rounded-full inline-block", cohortStatus.className)}>
-              {cohortStatus.label}
-            </span>
+            {cohortStatus ? (
+              <span className={cx("text-xs font-bold px-2.5 py-1 rounded-lg shadow-sm backdrop-blur-sm inline-block", cohortStatus.className)}>
+                {cohortStatus.label}
+              </span>
+            ) : null}
+          </div>
+
+          {/* Instructor Overlay on Hover */}
+          {instructor ? (
+            <div className="absolute inset-x-0 bottom-0 p-3 opacity-0 group-hover:opacity-100 duration-500 ease-in-out transition-opacity">
+              <div className="flex items-center gap-2.5 bg-slate-950/80 backdrop-blur-md rounded-lg p-2 text-white shadow-md">
+                {instructor.avatar ? (
+                  <img src={instructor.avatar} alt={instructor.name} className="w-8 h-8 rounded-full object-cover border border-white/40" />
+                ) : (
+                  <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-xs font-bold text-white">
+                    {instructor.name.slice(0, 2).toUpperCase()}
+                  </div>
+                )}
+                <div className="min-w-0">
+                  <p className="text-xs font-bold truncate leading-tight text-white">{instructor.name}</p>
+                  <p className="text-[10px] text-slate-300 truncate">{instructor.role || "Fasilitator Utama"}</p>
+                </div>
+              </div>
+            </div>
           ) : null}
         </div>
-        <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 dark:text-slate-400">
-          <PortalIcon name="graduation" className="h-4 w-4 text-primary" />
-          {courseCount} course
-        </span>
-      </div>
-      <Heading className="mt-4 text-xl font-bold leading-snug text-slate-900 dark:text-white group-hover:text-primary transition-colors duration-500">
-        <Link href={href}>{title}</Link>
-      </Heading>
-      <p className="mt-2.5 line-clamp-3 text-sm leading-relaxed text-slate-600 dark:text-slate-400 grow">{summary}</p>
-      {audience ? (
-        <div className="mt-4 flex items-center gap-2 text-xs font-medium text-slate-400">
-          <PortalIcon name="user" className="h-3.5 w-3.5 shrink-0" />
-          <span className="truncate">Untuk: {audience}</span>
-        </div>
       ) : null}
-      {(progress !== undefined || completed) && (
-        <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800">
-          <div className="flex items-center justify-between text-xs mb-1.5 font-semibold">
-            <span className="text-slate-500 dark:text-slate-400">Progres Belajar</span>
-            <span className={isDone ? "text-emerald-600 dark:text-emerald-400 font-bold" : "text-teal-600 dark:text-teal-400 font-bold"}>
-              {isDone ? "100%" : `${progress ?? 0}%`}
+
+      <div className="p-6 flex flex-col flex-1">
+        {/* Top meta if no image */}
+        {!image ? (
+          <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+            <div className="flex flex-wrap items-center gap-2">
+              <Badge className="bg-primary/10 text-primary font-bold text-xs uppercase tracking-wider">
+                {category || "Program penuh"}
+              </Badge>
+              {isDone ? (
+                <span className="text-xs font-bold px-2.5 py-0.5 rounded-full inline-flex items-center gap-1 bg-emerald-100 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300">
+                  <span>✓</span> Selesai
+                </span>
+              ) : progress !== undefined && progress > 0 ? (
+                <span className="text-xs font-bold px-2.5 py-0.5 rounded-full inline-flex items-center gap-1 bg-teal-100 text-teal-800 dark:bg-teal-950/50 dark:text-teal-300">
+                  <span>●</span> {progress}% Selesai
+                </span>
+              ) : cohortStatus ? (
+                <span className={cx("text-xs font-semibold px-2.5 py-0.5 rounded-full inline-block", cohortStatus.className)}>
+                  {cohortStatus.label}
+                </span>
+              ) : null}
+            </div>
+            <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 dark:text-slate-400">
+              <PortalIcon name="graduation" className="h-4 w-4 text-primary" />
+              {courseCount} course
             </span>
           </div>
-          <div className="h-2 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
-            <div
-              className={`h-full rounded-full transition-all duration-500 ${isDone ? "bg-emerald-500" : "bg-teal-500"}`}
-              style={{ width: `${isDone ? 100 : Math.min(100, Math.max(0, progress ?? 0))}%` }}
-            />
+        ) : null}
+
+        {/* Rating & Level row */}
+        <div className="flex items-center justify-between gap-2 text-xs font-medium text-slate-500 dark:text-slate-400 mb-2">
+          {rating && rating.totalReviews > 0 ? (
+            <div className="flex items-center gap-1.5 text-yellow-500 dark:text-yellow-400 font-bold">
+              <span className="text-sm">★</span>
+              <span>{rating.average.toFixed(1)}</span>
+              <span className="text-xs font-normal text-slate-400">({rating.totalReviews} ulasan)</span>
+            </div>
+          ) : (
+            <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-teal-600 dark:text-teal-400 bg-teal-50 dark:bg-teal-950/40 px-2 py-0.5 rounded-md">
+              <span>★</span> Pelatihan Baru
+            </span>
+          )}
+
+          <div className="flex items-center gap-2">
+            {level ? (
+              <span className="text-[11px] font-semibold px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+                {level}
+              </span>
+            ) : null}
+            {image ? (
+              <span className="inline-flex items-center gap-1 text-xs font-semibold text-slate-500 dark:text-slate-400">
+                <PortalIcon name="book" className="h-3.5 w-3.5 text-primary" />
+                {courseCount} course
+              </span>
+            ) : null}
           </div>
         </div>
-      )}
-      <div className="mt-5 flex items-center justify-between border-t border-slate-100 dark:border-slate-800 pt-4">
-        <span className="text-xs font-semibold text-slate-400">Kurikulum Moodle</span>
-        <Link href={href} className="inline-flex items-center gap-1 font-bold text-sm text-primary group-hover:translate-x-1.5 duration-500 transition-transform">
-          {isDone ? "Ulas materi →" : progress ? "Lanjutkan belajar →" : "Lihat program →"}
-        </Link>
+
+        <Heading className="mt-1 text-lg sm:text-xl font-bold leading-snug text-slate-900 dark:text-white group-hover:text-primary transition-colors duration-500">
+          <Link href={href}>{title}</Link>
+        </Heading>
+
+        <p className="mt-2.5 line-clamp-2 text-sm leading-relaxed text-slate-600 dark:text-slate-400 grow">{summary}</p>
+
+        {audience ? (
+          <div className="mt-3 flex items-center gap-2 text-xs font-medium text-slate-500 dark:text-slate-400">
+            <PortalIcon name="user" className="h-3.5 w-3.5 shrink-0 text-slate-400" />
+            <span className="truncate">Untuk: {audience}</span>
+          </div>
+        ) : null}
+
+        {(progress !== undefined || completed) && (
+          <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800">
+            <div className="flex items-center justify-between text-xs mb-1.5 font-semibold">
+              <span className="text-slate-500 dark:text-slate-400">Progres Belajar</span>
+              <span className={isDone ? "text-emerald-600 dark:text-emerald-400 font-bold" : "text-teal-600 dark:text-teal-400 font-bold"}>
+                {isDone ? "100%" : `${progress ?? 0}%`}
+              </span>
+            </div>
+            <div className="h-2 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+              <div
+                className={`h-full rounded-full transition-all duration-500 ${isDone ? "bg-emerald-500" : "bg-teal-500"}`}
+                style={{ width: `${isDone ? 100 : Math.min(100, Math.max(0, progress ?? 0))}%` }}
+              />
+            </div>
+          </div>
+        )}
+
+        <div className="mt-5 flex items-center justify-between border-t border-slate-100 dark:border-slate-800 pt-4">
+          <span className="text-xs font-semibold text-slate-400">
+            {durationLabel || "Kurikulum Moodle"}
+          </span>
+          <Link href={href} className="inline-flex items-center gap-1 font-bold text-sm text-primary group-hover:translate-x-1.5 duration-500 transition-transform">
+            {isDone ? "Ulas materi →" : progress ? "Lanjutkan belajar →" : "Lihat program →"}
+          </Link>
+        </div>
       </div>
     </ContentCard>
   );
@@ -792,7 +891,7 @@ export function CourseCard({ title, required, availability, state, summary, prog
 }
 
 export function Tabs({ items, label = "Tab navigasi" }: { items: Array<{ href: string; label: string; current?: boolean }>; label?: string }) {
-  return <nav className="flex gap-2 overflow-x-auto pb-2" aria-label={label}>{items.map((item) => <Link key={item.href} href={item.href} aria-current={item.current ? "page" : undefined} className={item.current ? "portal-filter-active" : "portal-filter"}>{item.label}</Link>)}</nav>;
+  return <nav className="flex gap-2 overflow-x-auto pb-2" aria-label={label}>{items.map((item) => <Link key={item.href} href={item.href} scroll={false} aria-current={item.current ? "page" : undefined} className={item.current ? "portal-filter-active" : "portal-filter"}>{item.label}</Link>)}</nav>;
 }
 
 export function Accordion({ title, children, defaultOpen = false }: { title: string; children: ReactNode; defaultOpen?: boolean }) {
@@ -964,6 +1063,7 @@ export function Pagination({
             <li>
               <Link
                 href={href(previous)}
+                scroll={false}
                 aria-disabled={pagination.page <= 1}
                 tabIndex={pagination.page <= 1 ? -1 : undefined}
                 className={cx(
@@ -994,6 +1094,7 @@ export function Pagination({
                 <li key={item}>
                   <Link
                     href={href(item)}
+                    scroll={false}
                     aria-current={isCurrent ? "page" : undefined}
                     className={cx(
                       "size-10 inline-flex justify-center items-center font-bold transition-all duration-300 border",
@@ -1011,6 +1112,7 @@ export function Pagination({
             <li>
               <Link
                 href={href(next)}
+                scroll={false}
                 aria-disabled={pagination.page >= pagination.total_pages}
                 tabIndex={pagination.page >= pagination.total_pages ? -1 : undefined}
                 className={cx(

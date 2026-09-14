@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { AdminIcon } from "@/components/admin-icon";
 import {
   createTrainingProgramAction,
@@ -259,16 +260,25 @@ export default function TrainingProgramsAdminPage() {
             Susun program, cohort, dan urutan course. Enrolment serta completion tetap dikelola Moodle.
           </p>
         </div>
-        {canWrite && (
-          <button
-            type="button"
-            className="admin-button flex items-center gap-2"
-            onClick={startCreate}
+        <div className="flex flex-wrap items-center gap-3">
+          <Link
+            href="/dashboard/course-reviews"
+            className="admin-button-secondary text-xs flex items-center gap-2"
           >
-            <AdminIcon name="file" className="h-4 w-4" />
-            Program baru
-          </button>
-        )}
+            <AdminIcon name="check" className="h-4 w-4" />
+            Moderasi Ulasan
+          </Link>
+          {canWrite && (
+            <button
+              type="button"
+              className="admin-button flex items-center gap-2"
+              onClick={startCreate}
+            >
+              <AdminIcon name="file" className="h-4 w-4" />
+              Program baru
+            </button>
+          )}
+        </div>
       </header>
 
       {error && (

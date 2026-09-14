@@ -103,7 +103,7 @@ export default async function HelpCenterPage({ searchParams }: { searchParams: P
               </div>
             )}
 
-            <div className="lg:grid lg:grid-cols-[280px_1fr] lg:gap-12">
+            <div className="lg:grid lg:grid-cols-[280px_minmax(0,1fr)] lg:gap-12 min-w-0">
               <FAQSidebar categories={categories} />
               <div className="grid gap-10">
                 {result.data.map((group) => <section key={group.category.id} aria-labelledby={`faq-category-${group.category.id}`}>

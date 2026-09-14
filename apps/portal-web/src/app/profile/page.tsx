@@ -5,6 +5,7 @@ import Link from "next/link";
 
 import { authOptions } from "@/lib/auth";
 import { getBackendAccessToken } from "@/lib/server-auth";
+import { getLearnerTranscript } from "@/lib/transcript";
 import { PageHero } from "@/components/techwind";
 import { PortalIcon } from "@/components/portal-icon";
 import type { EnrolledCourse } from "@/lib/learning/types";
@@ -53,7 +54,10 @@ export default async function LearnerProfilePage({
   const activeTab = raw.tab || "active-learning";
 
   const accessToken = await getBackendAccessToken();
-  const { me, courses } = accessToken ? await getLearnerProfileData(accessToken) : { me: null, courses: [] };
+  const [profileData, transcript] = accessToken
+    ? await Promise.all([getLearnerProfileData(accessToken), getLearnerTranscript(accessToken)])
+    : [{ me: null, courses: [] }, null];
+  const { me, courses } = profileData;
 
   const enrolledCourses: EnrolledCourse[] = courses;
   const completedCourses = enrolledCourses.filter((c) => (c.progress ?? 0) >= 100);
@@ -179,10 +183,11 @@ export default async function LearnerProfilePage({
         </div>
 
         {/* Tab Navigation */}
-        <div className="flex items-center gap-2 border-b border-slate-200 dark:border-slate-800 pb-3">
+        <div className="flex items-center gap-2 border-b border-slate-200 dark:border-slate-800 pb-3 overflow-x-auto">
           <Link
             href="/profile?tab=active-learning"
-            className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold transition-all ${
+            scroll={false}
+            className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold transition-all whitespace-nowrap ${
               activeTab === "active-learning"
                 ? "bg-teal-600 text-white shadow-sm"
                 : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
@@ -193,7 +198,8 @@ export default async function LearnerProfilePage({
           </Link>
           <Link
             href="/profile?tab=completed"
-            className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold transition-all ${
+            scroll={false}
+            className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold transition-all whitespace-nowrap ${
               activeTab === "completed"
                 ? "bg-teal-600 text-white shadow-sm"
                 : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
@@ -205,8 +211,21 @@ export default async function LearnerProfilePage({
             <span>Riwayat & Kelulusan ({completedCourses.length})</span>
           </Link>
           <Link
+            href="/profile?tab=portfolio"
+            scroll={false}
+            className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold transition-all whitespace-nowrap ${
+              activeTab === "portfolio"
+                ? "bg-teal-600 text-white shadow-sm"
+                : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+            }`}
+          >
+            <PortalIcon name="document" className="h-4 w-4" />
+            <span>Portofolio & Transkrip</span>
+          </Link>
+          <Link
             href="/profile?tab=account"
-            className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold transition-all ${
+            scroll={false}
+            className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold transition-all whitespace-nowrap ${
               activeTab === "account"
                 ? "bg-teal-600 text-white shadow-sm"
                 : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
@@ -332,7 +351,150 @@ export default async function LearnerProfilePage({
           </div>
         )}
 
-        {/* Tab Content 3: Account & Session Info */}
+        {/* Tab Content 3: Portfolio & Transcript */}
+        {activeTab === "portfolio" && (
+          <div className="space-y-6">
+            {/* Official Transcript Callout Banner */}
+            <div className="rounded-2xl border border-teal-200 dark:border-teal-800 bg-gradient-to-r from-teal-500/10 via-teal-500/5 to-transparent p-6 sm:p-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 shadow-sm">
+              <div className="space-y-2 max-w-xl">
+                <div className="inline-flex items-center gap-1.5 rounded-md bg-teal-100 dark:bg-teal-900/60 px-2 py-0.5 text-[11px] font-bold text-teal-800 dark:text-teal-200">
+                  <PortalIcon name="shield" className="h-3 w-3" />
+                  <span>Dokumen Sah LXP</span>
+                </div>
+                <h3 className="text-lg font-extrabold text-slate-900 dark:text-white">
+                  Transkrip Pembelajaran & Portofolio Kompetensi Resmi
+                </h3>
+                <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+                  Dapatkan rekapitulasi resmi seluruh capaian kursus, akumulasi jam pelatihan, skor kelulusan, dan nomor registrasi dokumen terverifikasi siap cetak dalam format standar A4.
+                </p>
+              </div>
+
+              <Link
+                href="/profile/transcript"
+                className="inline-flex items-center gap-2 rounded-xl bg-teal-600 hover:bg-teal-700 text-white px-5 py-3 text-xs font-bold shadow-md hover:shadow-lg transition-all shrink-0"
+              >
+                <PortalIcon name="document" className="h-4 w-4" />
+                <span>Buka & Cetak Transkrip</span>
+              </Link>
+            </div>
+
+            {/* Portfolio Metrics Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="rounded-2xl border border-slate-200/80 dark:border-slate-800/80 bg-white dark:bg-slate-900 p-5 shadow-sm">
+                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
+                  Akumulasi Jam Belajar
+                </span>
+                <div className="mt-2 flex items-baseline gap-2">
+                  <span className="text-3xl font-black text-slate-900 dark:text-white">
+                    {transcript?.summary.total_learning_hours ?? 0}
+                  </span>
+                  <span className="text-xs font-semibold text-slate-500">Jam Terdata</span>
+                </div>
+              </div>
+
+              <div className="rounded-2xl border border-slate-200/80 dark:border-slate-800/80 bg-white dark:bg-slate-900 p-5 shadow-sm">
+                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
+                  Rata-rata Skor Kelulusan
+                </span>
+                <div className="mt-2 flex items-baseline gap-2">
+                  <span className="text-3xl font-black text-slate-900 dark:text-white">
+                    {transcript?.summary.average_score && transcript.summary.average_score > 0
+                      ? transcript.summary.average_score.toFixed(1)
+                      : "-"}
+                  </span>
+                  <span className="text-xs font-semibold text-slate-500">Poin / 100</span>
+                </div>
+              </div>
+
+              <div className="rounded-2xl border border-slate-200/80 dark:border-slate-800/80 bg-white dark:bg-slate-900 p-5 shadow-sm">
+                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
+                  Sertifikat Resmi
+                </span>
+                <div className="mt-2 flex items-baseline gap-2">
+                  <span className="text-3xl font-black text-teal-600 dark:text-teal-400">
+                    {transcript?.summary.total_certificates ?? 0}
+                  </span>
+                  <span className="text-xs font-semibold text-slate-500">Sertifikat Aktif</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Verified Competencies & Certificates List */}
+            <div className="space-y-4">
+              <h4 className="text-sm font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
+                <PortalIcon name="shield" className="h-4 w-4 text-teal-600" />
+                <span>Sertifikasi & Riwayat Kompetensi Terverifikasi</span>
+              </h4>
+
+              {transcript && transcript.courses.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {transcript.courses.map((item) => (
+                    <div
+                      key={item.course_id}
+                      className="rounded-2xl border border-slate-200/80 dark:border-slate-800/80 bg-white dark:bg-slate-900 p-6 shadow-sm flex flex-col justify-between"
+                    >
+                      <div>
+                        <div className="flex items-center justify-between gap-2 mb-2">
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-teal-600 dark:text-teal-400 bg-teal-50 dark:bg-teal-950/50 px-2 py-0.5 rounded">
+                            {item.short_name}
+                          </span>
+                          {item.completed ? (
+                            <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                              <PortalIcon name="check" className="h-3 w-3" />
+                              Lulus
+                            </span>
+                          ) : (
+                            <span className="text-[11px] font-semibold text-slate-400">
+                              Progres: {Math.round(item.progress)}%
+                            </span>
+                          )}
+                        </div>
+
+                        <h5 className="font-extrabold text-sm text-slate-900 dark:text-white line-clamp-2">
+                          {item.course_name}
+                        </h5>
+
+                        <div className="mt-3 flex items-center gap-4 text-xs text-slate-500 dark:text-slate-400">
+                          <span>Kategori: <strong>{item.category || "Umum"}</strong></span>
+                          {item.final_grade && item.final_grade !== "-" && (
+                            <span>Nilai: <strong>{item.final_grade}</strong></span>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="mt-6 pt-4 border-t border-slate-100 dark:border-slate-800 flex flex-wrap items-center justify-between gap-2 text-xs">
+                        {item.certificate_code ? (
+                          <>
+                            <div className="font-mono text-[11px] text-slate-500">
+                              Kode: <span className="font-bold text-slate-800 dark:text-slate-200">{item.certificate_code}</span>
+                            </div>
+                            <Link
+                              href={`/certificates/verify?code=${encodeURIComponent(item.certificate_code)}`}
+                              className="inline-flex items-center gap-1 font-bold text-teal-600 dark:text-teal-400 hover:underline"
+                            >
+                              <PortalIcon name="shield" className="h-3.5 w-3.5" />
+                              <span>Verifikasi Publik</span>
+                            </Link>
+                          </>
+                        ) : (
+                          <span className="text-[11px] text-slate-400 italic">
+                            {item.completed ? "Sertifikat terdaftar dalam sistem" : "Sertifikat tersedia setelah kelulusan"}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="rounded-2xl border border-slate-200/80 dark:border-slate-800/80 bg-white dark:bg-slate-900 p-8 text-center text-slate-400 text-xs">
+                  Belum ada riwayat kompetensi atau sertifikat yang tercatat.
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Tab Content 4: Account & Session Info */}
         {activeTab === "account" && (
           <div className="rounded-2xl border border-slate-200/80 dark:border-slate-800/80 bg-white dark:bg-slate-900 p-8 shadow-sm space-y-6">
             <div className="border-b border-slate-100 dark:border-slate-800 pb-4">

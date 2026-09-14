@@ -182,6 +182,7 @@ export function CubaRbacManager({
     "Pembelajaran",
     "Ruang Kerja",
     "Administrasi Platform",
+    "Keamanan & Pemantauan",
   ];
 
   return (

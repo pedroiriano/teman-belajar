@@ -59,10 +59,10 @@ export function TechwindFaqSection({
 
   return (
     <div>
-      <div className="relative grid md:grid-cols-12 grid-cols-1 items-center mt-8 gap-[30px]">
+      <div className="relative grid md:grid-cols-12 grid-cols-1 items-start mt-8 gap-[30px]">
         {/* Left Column: SaaS CTA Image with Parallax (Jarallax style) */}
-        <div className="md:col-span-6">
-          <div ref={containerRef} className="relative rounded-xl overflow-hidden shadow-md dark:shadow-gray-800 h-96 sm:h-[480px] md:h-[540px]">
+        <div className="md:col-span-6 self-start md:sticky md:top-24">
+          <div ref={containerRef} className="relative rounded-xl overflow-hidden shadow-md dark:shadow-gray-800 h-96 sm:h-[480px] md:h-[540px] lg:h-[580px]">
             <div
               ref={parallaxRef}
               className="jarallax absolute inset-x-0 -top-[15%] h-[130%] w-full bg-slate-400 bg-no-repeat bg-top bg-cover will-change-transform"
@@ -75,8 +75,8 @@ export function TechwindFaqSection({
           </div>
         </div>
 
-        {/* Right Column: Mutual Exclusion Accordion */}
-        <div className="md:col-span-6">
+        {/* Right Column: Mutual Exclusion Accordion (Sticky) */}
+        <div className="md:col-span-6 self-start md:sticky md:top-24">
           <div data-accordion="collapse" id="accordion-collapse" className="space-y-4">
             {faqs.map((item, idx) => {
               const isOpen = openId === item.id;
