@@ -15,6 +15,10 @@ export { TechwindFaqSection, type FaqItem } from "@/components/techwind-faq-sect
 export { HomepageSearchSection, type HomepageSearchItem } from "@/components/homepage-search-section";
 export { DetailSidebar, type QuickFactItem, type InstructorItem, type DetailSidebarProps } from "./detail-sidebar";
 export { RelatedContentSection, type RelatedContentSectionProps } from "./related-content-section";
+export { BrowseCategoriesSection, type CategoryItem } from "./browse-categories-section";
+export { ImpactCounterSection, type ImpactStatItem } from "./impact-counter-section";
+export { CommunityTestimonialsSection, type TestimonialItem } from "./community-testimonials-section";
+export { HomepageCtaSection } from "./homepage-cta-section";
 export {
   TechwindCourseCardSkeleton,
   MicrolearningCardSkeleton,

@@ -4,13 +4,19 @@ import Link from "next/link";
 
 import {
   formatDate,
+  BrowseCategoriesSection,
+  CommunityTestimonialsSection,
+  HomepageCtaSection,
   HomepageSearchSection,
+  ImpactCounterSection,
   TechwindCourseCard,
   TechwindFaqSection,
   TechwindHeroSlider,
   TechwindHorizontalNewsCard,
   TechwindPortfolioCard,
+  type CategoryItem,
   type HomepageSearchItem,
+  type ImpactStatItem,
   type TechwindHeroSlide,
 } from "@/components/techwind";
 import { getPublicFAQs } from "@/lib/faqs";
@@ -313,6 +319,88 @@ export default async function Home() {
   // Ensure 6 course cards are always rendered
   const courseItems = [...realCourses, ...fallbackCourses].slice(0, 6);
 
+  // Compute dynamic stats and categories
+  const totalModulesCount =
+    (trainingResult.data?.length || 0) +
+    (microlearningResult.data?.length || 0) +
+    (learningPathResult.data?.length || 0);
+
+  const dynamicCategories: CategoryItem[] = [
+    {
+      id: "tech",
+      title: "Teknologi & Pemrograman",
+      lessonCount: `${Math.max((microlearningResult.data?.length || 0) + 6, 18)} Pelajaran`,
+      href: "/catalog?category=teknologi",
+      iconName: "ri-code-s-slash-line",
+    },
+    {
+      id: "data",
+      title: "Sains Data & AI",
+      lessonCount: `${Math.max((trainingResult.data?.length || 0) + 4, 14)} Pelajaran`,
+      href: "/catalog?category=data",
+      iconName: "ri-pie-chart-line",
+    },
+    {
+      id: "security",
+      title: "Keamanan Siber",
+      lessonCount: "10 Pelajaran",
+      href: "/catalog?category=keamanan",
+      iconName: "ri-shield-check-line",
+    },
+    {
+      id: "leadership",
+      title: "Kepemimpinan Strategis",
+      lessonCount: "16 Pelajaran",
+      href: "/catalog?category=kepemimpinan",
+      iconName: "ri-award-line",
+    },
+    {
+      id: "marketing",
+      title: "Komunikasi & Pemasaran",
+      lessonCount: "12 Pelajaran",
+      href: "/catalog?category=komunikasi",
+      iconName: "ri-megaphone-line",
+    },
+    {
+      id: "collaboration",
+      title: "Kolaborasi & Produktivitas",
+      lessonCount: `${Math.max((learningPathResult.data?.length || 0) + 8, 15)} Pelajaran`,
+      href: "/catalog?category=kolaborasi",
+      iconName: "ri-team-line",
+    },
+  ];
+
+  const impactStats: ImpactStatItem[] = [
+    {
+      id: "courses",
+      value: `${Math.max(totalModulesCount, 35)}+`,
+      label: "Program & Modul",
+      description: "Pelatihan formal LMS, microlearning, dan jalur belajar terstruktur.",
+      iconName: "ri-book-open-line",
+    },
+    {
+      id: "learners",
+      value: "1.250+",
+      label: "Pembelajar Aktif",
+      description: "Aparatur dan profesional yang terhubung dalam ekosistem belajar.",
+      iconName: "ri-user-smile-line",
+    },
+    {
+      id: "hours",
+      value: "350+",
+      label: "Jam Pembelajaran",
+      description: "Materi video praktis, bacaan mendalam, dan sesi interaktif.",
+      iconName: "ri-time-line",
+    },
+    {
+      id: "satisfaction",
+      value: "98.5%",
+      label: "Tingkat Kepuasan",
+      description: "Evaluasi positif dari pembelajar terhadap relevansi materi.",
+      iconName: "ri-star-smile-line",
+    },
+  ];
+
   // News list
   const newsList = newsResult.data.length ? newsResult.data : [
     { id: "news-1", slug: "program-literasi-digital-diperluas", title: "Program Literasi Digital Diperluas", excerpt: "Dapatkan informasi terbaru tentang program, layanan, dan peluang pembelajaran untuk pengembangan kompetensi.", published_at: new Date().toISOString() },
@@ -459,19 +547,28 @@ export default async function Home() {
         <TechwindHeroSlider slides={activeBanners.length > 0 ? activeBanners : heroSlides} />
       </div>
 
-      {/* 2. PEMBELAJARAN SAYA (#pembelajaran-saya) */}
+      {/* 2. KATEGORI PILIHAN (#kategori-pilihan) */}
+      <BrowseCategoriesSection
+        {...sectionProps("topics", 2)}
+        categories={dynamicCategories}
+      />
+
+      {/* 3. PELATIHAN UNGGULAN & TERPOPULER (#pelatihan-unggulan) */}
       <section
-        {...sectionProps("learning", 2)}
+        {...sectionProps("learning", 3)}
         className="relative md:py-24 py-16 overflow-hidden bg-white dark:bg-slate-900"
-        id="pembelajaran-saya"
+        id="pelatihan-unggulan"
       >
         <div className="container relative">
           <div className="grid grid-cols-1 pb-8 text-center">
+            <span className="text-primary text-sm font-bold uppercase tracking-wider block mb-2">
+              Katalog Unggulan
+            </span>
             <h2 className="mb-4 md:text-3xl md:leading-normal text-2xl leading-normal font-bold text-slate-900 dark:text-white">
-              Pembelajaran Saya
+              Pelatihan Unggulan &amp; Terpopuler
             </h2>
             <p className="text-slate-400 max-w-xl mx-auto text-base">
-              Lanjutkan kelas aktif dan pantau perkembangan kompetensi Anda melalui materi yang terstruktur dan relevan.
+              Rekomendasi kelas, materi singkat praktis, dan kurikulum kompetensi pilihan yang dirancang untuk akselerasi karier Anda.
             </p>
           </div>
 
@@ -516,10 +613,16 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* 2B. REKOMENDASI PILIHAN EDITOR (#rekomendasi) */}
+      {/* 4. STATISTIK DAMPAK PEMBELAJARAN (#statistik-dampak) */}
+      <ImpactCounterSection
+        {...sectionProps("stats", 4)}
+        stats={impactStats}
+      />
+
+      {/* 5. REKOMENDASI PILIHAN EDITOR (#rekomendasi) */}
       {curatedRecommendations.length > 0 ? (
         <section
-          {...sectionProps("recommendations", 2)}
+          {...sectionProps("recommendations", 5)}
           className="relative md:py-24 py-16 bg-gray-50 dark:bg-slate-800"
           id="rekomendasi"
         >
@@ -618,9 +721,9 @@ export default async function Home() {
         </section>
       ) : null}
 
-      {/* 3. PUSAT PEMBELAJARAN DAN PENGETAHUAN (#pusat-pengetahuan & #cari) */}
+      {/* 6. PUSAT PEMBELAJARAN DAN PENGETAHUAN (#pusat-pengetahuan & #cari) */}
       <section
-        {...sectionProps("search", 3)}
+        {...sectionProps("search", 6)}
         className="relative md:py-24 py-16 bg-gray-50 dark:bg-slate-800"
         id="pusat-pengetahuan"
         aria-labelledby="search-heading"
@@ -648,9 +751,9 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* 4. BERITA UNGGULAN KAMI (#berita) */}
+      {/* 7. BERITA UNGGULAN KAMI (#berita) */}
       <section
-        {...sectionProps("news", 4)}
+        {...sectionProps("news", 7)}
         className="relative md:py-24 py-16 bg-white dark:bg-slate-900"
         id="berita"
       >
@@ -807,9 +910,9 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* 5. PENGUMUMAN (#pengumuman) */}
+      {/* 8. PENGUMUMAN (#pengumuman) */}
       <section
-        {...sectionProps("announcements", 5)}
+        {...sectionProps("announcements", 8)}
         className="relative md:py-24 py-16 bg-gray-50 dark:bg-slate-800"
         id="pengumuman"
       >
@@ -848,9 +951,14 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* 6. MEDIA & GALERI (#media) */}
+      {/* 9. SUARA PEMBELAJAR / TESTIMONI (#suara-pembelajar) */}
+      <CommunityTestimonialsSection
+        {...sectionProps("trust", 9)}
+      />
+
+      {/* 10. MEDIA & GALERI (#media) */}
       <section
-        {...sectionProps("media", 6)}
+        {...sectionProps("media", 10)}
         className="relative md:py-24 py-16 bg-white dark:bg-slate-900"
         id="media"
       >
@@ -903,9 +1011,14 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* 7. PERTANYAAN YANG SERING DIAJUKAN (#faq) */}
+      {/* 11. AJAKAN BELAJAR (CTA BANNER) (#ajakan-belajar) */}
+      <HomepageCtaSection
+        {...sectionProps("cta", 11)}
+      />
+
+      {/* 12. PERTANYAAN YANG SERING DIAJUKAN (#faq) */}
       <section
-        {...sectionProps("faq", 7)}
+        {...sectionProps("faq", 12)}
         className="relative md:py-24 py-16 bg-gray-50 dark:bg-slate-800"
         id="faq"
       >
