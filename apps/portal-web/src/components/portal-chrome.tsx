@@ -39,6 +39,7 @@ const navigationGroups: NavigationGroup[] = [
           { href: "/microlearning", label: "Pembelajaran Singkat", description: "Materi editorial 3–15 menit." },
           { href: "/webinars", label: "Webinar", description: "Sesi langsung bersama narasumber." },
           { href: "/learning-paths", label: "Jalur Belajar", description: "Rangkaian kompetensi terarah." },
+          { label: "Komunitas Belajar", description: "Forum diskusi antarpelajar dan mentor.", comingSoon: true },
         ],
       },
     ],

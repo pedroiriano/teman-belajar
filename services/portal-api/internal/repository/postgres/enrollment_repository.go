@@ -303,6 +303,7 @@ func (r *EnrollmentRepository) List(ctx context.Context, filter enrollment.Filte
 	whereSQL := strings.Join(whereClauses, " AND ")
 
 	var total int
+	// #nosec G201 -- whereSQL uses internal static conditions and query values are bound via args
 	countSQL := fmt.Sprintf("SELECT COUNT(*) FROM training_program_enrollments WHERE %s", whereSQL)
 	if err := r.db.QueryRowContext(ctx, countSQL, args...).Scan(&total); err != nil {
 		return nil, 0, metrics, err
@@ -310,6 +311,7 @@ func (r *EnrollmentRepository) List(ctx context.Context, filter enrollment.Filte
 
 	// 3. Query records
 	offset := (filter.Page - 1) * filter.PageSize
+	// #nosec G201 -- whereSQL uses internal static conditions and query values are bound via args
 	listSQL := fmt.Sprintf(`
 		SELECT 
 			id::text, user_subject, user_name, user_email,

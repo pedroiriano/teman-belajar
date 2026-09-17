@@ -237,12 +237,14 @@ func (r *CourseReviewRepository) ListAdmin(ctx context.Context, filter courserev
 	whereSQL := strings.Join(whereClauses, " AND ")
 
 	var total int
+	// #nosec G201 -- whereSQL uses internal static conditions and query values are bound via args
 	countQuery := fmt.Sprintf("SELECT COUNT(*) FROM training_program_reviews WHERE %s", whereSQL)
 	if err := r.db.QueryRowContext(ctx, countQuery, args...).Scan(&total); err != nil {
 		return nil, 0, err
 	}
 
 	offset := (filter.Page - 1) * filter.PageSize
+	// #nosec G201 -- whereSQL uses internal static conditions and query values are bound via args
 	listQuery := fmt.Sprintf(`
 		SELECT id::text, program_id::text, program_slug, moodle_course_id, user_subject, author_name, rating, title, content, status, created_at, updated_at
 		FROM training_program_reviews
