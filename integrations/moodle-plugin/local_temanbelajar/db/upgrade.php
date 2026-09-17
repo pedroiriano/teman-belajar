@@ -152,5 +152,27 @@ function xmldb_local_temanbelajar_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2026091401, 'local', 'temanbelajar');
     }
 
+    if ($oldversion < 2026091503) {
+        // Ensure webservice integration role has manual enrol capabilities and role allow assign
+        $role = $DB->get_record('role', ['shortname' => 'integrationapi']);
+        if ($role) {
+            $syscontext = context_system::instance();
+            assign_capability('enrol/manual:enrol', CAP_ALLOW, $role->id, $syscontext->id, true);
+            assign_capability('moodle/course:view', CAP_ALLOW, $role->id, $syscontext->id, true);
+            assign_capability('moodle/role:assign', CAP_ALLOW, $role->id, $syscontext->id, true);
+
+            $studentRole = $DB->get_record('role', ['shortname' => 'student']);
+            if ($studentRole && !$DB->record_exists('role_allow_assign', ['roleid' => $role->id, 'allowassign' => $studentRole->id])) {
+                $DB->insert_record('role_allow_assign', (object)[
+                    'roleid' => $role->id,
+                    'allowassign' => $studentRole->id,
+                ]);
+            }
+        }
+
+        upgrade_plugin_savepoint(true, 2026091503, 'local', 'temanbelajar');
+    }
+
     return true;
 }
+

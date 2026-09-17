@@ -11,6 +11,7 @@ import {
   type MicrolearningStatus,
 } from "@/app/actions/microlearning";
 import { AdminIcon } from "@/components/admin-icon";
+import { AdminDataTable, type ColumnHeader } from "@/components/admin-data-table";
 import MediaPicker from "@/components/media/MediaPicker";
 
 type Draft = Omit<MicrolearningInput, "expected_version">;
@@ -89,6 +90,38 @@ export default function MicrolearningAdminPage() {
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState("all");
   const [format, setFormat] = useState("");
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [sortKey, setSortKey] = useState<string>("title");
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
+
+  const handleSortChange = (key: string) => {
+    if (sortKey === key) {
+      setSortDirection((prev) => (prev === "asc" ? "desc" : "asc"));
+    } else {
+      setSortKey(key);
+      setSortDirection("asc");
+    }
+  };
+
+  const sortedItems = useMemo(() => {
+    return [...items].sort((a, b) => {
+      let cmp = 0;
+      if (sortKey === "title") {
+        cmp = a.title.localeCompare(b.title, "id");
+      } else if (sortKey === "duration_minutes") {
+        cmp = a.duration_minutes - b.duration_minutes;
+      } else if (sortKey === "status") {
+        cmp = a.status.localeCompare(b.status);
+      }
+      return sortDirection === "asc" ? cmp : -cmp;
+    });
+  }, [items, sortKey, sortDirection]);
+
+  const pagedItems = useMemo(() => {
+    const start = (page - 1) * pageSize;
+    return sortedItems.slice(start, start + pageSize);
+  }, [sortedItems, page, pageSize]);
 
   const canWrite = roles.some((role) =>
     ["Portal Administrator", "Content Editor"].includes(role)
@@ -264,115 +297,98 @@ export default function MicrolearningAdminPage() {
 
       <div className="grid gap-6 xl:grid-cols-[23rem_minmax(0,1fr)]">
         {/* Left: Materials Directory */}
-        <aside className="admin-card self-start overflow-hidden">
-          <div className="admin-card-header border-b border-slate-200 dark:border-slate-800 p-5">
-            <h2 className="text-base font-extrabold text-slate-900 dark:text-white">
-              Daftar Materi
-            </h2>
-            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-              Materi pembelajaran singkat mandiri terdaftar.
-            </p>
-          </div>
-          <div className="admin-card-body p-5 space-y-4">
-            <div className="space-y-3">
-              <div>
-                <label htmlFor="micro-search" className="admin-label">
-                  Cari Materi
-                </label>
-                <input
-                  id="micro-search"
-                  className="admin-input mt-1"
-                  value={query}
-                  maxLength={100}
-                  onChange={(event) => setQuery(event.target.value)}
-                  placeholder="Judul materi..."
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <label htmlFor="micro-status-filter" className="admin-label text-[11px]">
-                    Status
-                  </label>
-                  <select
-                    id="micro-status-filter"
-                    aria-label="Status"
-                    className="admin-input mt-1 text-xs"
-                    value={status}
-                    onChange={(event) => setStatus(event.target.value)}
-                  >
-                    <option value="all">Semua status</option>
-                    {Object.entries(labels).map(([value, label]) => (
-                      <option key={value} value={value}>
-                        {label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label htmlFor="micro-format-filter" className="admin-label text-[11px]">
-                    Format
-                  </label>
-                  <select
-                    id="micro-format-filter"
-                    aria-label="Format"
-                    className="admin-input mt-1 text-xs"
-                    value={format}
-                    onChange={(event) => setFormat(event.target.value)}
-                  >
-                    <option value="">Semua format</option>
-                    {Object.entries(formatLabels).map(([value, label]) => (
-                      <option key={value} value={value}>
-                        {label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-            </div>
-
-            <div className="space-y-2 pt-2">
-              {loading ? (
-                <p role="status" className="py-4 text-center text-sm text-slate-500">
-                  Memuat materi…
-                </p>
-              ) : items.length === 0 ? (
-                <p className="admin-empty py-6 text-center text-xs text-slate-500">
-                  Belum ada materi pada filter ini.
-                </p>
-              ) : (
-                items.map((item) => (
-                  <button
-                    type="button"
-                    key={item.id}
-                    onClick={() => choose(item)}
-                    className={`admin-list-item w-full text-left p-3.5 rounded-xl border transition flex items-start justify-between gap-3 ${
-                      selected?.id === item.id
-                        ? "is-active border-sky-500 bg-sky-50/60 dark:bg-sky-950/30"
-                        : "border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700"
+        {/* Left: Materials Directory via AdminDataTable */}
+        <div className="self-start">
+          <AdminDataTable
+            title="Daftar Materi"
+            description="Materi pembelajaran singkat mandiri terdaftar."
+            itemCount={sortedItems.length}
+            headers={[
+              { label: "Judul & Durasi", key: "title", sortable: true },
+              { label: "Status", key: "status", sortable: true, align: "right" },
+            ]}
+            sortKey={sortKey}
+            sortDirection={sortDirection}
+            onSortChange={handleSortChange}
+            searchQuery={query}
+            onSearchChange={(q) => {
+              setQuery(q);
+              setPage(1);
+            }}
+            searchPlaceholder="Cari judul materi…"
+            statusFilter={status}
+            statusOptions={[
+              { value: "all", label: "Semua status" },
+              { value: "draft", label: "Draf" },
+              { value: "in_review", label: "Peninjauan" },
+              { value: "approved", label: "Disetujui" },
+              { value: "published", label: "Terbit" },
+              { value: "archived", label: "Diarsipkan" },
+            ]}
+            onStatusFilterChange={(s) => {
+              setStatus(s);
+              setPage(1);
+            }}
+            loading={loading}
+            emptyState="Belum ada materi pada filter ini."
+            page={page}
+            pageSize={pageSize}
+            total={sortedItems.length}
+            onPageChange={setPage}
+            onPageSizeChange={(sz) => {
+              setPageSize(sz);
+              setPage(1);
+            }}
+            actions={
+              <select
+                value={format}
+                onChange={(event) => {
+                  setFormat(event.target.value);
+                  setPage(1);
+                }}
+                className="admin-input !h-9 !py-1 text-xs font-semibold rounded-xl border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900"
+                aria-label="Filter Format"
+              >
+                <option value="">Semua format</option>
+                {Object.entries(formatLabels).map(([value, label]) => (
+                  <option key={value} value={value}>
+                    {label}
+                  </option>
+                ))}
+              </select>
+            }
+          >
+            {pagedItems.map((item) => (
+              <tr
+                key={item.id}
+                onClick={() => choose(item)}
+                className={`cursor-pointer transition ${
+                  selected?.id === item.id
+                    ? "bg-sky-50/70 dark:bg-sky-950/40"
+                    : "hover:bg-slate-50/50 dark:hover:bg-slate-800/40"
+                }`}
+              >
+                <td className="py-3 px-4">
+                  <strong className="block truncate text-xs font-bold text-slate-900 dark:text-white">
+                    {item.title}
+                  </strong>
+                  <span className="mt-0.5 block text-[11px] text-slate-500 dark:text-slate-400">
+                    {formatLabels[item.format]} · {item.duration_minutes} menit
+                  </span>
+                </td>
+                <td className="py-3 px-4 text-right whitespace-nowrap">
+                  <span
+                    className={`cuba-badge text-[10px] ${
+                      microStatusBadgeClasses[item.status] || "cuba-badge-neutral"
                     }`}
                   >
-                    <div className="min-w-0 flex-1">
-                      <strong className="block truncate text-sm font-bold text-slate-900 dark:text-white">
-                        {item.title}
-                      </strong>
-                      <span className="mt-1 block text-xs text-slate-500 dark:text-slate-400">
-                        {formatLabels[item.format]} · {item.duration_minutes} menit
-                      </span>
-                    </div>
-                    <span
-                      className={`cuba-badge shrink-0 text-[10px] ${
-                        microStatusBadgeClasses[item.status] ||
-                        "cuba-badge-neutral"
-                      }`}
-                    >
-                      {labels[item.status]}
-                    </span>
-                  </button>
-                ))
-              )}
-            </div>
-          </div>
-        </aside>
+                    {labels[item.status]}
+                  </span>
+                </td>
+              </tr>
+            ))}
+          </AdminDataTable>
+        </div>
 
         {/* Right: Workspace & Editor */}
         <main className="space-y-6">

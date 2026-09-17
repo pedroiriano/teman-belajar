@@ -56,3 +56,54 @@ type ProviderPort interface {
 	Register(ctx context.Context, identity Identity, id int, idempotencyKey string) (Session, error)
 	Cancel(ctx context.Context, identity Identity, id int, idempotencyKey string) (Session, error)
 }
+
+type CreateWebinarInput struct {
+	Title         string    `json:"title"`
+	Slug          string    `json:"slug,omitempty"`
+	Summary       string    `json:"summary"`
+	Description   string    `json:"description"`
+	Speaker       string    `json:"speaker"`
+	StartsAt      time.Time `json:"starts_at"`
+	EndsAt        time.Time `json:"ends_at"`
+	Timezone      string    `json:"timezone"`
+	Capacity      int       `json:"capacity"`
+	JoinURL       string    `json:"join_url"`
+	RecordingURL  string    `json:"recording_url,omitempty"`
+	Provider      string    `json:"provider"`
+	CoverImageURL string    `json:"cover_image_url,omitempty"`
+}
+
+type UpdateWebinarInput struct {
+	Title         *string    `json:"title,omitempty"`
+	Summary       *string    `json:"summary,omitempty"`
+	Description   *string    `json:"description,omitempty"`
+	Speaker       *string    `json:"speaker,omitempty"`
+	StartsAt      *time.Time `json:"starts_at,omitempty"`
+	EndsAt        *time.Time `json:"ends_at,omitempty"`
+	Timezone      *string    `json:"timezone,omitempty"`
+	Capacity      *int       `json:"capacity,omitempty"`
+	Status        *string    `json:"status,omitempty"`
+	JoinURL       *string    `json:"join_url,omitempty"`
+	RecordingURL  *string    `json:"recording_url,omitempty"`
+	Provider      *string    `json:"provider,omitempty"`
+	CoverImageURL *string    `json:"cover_image_url,omitempty"`
+}
+
+type Attendee struct {
+	ID              string    `json:"id"`
+	WebinarID       int       `json:"webinar_id"`
+	UserID          string    `json:"user_id"`
+	UserName        string    `json:"name"`
+	UserEmail       string    `json:"email"`
+	Status          string    `json:"attendance_state"`
+	RegisteredAt    time.Time `json:"registered_at"`
+	AttendedMinutes *int      `json:"attended_minutes,omitempty"`
+}
+
+type Filter struct {
+	Page     int
+	PageSize int
+	Status   string
+	Speaker  string
+	Query    string
+}

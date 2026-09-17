@@ -10,14 +10,17 @@ const page = read("apps/portal-web/src/app/webinars/page.tsx");
 const detail = read("apps/portal-web/src/app/webinars/[id]/page.tsx");
 const actions = read("apps/portal-web/src/components/webinars/webinar-actions.tsx");
 
+const adminWorkspace = read("apps/admin-web/src/components/webinars/cuba-webinar-workspace.tsx");
+
 const checks = [
   [openapi.includes("/webinars/{id}/registrations:"), "OpenAPI registration contract"],
   [openapi.includes("Idempotency-Key"), "OpenAPI idempotency header"],
-  [chrome.includes('{ label: "Webinar", description: "Sesi langsung bersama narasumber.", comingSoon: true }'), "Webinar navigation remains gated"],
+  [chrome.includes('{ href: "/webinars", label: "Webinar"'), "Webinar navigation is active"],
   [proxy.includes("sameOrigin(request)") && proxy.includes('"Idempotency-Key": key'), "BFF mutation protections"],
-  [page.includes("ComingSoonState") && !page.includes("listWebinars") && !page.includes("redirect("), "Webinar list remains dummy and gated"],
-  [detail.includes("ComingSoonState") && !detail.includes("getWebinar") && !detail.includes("WebinarActions"), "Webinar detail remains dummy and gated"],
-  [actions.includes("ComingSoonState") && !actions.includes("fetch(") && !actions.includes("Registrasi berhasil"), "Webinar actions fail closed"],
+  [page.includes("listPublicWebinars") && !page.includes("ComingSoonState"), "Webinar list is active with Techwind design"],
+  [detail.includes("getPublicWebinarDetail") && detail.includes("WebinarActions") && !detail.includes("ComingSoonState"), "Webinar detail is active and interactive"],
+  [actions.includes("fetch(`/api/webinars/") && actions.includes("createPortal"), "Webinar actions support native interactive registration"],
+  [adminWorkspace.includes('data-cuba-component="webinar-workspace"') && adminWorkspace.includes("AdminDataTable"), "Admin workspace uses Cuba foundation and AdminDataTable"],
 ];
 
 const failed = checks.filter(([ok]) => !ok);
@@ -25,4 +28,4 @@ if (failed.length) {
   for (const [, label] of failed) console.error(`FAIL ${label}`);
   process.exit(1);
 }
-console.log("PASS webinar contract and activation gate");
+console.log("PASS native LXP webinar contract and activation verification");

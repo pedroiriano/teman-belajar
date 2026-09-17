@@ -117,7 +117,6 @@ export default async function AdminNewsPage({
       <CubaNewsTable
         news={news}
         itemCount={pagination.total}
-        headerActions={headerActions}
         errorMessage={newsRes ? null : "Data berita gagal dimuat. Periksa koneksi backend."}
       />
 

@@ -35,6 +35,7 @@ export const navigationGroups: NavigationGroup[] = [
     label: "Pembelajaran",
     items: [
       { id: "training-programs", href: "/dashboard/training-programs", label: "Program Pelatihan", icon: "book" },
+      { id: "enrollments", href: "/dashboard/enrollments", label: "Konfirmasi Pendaftaran", icon: "check" },
       { id: "course-reviews", href: "/dashboard/course-reviews", label: "Ulasan Pelatihan", icon: "check" },
       { id: "microlearning", href: "/dashboard/microlearning", label: "Pembelajaran Singkat", icon: "video" },
       { id: "learning-paths", href: "/dashboard/learning-paths", label: "Jalur Belajar", icon: "knowledge" },

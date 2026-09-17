@@ -212,6 +212,7 @@ export function CubaKnowledgeTable({
       <AdminDataTable
         title="Daftar artikel"
         description="Versi dan status publikasi artikel pengetahuan"
+        titleAlign="center"
         itemCount={itemCount}
         headers={[
           { label: "Judul", key: "title", sortable: true },
@@ -225,7 +226,6 @@ export function CubaKnowledgeTable({
         emptyState="Belum ada artikel pengetahuan. Buat draf pertama untuk memulai."
         error={errorMessage}
         retryHref="/dashboard/knowledge"
-        actions={headerActions}
         selectable={true}
         isAllSelected={isAllSelected}
         isSomeSelected={isSomeSelected}

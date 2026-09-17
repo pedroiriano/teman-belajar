@@ -23,13 +23,13 @@ export default async function WebinarsPage() {
           <p className="admin-kicker">Pembelajaran Interaktif</p>
           <h1 className="admin-page-title">Webinar & Sesi Live</h1>
           <p className="admin-page-copy">
-            Kelola jadwal sesi tatap muka daring, narasumber, integrasi Zoom Moodle, dan kehadiran peserta.
+            Kelola jadwal sesi tatap muka daring mandiri (LXP Native), narasumber, tautan pertemuan daring, dan kehadiran peserta.
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
           <div className="inline-flex items-center gap-2 rounded-xl border border-sky-200 bg-sky-50 px-3.5 py-1.5 text-xs font-bold text-sky-800 dark:border-sky-900/60 dark:bg-sky-950/40 dark:text-sky-300">
             <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-            Provider: mod_zoom Authoritative
+            LXP Native Webinar
           </div>
           <Link
             href="/dashboard/schedule"

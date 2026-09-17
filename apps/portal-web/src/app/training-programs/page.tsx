@@ -45,6 +45,7 @@ export default async function TrainingProgramsPage({
     courseCount: prog.courses?.length || 0,
     cohortStatus: getProgramEnrollmentSummary(prog.cohorts),
     visual: prog.visual,
+    tags: prog.tags || [],
     rating: prog.rating,
   }));
 

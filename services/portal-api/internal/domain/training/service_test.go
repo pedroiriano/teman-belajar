@@ -193,3 +193,52 @@ func TestDisposableProgramFullWorkflowAndLearnerProjection(t *testing.T) {
 		t.Fatalf("reviewer create must fail closed: %v", err)
 	}
 }
+
+func TestUpdateAllowsAddingCohortsOnPublishedProgram(t *testing.T) {
+	repo := &fakeRepository{item: publishedProgram()}
+	provider := &fakeLearning{
+		courses: []learning.LearningCourse{
+			{ID: 10, FullName: "Dasar", Visible: true},
+			{ID: 20, FullName: "Praktik", Visible: true},
+		},
+	}
+	svc := NewService(repo, provider, nil, "https://moodle.example.test")
+
+	updateInput := ProgramInput{
+		Slug:            repo.item.Slug,
+		Title:           repo.item.Title,
+		Summary:         repo.item.Summary,
+		Description:     repo.item.Description,
+		Audience:        repo.item.Audience,
+		EligibilityText: repo.item.EligibilityText,
+		Category:        repo.item.Category,
+		Level:           repo.item.Level,
+		Courses: []CourseInput{
+			{MoodleCourseID: 10, Required: true},
+			{MoodleCourseID: 20, Required: true},
+		},
+		Cohorts: []CohortInput{
+			{ID: "550e8400-e29b-41d4-a716-446655440001", Label: "Gelombang 1 - Batch Maret", Status: "completed"},
+			{Label: "Gelombang 2 - Batch April", Status: "scheduled"},
+		},
+		ExpectedVersion: repo.item.Version,
+	}
+
+	updated, err := svc.Update(context.Background(), repo.item.ID, updateInput, []string{"Content Editor"}, "admin-user")
+	if err != nil {
+		t.Fatalf("update on published program failed: %v", err)
+	}
+	if updated.Status != StatusPublished {
+		t.Fatalf("expected status published, got %s", updated.Status)
+	}
+	if len(updated.Cohorts) != 2 {
+		t.Fatalf("expected 2 cohorts, got %d", len(updated.Cohorts))
+	}
+	if updated.Cohorts[0].ID != "550e8400-e29b-41d4-a716-446655440001" {
+		t.Fatalf("expected cohort 1 to retain ID, got %s", updated.Cohorts[0].ID)
+	}
+	if updated.Cohorts[1].Label != "Gelombang 2 - Batch April" || updated.Cohorts[1].ID == "" {
+		t.Fatalf("expected cohort 2 to be populated with new ID, got %#v", updated.Cohorts[1])
+	}
+}
+

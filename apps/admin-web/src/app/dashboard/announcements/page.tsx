@@ -121,7 +121,6 @@ export default async function AdminAnnouncementsPage({
       <CubaAnnouncementsTable
         announcements={announcements}
         itemCount={pagination.total}
-        headerActions={headerActions}
         errorMessage={annsRes ? null : "Data pengumuman gagal dimuat. Periksa koneksi backend."}
       />
 

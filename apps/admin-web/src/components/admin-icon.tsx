@@ -11,6 +11,7 @@ export type AdminIconName =
   | "calendar"
   | "check"
   | "chevron"
+  | "chevron-down"
   | "clock"
   | "close"
   | "code"
@@ -27,6 +28,7 @@ export type AdminIconName =
   | "help"
   | "knowledge"
   | "list"
+  | "lock"
   | "logout"
   | "media"
   | "menu"
@@ -40,6 +42,7 @@ export type AdminIconName =
   | "settings"
   | "sun"
   | "trash"
+  | "unlock"
   | "upload"
   | "user"
   | "users"
@@ -57,6 +60,7 @@ const paths: Record<AdminIconName, string> = {
   calendar: "M3 4h18v18H3V4z M16 2v4 M8 2v4 M3 10h18",
   check: "m20 6-11 11-5-5",
   chevron: "m9 6 6 6-6 6",
+  "chevron-down": "m6 9 6 6 6-6",
   clock: "M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z M12 7v5l3 2",
   close: "M6 6l12 12M18 6 6 18",
   code: "m16 18 6-6-6-6M8 6l-6 6 6 6",
@@ -73,6 +77,7 @@ const paths: Record<AdminIconName, string> = {
   help: "M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20z M9.09 9a3 3 0 1 1 5.83 1c-.9 1.3-2.92 1.5-2.92 3 M12 17h.01",
   knowledge: "M4 5.5A3.5 3.5 0 0 1 7.5 2H20v17H7.5A3.5 3.5 0 0 0 4 22V5.5Zm0 0V19",
   list: "M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01",
+  lock: "M7 11V7a5 5 0 0 1 10 0v4 M5 11h14v10H5z",
   logout: "M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4 M16 17l5-5-5-5 M21 12H9",
   media: "M4 5h16v14H4V5Zm3 10 3-3 2 2 3-4 3 5M8 9h.01",
   menu: "M4 7h16M4 12h16M4 17h16",
@@ -86,6 +91,7 @@ const paths: Record<AdminIconName, string> = {
   settings: "M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Zm7-3.5 2-1-2-3-2.2.4L15 6.5 15.4 4h-3.5L11 6.5 8.4 7.6 6 6 3.8 8.8 5.5 11 5 13.5 2.5 15l1.8 3 2.5-.5L9 19.2l.5 2.8H13l1-2.6 2.5-1 2.2 1.6 2.2-2.8-1.7-2.2.8-3Z",
   sun: "M12 17a5 5 0 1 0 0-10 5 5 0 0 0 0 10z M12 1v2 M12 21v2 M4.22 4.22l1.42 1.42 M18.36 18.36l1.42 1.42 M1 12h2 M21 12h2 M4.22 19.78l1.42-1.42 M18.36 5.64l1.42-1.42",
   trash: "M3 6h18 M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6 M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2 M10 11v6 M14 11v6",
+  unlock: "M7 11V7a5 5 0 0 1 9.9-1 M5 11h14v10H5z",
   upload: "M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4 M17 8l-5-5-5 5 M12 3v12",
   user: "M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2 M12 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8z",
   users: "M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2m7-10a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm13 10v-2a4 4 0 0 0-3-3.9m-2-11.8a4 4 0 0 1 0 7.4",

@@ -89,9 +89,9 @@ function Sidebar({
   };
 
   return (
-    <div className="flex h-full flex-col">
+    <div className="flex h-full flex-col overflow-hidden">
       <Brand desktopClose={desktopClose} />
-      <nav className="flex-1 overflow-y-auto px-3 py-3" aria-label="Navigasi admin">
+      <nav className="flex-1 overflow-y-auto overflow-x-hidden px-3 py-3" aria-label="Navigasi admin">
         {navigationGroups.map((group) => {
           const visibleItems = group.items.filter((item) => canAccessItem(item, roles, role));
           if (visibleItems.length === 0) return null;
@@ -100,10 +100,10 @@ function Sidebar({
           const panelId = `nav-group-${group.id}`;
 
           return (
-            <div key={group.id} className="mb-2">
+            <div key={group.id} className="mb-2 min-w-0">
               <button
                 type="button"
-                className={`admin-nav-group-toggle flex w-full items-center justify-between rounded-lg px-3 py-2 text-[10px] font-black uppercase tracking-[.18em] transition-colors ${
+                className={`admin-nav-group-toggle flex w-full min-w-0 items-center justify-between rounded-lg px-3 py-2 text-[10px] font-black uppercase tracking-[.18em] transition-colors ${
                   hasActive
                     ? "text-sky-600 dark:text-sky-400 font-extrabold"
                     : "admin-sidebar-section-title hover:bg-slate-100 dark:hover:bg-white/5"
@@ -112,24 +112,24 @@ function Sidebar({
                 aria-controls={panelId}
                 onClick={() => toggleGroup(group.id, isExpanded)}
               >
-                <span>{group.label}</span>
+                <span className="truncate min-w-0">{group.label}</span>
                 <AdminIcon
                   name="chevron"
-                  className={`h-3.5 w-3.5 transition-transform duration-200 ${isExpanded ? "rotate-90" : ""}`}
+                  className={`h-3.5 w-3.5 shrink-0 transition-transform duration-200 ${isExpanded ? "rotate-90" : ""}`}
                 />
               </button>
-              <div id={panelId} hidden={!isExpanded} className="mt-1 grid gap-0.5">
+              <div id={panelId} hidden={!isExpanded} className="mt-1 grid gap-0.5 min-w-0">
                 {visibleItems.map((item) => {
                   const active = isItemActive(item.href, pathname);
                   return item.disabled ? (
                     <span
                       key={item.id}
-                      className="admin-sidebar-link cursor-not-allowed opacity-50"
+                      className="admin-sidebar-link min-w-0 cursor-not-allowed opacity-50"
                       aria-disabled="true"
                     >
-                      <AdminIcon name={item.icon} className="h-4 w-4" />
-                      <span className="truncate">{item.label}</span>
-                      <span className="ml-auto rounded-full admin-sidebar-badge-bg px-2 py-0.5 text-[9px] uppercase">
+                      <AdminIcon name={item.icon} className="h-4 w-4 shrink-0" />
+                      <span className="truncate min-w-0">{item.label}</span>
+                      <span className="ml-auto shrink-0 rounded-full admin-sidebar-badge-bg px-2 py-0.5 text-[9px] uppercase">
                         Segera
                       </span>
                     </span>
@@ -139,7 +139,7 @@ function Sidebar({
                       href={item.href!}
                       onClick={close}
                       aria-current={active ? "page" : undefined}
-                      className={`admin-sidebar-link relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition-all ${
+                      className={`admin-sidebar-link relative flex min-w-0 items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition-all ${
                         active
                           ? "is-active font-bold text-sky-700 dark:text-sky-300 bg-sky-50 dark:bg-sky-950/40 shadow-sm before:content-[''] before:absolute before:left-0 before:top-2 before:bottom-2 before:w-1 before:rounded-r-md before:bg-sky-500"
                           : "text-slate-600 dark:text-slate-300 hover:bg-slate-100/70 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white"
@@ -151,13 +151,13 @@ function Sidebar({
                           active ? "text-sky-600 dark:text-sky-400" : "text-slate-400 dark:text-slate-500"
                         }`}
                       />
-                      <span className="truncate">{item.label}</span>
+                      <span className="truncate min-w-0">{item.label}</span>
                       {item.badge ? (
-                        <span className="ml-auto rounded-full bg-sky-600 px-2 py-0.5 text-[10px] font-bold text-white shadow-sm">
+                        <span className="ml-auto shrink-0 rounded-full bg-sky-600 px-2 py-0.5 text-[10px] font-bold text-white shadow-sm">
                           {item.badge}
                         </span>
                       ) : active ? (
-                        <span className="ml-auto h-2 w-2 rounded-full bg-sky-500 animate-pulse" />
+                        <span className="ml-auto shrink-0 h-2 w-2 rounded-full bg-sky-500 animate-pulse" />
                       ) : null}
                     </Link>
                   );
@@ -167,7 +167,7 @@ function Sidebar({
           );
         })}
       </nav>
-      <div className="m-3 rounded-[15px] border border-sky-100 dark:border-sky-950/50 bg-gradient-to-br from-sky-50/60 to-slate-50/60 dark:from-sky-950/20 dark:to-slate-900/40 p-3.5 shadow-sm">
+      <div className="m-3 min-w-0 rounded-[15px] border border-sky-100 dark:border-sky-950/50 bg-gradient-to-br from-sky-50/60 to-slate-50/60 dark:from-sky-950/20 dark:to-slate-900/40 p-3.5 shadow-sm">
         <div className="flex items-center gap-2">
           <span className="grid h-6 w-6 place-items-center rounded-lg bg-sky-500 text-white shadow-sm">
             <AdminIcon name="audit" className="h-3.5 w-3.5" />
@@ -270,7 +270,7 @@ export function AdminShell({
       {desktopSidebarOpen && (
         <aside
           id="admin-sidebar"
-          className="sidebar-wrapper admin-sidebar fixed inset-y-0 left-0 z-40 hidden w-[255px] lg:block"
+          className="sidebar-wrapper admin-sidebar fixed inset-y-0 left-0 z-40 hidden w-[255px] overflow-hidden lg:block"
           data-sidebar-layout="stroke-svg"
         >
           <Sidebar
@@ -293,7 +293,7 @@ export function AdminShell({
           <aside
             ref={mobileDrawerRef}
             id="admin-mobile-sidebar"
-            className="admin-sidebar relative h-full w-[min(86vw,310px)] shadow-2xl"
+            className="admin-sidebar relative h-full w-[min(86vw,310px)] overflow-hidden shadow-2xl"
             role="dialog"
             aria-modal="true"
             aria-label="Navigasi admin"

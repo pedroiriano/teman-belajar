@@ -4,8 +4,25 @@ import { getBackendAccessToken } from "@/lib/server-auth";
 
 export type TrainingCourseRef = { moodle_course_id: number; sort_order: number; required: boolean };
 export type TrainingCohort = { id: string; label: string; starts_at?: string; ends_at?: string; enrollment_opens_at?: string; enrollment_closes_at?: string; status: "scheduled" | "cancelled" | "completed"; sort_order: number };
-export type TrainingProgram = { id: string; slug: string; title: string; summary: string; description: string; audience: string; eligibility_text: string; status: string; version: number; published_at?: string; courses?: TrainingCourseRef[]; cohorts?: TrainingCohort[] };
-export type TrainingCourse = { moodle_course_id: number; short_name?: string; full_name?: string; summary?: string; category?: string; required: boolean; availability: "available" | "unavailable"; learner_state?: "enrolled" | "completed" | "not_enrolled"; progress?: number; start_url?: string };
+export type TrainingProgram = {
+  id: string;
+  slug: string;
+  title: string;
+  summary: string;
+  description: string;
+  audience: string;
+  eligibility_text: string;
+  category?: string;
+  level?: "Pemula" | "Menengah" | "Mahir";
+  tags?: string[];
+  status: string;
+  version: number;
+  published_at?: string;
+  cover_image_url?: string;
+  courses?: TrainingCourseRef[];
+  cohorts?: TrainingCohort[];
+};
+export type TrainingCourse = { moodle_course_id: number; short_name?: string; full_name?: string; summary?: string; category?: string; required: boolean; availability: "available" | "unavailable"; learner_state?: "enrolled" | "completed" | "not_enrolled"; progress?: number; start_url?: string; image_url?: string };
 export type TrainingProvenance = { source: "moodle"; checked_at: string; state: "fresh" | "degraded"; detail?: string };
 export type TrainingDetail = { program: TrainingProgram; courses: TrainingCourse[]; provenance: TrainingProvenance };
 export type TrainingProgress = { program_slug: string; courses: TrainingCourse[]; completed_courses: number; enrolled_courses: number; total_courses: number; progress_percent?: number; eligibility: { status: "confirmed" | "partial" | "unverified"; message: string }; cta: { kind: "start" | "review" | "check_access" | "unavailable"; label: string; url?: string }; provenance: TrainingProvenance };
@@ -75,6 +92,50 @@ export async function getTrainingProgress(slug: string): Promise<{ authenticated
     return { authenticated: true, data: response.ok ? await response.json() : null };
   } catch { return { authenticated: true, data: null }; }
 }
+
+export type TrainingEnrollmentStatus = {
+  has_application: boolean;
+  enrollment?: {
+    id: string;
+    user_subject: string;
+    user_name: string;
+    user_email: string;
+    program_slug: string;
+    program_title: string;
+    cohort_id?: string;
+    cohort_label: string;
+    status: "pending" | "confirmed" | "rejected" | "cancelled";
+    notes?: string;
+    rejection_reason?: string;
+    applied_at: string;
+    confirmed_at?: string;
+    confirmed_by?: string;
+  };
+};
+
+export async function getMyEnrollmentStatus(slug: string): Promise<{
+  authenticated: boolean;
+  data: TrainingEnrollmentStatus | null;
+}> {
+  const [base, token] = [apiBase(), await getBackendAccessToken()];
+  if (!token) return { authenticated: false, data: null };
+  if (!base) return { authenticated: true, data: null };
+  try {
+    const response = await fetch(
+      `${base}/api/v1/learning/me/training-programs/${encodeURIComponent(slug)}/enrollment-status`,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+        cache: "no-store",
+      }
+    );
+    if (!response.ok) return { authenticated: true, data: null };
+    const data = (await response.json()) as TrainingEnrollmentStatus;
+    return { authenticated: true, data };
+  } catch {
+    return { authenticated: true, data: null };
+  }
+}
+
 
 export async function getRelatedTrainingPrograms(currentSlug: string, limit = 3): Promise<TrainingProgram[]> {
   try {
@@ -269,18 +330,73 @@ const visualMetadataMap: Record<string, ProgramVisualMetadata> = {
     instructor: { name: "Hendro Susanto, PMP", avatar: "/techwind-hero/client/06.jpg", role: "Agile Delivery Coach" },
     durationLabel: "6 Minggu",
   },
+  "pelatihan-microsoft-office-tingkat-dasar": {
+    image: "/techwind-hero/course/c1.jpg",
+    category: "Aplikasi Perkantoran",
+    level: "Pemula",
+    instructor: { name: "Tim Pembina Aparatur", avatar: "/techwind-hero/client/01.jpg", role: "Instruktur Perkantoran Modern" },
+    durationLabel: "4 Minggu",
+  },
 };
 
-export function getProgramVisualMetadata(slug: string): ProgramVisualMetadata {
-  return (
-    visualMetadataMap[slug] || {
-      image: "/techwind-hero/course/c1.jpg",
-      category: "Program Pelatihan",
-      level: "Menengah",
-      instructor: { name: "Fasilitator Teman Belajar", avatar: "/techwind-hero/client/01.jpg", role: "Instruktur Resmi" },
-      durationLabel: "8 Minggu",
+export function getProgramVisualMetadata(
+  slug: string,
+  title?: string,
+  summary?: string,
+  explicitCategory?: string,
+  explicitLevel?: string,
+  coverImageUrl?: string
+): ProgramVisualMetadata {
+  const base = visualMetadataMap[slug];
+
+  let category = (explicitCategory && explicitCategory !== "Umum") ? explicitCategory : base?.category;
+  let level = (explicitLevel as "Pemula" | "Menengah" | "Mahir") || base?.level;
+
+  if (!category || category === "Umum" || !level) {
+    const text = `${slug} ${title || ""} ${summary || ""}`.toLowerCase();
+
+    if (!level) {
+      if (/dasar|pemula|basic|fundamental|pengantar|intro/.test(text)) {
+        level = "Pemula";
+      } else if (/lanjutan|mahir|advanced|expert|arsitek/.test(text)) {
+        level = "Mahir";
+      } else {
+        level = "Menengah";
+      }
     }
-  );
+
+    if (!category || category === "Umum") {
+      if (/office|perkantoran|administrasi|word|excel|powerpoint/.test(text)) {
+        category = "Aplikasi Perkantoran";
+      } else if (/cloud|devops|server|virtualisasi|docker|kubernetes/.test(text)) {
+        category = "Cloud & DevOps";
+      } else if (/web|software|pemrograman|coding|frontend|backend|fullstack/.test(text)) {
+        category = "Software Engineering";
+      } else if (/data|ai|analitik|kecerdasan|machine learning|big data/.test(text)) {
+        category = "Data & AI";
+      } else if (/keamanan|siber|security|cyber/.test(text)) {
+        category = "Keamanan Siber";
+      } else if (/ui|ux|desain|design/.test(text)) {
+        category = "UI/UX & Desain";
+      } else if (/proyek|project|agile|scrum|manajemen/.test(text)) {
+        category = "Manajemen Proyek";
+      } else {
+        category = "Program Pelatihan";
+      }
+    }
+  }
+
+  return {
+    image: coverImageUrl || base?.image || "/techwind-hero/course/c1.jpg",
+    category,
+    level: level || "Menengah",
+    instructor: base?.instructor || {
+      name: "Fasilitator Teman Belajar",
+      avatar: "/techwind-hero/client/01.jpg",
+      role: "Instruktur Resmi",
+    },
+    durationLabel: base?.durationLabel || "4 Minggu",
+  };
 }
 
 export type EnrichedTrainingProgram = TrainingProgram & {
@@ -302,7 +418,14 @@ export async function listTrainingProgramsWithReviews(query: string, page: numbe
 
   const enrichedData: EnrichedTrainingProgram[] = await Promise.all(
     list.data.map(async (program) => {
-      const visual = getProgramVisualMetadata(program.slug);
+      const visual = getProgramVisualMetadata(
+        program.slug,
+        program.title,
+        program.summary,
+        program.category,
+        program.level,
+        program.cover_image_url
+      );
       try {
         const reviewData = await getTrainingProgramReviews(program.slug);
         const rating = reviewData?.summary?.total_reviews

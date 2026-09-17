@@ -4,7 +4,8 @@ import { notFound } from "next/navigation";
 
 import { Breadcrumb, CourseCard, CourseDetailHero, ContentCard, DetailSidebar, Progress, RelatedContentSection, TrainingProgramCard, formatDate } from "@/components/techwind";
 import { CourseReviewsSection } from "@/components/training-programs/course-reviews-section";
-import { getCohortEnrollmentState, getProgramEnrollmentSummary, getRelatedTrainingPrograms, getTrainingProgram, getTrainingProgress, getTrainingProgramReviews, getMyTrainingProgramReview, isTrainingProgramSlug } from "@/lib/training-programs";
+import { TrainingEnrollmentAction } from "@/components/training-programs/training-enrollment-action";
+import { getCohortEnrollmentState, getProgramEnrollmentSummary, getProgramVisualMetadata, getRelatedTrainingPrograms, getTrainingProgram, getTrainingProgress, getTrainingProgramReviews, getMyTrainingProgramReview, getMyEnrollmentStatus, isTrainingProgramSlug } from "@/lib/training-programs";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
@@ -17,18 +18,20 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 export default async function TrainingProgramDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   if (!isTrainingProgramSlug(slug)) notFound();
-  const [detail, learner, related, reviewsResult, myReview] = await Promise.all([
+  const [detail, learner, related, reviewsResult, myReview, enrollmentStatusRes] = await Promise.all([
     getTrainingProgram(slug),
     getTrainingProgress(slug),
     getRelatedTrainingPrograms(slug, 3),
     getTrainingProgramReviews(slug),
     getMyTrainingProgramReview(slug),
+    getMyEnrollmentStatus(slug),
   ]);
   if (!detail) notFound();
   const progress = learner.data;
   const courses = progress?.courses || detail.courses;
   const provenance = progress?.provenance || detail.provenance;
   const enrollmentSummary = getProgramEnrollmentSummary(detail.program.cohorts);
+  const primaryCourseUrl = courses.find((c) => c.start_url)?.start_url || progress?.cta.url;
 
   const breadcrumbs = [
     { href: "/", label: "Beranda" },
@@ -46,9 +49,13 @@ export default async function TrainingProgramDetailPage({ params }: { params: Pr
       breadcrumbs={breadcrumbs}
       meta={
         <>
+          <span className="rounded-full bg-teal-500/20 text-teal-200 px-3 py-1 text-xs font-bold uppercase tracking-wider">
+            {detail.program.category || "Program Pelatihan"}
+          </span>
+          <span className="rounded-full bg-sky-500/20 text-sky-200 px-3 py-1 text-xs font-bold uppercase tracking-wider">
+            Tingkat {detail.program.level || "Menengah"}
+          </span>
           <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-bold uppercase tracking-wider">{courses.length} course terstruktur</span>
-          <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-bold uppercase tracking-wider">State formal Moodle</span>
-          <span className="rounded-full bg-teal-500/20 text-teal-200 px-3 py-1 text-xs font-bold uppercase tracking-wider">Jadwal cohort transparan</span>
           {reviewsResult && reviewsResult.summary.total_reviews > 0 ? (
             <span className="rounded-full bg-amber-500/20 text-amber-200 px-3 py-1 text-xs font-bold uppercase tracking-wider flex items-center gap-1">
               ★ {reviewsResult.summary.average_rating.toFixed(1)} ({reviewsResult.summary.total_reviews} ulasan)
@@ -58,14 +65,15 @@ export default async function TrainingProgramDetailPage({ params }: { params: Pr
       }
       aside={
         <DetailSidebar
-          imageSrc="/techwind-hero/course/cta.jpg"
+          imageSrc={detail.program.cover_image_url || "/techwind-hero/course/cta.jpg"}
           imageAlt={detail.program.title}
           factsTitle="Informasi Pelatihan"
           facts={[
+            { icon: "briefcase", label: "Bidang Keahlian", value: detail.program.category || "Umum" },
+            { icon: "shield", label: "Tingkat Kesulitan", value: detail.program.level || "Menengah" },
             { icon: "book", label: "Jumlah Course", value: `${courses.length} Materi` },
             { icon: "graduation", label: "Platform Belajar", value: "Moodle LMS" },
             { icon: "calendar", label: "Status Pendaftaran", value: enrollmentSummary.label },
-            { icon: "shield", label: "Status Akses", value: learner.authenticated ? "Terhubung SSO" : "Perlu Masuk" },
             {
               icon: "check",
               label: "Rating & Ulasan",
@@ -80,19 +88,6 @@ export default async function TrainingProgramDetailPage({ params }: { params: Pr
             completedCount: progress.completed_courses,
             totalCount: progress.total_courses,
           } : null}
-          primaryAction={progress?.cta.url ? {
-            label: progress.cta.label,
-            href: progress.cta.url,
-            subtext: progress.eligibility.message,
-          } : learner.authenticated ? {
-            label: progress?.cta.label || "Akses Belum Tersedia",
-            disabled: true,
-            subtext: progress?.eligibility.message || "Data program tetap dapat dibaca. Coba lagi saat Moodle kembali tersedia.",
-          } : {
-            label: "Masuk untuk memeriksa akses",
-            href: `/api/auth/signin?callbackUrl=${encodeURIComponent(`/training-programs/${slug}`)}`,
-            subtext: "Kami tidak mengasumsikan eligibility atau enrolment sebelum dikonfirmasi oleh API.",
-          }}
           people={[
             {
               name: "Tim Fasilitator Teman Belajar",
@@ -101,6 +96,17 @@ export default async function TrainingProgramDetailPage({ params }: { params: Pr
             },
           ]}
         >
+          <div className="pt-2 pb-1 border-t border-gray-100 dark:border-gray-800">
+            <TrainingEnrollmentAction
+              slug={slug}
+              programTitle={detail.program.title}
+              cohorts={detail.program.cohorts}
+              authenticated={learner.authenticated}
+              initialEnrollmentStatus={enrollmentStatusRes.data}
+              progressCTA={progress?.cta}
+              primaryCourseUrl={primaryCourseUrl}
+            />
+          </div>
           {progress?.progress_percent != null ? (
             <div className="mt-4 pt-3 border-t border-gray-100 dark:border-gray-800">
               <Progress value={progress.progress_percent} label="Progres pelatihan" showValue={false} />
@@ -158,6 +164,20 @@ export default async function TrainingProgramDetailPage({ params }: { params: Pr
             <p className="mt-3 text-xs font-bold text-slate-500">Panduan ini informatif; akses aktual tetap dikonfirmasi Moodle.</p>
           </div>
         ) : null}
+
+        {detail.program.tags && detail.program.tags.length > 0 ? (
+          <div className="mt-6 flex flex-wrap items-center gap-2">
+            <span className="text-xs font-bold text-slate-500 dark:text-slate-400">Tag Pelatihan:</span>
+            {detail.program.tags.map((tag) => (
+              <span
+                key={tag}
+                className="inline-flex items-center rounded-lg bg-slate-100 dark:bg-slate-800 px-2.5 py-1 text-xs font-semibold text-slate-700 dark:text-slate-300"
+              >
+                #{tag}
+              </span>
+            ))}
+          </div>
+        ) : null}
       </div>
 
       <aside>
@@ -212,6 +232,7 @@ export default async function TrainingProgramDetailPage({ params }: { params: Pr
                 summary={course.summary}
                 progress={course.progress}
                 startUrl={course.start_url}
+                image={course.image_url}
               />
             </li>
           ))}
@@ -247,17 +268,25 @@ export default async function TrainingProgramDetailPage({ params }: { params: Pr
         viewAllHref="/training-programs"
         viewAllLabel="Lihat Semua Program →"
       >
-        {related.map((item) => (
-          <TrainingProgramCard
-            key={item.id}
-            href={`/training-programs/${item.slug}`}
-            title={item.title}
-            summary={item.summary}
-            audience={item.audience}
-            courseCount={item.courses?.length || 0}
-            cohortStatus={getProgramEnrollmentSummary(item.cohorts)}
-          />
-        ))}
+        {related.map((item) => {
+          const vis = getProgramVisualMetadata(item.slug, item.title, item.summary, item.category, item.level, item.cover_image_url);
+          return (
+            <TrainingProgramCard
+              key={item.id}
+              href={`/training-programs/${item.slug}`}
+              title={item.title}
+              summary={item.summary}
+              audience={item.audience}
+              courseCount={item.courses?.length || 0}
+              cohortStatus={getProgramEnrollmentSummary(item.cohorts)}
+              image={vis.image}
+              instructor={vis.instructor}
+              category={vis.category}
+              level={vis.level}
+              durationLabel={vis.durationLabel}
+            />
+          );
+        })}
       </RelatedContentSection>
     ) : null}
   </div>;

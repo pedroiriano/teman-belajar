@@ -212,6 +212,7 @@ export function CubaNewsTable({
       <AdminDataTable
         title="Daftar berita"
         description="Seluruh status editorial dan riwayat publikasi berita"
+        titleAlign="center"
         itemCount={itemCount}
         headers={[
           { label: "Judul", key: "title", sortable: true },
@@ -225,7 +226,6 @@ export function CubaNewsTable({
         emptyState="Belum ada berita. Buat draf pertama untuk memulai."
         error={errorMessage}
         retryHref="/dashboard/news"
-        actions={headerActions}
         selectable={true}
         isAllSelected={isAllSelected}
         isSomeSelected={isSomeSelected}

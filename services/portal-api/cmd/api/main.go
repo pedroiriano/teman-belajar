@@ -35,6 +35,7 @@ import (
 	"teman-belajar-api/internal/domain/discoverability"
 	"teman-belajar-api/internal/domain/draft"
 	engagementdomain "teman-belajar-api/internal/domain/engagement"
+	"teman-belajar-api/internal/domain/enrollment"
 	"teman-belajar-api/internal/domain/faq"
 	"teman-belajar-api/internal/domain/knowledge"
 	"teman-belajar-api/internal/domain/learning"
@@ -151,6 +152,8 @@ func main() {
 	trainingSvc := training.NewService(trainingRepo, moodleClient, auditRepo, moodlePublicBaseURL)
 	courseReviewRepo := postgres.NewCourseReviewRepository(db)
 	courseReviewSvc := coursereview.NewService(courseReviewRepo)
+	enrollmentRepo := postgres.NewEnrollmentRepository(db)
+	enrollmentSvc := enrollment.NewService(enrollmentRepo, trainingRepo, moodleClient)
 
 	// Handlers
 	cmsHandler := handler.NewCMSHandler(cmsSvc, discoverySvc)
@@ -162,9 +165,11 @@ func main() {
 	learningHandler := handler.NewLearningHandler(learningSvc, auditRepo)
 	trainingHandler := handler.NewTrainingHandler(trainingSvc)
 	courseReviewHandler := handler.NewCourseReviewHandler(courseReviewSvc, auditRepo)
+	enrollmentHandler := handler.NewEnrollmentHandler(enrollmentSvc, auditRepo)
 	microlearningHandler := handler.NewMicrolearningHandler(microlearningSvc)
 	notificationHandler := handler.NewNotificationHandler(notificationSvc)
-	webinarSvc := webinar.NewService(moodleClient, notificationSvc)
+	webinarRepo := postgres.NewWebinarRepository(db)
+	webinarSvc := webinar.NewService(webinarRepo, notificationSvc)
 	webinarHandler := handler.NewWebinarHandler(webinarSvc, auditRepo)
 	learningPathRepo := postgres.NewLearningPathRepository(db)
 	learningPathSources := learningpathapplication.NewSourceAdapter(moodleClient, knowledgeRepo, microlearningRepo, webinarSvc, engagementRepo, moodlePublicBaseURL)
@@ -289,6 +294,8 @@ func main() {
 			"Portal Administrator",
 			"Content Editor",
 			"Reviewer",
+			"Super Administrator",
+			"Administrator",
 		},
 	})
 	integrationHealthSvc := buildIntegrationHealthService(db, integrationHealthConfig{
@@ -360,7 +367,11 @@ func main() {
 	mux.Handle("POST /api/v1/admin/recommendations/pins", adminAuthMiddleware(http.HandlerFunc(recommendationPinHandler.Create)))
 	mux.Handle("DELETE /api/v1/admin/recommendations/pins/{id}", adminAuthMiddleware(http.HandlerFunc(recommendationPinHandler.Delete)))
 	mux.Handle("GET /api/v1/admin/webinars", adminAuthMiddleware(http.HandlerFunc(webinarHandler.AdminList)))
+	mux.Handle("POST /api/v1/admin/webinars", adminAuthMiddleware(http.HandlerFunc(webinarHandler.AdminCreate)))
 	mux.Handle("GET /api/v1/admin/webinars/{id}", adminAuthMiddleware(http.HandlerFunc(webinarHandler.AdminGet)))
+	mux.Handle("PATCH /api/v1/admin/webinars/{id}", adminAuthMiddleware(http.HandlerFunc(webinarHandler.AdminUpdate)))
+	mux.Handle("DELETE /api/v1/admin/webinars/{id}", adminAuthMiddleware(http.HandlerFunc(webinarHandler.AdminDelete)))
+	mux.Handle("POST /api/v1/admin/webinars/{id}/attendance", adminAuthMiddleware(http.HandlerFunc(webinarHandler.AdminUpdateAttendance)))
 	mux.Handle("/metrics", promhttp.Handler())
 
 	// Public CMS Endpoints
@@ -421,6 +432,8 @@ func main() {
 	mux.Handle("GET /api/v1/learning/me/courses/{courseId}/completion", authMiddleware(http.HandlerFunc(learningHandler.GetMyCourseCompletion)))
 	mux.Handle("GET /api/v1/learning/me/courses/{courseId}/grades", authMiddleware(http.HandlerFunc(learningHandler.GetMyCourseGrades)))
 	mux.Handle("GET /api/v1/learning/me/training-programs/{slug}", authMiddleware(http.HandlerFunc(trainingHandler.MyProgress)))
+	mux.Handle("POST /api/v1/learning/me/training-programs/{slug}/enroll", authMiddleware(http.HandlerFunc(enrollmentHandler.Apply)))
+	mux.Handle("GET /api/v1/learning/me/training-programs/{slug}/enrollment-status", authMiddleware(http.HandlerFunc(enrollmentHandler.MyStatus)))
 	mux.Handle("GET /api/v1/training-programs/{slug}/reviews/my", authMiddleware(http.HandlerFunc(courseReviewHandler.GetMyReview)))
 	mux.Handle("POST /api/v1/training-programs/{slug}/reviews", authMiddleware(http.HandlerFunc(courseReviewHandler.SubmitReview)))
 	mux.Handle("DELETE /api/v1/training-programs/{slug}/reviews/my", authMiddleware(http.HandlerFunc(courseReviewHandler.DeleteMyReview)))
@@ -466,6 +479,10 @@ func main() {
 	mux.Handle("GET /api/v1/admin/training-programs/course-options", adminAuthMiddleware(http.HandlerFunc(trainingHandler.CourseOptions)))
 	mux.Handle("GET /api/v1/admin/training-programs/reviews", adminAuthMiddleware(http.HandlerFunc(courseReviewHandler.AdminList)))
 	mux.Handle("PATCH /api/v1/admin/training-programs/reviews/{id}/status", adminAuthMiddleware(http.HandlerFunc(courseReviewHandler.AdminUpdateStatus)))
+	mux.Handle("GET /api/v1/admin/enrollments", adminAuthMiddleware(http.HandlerFunc(enrollmentHandler.AdminList)))
+	mux.Handle("POST /api/v1/admin/enrollments/{id}/confirm", adminAuthMiddleware(http.HandlerFunc(enrollmentHandler.AdminConfirm)))
+	mux.Handle("POST /api/v1/admin/enrollments/{id}/reject", adminAuthMiddleware(http.HandlerFunc(enrollmentHandler.AdminReject)))
+	mux.Handle("POST /api/v1/admin/enrollments/manual", adminAuthMiddleware(http.HandlerFunc(enrollmentHandler.AdminManual)))
 	mux.Handle("GET /api/v1/admin/training-programs/{id}", adminAuthMiddleware(http.HandlerFunc(trainingHandler.AdminGet)))
 	mux.Handle("PATCH /api/v1/admin/training-programs/{id}", adminAuthMiddleware(http.HandlerFunc(trainingHandler.AdminUpdate)))
 	mux.Handle("POST /api/v1/admin/training-programs/{id}/transition", adminAuthMiddleware(http.HandlerFunc(trainingHandler.AdminTransition)))

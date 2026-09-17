@@ -34,7 +34,7 @@ tags:
   - name: Learning Paths
     description: Versioned Portal composition with source-owned progress and provenance
   - name: Webinars
-    description: Moodle mod_zoom-authoritative live learning operations
+    description: Native Portal LXP live learning and interactive webinar operations
   - name: Certificates
     description: Public certificate verification and credential operations
   - name: Me
@@ -351,6 +351,8 @@ paths:
       security: []
       parameters:
         - { name: q, in: query, schema: { type: string, maxLength: 100 } }
+        - { name: category, in: query, schema: { type: string, maxLength: 100 } }
+        - { name: level, in: query, schema: { type: string, enum: [Pemula, Menengah, Mahir] } }
         - $ref: '#/components/parameters/Page'
         - $ref: '#/components/parameters/PageSize'
       responses:
@@ -463,6 +465,46 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/TrainingProgramProgress' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /learning/me/training-programs/{slug}/enroll:
+    post:
+      tags: [Learning, Training Programs]
+      operationId: applyTrainingProgramEnrollment
+      summary: Apply for enrollment in a training program cohort
+      security:
+        - bearerAuth: []
+      parameters:
+        - { name: slug, in: path, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [cohort_id]
+              properties:
+                cohort_id: { type: string, format: uuid }
+                notes: { type: string, maxLength: 2000 }
+      responses:
+        '201':
+          description: Enrollment application submitted
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+  /learning/me/training-programs/{slug}/enrollment-status:
+    get:
+      tags: [Learning, Training Programs]
+      operationId: getMyTrainingProgramEnrollmentStatus
+      summary: Get learner's enrollment status for a training program
+      security:
+        - bearerAuth: []
+      parameters:
+        - { name: slug, in: path, required: true, schema: { type: string } }
+      responses:
+        '200':
+          description: Enrollment application status
         '401': { $ref: '#/components/responses/Unauthorized' }
         '404': { $ref: '#/components/responses/NotFound' }
   /learning/me/certificates:
@@ -706,6 +748,93 @@ paths:
         '409': { $ref: '#/components/responses/ConflictError' }
         '422': { $ref: '#/components/responses/ValidationError' }
         '503': { $ref: '#/components/responses/DependencyUnavailable' }
+  /admin/enrollments:
+    get:
+      tags: [Admin, Training Programs]
+      operationId: listAdminEnrollments
+      summary: List enrollment applications with filter and pagination
+      security:
+        - oidc: [content:read]
+      parameters:
+        - { name: q, in: query, schema: { type: string } }
+        - { name: program_slug, in: query, schema: { type: string } }
+        - { name: status, in: query, schema: { type: string, enum: [pending, confirmed, rejected, cancelled] } }
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: List of enrollments and metrics
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+  /admin/enrollments/{id}/confirm:
+    post:
+      tags: [Admin, Training Programs]
+      operationId: confirmEnrollment
+      summary: Confirm a pending enrollment application and enrol into Moodle
+      security:
+        - oidc: [content:write]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200':
+          description: Enrollment confirmed
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+  /admin/enrollments/{id}/reject:
+    post:
+      tags: [Admin, Training Programs]
+      operationId: rejectEnrollment
+      summary: Reject a pending enrollment application
+      security:
+        - oidc: [content:write]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [reason]
+              properties:
+                reason: { type: string, maxLength: 1000 }
+      responses:
+        '200':
+          description: Enrollment rejected
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+  /admin/enrollments/manual:
+    post:
+      tags: [Admin, Training Programs]
+      operationId: manualEnrollment
+      summary: Manually enroll a learner and enrol into Moodle
+      security:
+        - oidc: [content:write]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [user_subject, user_name, user_email, program_slug]
+              properties:
+                user_subject: { type: string }
+                user_name: { type: string }
+                user_email: { type: string, format: email }
+                program_slug: { type: string }
+                cohort_id: { type: string, format: uuid }
+                cohort_label: { type: string }
+                notes: { type: string }
+      responses:
+        '201':
+          description: Enrollment created and confirmed
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '422': { $ref: '#/components/responses/ValidationError' }
   /learning-paths:
     get:
       tags: [Learning Paths]
@@ -3286,14 +3415,20 @@ paths:
     get:
       tags: [Webinars]
       operationId: listWebinars
-      summary: List learner-visible Moodle Zoom webinars
-      description: Moodle mod_zoom is authoritative. Responses never expose raw Zoom meeting URLs, passcodes, or OAuth credentials.
+      summary: List learner-visible native webinars
+      description: Native LXP webinar management backed by PostgreSQL. Responses mask join URLs for non-registered users.
       security: [{ bearerAuth: [] }]
       parameters:
         - $ref: '#/components/parameters/Page'
         - name: page_size
           in: query
           schema: { type: integer, minimum: 1, maximum: 50, default: 12 }
+        - name: status
+          in: query
+          schema: { type: string, enum: [all, upcoming, live, completed, cancelled] }
+        - name: q
+          in: query
+          schema: { type: string }
       responses:
         '200':
           description: Paginated webinar sessions
@@ -3310,13 +3445,13 @@ paths:
     get:
       tags: [Webinars]
       operationId: getWebinar
-      summary: Get one learner-visible Moodle Zoom webinar
+      summary: Get one learner-visible native webinar
       security: [{ bearerAuth: [] }]
       parameters:
         - name: id
           in: path
           required: true
-          description: Moodle course module identifier
+          description: Native webinar identifier
           schema: { type: integer, minimum: 1 }
       responses:
         '200':
@@ -3335,7 +3470,7 @@ paths:
     post:
       tags: [Webinars]
       operationId: registerForWebinar
-      summary: Register for a webinar with waitlist disabled
+      summary: Register for a native webinar
       security: [{ bearerAuth: [] }]
       parameters:
         - name: id
@@ -3355,7 +3490,7 @@ paths:
     delete:
       tags: [Webinars]
       operationId: cancelWebinarRegistration
-      summary: Cancel registration until the webinar starts
+      summary: Cancel native webinar registration
       security: [{ bearerAuth: [] }]
       parameters:
         - name: id
@@ -4505,6 +4640,135 @@ paths:
           content:
             application/problem+json:
               schema: { $ref: '#/components/schemas/Problem' }
+  /admin/webinars:
+    get:
+      tags:
+        - Webinars
+        - Admin
+      summary: List webinars for admin management
+      operationId: listAdminWebinars
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema: { type: integer, default: 1 }
+        - name: page_size
+          in: query
+          schema: { type: integer, default: 50 }
+        - name: status
+          in: query
+          schema: { type: string }
+        - name: speaker
+          in: query
+          schema: { type: string }
+        - name: q
+          in: query
+          schema: { type: string }
+      responses:
+        '200':
+          description: Admin webinar list
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+    post:
+      tags:
+        - Webinars
+        - Admin
+      summary: Create a new native webinar
+      operationId: createAdminWebinar
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [title, speaker, starts_at, ends_at, capacity]
+              properties:
+                title: { type: string }
+                summary: { type: string }
+                description: { type: string }
+                speaker: { type: string }
+                starts_at: { type: string, format: date-time }
+                ends_at: { type: string, format: date-time }
+                capacity: { type: integer }
+                join_url: { type: string }
+                provider: { type: string }
+      responses:
+        '201':
+          description: Webinar created
+        '422':
+          description: Validation error
+  /admin/webinars/{id}:
+    get:
+      tags:
+        - Webinars
+        - Admin
+      summary: Get admin webinar detail with attendees
+      operationId: getAdminWebinar
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Admin webinar detail
+        '404': { $ref: '#/components/responses/NotFound' }
+    patch:
+      tags:
+        - Webinars
+        - Admin
+      summary: Update webinar
+      operationId: updateAdminWebinar
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Webinar updated
+        '404': { $ref: '#/components/responses/NotFound' }
+    delete:
+      tags:
+        - Webinars
+        - Admin
+      summary: Delete webinar
+      operationId: deleteAdminWebinar
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '204':
+          description: Webinar deleted
+        '404': { $ref: '#/components/responses/NotFound' }
+  /admin/webinars/{id}/attendance:
+    post:
+      tags:
+        - Webinars
+        - Admin
+      summary: Update webinar attendance status
+      operationId: updateAdminWebinarAttendance
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Attendance updated
 components:
   securitySchemes:
     oidc:
@@ -6374,6 +6638,8 @@ components:
           type: integer
         visible:
           type: boolean
+        image_url:
+          type: string
     TrainingProgramStatus:
       type: string
       enum: [draft, in_review, approved, published, archived]
@@ -6409,11 +6675,15 @@ components:
         description: { type: string, maxLength: 20000 }
         audience: { type: string, maxLength: 500 }
         eligibility_text: { type: string, maxLength: 1000 }
+        category: { type: string, maxLength: 100 }
+        level: { type: string, enum: [Pemula, Menengah, Mahir] }
+        tags: { type: array, items: { type: string, maxLength: 50 }, maxItems: 30 }
         status: { $ref: '#/components/schemas/TrainingProgramStatus' }
         version: { type: integer, minimum: 1 }
         published_at: { type: [string, 'null'], format: date-time }
         created_at: { type: string, format: date-time }
         updated_at: { type: string, format: date-time }
+        cover_image_url: { type: string }
         courses: { type: array, minItems: 1, maxItems: 50, items: { $ref: '#/components/schemas/TrainingCourseRef' } }
         cohorts: { type: array, maxItems: 20, items: { $ref: '#/components/schemas/TrainingCohort' } }
     TrainingProgramWrite:
@@ -6427,6 +6697,9 @@ components:
         description: { type: string, minLength: 20, maxLength: 20000 }
         audience: { type: string, maxLength: 500 }
         eligibility_text: { type: string, maxLength: 1000 }
+        category: { type: string, maxLength: 100 }
+        level: { type: string, enum: [Pemula, Menengah, Mahir] }
+        tags: { type: array, items: { type: string, maxLength: 50 }, maxItems: 30 }
         courses: { type: array, minItems: 1, maxItems: 50, items: { $ref: '#/components/schemas/TrainingCourseRef' } }
         cohorts: { type: array, maxItems: 20, items: { $ref: '#/components/schemas/TrainingCohort' } }
         expected_version: { type: integer, minimum: 1 }
@@ -6509,6 +6782,7 @@ components:
             learner_state: { type: string, enum: [enrolled, completed, not_enrolled] }
             progress: { type: number, minimum: 0, maximum: 100 }
             start_url: { type: string, format: uri }
+            image_url: { type: string }
     TrainingProgramDetail:
       type: object
       required: [program, courses, provenance]

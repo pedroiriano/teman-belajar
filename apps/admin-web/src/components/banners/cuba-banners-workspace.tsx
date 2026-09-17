@@ -2,7 +2,8 @@
 
 /* eslint-disable @next/next/no-img-element -- authenticated BFF media previews have runtime URLs */
 
-import { useEffect, useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useSyncExternalStore, useTransition } from "react";
+import { createPortal } from "react-dom";
 import type { HeroBanner, CreateBannerPayload, UpdateBannerPayload, BannerAlign } from "@/types/banner";
 import {
   createAdminBannerAction,
@@ -13,6 +14,8 @@ import {
 import { AdminDataTable, type ColumnHeader } from "@/components/admin-data-table";
 import { AdminIcon } from "@/components/admin-icon";
 import MediaPicker from "@/components/media/MediaPicker";
+
+const emptySubscribe = () => () => {};
 
 interface CubaBannersWorkspaceProps {
   initialBanners: HeroBanner[];
@@ -58,8 +61,9 @@ export function CubaBannersWorkspace({ initialBanners }: CubaBannersWorkspacePro
   const [generalError, setGeneralError] = useState<string | null>(null);
   const [generalSuccess, setGeneralSuccess] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+  const mounted = useSyncExternalStore(emptySubscribe, () => true, () => false);
 
-  // Escape key & body scroll lock for modals
+  // Escape key & body/html scroll lock for modals
   useEffect(() => {
     if (!isModalOpen && !isDeleteModalOpen) return;
 
@@ -71,12 +75,15 @@ export function CubaBannersWorkspace({ initialBanners }: CubaBannersWorkspacePro
     };
 
     const prevOverflow = document.body.style.overflow;
+    const prevHtmlOverflow = document.documentElement.style.overflow;
     document.body.style.overflow = "hidden";
+    document.documentElement.style.overflow = "hidden";
     window.addEventListener("keydown", handleKeyDown);
 
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
       document.body.style.overflow = prevOverflow;
+      document.documentElement.style.overflow = prevHtmlOverflow;
     };
   }, [isModalOpen, isDeleteModalOpen, isPending]);
 
@@ -527,16 +534,23 @@ export function CubaBannersWorkspace({ initialBanners }: CubaBannersWorkspacePro
       </AdminDataTable>
 
       {/* Modal Tambah / Edit */}
-      {isModalOpen && (
+      {mounted && isModalOpen && typeof document !== "undefined" && createPortal(
         <div
           role="dialog"
           aria-modal="true"
           onClick={(e) => {
             if (!isPending && e.target === e.currentTarget) setIsModalOpen(false);
           }}
-          className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-slate-900/60 p-4 backdrop-blur-sm"
+          onMouseDown={(e) => {
+            if (!isPending && e.target === e.currentTarget) setIsModalOpen(false);
+          }}
+          className="fixed inset-0 z-[100] flex items-center justify-center overflow-y-auto bg-slate-950/70 p-4 backdrop-blur-md"
         >
-          <div className="relative w-full max-w-2xl rounded-2xl bg-white p-6 shadow-2xl dark:bg-slate-900 border border-slate-200 dark:border-slate-800 max-h-[90vh] overflow-y-auto">
+          <div
+            onClick={(e) => e.stopPropagation()}
+            onMouseDown={(e) => e.stopPropagation()}
+            className="relative w-full max-w-2xl rounded-2xl bg-white p-6 shadow-2xl dark:bg-slate-900 border border-slate-200 dark:border-slate-800 max-h-[90vh] overflow-y-auto"
+          >
             <div className="flex items-center justify-between border-b border-slate-100 pb-4 dark:border-slate-800">
               <div>
                 <h3 className="text-base font-bold text-slate-900 dark:text-white">
@@ -774,20 +788,28 @@ export function CubaBannersWorkspace({ initialBanners }: CubaBannersWorkspacePro
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Modal Konfirmasi Hapus */}
-      {isDeleteModalOpen && bannerToDelete && (
+      {mounted && isDeleteModalOpen && bannerToDelete && typeof document !== "undefined" && createPortal(
         <div
           role="dialog"
           aria-modal="true"
           onClick={(e) => {
             if (!isPending && e.target === e.currentTarget) setIsDeleteModalOpen(false);
           }}
-          className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-slate-900/60 p-4 backdrop-blur-sm"
+          onMouseDown={(e) => {
+            if (!isPending && e.target === e.currentTarget) setIsDeleteModalOpen(false);
+          }}
+          className="fixed inset-0 z-[100] flex items-center justify-center overflow-y-auto bg-slate-950/70 p-4 backdrop-blur-md"
         >
-          <div className="relative w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+          <div
+            onClick={(e) => e.stopPropagation()}
+            onMouseDown={(e) => e.stopPropagation()}
+            className="relative w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl dark:bg-slate-900 border border-slate-200 dark:border-slate-800 max-h-[90vh] overflow-y-auto"
+          >
             <div className="flex items-center gap-3 text-rose-600 dark:text-rose-400">
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-rose-50 dark:bg-rose-950/50">
                 <AdminIcon name="alert" className="h-5 w-5" />
@@ -818,7 +840,8 @@ export function CubaBannersWorkspace({ initialBanners }: CubaBannersWorkspacePro
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
