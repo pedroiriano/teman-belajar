@@ -552,6 +552,7 @@ paths:
       operationId: verifyCertificate
       summary: Verify authenticity of an issued certificate by its unique code
       description: Public unauthenticated endpoint to verify learner certificate authenticity.
+      security: []
       parameters:
         - name: code
           in: query
@@ -3293,6 +3294,7 @@ paths:
                   data:
                     type: array
                     items: { $ref: '#/components/schemas/SitemapEntry' }
+        '400': { $ref: '#/components/responses/BadRequest' }
         '503': { $ref: '#/components/responses/ServiceUnavailableError' }
   /discovery/{kind}:
     get:
@@ -4252,52 +4254,6 @@ paths:
           description: Pin removed
         '401': { $ref: '#/components/responses/Unauthorized' }
         '403': { $ref: '#/components/responses/Forbidden' }
-  /admin/webinars:
-    get:
-      tags: [Admin, Webinars]
-      operationId: listAdminWebinars
-      summary: List webinars for administration
-      security: [{ bearerAuth: [] }]
-      parameters:
-        - name: page
-          in: query
-          schema: { type: integer, default: 1 }
-        - name: page_size
-          in: query
-          schema: { type: integer, default: 50 }
-      responses:
-        '200':
-          description: Admin list of webinars
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  items:
-                    type: array
-                    items: { type: object }
-        '401': { $ref: '#/components/responses/Unauthorized' }
-        '403': { $ref: '#/components/responses/Forbidden' }
-  /admin/webinars/{id}:
-    get:
-      tags: [Admin, Webinars]
-      operationId: getAdminWebinarDetail
-      summary: Get detailed webinar administration session
-      security: [{ bearerAuth: [] }]
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema: { type: integer }
-      responses:
-        '200':
-          description: Webinar detail
-          content:
-            application/json:
-              schema: { type: object }
-        '401': { $ref: '#/components/responses/Unauthorized' }
-        '403': { $ref: '#/components/responses/Forbidden' }
-        '404': { $ref: '#/components/responses/NotFound' }
   /admin/moodle/events/summary:
     get:
       tags: [Admin, Integration]
@@ -4431,6 +4387,7 @@ paths:
                     type: array
                     items:
                       $ref: '#/components/schemas/Banner'
+        '400': { $ref: '#/components/responses/BadRequest' }
         '500':
           description: Internal server error
           content:
@@ -4769,6 +4726,10 @@ paths:
       responses:
         '200':
           description: Attendance updated
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
 components:
   securitySchemes:
     oidc:
@@ -4852,6 +4813,18 @@ components:
         type: string
         format: uuid
   responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    Conflict:
+      description: Resource conflict
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
     ValidationError:
       description: Validation failed
       content:
@@ -6716,7 +6689,7 @@ components:
         id: { type: string, format: uuid }
         program_id: { type: string, format: uuid }
         program_slug: { type: string }
-        moodle_course_id: { type: integer, nullable: true }
+        moodle_course_id: { type: [integer, 'null'] }
         user_subject: { type: string }
         author_name: { type: string }
         rating: { type: integer, minimum: 1, maximum: 5 }
