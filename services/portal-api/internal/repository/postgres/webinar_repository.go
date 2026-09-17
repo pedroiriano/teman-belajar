@@ -1,4 +1,4 @@
-﻿package postgres
+package postgres
 
 import (
 	"context"
@@ -74,6 +74,7 @@ func (r *WebinarRepository) List(ctx context.Context, filter webinar.Filter, sub
 		whereClause = "WHERE " + strings.Join(conditions, " AND ")
 	}
 
+	// #nosec G201 -- whereClause uses internal static conditions and query values are bound via args
 	countQuery := fmt.Sprintf("SELECT COUNT(*) FROM webinars w %s", whereClause)
 	var total int
 	if err := r.db.QueryRowContext(ctx, countQuery, args...).Scan(&total); err != nil {
@@ -83,7 +84,8 @@ func (r *WebinarRepository) List(ctx context.Context, filter webinar.Filter, sub
 	var regJoin string
 	var regSelect string
 	if subject != "" {
-		regSelect = fmt.Sprintf(", (CASE WHEN reg.status = 'registered' THEN true ELSE false END) as is_registered")
+		regSelect = ", (CASE WHEN reg.status = 'registered' THEN true ELSE false END) as is_registered"
+		// #nosec G201 -- argIdx parameter placeholder is numeric and query values are bound via args
 		regJoin = fmt.Sprintf("LEFT JOIN webinar_registrations reg ON reg.webinar_id = w.id AND reg.user_id = $%d", argIdx)
 		args = append(args, subject)
 		argIdx++
@@ -91,6 +93,7 @@ func (r *WebinarRepository) List(ctx context.Context, filter webinar.Filter, sub
 		regSelect = ", false as is_registered"
 	}
 
+	// #nosec G201 -- query clauses and parameter placeholders are strictly controlled
 	query := fmt.Sprintf(`
 		SELECT
 			w.id, w.title, w.summary, w.description, w.speaker,
@@ -404,6 +407,7 @@ func (r *WebinarRepository) Update(ctx context.Context, id int, input webinar.Up
 	argIdx++
 
 	args = append(args, id)
+	// #nosec G201 -- sets uses internal static column assignments and parameter placeholders
 	query := fmt.Sprintf(`
 		UPDATE webinars
 		SET %s
