@@ -74,11 +74,18 @@ func trainingListFilter(r *http.Request) (training.ListFilter, error) {
 			return training.ListFilter{}, training.ErrValidation
 		}
 	}
-	return training.ListFilter{Query: r.URL.Query().Get("q"), Status: r.URL.Query().Get("status"), Page: page, PageSize: pageSize}, nil
+	return training.ListFilter{
+		Query:    r.URL.Query().Get("q"),
+		Status:   r.URL.Query().Get("status"),
+		Category: r.URL.Query().Get("category"),
+		Level:    r.URL.Query().Get("level"),
+		Page:     page,
+		PageSize: pageSize,
+	}, nil
 }
 
 func (h *TrainingHandler) PublicList(w http.ResponseWriter, r *http.Request) {
-	if !allowTrainingQuery(w, r, "q", "page", "page_size") {
+	if !allowTrainingQuery(w, r, "q", "page", "page_size", "category", "level") {
 		return
 	}
 	filter, err := trainingListFilter(r)
@@ -122,7 +129,7 @@ func (h *TrainingHandler) AdminList(w http.ResponseWriter, r *http.Request) {
 	if _, ok := trainingClaims(w, r); !ok {
 		return
 	}
-	if !allowTrainingQuery(w, r, "q", "status", "page", "page_size") {
+	if !allowTrainingQuery(w, r, "q", "status", "page", "page_size", "category", "level") {
 		return
 	}
 	filter, err := trainingListFilter(r)

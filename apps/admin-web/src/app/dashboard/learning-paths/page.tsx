@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { AdminIcon } from "@/components/admin-icon";
+import { AdminDataTable } from "@/components/admin-data-table";
 import {
   createLearningPathAction,
   createLearningPathRevisionAction,
@@ -101,6 +102,38 @@ export default function LearningPathsAdminPage() {
   const [status, setStatus] = useState("all");
   const [webinarID, setWebinarID] = useState("");
   const [webinarLabel, setWebinarLabel] = useState("");
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [sortKey, setSortKey] = useState<string>("title");
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
+
+  const handleSortChange = (key: string) => {
+    if (sortKey === key) {
+      setSortDirection((prev) => (prev === "asc" ? "desc" : "asc"));
+    } else {
+      setSortKey(key);
+      setSortDirection("asc");
+    }
+  };
+
+  const sortedPaths = useMemo(() => {
+    return [...paths].sort((a, b) => {
+      let cmp = 0;
+      if (sortKey === "title") {
+        cmp = a.version.title.localeCompare(b.version.title, "id");
+      } else if (sortKey === "steps") {
+        cmp = a.version.items.length - b.version.items.length;
+      } else if (sortKey === "status") {
+        cmp = a.version.status.localeCompare(b.version.status);
+      }
+      return sortDirection === "asc" ? cmp : -cmp;
+    });
+  }, [paths, sortKey, sortDirection]);
+
+  const pagedPaths = useMemo(() => {
+    const start = (page - 1) * pageSize;
+    return sortedPaths.slice(start, start + pageSize);
+  }, [sortedPaths, page, pageSize]);
 
   const canWrite = roles.some((role) =>
     ["Portal Administrator", "Content Editor"].includes(role)
@@ -305,94 +338,81 @@ export default function LearningPathsAdminPage() {
       )}
 
       <div className="grid gap-6 xl:grid-cols-[22rem_minmax(0,1fr)]">
-        {/* Left: Learning Paths Directory */}
-        <aside className="admin-card self-start overflow-hidden">
-          <div className="admin-card-header border-b border-slate-200 dark:border-slate-800 p-5">
-            <h2 className="text-base font-extrabold text-slate-900 dark:text-white">
-              Daftar Jalur Belajar
-            </h2>
-            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-              Katalog kurikulum bertahap.
-            </p>
-          </div>
-          <div className="admin-card-body p-5 space-y-4">
-            <div className="space-y-3">
-              <div>
-                <label htmlFor="path-search" className="admin-label">
-                  Cari Jalur
-                </label>
-                <input
-                  id="path-search"
-                  className="admin-input mt-1"
-                  value={query}
-                  maxLength={100}
-                  onChange={(event) => setQuery(event.target.value)}
-                  placeholder="Judul kurikulum..."
-                />
-              </div>
-              <div>
-                <label htmlFor="path-status" className="admin-label">
-                  Status
-                </label>
-                <select
-                  id="path-status"
-                  className="admin-input mt-1"
-                  value={status}
-                  onChange={(event) => setStatus(event.target.value)}
-                >
-                  <option value="all">Semua status</option>
-                  {Object.entries(labels).map(([value, label]) => (
-                    <option key={value} value={value}>
-                      {label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            <div className="space-y-2 pt-2">
-              {loading ? (
-                <p role="status" className="py-4 text-center text-sm text-slate-500">
-                  Memuat…
-                </p>
-              ) : paths.length === 0 ? (
-                <p className="admin-empty py-6 text-center text-xs text-slate-500">
-                  Belum ada jalur.
-                </p>
-              ) : (
-                paths.map((path) => (
-                  <button
-                    type="button"
-                    key={path.id}
-                    className={`admin-list-item w-full text-left p-3.5 rounded-xl border transition flex items-start justify-between gap-3 ${
-                      selected?.id === path.id
-                        ? "is-active border-sky-500 bg-sky-50/60 dark:bg-sky-950/30"
-                        : "border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700"
+        {/* Left: Learning Paths Directory via AdminDataTable */}
+        <div className="self-start">
+          <AdminDataTable
+            title="Daftar Jalur Belajar"
+            description="Katalog kurikulum bertahap."
+            itemCount={sortedPaths.length}
+            headers={[
+              { label: "Judul & Langkah", key: "title", sortable: true },
+              { label: "Status", key: "status", sortable: true, align: "right" },
+            ]}
+            sortKey={sortKey}
+            sortDirection={sortDirection}
+            onSortChange={handleSortChange}
+            searchQuery={query}
+            onSearchChange={(q) => {
+              setQuery(q);
+              setPage(1);
+            }}
+            searchPlaceholder="Cari judul kurikulum…"
+            statusFilter={status}
+            statusOptions={[
+              { value: "all", label: "Semua status" },
+              { value: "draft", label: "Draf" },
+              { value: "in_review", label: "Peninjauan" },
+              { value: "approved", label: "Disetujui" },
+              { value: "published", label: "Terbit" },
+              { value: "archived", label: "Diarsipkan" },
+            ]}
+            onStatusFilterChange={(s) => {
+              setStatus(s);
+              setPage(1);
+            }}
+            loading={loading}
+            emptyState="Belum ada jalur pada filter ini."
+            page={page}
+            pageSize={pageSize}
+            total={sortedPaths.length}
+            onPageChange={setPage}
+            onPageSizeChange={(sz) => {
+              setPageSize(sz);
+              setPage(1);
+            }}
+          >
+            {pagedPaths.map((path) => (
+              <tr
+                key={path.id}
+                onClick={() => choose(path)}
+                className={`cursor-pointer transition ${
+                  selected?.id === path.id
+                    ? "bg-sky-50/70 dark:bg-sky-950/40"
+                    : "hover:bg-slate-50/50 dark:hover:bg-slate-800/40"
+                }`}
+              >
+                <td className="py-3 px-4">
+                  <strong className="block truncate text-xs font-bold text-slate-900 dark:text-white">
+                    {path.version.title}
+                  </strong>
+                  <span className="mt-0.5 block text-[11px] text-slate-500 dark:text-slate-400">
+                    v{path.version.number} · {path.version.items.length} langkah
+                  </span>
+                </td>
+                <td className="py-3 px-4 text-right whitespace-nowrap">
+                  <span
+                    className={`cuba-badge text-[10px] ${
+                      pathStatusBadgeClasses[path.version.status] ||
+                      "cuba-badge-neutral"
                     }`}
-                    onClick={() => choose(path)}
                   >
-                    <div className="min-w-0 flex-1">
-                      <strong className="block truncate text-sm font-bold text-slate-900 dark:text-white">
-                        {path.version.title}
-                      </strong>
-                      <span className="mt-1 block text-xs text-slate-500 dark:text-slate-400">
-                        v{path.version.number} · {path.version.items.length} langkah
-                      </span>
-                    </div>
-                    <span
-                      className={`cuba-badge shrink-0 text-[10px] ${
-                        pathStatusBadgeClasses[path.version.status] ||
-                        "cuba-badge-neutral"
-                      }`}
-                    >
-                      {labels[path.version.status]}
-                    </span>
-                  </button>
-                ))
-              )}
-            </div>
-          </div>
-        </aside>
+                    {labels[path.version.status]}
+                  </span>
+                </td>
+              </tr>
+            ))}
+          </AdminDataTable>
+        </div>
 
         {/* Right: Path Composer */}
         <main className="space-y-6">

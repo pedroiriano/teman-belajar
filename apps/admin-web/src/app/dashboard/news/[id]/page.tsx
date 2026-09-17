@@ -99,12 +99,22 @@ export default function AdminNewsDetailPage() {
   const applyDraft = (draft: NewsEditDraft) => { setTitle(draft.title); setSEO(pickSEOValue(draft)); setExcerpt(draft.excerpt); setBody(draft.body); };
   const autoSave = useAutoSaveDraft({ formKey: "news.edit", entityType: "news", entityId: id, baseEntityVersion: news ? String(news.version) : undefined, value, emptyValue: canonical, enabled: canEditSEO, onRecover: applyDraft, onStartNew: applyDraft });
 
+const isSessionExpired = (msg: string) =>
+  /sesi|token|unauthorized|401|403|login|kedaluwarsa|konflik/i.test(msg);
+
   const handleTransition = async (status: string) => {
     setActionLoading(true);
     setError("");
     const res = await transitionNewsAction(id, status);
     if (!res.success) {
-      setError(res.error || "Status berita belum dapat diperbarui");
+      const msg = res.error || "Status berita belum dapat diperbarui";
+      setError(msg);
+      setTimeout(() => {
+        document.getElementById("form-error-alert")?.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+        });
+      }, 50);
       setActionLoading(false);
     } else {
       router.push("/dashboard/news");
@@ -114,14 +124,36 @@ export default function AdminNewsDetailPage() {
   const handleSave = async () => {
     setActionLoading(true); setError("");
     const result = await updateNewsAction(id, { title, slug: seo.slug, excerpt, body, expected_version: news.version, seo, media_usages: mediaUsagesFromMarkdown(body) });
-    if (!result.success) { setError(result.error || "Berita belum dapat diperbarui"); setActionLoading(false); return; }
+    if (!result.success) {
+      const msg = result.error || "Berita belum dapat diperbarui";
+      setError(msg);
+      setTimeout(() => {
+        document.getElementById("form-error-alert")?.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+        });
+      }, 50);
+      setActionLoading(false);
+      return;
+    }
     await autoSave.finalize(); router.push("/dashboard/news");
   };
 
   const handleSaveSEO = async () => {
     setActionLoading(true); setError("");
     const result = await saveDiscoverabilityProfileAction("news", id, seo);
-    if (!result.success) { setError(result.error || "SEO & Discovery belum dapat disimpan"); setActionLoading(false); return; }
+    if (!result.success) {
+      const msg = result.error || "SEO & Discovery belum dapat disimpan";
+      setError(msg);
+      setTimeout(() => {
+        document.getElementById("form-error-alert")?.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+        });
+      }, 50);
+      setActionLoading(false);
+      return;
+    }
     await autoSave.finalize(); router.refresh(); setActionLoading(false);
   };
 
@@ -134,7 +166,6 @@ export default function AdminNewsDetailPage() {
         <div><Link href="/dashboard/news" className="text-sm font-bold text-sky-700 dark:text-sky-400">&larr; Kembali ke Berita</Link><p className="admin-kicker mt-5">Detail editorial</p><h1 className="admin-page-title">{news.title}</h1><p className="admin-page-copy">Tinjau konten dan jalankan transisi sesuai peran editorial.</p></div>
         <span className={`cuba-badge ${statusBadgeClasses[news.status] || "cuba-badge-neutral"}`}>{statusLabels[news.status] || news.status}</span>
       </div>
-      {error && <div className="admin-alert-error mb-5" role="alert">{error}</div>}
 
       <div className="flex items-center gap-2 border-b border-slate-200 dark:border-slate-800 pb-3 mb-6">
         <button
@@ -278,10 +309,70 @@ export default function AdminNewsDetailPage() {
                 )}
               </div>
               {canEdit && <SeoDiscoverySection compact embedded value={seo} onChange={setSEO} contentTitle={title || news.title} contentSummary={excerpt || news.excerpt || ""} contentBody={body || news.body || ""} routePrefix="/news/" />}
-              {canEdit && <div className="admin-form-footer"><button type="button" className="admin-button" disabled={actionLoading || !title || !seo.slug || !body} onClick={handleSave}>Simpan perubahan</button></div>}
+              {error && (
+                <div className="p-5 sm:px-7 pb-0">
+                  <div
+                    id="form-error-alert"
+                    role="alert"
+                    className="rounded-xl border border-rose-300 bg-rose-50 p-4 text-sm font-medium text-rose-900 dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-sm"
+                  >
+                    <div className="flex items-start gap-2.5">
+                      <span className="text-rose-600 dark:text-rose-400 font-bold text-base leading-none mt-0.5">⚠️</span>
+                      <div>
+                        <p className="font-bold text-rose-800 dark:text-rose-300">Gagal Menyimpan:</p>
+                        <p className="text-xs text-rose-700 dark:text-rose-300/90 mt-0.5">{error}</p>
+                      </div>
+                    </div>
+                    {isSessionExpired(error) && (
+                      <button
+                        type="button"
+                        onClick={() => window.location.reload()}
+                        className="admin-button text-xs whitespace-nowrap self-stretch sm:self-auto py-2 px-3 flex items-center justify-center gap-1.5"
+                      >
+                        <AdminIcon name="refresh" className="h-3.5 w-3.5" />
+                        Muat Ulang Halaman &amp; Masuk Ulang
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
+              {canEdit && (
+                <div className="admin-form-footer flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    Pastikan isi berita dan konfigurasi SEO telah sesuai sebelum menyimpan perubahan draf.
+                  </p>
+                  <div className="flex items-center gap-3">
+                    <Link href="/dashboard/news" className="admin-button-secondary">
+                      Batal / Kembali
+                    </Link>
+                    <button
+                      type="button"
+                      className="admin-button"
+                      disabled={actionLoading || !title || !seo.slug || !body}
+                      onClick={handleSave}
+                    >
+                      {actionLoading ? "Menyimpan…" : "Simpan perubahan"}
+                    </button>
+                  </div>
+                </div>
+              )}
           </section>
           {!canEdit && <SeoDiscoverySection compact value={seo} onChange={setSEO} contentTitle={title || news.title} contentSummary={excerpt || news.excerpt || ""} contentBody={body || news.body || ""} routePrefix="/news/" disabled={!canEditSEO} />}
-          {!canEdit && canEditSEO && <div className="flex justify-end"><button type="button" className="admin-button" disabled={actionLoading} onClick={handleSaveSEO}>Simpan pengaturan publikasi</button></div>}
+          {!canEdit && canEditSEO && (
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pt-4">
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                Pengaturan SEO &amp; Discovery dapat disimpan secara mandiri saat berita sudah berstatus terbit.
+              </p>
+              <button
+                type="button"
+                className="admin-button"
+                disabled={actionLoading}
+                onClick={handleSaveSEO}
+              >
+                {actionLoading ? "Menyimpan…" : "Simpan pengaturan publikasi"}
+              </button>
+            </div>
+          )}
         </>
       )}
     </div>

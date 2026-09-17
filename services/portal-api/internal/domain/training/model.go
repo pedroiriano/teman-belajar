@@ -49,13 +49,17 @@ type Program struct {
 	Description     string      `json:"description"`
 	Audience        string      `json:"audience"`
 	EligibilityText string      `json:"eligibility_text"`
+	Category        string      `json:"category"`
+	Level           string      `json:"level"`
+	Tags            []string    `json:"tags"`
 	Status          Status      `json:"status"`
 	Version         int64       `json:"version"`
 	PublishedAt     *time.Time  `json:"published_at,omitempty"`
 	CreatedAt       time.Time   `json:"created_at"`
 	UpdatedAt       time.Time   `json:"updated_at"`
-	Courses         []CourseRef `json:"courses,omitempty"`
-	Cohorts         []Cohort    `json:"cohorts,omitempty"`
+	CoverImageURL   string      `json:"cover_image_url,omitempty"`
+	Courses         []CourseRef `json:"courses"`
+	Cohorts         []Cohort    `json:"cohorts"`
 }
 
 type CourseInput struct {
@@ -64,6 +68,7 @@ type CourseInput struct {
 }
 
 type CohortInput struct {
+	ID                 string     `json:"id,omitempty"`
 	Label              string     `json:"label"`
 	StartsAt           *time.Time `json:"starts_at"`
 	EndsAt             *time.Time `json:"ends_at"`
@@ -79,6 +84,9 @@ type ProgramInput struct {
 	Description     string        `json:"description"`
 	Audience        string        `json:"audience"`
 	EligibilityText string        `json:"eligibility_text"`
+	Category        string        `json:"category,omitempty"`
+	Level           string        `json:"level,omitempty"`
+	Tags            []string      `json:"tags,omitempty"`
 	Courses         []CourseInput `json:"courses"`
 	Cohorts         []CohortInput `json:"cohorts"`
 	ExpectedVersion int64         `json:"expected_version"`
@@ -87,6 +95,8 @@ type ProgramInput struct {
 type ListFilter struct {
 	Query    string
 	Status   string
+	Category string
+	Level    string
 	Page     int
 	PageSize int
 }
@@ -121,6 +131,7 @@ type ComposedCourse struct {
 	LearnerState   string   `json:"learner_state,omitempty"`
 	Progress       *float64 `json:"progress,omitempty"`
 	StartURL       string   `json:"start_url,omitempty"`
+	ImageURL       string   `json:"image_url,omitempty"`
 }
 
 type ProgramDetail struct {

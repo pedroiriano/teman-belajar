@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { AdminIcon } from "@/components/admin-icon";
+import { AdminDataTable, type ColumnHeader } from "@/components/admin-data-table";
 import {
   getCourseReviewsAction,
   moderateReviewStatusAction,
@@ -15,6 +16,16 @@ const statusBadges: Record<string, { label: string; className: string }> = {
   flagged: { label: "Ditandai", className: "cuba-badge-warning" },
   hidden: { label: "Disembunyikan", className: "cuba-badge-neutral" },
 };
+
+const tableHeaders: ColumnHeader[] = [
+  { key: "author_name", label: "Pembelajar", sortable: true },
+  { key: "program_slug", label: "Program Pelatihan", sortable: true },
+  { key: "rating", label: "Rating", sortable: true, align: "center" },
+  { key: "content", label: "Ulasan & Komentar" },
+  { key: "created_at", label: "Tanggal", sortable: true },
+  { key: "status", label: "Status", sortable: true, align: "center" },
+  { label: "Aksi Moderasi", align: "right" },
+];
 
 export default function CourseReviewsAdminPage() {
   const [reviews, setReviews] = useState<CourseReview[]>([]);
@@ -100,6 +111,12 @@ export default function CourseReviewsAdminPage() {
     setBusyId(null);
   }
 
+  // Pagination & Sorting states
+  const [sortKey, setSortKey] = useState<string>("created_at");
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+
   // Summary metrics
   const stats = useMemo(() => {
     const total = reviews.length;
@@ -112,6 +129,38 @@ export default function CourseReviewsAdminPage() {
         : "0.0";
     return { total, published, flagged, hidden, avg };
   }, [reviews]);
+
+  const handleSortChange = (key: string) => {
+    if (sortKey === key) {
+      setSortDirection((prev) => (prev === "asc" ? "desc" : "asc"));
+    } else {
+      setSortKey(key);
+      setSortDirection("desc");
+    }
+  };
+
+  const sortedReviews = useMemo(() => {
+    return [...reviews].sort((a, b) => {
+      let comparison = 0;
+      if (sortKey === "author_name") {
+        comparison = (a.author_name || "").localeCompare(b.author_name || "", "id");
+      } else if (sortKey === "program_slug") {
+        comparison = (a.program_slug || "").localeCompare(b.program_slug || "");
+      } else if (sortKey === "rating") {
+        comparison = a.rating - b.rating;
+      } else if (sortKey === "created_at") {
+        comparison = new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+      } else if (sortKey === "status") {
+        comparison = (a.status || "").localeCompare(b.status || "");
+      }
+      return sortDirection === "asc" ? comparison : -comparison;
+    });
+  }, [reviews, sortKey, sortDirection]);
+
+  const pagedReviews = useMemo(() => {
+    const start = (page - 1) * pageSize;
+    return sortedReviews.slice(start, start + pageSize);
+  }, [sortedReviews, page, pageSize]);
 
   return (
     <div className="admin-page space-y-6" data-cuba-page="course-reviews">
@@ -196,19 +245,52 @@ export default function CourseReviewsAdminPage() {
         </div>
       </div>
 
-      {/* Filters Bar */}
-      <div className="admin-card p-4">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-          {/* Program Select */}
-          <div>
-            <label htmlFor="filter-program" className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">
-              Program Pelatihan
-            </label>
+      {/* AdminDataTable Component */}
+      <AdminDataTable
+        title="Daftar Ulasan & Rating"
+        description="Kelola dan moderasi feedback pembelajar seluruh program pelatihan secara terpadu."
+        itemCount={sortedReviews.length}
+        headers={tableHeaders}
+        loading={loading}
+        emptyState="Belum ada ulasan yang sesuai dengan filter atau kata kunci."
+        sortKey={sortKey}
+        sortDirection={sortDirection}
+        onSortChange={handleSortChange}
+        searchQuery={searchQuery}
+        onSearchChange={(q) => {
+          setSearchQuery(q);
+          setPage(1);
+        }}
+        searchPlaceholder="Cari pembelajar, program, atau isi ulasan…"
+        statusFilter={statusFilter}
+        statusOptions={[
+          { value: "all", label: "Semua Status" },
+          { value: "published", label: "Terbit (Aktif)" },
+          { value: "flagged", label: "Ditandai (Perlu Ditinjau)" },
+          { value: "hidden", label: "Disembunyikan" },
+        ]}
+        onStatusFilterChange={(s) => {
+          setStatusFilter(s);
+          setPage(1);
+        }}
+        page={page}
+        pageSize={pageSize}
+        total={sortedReviews.length}
+        onPageChange={setPage}
+        onPageSizeChange={(sz) => {
+          setPageSize(sz);
+          setPage(1);
+        }}
+        actions={
+          <div className="flex flex-wrap items-center gap-2">
             <select
-              id="filter-program"
               value={programFilter}
-              onChange={(e) => setProgramFilter(e.target.value)}
-              className="w-full text-xs py-2 px-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
+              onChange={(e) => {
+                setProgramFilter(e.target.value);
+                setPage(1);
+              }}
+              className="admin-input !h-9 !py-1 text-xs font-semibold rounded-xl border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200"
+              aria-label="Filter Program"
             >
               <option value="all">Semua Program</option>
               {programs.map((p) => (
@@ -217,36 +299,14 @@ export default function CourseReviewsAdminPage() {
                 </option>
               ))}
             </select>
-          </div>
-
-          {/* Status Filter */}
-          <div>
-            <label htmlFor="filter-status" className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">
-              Status Moderasi
-            </label>
             <select
-              id="filter-status"
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="w-full text-xs py-2 px-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
-            >
-              <option value="all">Semua Status</option>
-              <option value="published">Terbit (Aktif)</option>
-              <option value="flagged">Ditandai (Perlu Ditinjau)</option>
-              <option value="hidden">Disembunyikan</option>
-            </select>
-          </div>
-
-          {/* Rating Filter */}
-          <div>
-            <label htmlFor="filter-rating" className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">
-              Rating Bintang
-            </label>
-            <select
-              id="filter-rating"
               value={ratingFilter}
-              onChange={(e) => setRatingFilter(e.target.value === "all" ? "all" : Number(e.target.value))}
-              className="w-full text-xs py-2 px-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
+              onChange={(e) => {
+                setRatingFilter(e.target.value === "all" ? "all" : Number(e.target.value));
+                setPage(1);
+              }}
+              className="admin-input !h-9 !py-1 text-xs font-semibold rounded-xl border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200"
+              aria-label="Filter Rating"
             >
               <option value="all">Semua Rating (1-5)</option>
               <option value="5">5 Bintang (★★★★★)</option>
@@ -256,153 +316,95 @@ export default function CourseReviewsAdminPage() {
               <option value="1">1 Bintang (★☆☆☆☆)</option>
             </select>
           </div>
+        }
+      >
+        {pagedReviews.map((item) => {
+          const badge = statusBadges[item.status] || {
+            label: item.status,
+            className: "cuba-badge-neutral",
+          };
+          const isBusy = busyId === item.id;
+          const formattedDate = new Date(item.created_at).toLocaleDateString("id-ID", {
+            day: "numeric",
+            month: "short",
+            year: "numeric",
+          });
 
-          {/* Search Bar */}
-          <div>
-            <label htmlFor="filter-search" className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">
-              Pencarian Teks
-            </label>
-            <input
-              id="filter-search"
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Cari pembelajar / isi..."
-              className="w-full text-xs py-2 px-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
-            />
-          </div>
-        </div>
-      </div>
-
-      {/* Reviews Moderation Table */}
-      <div className="admin-card overflow-hidden">
-        <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
-          <h2 className="text-sm font-bold text-slate-900 dark:text-white">
-            Daftar Ulasan & Rating ({reviews.length})
-          </h2>
-          <span className="text-xs text-slate-400">
-            {loading ? "Memuat..." : "Terkini"}
-          </span>
-        </div>
-
-        {reviews.length === 0 ? (
-          <div className="p-12 text-center text-slate-500">
-            <div className="mx-auto w-12 h-12 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400 mb-3">
-              <AdminIcon name="file" className="w-6 h-6" />
-            </div>
-            <p className="font-bold text-slate-800 dark:text-slate-200 text-sm">
-              Tidak ada ulasan yang sesuai filter
-            </p>
-            <p className="text-xs text-slate-400 mt-1">
-              Sesuaikan filter di atas atau muat ulang data untuk melihat ulasan lainnya.
-            </p>
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-start text-xs border-collapse">
-              <thead>
-                <tr className="bg-slate-50/75 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-700 text-slate-500 uppercase tracking-wider font-bold">
-                  <th className="py-3 px-4 text-start">Pembelajar</th>
-                  <th className="py-3 px-4 text-start">Program Pelatihan</th>
-                  <th className="py-3 px-4 text-center">Rating</th>
-                  <th className="py-3 px-4 text-start">Ulasan</th>
-                  <th className="py-3 px-4 text-start">Tanggal</th>
-                  <th className="py-3 px-4 text-center">Status</th>
-                  <th className="py-3 px-4 text-end">Aksi Moderasi</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                {reviews.map((item) => {
-                  const badge = statusBadges[item.status] || {
-                    label: item.status,
-                    className: "cuba-badge-neutral",
-                  };
-                  const isBusy = busyId === item.id;
-                  const formattedDate = new Date(item.created_at).toLocaleDateString("id-ID", {
-                    day: "numeric",
-                    month: "short",
-                    year: "numeric",
-                  });
-
-                  return (
-                    <tr key={item.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition">
-                      <td className="py-3 px-4 font-bold text-slate-900 dark:text-white whitespace-nowrap">
-                        {item.author_name}
-                      </td>
-                      <td className="py-3 px-4 font-medium text-slate-600 dark:text-slate-300">
-                        <Link
-                          href={`/training-programs/${item.program_slug}`}
-                          target="_blank"
-                          className="hover:underline hover:text-sky-600"
-                        >
-                          {item.program_slug}
-                        </Link>
-                      </td>
-                      <td className="py-3 px-4 text-center whitespace-nowrap">
-                        <span className="font-black text-yellow-500">
-                          {item.rating} ★
-                        </span>
-                      </td>
-                      <td className="py-3 px-4 max-w-xs">
-                        {item.title ? (
-                          <div className="font-bold text-slate-800 dark:text-slate-200 truncate">
-                            {item.title}
-                          </div>
-                        ) : null}
-                        <div className="text-slate-500 dark:text-slate-400 line-clamp-2 text-[11px] leading-relaxed">
-                          {item.content}
-                        </div>
-                      </td>
-                      <td className="py-3 px-4 text-slate-400 whitespace-nowrap text-[11px]">
-                        {formattedDate}
-                      </td>
-                      <td className="py-3 px-4 text-center whitespace-nowrap">
-                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${badge.className}`}>
-                          {badge.label}
-                        </span>
-                      </td>
-                      <td className="py-3 px-4 text-end whitespace-nowrap">
-                        <div className="inline-flex items-center gap-1.5">
-                          {item.status !== "published" ? (
-                            <button
-                              type="button"
-                              onClick={() => handleModerate(item.id, "published")}
-                              disabled={isBusy}
-                              className="px-2.5 py-1 text-[11px] font-semibold rounded bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 transition disabled:opacity-50"
-                            >
-                              Terbitkan
-                            </button>
-                          ) : null}
-                          {item.status !== "flagged" ? (
-                            <button
-                              type="button"
-                              onClick={() => handleModerate(item.id, "flagged")}
-                              disabled={isBusy}
-                              className="px-2.5 py-1 text-[11px] font-semibold rounded bg-yellow-50 text-yellow-700 hover:bg-yellow-100 dark:bg-yellow-950/40 dark:text-yellow-300 border border-yellow-200 dark:border-yellow-800 transition disabled:opacity-50"
-                            >
-                              Tandai
-                            </button>
-                          ) : null}
-                          {item.status !== "hidden" ? (
-                            <button
-                              type="button"
-                              onClick={() => handleModerate(item.id, "hidden")}
-                              disabled={isBusy}
-                              className="px-2.5 py-1 text-[11px] font-semibold rounded bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 border border-slate-300 dark:border-slate-700 transition disabled:opacity-50"
-                            >
-                              Sembunyikan
-                            </button>
-                          ) : null}
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
+          return (
+            <tr key={item.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition">
+              <td className="py-3.5 px-4 font-bold text-slate-900 dark:text-white whitespace-nowrap">
+                {item.author_name}
+              </td>
+              <td className="py-3.5 px-4 font-medium text-slate-600 dark:text-slate-300">
+                <Link
+                  href={`/training-programs/${item.program_slug}`}
+                  target="_blank"
+                  className="hover:underline hover:text-sky-600 dark:hover:text-sky-400 font-mono text-xs"
+                >
+                  {item.program_slug}
+                </Link>
+              </td>
+              <td className="py-3.5 px-4 text-center whitespace-nowrap">
+                <span className="font-black text-yellow-500 text-xs">
+                  {item.rating} ★
+                </span>
+              </td>
+              <td className="py-3.5 px-4 max-w-sm">
+                {item.title ? (
+                  <div className="font-bold text-slate-800 dark:text-slate-200 truncate">
+                    {item.title}
+                  </div>
+                ) : null}
+                <div className="text-slate-500 dark:text-slate-400 line-clamp-2 text-[11px] leading-relaxed">
+                  {item.content}
+                </div>
+              </td>
+              <td className="py-3.5 px-4 text-slate-400 whitespace-nowrap text-[11px]">
+                {formattedDate}
+              </td>
+              <td className="py-3.5 px-4 text-center whitespace-nowrap">
+                <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${badge.className}`}>
+                  {badge.label}
+                </span>
+              </td>
+              <td className="py-3.5 px-4 text-end whitespace-nowrap">
+                <div className="inline-flex items-center gap-1.5">
+                  {item.status !== "published" ? (
+                    <button
+                      type="button"
+                      onClick={() => handleModerate(item.id, "published")}
+                      disabled={isBusy}
+                      className="px-2.5 py-1 text-[11px] font-semibold rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 transition disabled:opacity-50"
+                    >
+                      Terbitkan
+                    </button>
+                  ) : null}
+                  {item.status !== "flagged" ? (
+                    <button
+                      type="button"
+                      onClick={() => handleModerate(item.id, "flagged")}
+                      disabled={isBusy}
+                      className="px-2.5 py-1 text-[11px] font-semibold rounded-lg bg-yellow-50 text-yellow-700 hover:bg-yellow-100 dark:bg-yellow-950/40 dark:text-yellow-300 border border-yellow-200 dark:border-yellow-800 transition disabled:opacity-50"
+                    >
+                      Tandai
+                    </button>
+                  ) : null}
+                  {item.status !== "hidden" ? (
+                    <button
+                      type="button"
+                      onClick={() => handleModerate(item.id, "hidden")}
+                      disabled={isBusy}
+                      className="px-2.5 py-1 text-[11px] font-semibold rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 border border-slate-300 dark:border-slate-700 transition disabled:opacity-50"
+                    >
+                      Sembunyikan
+                    </button>
+                  ) : null}
+                </div>
+              </td>
+            </tr>
+          );
+        })}
+      </AdminDataTable>
     </div>
   );
 }

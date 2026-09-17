@@ -126,7 +126,6 @@ export default async function AdminKnowledgePage({
       <CubaKnowledgeTable
         articles={articles}
         itemCount={pagination.total}
-        headerActions={headerActions}
         errorMessage={knowledgeRes ? null : "Data artikel gagal dimuat. Periksa koneksi backend."}
       />
 

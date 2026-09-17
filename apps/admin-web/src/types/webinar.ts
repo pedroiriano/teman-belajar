@@ -11,15 +11,17 @@ export interface AdminWebinarItem {
   status: "upcoming" | "in_progress" | "completed" | "cancelled";
   join_url?: string;
   recording_url?: string;
-  provider: "zoom" | "bigbluebutton" | "manual";
+  provider: "zoom" | "gmeet" | "teams" | "bigbluebutton" | "manual" | "other" | string;
   provider_ready: boolean;
 }
 
 export interface AdminWebinarAttendee {
+  id?: string;
+  user_id?: string;
   name: string;
   email: string;
   registered_at: string;
-  attendance_state: "present" | "absent" | "registered";
+  attendance_state: "present" | "absent" | "registered" | "attended";
   attended_minutes?: number;
 }
 
@@ -44,4 +46,18 @@ export interface CreateAdminWebinarInput {
   ends_at: string;
   capacity: number;
   join_url?: string;
+  provider?: string;
+}
+
+export interface UpdateAdminWebinarInput {
+  title?: string;
+  description?: string;
+  speaker?: string;
+  starts_at?: string;
+  ends_at?: string;
+  capacity?: number;
+  status?: "upcoming" | "in_progress" | "completed" | "cancelled";
+  join_url?: string;
+  recording_url?: string;
+  provider?: string;
 }

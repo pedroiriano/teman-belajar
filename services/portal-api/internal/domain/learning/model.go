@@ -41,6 +41,7 @@ type LearningCourse struct {
 	StartAt   *int64 `json:"start_at,omitempty"`
 	EndAt     *int64 `json:"end_at,omitempty"`
 	Visible   bool   `json:"visible"`
+	ImageURL  string `json:"image_url,omitempty"`
 }
 
 type CourseFilter struct {

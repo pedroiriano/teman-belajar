@@ -43,6 +43,21 @@ final class list_visible_courses extends external_api {
             if (!$context) {
                 continue;
             }
+            $courseinlist = new \core_course_list_element($course);
+            $imageurl = '';
+            foreach ($courseinlist->get_course_overviewfiles() as $file) {
+                if ($file->is_valid_image()) {
+                    $imageurl = \moodle_url::make_pluginfile_url(
+                        $file->get_contextid(),
+                        $file->get_component(),
+                        $file->get_filearea(),
+                        null,
+                        $file->get_filepath(),
+                        $file->get_filename()
+                    )->out(false);
+                    break;
+                }
+            }
             $result[] = [
                 'id' => (int) $course->id,
                 'shortname' => format_string($course->shortname, true, ['context' => $context]),
@@ -52,6 +67,7 @@ final class list_visible_courses extends external_api {
                 'startdate' => (int) $course->startdate,
                 'enddate' => (int) $course->enddate,
                 'visible' => 1,
+                'imageurl' => $imageurl,
             ];
         }
         return $result;
@@ -67,6 +83,7 @@ final class list_visible_courses extends external_api {
             'startdate' => new external_value(PARAM_INT, 'Course start timestamp'),
             'enddate' => new external_value(PARAM_INT, 'Course end timestamp'),
             'visible' => new external_value(PARAM_INT, 'Always one for returned courses'),
+            'imageurl' => new external_value(PARAM_RAW, 'Course cover image URL if available', VALUE_DEFAULT, ''),
         ]));
     }
 }

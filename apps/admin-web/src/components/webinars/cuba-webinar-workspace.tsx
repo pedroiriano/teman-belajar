@@ -8,10 +8,14 @@ import type {
   AdminWebinarItem,
   AdminWebinarDetailItem,
   CreateAdminWebinarInput,
+  UpdateAdminWebinarInput,
 } from "@/types/webinar";
 import {
   createAdminWebinarAction,
   getAdminWebinarDetailAction,
+  updateAdminWebinarAction,
+  deleteAdminWebinarAction,
+  updateAttendanceAction,
 } from "@/app/actions/webinars";
 import { AdminDataTable } from "@/components/admin-data-table";
 
@@ -19,14 +23,17 @@ interface CubaWebinarWorkspaceProps {
   initialWebinars: AdminWebinarItem[];
 }
 
+const isSessionExpired = (msg: string) =>
+  /sesi|token|unauthorized|401|403|login|kedaluwarsa|konflik/i.test(msg);
+
 export function CubaWebinarWorkspace({ initialWebinars }: CubaWebinarWorkspaceProps) {
   const [webinars, setWebinars] = useState<AdminWebinarItem[]>(initialWebinars);
   const [filter, setFilter] = useState<string>("all");
   const [speakerFilter, setSpeakerFilter] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedWebinar, setSelectedWebinar] = useState<AdminWebinarDetailItem | AdminWebinarItem | null>(null);
+  const [selectedWebinar, setSelectedWebinar] = useState<AdminWebinarDetailItem | null>(null);
   const [isLoadingDetail, setIsLoadingDetail] = useState(false);
-  const [detailTab, setDetailTab] = useState<"info" | "attendance">("info");
+  const [detailTab, setDetailTab] = useState<"info" | "attendance" | "edit">("info");
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
@@ -43,6 +50,7 @@ export function CubaWebinarWorkspace({ initialWebinars }: CubaWebinarWorkspacePr
     ends_at: string;
     capacity: number;
     join_url: string;
+    provider: string;
   }>({
     title: "",
     description: "",
@@ -51,22 +59,57 @@ export function CubaWebinarWorkspace({ initialWebinars }: CubaWebinarWorkspacePr
     ends_at: "",
     capacity: 100,
     join_url: "",
+    provider: "zoom",
   });
+
+  // Edit State
+  const [editForm, setEditForm] = useState<{
+    title: string;
+    description: string;
+    speaker: string;
+    starts_at: string;
+    ends_at: string;
+    capacity: number;
+    status: AdminWebinarItem["status"];
+    join_url: string;
+    recording_url: string;
+    provider: string;
+  }>({
+    title: "",
+    description: "",
+    speaker: "",
+    starts_at: "",
+    ends_at: "",
+    capacity: 100,
+    status: "upcoming",
+    join_url: "",
+    recording_url: "",
+    provider: "zoom",
+  });
+  const [editError, setEditError] = useState<string | null>(null);
+  const [isUpdating, setIsUpdating] = useState(false);
+
+  // Delete Confirm State
+  const [deleteConfirmId, setDeleteConfirmId] = useState<number | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const mounted = useSyncExternalStore(emptySubscribe, () => true, () => false);
 
   useEffect(() => {
-    if (!isCreateModalOpen && !selectedWebinar) return;
+    if (!isCreateModalOpen && !selectedWebinar && !deleteConfirmId) return;
     const prevBody = document.body.style.overflow;
     const prevHtml = document.documentElement.style.overflow;
     document.body.style.overflow = "hidden";
     document.documentElement.style.overflow = "hidden";
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
-        if (isCreateModalOpen && !isSubmitting) {
+        if (deleteConfirmId && !isDeleting) {
+          e.preventDefault();
+          setDeleteConfirmId(null);
+        } else if (isCreateModalOpen && !isSubmitting) {
           e.preventDefault();
           setIsCreateModalOpen(false);
-        } else if (selectedWebinar) {
+        } else if (selectedWebinar && !isUpdating) {
           e.preventDefault();
           setSelectedWebinar(null);
         }
@@ -78,7 +121,7 @@ export function CubaWebinarWorkspace({ initialWebinars }: CubaWebinarWorkspacePr
       document.body.style.overflow = prevBody;
       document.documentElement.style.overflow = prevHtml;
     };
-  }, [isCreateModalOpen, selectedWebinar, isSubmitting]);
+  }, [isCreateModalOpen, selectedWebinar, deleteConfirmId, isSubmitting, isUpdating, isDeleting]);
 
   const speakerOptions = useMemo(() => {
     const list = Array.from(new Set(webinars.map((w) => w.speaker).filter(Boolean)));
@@ -100,48 +143,65 @@ export function CubaWebinarWorkspace({ initialWebinars }: CubaWebinarWorkspacePr
   }, [webinars, filter, speakerFilter, searchQuery]);
 
   const filteredAndPaged = useMemo(() => {
-    const start = (page - 1) * pageSize;
-    return filteredWebinars.slice(start, start + pageSize);
+    const startIndex = (page - 1) * pageSize;
+    return filteredWebinars.slice(startIndex, startIndex + pageSize);
   }, [filteredWebinars, page, pageSize]);
 
-  const allCurrentKeys = filteredAndPaged.map((w) => String(w.id));
-  const isAllSelected =
-    allCurrentKeys.length > 0 && allCurrentKeys.every((id) => selectedIds.has(id));
-  const isSomeSelected =
-    allCurrentKeys.some((id) => selectedIds.has(id)) && !isAllSelected;
+  const isAllSelected = useMemo(() => {
+    if (filteredAndPaged.length === 0) return false;
+    return filteredAndPaged.every((w) => selectedIds.has(String(w.id)));
+  }, [filteredAndPaged, selectedIds]);
 
-  const handleToggleSelectAll = (checked: boolean) => {
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
-      if (checked) {
-        allCurrentKeys.forEach((id) => next.add(id));
-      } else {
-        allCurrentKeys.forEach((id) => next.delete(id));
-      }
-      return next;
-    });
+  const isSomeSelected = useMemo(() => {
+    if (filteredAndPaged.length === 0) return false;
+    const count = filteredAndPaged.filter((w) => selectedIds.has(String(w.id))).length;
+    return count > 0 && count < filteredAndPaged.length;
+  }, [filteredAndPaged, selectedIds]);
+
+  const handleToggleSelectAll = () => {
+    const next = new Set(selectedIds);
+    if (isAllSelected) {
+      filteredAndPaged.forEach((w) => next.delete(String(w.id)));
+    } else {
+      filteredAndPaged.forEach((w) => next.add(String(w.id)));
+    }
+    setSelectedIds(next);
   };
 
   const handleToggleRow = (id: string) => {
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
+    const next = new Set(selectedIds);
+    if (next.has(id)) {
+      next.delete(id);
+    } else {
+      next.add(id);
+    }
+    setSelectedIds(next);
   };
 
   const handleOpenDetail = async (item: AdminWebinarItem) => {
-    setSelectedWebinar(item);
+    setSelectedWebinar({ ...item, attendees: [] });
     setDetailTab("info");
     setIsLoadingDetail(true);
+    setEditError(null);
     try {
       const res = await getAdminWebinarDetailAction(item.id);
       if (res.success && res.data) {
         setSelectedWebinar(res.data);
+        setEditForm({
+          title: res.data.title,
+          description: res.data.description || "",
+          speaker: res.data.speaker,
+          starts_at: res.data.starts_at ? new Date(res.data.starts_at).toISOString().slice(0, 16) : "",
+          ends_at: res.data.ends_at ? new Date(res.data.ends_at).toISOString().slice(0, 16) : "",
+          capacity: res.data.capacity,
+          status: res.data.status,
+          join_url: res.data.join_url || "",
+          recording_url: res.data.recording_url || "",
+          provider: res.data.provider || "zoom",
+        });
       }
     } catch {
-      // Keep baseline
+      // Graceful retain base
     } finally {
       setIsLoadingDetail(false);
     }
@@ -160,10 +220,14 @@ export function CubaWebinarWorkspace({ initialWebinars }: CubaWebinarWorkspacePr
         ends_at: new Date(createForm.ends_at).toISOString(),
         capacity: Number(createForm.capacity),
         join_url: createForm.join_url,
+        provider: createForm.provider,
       };
       const res = await createAdminWebinarAction(input);
       if (!res.success || !res.data) {
         setCreateError(res.error || "Gagal menjadwalkan sesi webinar");
+        setTimeout(() => {
+          document.getElementById("form-error-alert")?.scrollIntoView({ behavior: "smooth", block: "center" });
+        }, 50);
         return;
       }
       setWebinars((prev) => [res.data!, ...prev]);
@@ -176,11 +240,84 @@ export function CubaWebinarWorkspace({ initialWebinars }: CubaWebinarWorkspacePr
         ends_at: "",
         capacity: 100,
         join_url: "",
+        provider: "zoom",
       });
     } catch (err: any) {
       setCreateError(err.message || "Terjadi kesalahan sistem saat menjadwalkan");
+      setTimeout(() => {
+        document.getElementById("form-error-alert")?.scrollIntoView({ behavior: "smooth", block: "center" });
+      }, 50);
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleUpdateWebinar = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedWebinar) return;
+    setIsUpdating(true);
+    setEditError(null);
+    try {
+      const input: UpdateAdminWebinarInput = {
+        title: editForm.title,
+        description: editForm.description,
+        speaker: editForm.speaker,
+        starts_at: new Date(editForm.starts_at).toISOString(),
+        ends_at: new Date(editForm.ends_at).toISOString(),
+        capacity: Number(editForm.capacity),
+        status: editForm.status,
+        join_url: editForm.join_url,
+        recording_url: editForm.recording_url,
+        provider: editForm.provider,
+      };
+      const res = await updateAdminWebinarAction(selectedWebinar.id, input);
+      if (!res.success || !res.data) {
+        setEditError(res.error || "Gagal memperbarui sesi webinar");
+        return;
+      }
+      setWebinars((prev) => prev.map((w) => (w.id === selectedWebinar.id ? res.data! : w)));
+      setSelectedWebinar({ ...selectedWebinar, ...res.data! });
+      setDetailTab("info");
+    } catch (err: any) {
+      setEditError(err.message || "Terjadi kesalahan saat menyimpan perubahan");
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  const handleDeleteWebinar = async (id: number) => {
+    setIsDeleting(true);
+    try {
+      const res = await deleteAdminWebinarAction(id);
+      if (res.success) {
+        setWebinars((prev) => prev.filter((w) => w.id !== id));
+        setDeleteConfirmId(null);
+        if (selectedWebinar?.id === id) {
+          setSelectedWebinar(null);
+        }
+      }
+    } catch {
+      // Handled
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const handleToggleAttendance = async (attendeeUserId: string, currentStatus: string) => {
+    if (!selectedWebinar) return;
+    const newStatus = currentStatus === "present" || currentStatus === "attended" ? "registered" : "attended";
+    try {
+      const res = await updateAttendanceAction(selectedWebinar.id, attendeeUserId, newStatus);
+      if (res.success) {
+        setSelectedWebinar({
+          ...selectedWebinar,
+          attendees: (selectedWebinar.attendees || []).map((a) =>
+            a.user_id === attendeeUserId ? { ...a, attendance_state: newStatus === "attended" ? "present" : "registered" } : a
+          ),
+        });
+      }
+    } catch {
+      // Handled
     }
   };
 
@@ -195,7 +332,7 @@ export function CubaWebinarWorkspace({ initialWebinars }: CubaWebinarWorkspacePr
         <div className="admin-card p-5">
           <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">Total Sesi Live</p>
           <p className="mt-2 text-2xl font-black text-slate-900 dark:text-white">{webinars.length}</p>
-          <p className="mt-1 text-xs text-sky-600 dark:text-sky-400 font-medium">Tersinkronisasi Moodle mod_zoom</p>
+          <p className="mt-1 text-xs text-sky-600 dark:text-sky-400 font-medium">Manajemen Mandiri (LXP Native)</p>
         </div>
         <div className="admin-card p-5">
           <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">Sesi Mendatang</p>
@@ -208,12 +345,12 @@ export function CubaWebinarWorkspace({ initialWebinars }: CubaWebinarWorkspacePr
           <p className="mt-1 text-xs text-slate-500 dark:text-slate-400 font-medium">Dari {totalCapacity} kapasitas kursi</p>
         </div>
         <div className="admin-card p-5">
-          <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">Kesiapan Provider</p>
+          <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">Basis Data Persisten</p>
           <div className="mt-2 flex items-center gap-2">
             <span className="h-2.5 w-2.5 rounded-full bg-emerald-500" />
-            <span className="text-sm font-bold text-slate-800 dark:text-slate-200">Zoom S2S Standby</span>
+            <span className="text-sm font-bold text-slate-800 dark:text-slate-200">PostgreSQL Riil</span>
           </div>
-          <p className="mt-1 text-xs text-slate-500 dark:text-slate-400 font-medium">Otoritas Moodle</p>
+          <p className="mt-1 text-xs text-slate-500 dark:text-slate-400 font-medium">Tersimpan Permanen</p>
         </div>
       </div>
 
@@ -249,17 +386,16 @@ export function CubaWebinarWorkspace({ initialWebinars }: CubaWebinarWorkspacePr
             setCreateError(null);
             setIsCreateModalOpen(true);
           }}
-          className="admin-button-primary text-xs flex items-center gap-1.5"
+          className="admin-button-primary text-xs"
         >
-          <span>+</span>
-          <span>Jadwalkan Webinar Baru</span>
+          + Jadwalkan Webinar Baru
         </button>
       </div>
 
-      {/* Webinar DataTable */}
+      {/* Main Admin Data Table */}
       <AdminDataTable
         title="Daftar Sesi Webinar"
-        description="Kelola jadwal, kapasitas peserta, dan status siaran webinar platform."
+        description="Kelola jadwal, kapasitas peserta, narasumber, dan status siaran webinar platform."
         itemCount={filteredAndPaged.length}
         headers={[
           { label: "Topik Webinar", key: "title" },
@@ -282,6 +418,7 @@ export function CubaWebinarWorkspace({ initialWebinars }: CubaWebinarWorkspacePr
           { value: "upcoming", label: "Akan Datang" },
           { value: "in_progress", label: "Sedang Berlangsung" },
           { value: "completed", label: "Selesai" },
+          { value: "cancelled", label: "Dibatalkan" },
         ]}
         onStatusFilterChange={(s) => {
           setFilter(s);
@@ -362,6 +499,8 @@ export function CubaWebinarWorkspace({ initialWebinars }: CubaWebinarWorkspacePr
                       ? "bg-sky-50 text-sky-700 border border-sky-200 dark:bg-sky-950/40 dark:text-sky-300 dark:border-sky-800"
                       : item.status === "in_progress"
                       ? "bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800"
+                      : item.status === "cancelled"
+                      ? "bg-rose-50 text-rose-700 border border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-800"
                       : "bg-slate-100 text-slate-600 border border-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700"
                   }`}
                 >
@@ -369,16 +508,26 @@ export function CubaWebinarWorkspace({ initialWebinars }: CubaWebinarWorkspacePr
                     ? "Akan Datang"
                     : item.status === "in_progress"
                     ? "Live"
+                    : item.status === "cancelled"
+                    ? "Dibatalkan"
                     : "Selesai"}
                 </span>
               </td>
-              <td className="px-6 py-4 text-right whitespace-nowrap">
+              <td className="px-6 py-4 text-right whitespace-nowrap space-x-2">
                 <button
                   type="button"
                   onClick={() => handleOpenDetail(item)}
                   className="rounded-lg border border-sky-200 bg-sky-50 px-3 py-1 text-xs font-bold text-sky-700 hover:bg-sky-100 dark:border-sky-800 dark:bg-sky-950/50 dark:text-sky-300 dark:hover:bg-sky-900/60"
                 >
-                  Detail
+                  Kelola & Detail
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setDeleteConfirmId(item.id)}
+                  className="rounded-lg border border-rose-200 bg-rose-50 px-2.5 py-1 text-xs font-bold text-rose-700 hover:bg-rose-100 dark:border-rose-900/60 dark:bg-rose-950/50 dark:text-rose-300"
+                  title="Hapus / Batalkan Sesi"
+                >
+                  Hapus
                 </button>
               </td>
             </tr>
@@ -386,87 +535,100 @@ export function CubaWebinarWorkspace({ initialWebinars }: CubaWebinarWorkspacePr
         })}
       </AdminDataTable>
 
-      {/* Create Webinar Modal */}
+      {/* Standard Create Modal */}
       {isCreateModalOpen && mounted && createPortal(
         <div
           role="dialog"
           aria-modal="true"
           className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/70 p-4 backdrop-blur-md overflow-y-auto animate-in fade-in duration-150"
           onClick={(e) => {
-            if (!isSubmitting && e.target === e.currentTarget) setIsCreateModalOpen(false);
+            if (e.target === e.currentTarget && !isSubmitting) setIsCreateModalOpen(false);
           }}
           onMouseDown={(e) => {
-            if (!isSubmitting && e.target === e.currentTarget) setIsCreateModalOpen(false);
+            if (e.target === e.currentTarget && !isSubmitting) setIsCreateModalOpen(false);
           }}
         >
           <div
-            className="admin-card max-w-xl w-full p-6 space-y-4 shadow-xl max-h-[90vh] overflow-y-auto"
+            className="admin-card max-w-lg w-full p-6 space-y-4 shadow-xl max-h-[90vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
             onMouseDown={(e) => e.stopPropagation()}
           >
-            <div className="flex items-start justify-between">
+            <div className="flex items-center justify-between">
               <div>
-                <p className="admin-kicker">Jadwal Sesi Baru</p>
-                <h3 className="text-lg font-bold text-slate-900 dark:text-white mt-1">Jadwalkan Webinar Pembelajaran</h3>
+                <h2 className="text-base font-bold text-slate-900 dark:text-white">Jadwalkan Sesi Webinar Baru</h2>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                  Isi formulir sesi tatap muka interaktif LXP Teman Belajar.
+                </p>
               </div>
               <button
                 type="button"
                 onClick={() => setIsCreateModalOpen(false)}
                 className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-sm font-bold"
+                disabled={isSubmitting}
               >
                 ✕
               </button>
             </div>
 
             {createError && (
-              <div className="rounded-lg border border-rose-200 bg-rose-50 p-3 text-xs text-rose-700 dark:border-rose-900/50 dark:bg-rose-950/40 dark:text-rose-300">
-                {createError}
+              <div id="form-error-alert" className="rounded-xl border border-rose-200 bg-rose-50/90 p-4 dark:border-rose-900/50 dark:bg-rose-950/40 text-xs text-rose-800 dark:text-rose-300">
+                <p className="font-bold flex items-center gap-1.5">⚠️ Gagal Menyimpan:</p>
+                <p className="mt-1">{createError}</p>
+                {isSessionExpired(createError) && (
+                  <button
+                    type="button"
+                    onClick={() => window.location.reload()}
+                    className="mt-2 inline-flex items-center gap-1.5 rounded-lg border border-sky-300 bg-white px-2.5 py-1 text-xs font-bold text-sky-700 hover:bg-sky-50 shadow-sm dark:border-sky-700 dark:bg-slate-900 dark:text-sky-300"
+                  >
+                    Muat Ulang Halaman & Masuk Ulang
+                  </button>
+                )}
               </div>
             )}
 
             <form onSubmit={handleCreateWebinar} className="space-y-4">
               <div>
                 <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                  Judul Sesi Webinar <span className="text-rose-500">*</span>
+                  Topik / Judul Webinar <span className="text-rose-500">*</span>
                 </label>
                 <input
                   type="text"
                   required
                   value={createForm.title}
                   onChange={(e) => setCreateForm({ ...createForm, title: e.target.value })}
-                  placeholder="Contoh: Lokakarya Keamanan Cloud Enterprise 2026"
+                  placeholder="Contoh: Best Practices Keamanan Siber Cloud"
                   className="cuba-input w-full rounded-lg border-slate-300 bg-white px-3 py-2 text-xs text-slate-800 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
                 />
               </div>
 
               <div>
                 <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                  Nama Narasumber / Instruktur <span className="text-rose-500">*</span>
+                  Ringkasan / Deskripsi Sesi
+                </label>
+                <textarea
+                  rows={3}
+                  value={createForm.description}
+                  onChange={(e) => setCreateForm({ ...createForm, description: e.target.value })}
+                  placeholder="Penjelasan ringkas materi dan tujuan sesi webinar…"
+                  className="cuba-input w-full rounded-lg border-slate-300 bg-white px-3 py-2 text-xs text-slate-800 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                  Nama Narasumber <span className="text-rose-500">*</span>
                 </label>
                 <input
                   type="text"
                   required
                   value={createForm.speaker}
                   onChange={(e) => setCreateForm({ ...createForm, speaker: e.target.value })}
-                  placeholder="Contoh: Ir. Hendra Gunawan, M.T."
+                  placeholder="Nama lengkap dan gelar narasumber"
                   className="cuba-input w-full rounded-lg border-slate-300 bg-white px-3 py-2 text-xs text-slate-800 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
                 />
               </div>
 
-              <div>
-                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                  Deskripsi & Silabus Ringkas
-                </label>
-                <textarea
-                  rows={3}
-                  value={createForm.description}
-                  onChange={(e) => setCreateForm({ ...createForm, description: e.target.value })}
-                  placeholder="Jelaskan ringkasan materi dan target audiens sesi webinar ini…"
-                  className="cuba-input w-full rounded-lg border-slate-300 bg-white px-3 py-2 text-xs text-slate-800 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
-                />
-              </div>
-
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
                     Waktu Mulai (WIB) <span className="text-rose-500">*</span>
@@ -479,7 +641,6 @@ export function CubaWebinarWorkspace({ initialWebinars }: CubaWebinarWorkspacePr
                     className="cuba-input w-full rounded-lg border-slate-300 bg-white px-3 py-2 text-xs text-slate-800 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
                   />
                 </div>
-
                 <div>
                   <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
                     Waktu Selesai (WIB) <span className="text-rose-500">*</span>
@@ -494,7 +655,23 @@ export function CubaWebinarWorkspace({ initialWebinars }: CubaWebinarWorkspacePr
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                    Platform Telekonferensi <span className="text-rose-500">*</span>
+                  </label>
+                  <select
+                    value={createForm.provider}
+                    onChange={(e) => setCreateForm({ ...createForm, provider: e.target.value })}
+                    className="cuba-input w-full rounded-lg border-slate-300 bg-white px-3 py-2 text-xs text-slate-800 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
+                  >
+                    <option value="zoom">Zoom (Gratis / Berbayar)</option>
+                    <option value="gmeet">Google Meet</option>
+                    <option value="teams">Microsoft Teams</option>
+                    <option value="bigbluebutton">BigBlueButton / Jitsi</option>
+                    <option value="other">Platform Lainnya / Manual Link</option>
+                  </select>
+                </div>
                 <div>
                   <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
                     Kapasitas Kursi <span className="text-rose-500">*</span>
@@ -502,30 +679,42 @@ export function CubaWebinarWorkspace({ initialWebinars }: CubaWebinarWorkspacePr
                   <input
                     type="number"
                     min={1}
-                    max={500}
+                    max={1000}
                     required
                     value={createForm.capacity}
                     onChange={(e) => setCreateForm({ ...createForm, capacity: Number(e.target.value) })}
                     className="cuba-input w-full rounded-lg border-slate-300 bg-white px-3 py-2 text-xs text-slate-800 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
                   />
                 </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                    Tautan Meeting / Siaran (Opsional)
-                  </label>
-                  <input
-                    type="url"
-                    value={createForm.join_url}
-                    onChange={(e) => setCreateForm({ ...createForm, join_url: e.target.value })}
-                    placeholder="https://zoom.us/j/..."
-                    className="cuba-input w-full rounded-lg border-slate-300 bg-white px-3 py-2 text-xs text-slate-800 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
-                  />
-                </div>
               </div>
 
-              <div className="rounded-lg border border-sky-200 bg-sky-50 p-3 text-xs text-sky-800 dark:border-sky-900/60 dark:bg-sky-950/40 dark:text-sky-300">
-                Sesi webinar yang dijadwalkan akan otomatis sinkron dengan adapter Moodle <code>mod_zoom</code> dan tetap fail-closed pada portal pembelajar sampai gerbang kredensial eksternal dibuka.
+              <div>
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                  Tautan Masuk Sesi (Join URL) <span className="text-rose-500">*</span>
+                </label>
+                <input
+                  type="url"
+                  required
+                  value={createForm.join_url}
+                  onChange={(e) => setCreateForm({ ...createForm, join_url: e.target.value })}
+                  placeholder={
+                    createForm.provider === "zoom"
+                      ? "https://zoom.us/j/... (atau link personal room)"
+                      : createForm.provider === "gmeet"
+                      ? "https://meet.google.com/xxx-xxxx-xxx"
+                      : createForm.provider === "teams"
+                      ? "https://teams.microsoft.com/l/meetup-join/..."
+                      : "https://..."
+                  }
+                  className="cuba-input w-full rounded-lg border-slate-300 bg-white px-3 py-2 text-xs text-slate-800 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 font-mono"
+                />
+                <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
+                  {createForm.provider === "zoom" && "💡 Panduan: Jika akun Zoom Gratis, atur durasi maks 40 menit & kuota maks 100 kursi. Akun Zoom Pro/Business mendukung 300–1000 kursi."}
+                  {createForm.provider === "gmeet" && "💡 Panduan: Salin tautan rapat dari Google Calendar atau aplikasi Google Meet."}
+                  {createForm.provider === "teams" && "💡 Panduan: Salin tautan undangan rapat dari Microsoft Teams."}
+                  {createForm.provider === "bigbluebutton" && "💡 Panduan: Salin URL ruang konferensi BigBlueButton atau Jitsi."}
+                  {createForm.provider === "other" && "💡 Panduan: Tempelkan tautan webinar, Cisco Webex, atau tautan siaran langsung YouTube Live."}
+                </p>
               </div>
 
               <div className="flex justify-end gap-3 pt-2">
@@ -551,17 +740,17 @@ export function CubaWebinarWorkspace({ initialWebinars }: CubaWebinarWorkspacePr
         document.body
       )}
 
-      {/* Enhanced Detail Modal */}
+      {/* Enhanced Detail & Edit Modal */}
       {selectedWebinar && mounted && createPortal(
         <div
           role="dialog"
           aria-modal="true"
           className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/70 p-4 backdrop-blur-md overflow-y-auto animate-in fade-in duration-150"
           onClick={(e) => {
-            if (e.target === e.currentTarget) setSelectedWebinar(null);
+            if (e.target === e.currentTarget && !isUpdating) setSelectedWebinar(null);
           }}
           onMouseDown={(e) => {
-            if (e.target === e.currentTarget) setSelectedWebinar(null);
+            if (e.target === e.currentTarget && !isUpdating) setSelectedWebinar(null);
           }}
         >
           <div
@@ -580,6 +769,7 @@ export function CubaWebinarWorkspace({ initialWebinars }: CubaWebinarWorkspacePr
                 type="button"
                 onClick={() => setSelectedWebinar(null)}
                 className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-sm font-bold"
+                disabled={isUpdating}
               >
                 ✕
               </button>
@@ -607,7 +797,18 @@ export function CubaWebinarWorkspace({ initialWebinars }: CubaWebinarWorkspacePr
                     : "border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-300"
                 }`}
               >
-                Kehadiran & Presensi Peserta
+                Kehadiran Peserta ({selectedWebinar.attendees?.length || selectedWebinar.enrolled_count})
+              </button>
+              <button
+                type="button"
+                onClick={() => setDetailTab("edit")}
+                className={`py-2 px-4 border-b-2 transition-colors ${
+                  detailTab === "edit"
+                    ? "border-sky-600 text-sky-600 dark:border-sky-400 dark:text-sky-400"
+                    : "border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-300"
+                }`}
+              >
+                Sunting Sesi
               </button>
             </div>
 
@@ -625,6 +826,7 @@ export function CubaWebinarWorkspace({ initialWebinars }: CubaWebinarWorkspacePr
                   <div className="rounded-lg bg-slate-50 p-3 dark:bg-slate-900/50">
                     <p className="text-slate-500 dark:text-slate-400 font-semibold">Waktu Pelaksanaan</p>
                     <p className="text-slate-900 dark:text-white font-bold mt-1">
+                      {new Date(selectedWebinar.starts_at).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" })} •{" "}
                       {new Date(selectedWebinar.starts_at).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })} - {new Date(selectedWebinar.ends_at).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })} WIB
                     </p>
                   </div>
@@ -635,23 +837,36 @@ export function CubaWebinarWorkspace({ initialWebinars }: CubaWebinarWorkspacePr
                     </p>
                   </div>
                   <div className="rounded-lg bg-slate-50 p-3 dark:bg-slate-900/50">
-                    <p className="text-slate-500 dark:text-slate-400 font-semibold">Provider Engine</p>
-                    <p className="text-emerald-600 dark:text-emerald-400 font-bold mt-1 uppercase">
-                      {selectedWebinar.provider} (mod_zoom)
+                    <p className="text-slate-500 dark:text-slate-400 font-semibold">Status Sesi</p>
+                    <p className="text-sky-600 dark:text-sky-400 font-bold mt-1 uppercase">
+                      {selectedWebinar.status}
                     </p>
                   </div>
                 </div>
 
                 {selectedWebinar.join_url && (
-                  <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs dark:border-slate-800 dark:bg-slate-900/40">
-                    <p className="font-semibold text-slate-500 dark:text-slate-400">Tautan Masuk Sesi (Host/Peserta):</p>
+                  <div className="rounded-xl border border-sky-200 bg-sky-50/80 p-3.5 dark:border-sky-900/60 dark:bg-sky-950/40 flex flex-wrap items-center justify-between gap-3 text-xs">
+                    <div className="min-w-0 flex-1">
+                      <p className="font-bold text-sky-950 dark:text-sky-200 flex items-center gap-1.5">
+                        <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                        Tautan Ruang Pertemuan ({selectedWebinar.provider.toUpperCase()}):
+                      </p>
+                      <a
+                        href={selectedWebinar.join_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="mt-1 block font-mono text-sky-700 underline dark:text-sky-300 truncate"
+                      >
+                        {selectedWebinar.join_url}
+                      </a>
+                    </div>
                     <a
                       href={selectedWebinar.join_url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="mt-1 block font-mono text-sky-600 underline dark:text-sky-400 truncate"
+                      className="inline-flex items-center gap-1.5 rounded-lg bg-sky-600 px-3 py-1.5 text-xs font-bold text-white shadow-sm hover:bg-sky-700 transition shrink-0"
                     >
-                      {selectedWebinar.join_url}
+                      Buka Ruang Sesi (Host) ↗
                     </a>
                   </div>
                 )}
@@ -669,84 +884,361 @@ export function CubaWebinarWorkspace({ initialWebinars }: CubaWebinarWorkspacePr
                     </a>
                   </div>
                 )}
+
+                <div className="flex justify-between items-center pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setDeleteConfirmId(selectedWebinar.id)}
+                    className="text-xs font-bold text-rose-600 hover:text-rose-800 dark:text-rose-400"
+                  >
+                    Hapus Sesi Ini
+                  </button>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setDetailTab("edit")}
+                      className="admin-button-primary text-xs"
+                    >
+                      Sunting Sesi
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedWebinar(null)}
+                      className="admin-button-secondary text-xs"
+                    >
+                      Tutup
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ) : detailTab === "attendance" ? (
+              <div className="space-y-4">
+                {(() => {
+                  const atts = selectedWebinar.attendees || [];
+                  const totalAtts = atts.length;
+                  const presentCount = atts.filter((a) => a.attendance_state === "present" || a.attendance_state === "attended").length;
+                  const absentCount = totalAtts - presentCount;
+                  const rate = totalAtts > 0 ? Math.round((presentCount / totalAtts) * 100) : 0;
+                  return (
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center">
+                      <div className="rounded-lg border border-slate-200 bg-slate-50/60 p-2.5 dark:border-slate-800 dark:bg-slate-900/50">
+                        <p className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold">Total Pendaftar</p>
+                        <p className="text-sm font-black text-slate-800 dark:text-slate-100 mt-0.5">{totalAtts}</p>
+                      </div>
+                      <div className="rounded-lg border border-emerald-200 bg-emerald-50/60 p-2.5 dark:border-emerald-900/40 dark:bg-emerald-950/30">
+                        <p className="text-[10px] text-emerald-700 dark:text-emerald-400 font-semibold">Telah Hadir</p>
+                        <p className="text-sm font-black text-emerald-700 dark:text-emerald-300 mt-0.5">{presentCount}</p>
+                      </div>
+                      <div className="rounded-lg border border-slate-200 bg-slate-50/60 p-2.5 dark:border-slate-800 dark:bg-slate-900/50">
+                        <p className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold">Belum Hadir</p>
+                        <p className="text-sm font-black text-slate-600 dark:text-slate-300 mt-0.5">{absentCount}</p>
+                      </div>
+                      <div className="rounded-lg border border-sky-200 bg-sky-50/60 p-2.5 dark:border-sky-900/40 dark:bg-sky-950/30">
+                        <p className="text-[10px] text-sky-700 dark:text-sky-400 font-semibold">Tingkat Hadir</p>
+                        <p className="text-sm font-black text-sky-700 dark:text-sky-300 mt-0.5">{rate}%</p>
+                      </div>
+                    </div>
+                  );
+                })()}
+
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  Daftar peserta yang mendaftar ke sesi ini. Anda dapat menandai presensi kehadiran peserta secara manual di bawah ini.
+                </p>
+
+                {selectedWebinar.attendees && selectedWebinar.attendees.length > 0 ? (
+                  <div className="rounded-lg border border-slate-200 dark:border-slate-800 overflow-hidden">
+                    <table className="w-full text-left text-xs">
+                      <thead className="bg-slate-50 dark:bg-slate-900/80 text-slate-600 dark:text-slate-400 border-b border-slate-200 dark:border-slate-800">
+                        <tr>
+                          <th className="px-3 py-2 font-semibold">Nama Peserta</th>
+                          <th className="px-3 py-2 font-semibold">Status Presensi</th>
+                          <th className="px-3 py-2 font-semibold text-right">Aksi</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
+                        {selectedWebinar.attendees.map((att, idx) => (
+                          <tr key={idx} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30">
+                            <td className="px-3 py-2 font-medium text-slate-800 dark:text-slate-200">
+                              {att.name || "Peserta"}
+                              <span className="block text-[11px] text-slate-500">{att.email}</span>
+                            </td>
+                            <td className="px-3 py-2">
+                              <span
+                                className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                                  att.attendance_state === "present" || att.attendance_state === "attended"
+                                    ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300"
+                                    : att.attendance_state === "absent"
+                                    ? "bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300"
+                                    : "bg-sky-50 text-sky-700 dark:bg-sky-950/40 dark:text-sky-300"
+                                }`}
+                              >
+                                {att.attendance_state === "present" || att.attendance_state === "attended"
+                                  ? "Hadir"
+                                  : att.attendance_state === "absent"
+                                  ? "Tidak Hadir"
+                                  : "Terdaftar"}
+                              </span>
+                            </td>
+                            <td className="px-3 py-2 text-right">
+                              <button
+                                type="button"
+                                onClick={() => handleToggleAttendance(att.user_id || "", att.attendance_state)}
+                                className="rounded px-2 py-1 text-[11px] font-bold border border-slate-200 bg-white hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:hover:bg-slate-700"
+                              >
+                                {att.attendance_state === "present" || att.attendance_state === "attended" ? "Set Belum Hadir" : "Tandai Hadir"}
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <p className="text-xs text-slate-500 italic py-4 text-center">Belum ada peserta yang mendaftar ke sesi ini.</p>
+                )}
+
+                <div className="flex justify-end pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedWebinar(null)}
+                    className="admin-button-secondary text-xs"
+                  >
+                    Tutup
+                  </button>
+                </div>
               </div>
             ) : (
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-3 text-xs">
-                  <div className="rounded-lg bg-slate-50 p-3 dark:bg-slate-900/50">
-                    <p className="text-slate-500 dark:text-slate-400 font-semibold">Status Sinkronisasi Presensi</p>
-                    <p className="text-slate-900 dark:text-white font-bold mt-1 uppercase">
-                      {(selectedWebinar as AdminWebinarDetailItem).attendance_state === "synced" ? "Tersinkron (Synced)" : "Menunggu Sesi (Pending)"}
-                    </p>
+              /* Edit Tab */
+              <form onSubmit={handleUpdateWebinar} className="space-y-4">
+                {editError && (
+                  <div className="rounded-xl border border-rose-200 bg-rose-50/90 p-3 text-xs text-rose-800 dark:border-rose-900/50 dark:bg-rose-950/40">
+                    <p className="font-bold">⚠️ Gagal Memperbarui:</p>
+                    <p className="mt-0.5">{editError}</p>
                   </div>
-                  <div className="rounded-lg bg-slate-50 p-3 dark:bg-slate-900/50">
-                    <p className="text-slate-500 dark:text-slate-400 font-semibold">Total Durasi Presensi Tercatat</p>
-                    <p className="text-slate-900 dark:text-white font-bold mt-1">
-                      {Math.round(((selectedWebinar as AdminWebinarDetailItem).attendance_seconds || 0) / 60)} Menit
-                    </p>
+                )}
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                    Topik / Judul Webinar <span className="text-rose-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={editForm.title}
+                    onChange={(e) => setEditForm({ ...editForm, title: e.target.value })}
+                    className="cuba-input w-full rounded-lg border-slate-300 bg-white px-3 py-2 text-xs text-slate-800 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                    Ringkasan / Deskripsi Sesi
+                  </label>
+                  <textarea
+                    rows={2}
+                    value={editForm.description}
+                    onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
+                    className="cuba-input w-full rounded-lg border-slate-300 bg-white px-3 py-2 text-xs text-slate-800 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                      Narasumber <span className="text-rose-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={editForm.speaker}
+                      onChange={(e) => setEditForm({ ...editForm, speaker: e.target.value })}
+                      className="cuba-input w-full rounded-lg border-slate-300 bg-white px-3 py-2 text-xs text-slate-800 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                      Status Sesi
+                    </label>
+                    <select
+                      value={editForm.status}
+                      onChange={(e) => setEditForm({ ...editForm, status: e.target.value as any })}
+                      className="cuba-input w-full rounded-lg border-slate-300 bg-white px-3 py-2 text-xs text-slate-800 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
+                    >
+                      <option value="upcoming">Akan Datang (Upcoming)</option>
+                      <option value="in_progress">Sedang Berlangsung (Live)</option>
+                      <option value="completed">Selesai (Completed)</option>
+                      <option value="cancelled">Dibatalkan (Cancelled)</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                      Waktu Mulai
+                    </label>
+                    <input
+                      type="datetime-local"
+                      required
+                      value={editForm.starts_at}
+                      onChange={(e) => setEditForm({ ...editForm, starts_at: e.target.value })}
+                      className="cuba-input w-full rounded-lg border-slate-300 bg-white px-3 py-2 text-xs text-slate-800 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                      Waktu Selesai
+                    </label>
+                    <input
+                      type="datetime-local"
+                      required
+                      value={editForm.ends_at}
+                      onChange={(e) => setEditForm({ ...editForm, ends_at: e.target.value })}
+                      className="cuba-input w-full rounded-lg border-slate-300 bg-white px-3 py-2 text-xs text-slate-800 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                      Platform Telekonferensi
+                    </label>
+                    <select
+                      value={editForm.provider}
+                      onChange={(e) => setEditForm({ ...editForm, provider: e.target.value })}
+                      className="cuba-input w-full rounded-lg border-slate-300 bg-white px-3 py-2 text-xs text-slate-800 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
+                    >
+                      <option value="zoom">Zoom (Gratis / Berbayar)</option>
+                      <option value="gmeet">Google Meet</option>
+                      <option value="teams">Microsoft Teams</option>
+                      <option value="bigbluebutton">BigBlueButton / Jitsi</option>
+                      <option value="other">Platform Lainnya / Manual Link</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                      Kapasitas Kursi
+                    </label>
+                    <input
+                      type="number"
+                      min={1}
+                      max={1000}
+                      required
+                      value={editForm.capacity}
+                      onChange={(e) => setEditForm({ ...editForm, capacity: Number(e.target.value) })}
+                      className="cuba-input w-full rounded-lg border-slate-300 bg-white px-3 py-2 text-xs text-slate-800 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
+                    />
                   </div>
                 </div>
 
                 <div>
-                  <p className="text-xs font-bold text-slate-800 dark:text-slate-200 mb-2">
-                    Daftar Peserta Terdaftar ({selectedWebinar.enrolled_count} orang):
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                    Tautan Masuk Sesi (Join URL)
+                  </label>
+                  <input
+                    type="url"
+                    value={editForm.join_url}
+                    onChange={(e) => setEditForm({ ...editForm, join_url: e.target.value })}
+                    placeholder={
+                      editForm.provider === "zoom"
+                        ? "https://zoom.us/j/... (atau link personal room)"
+                        : editForm.provider === "gmeet"
+                        ? "https://meet.google.com/xxx-xxxx-xxx"
+                        : editForm.provider === "teams"
+                        ? "https://teams.microsoft.com/l/meetup-join/..."
+                        : "https://..."
+                    }
+                    className="cuba-input w-full rounded-lg border-slate-300 bg-white px-3 py-2 text-xs text-slate-800 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 font-mono"
+                  />
+                  <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
+                    {editForm.provider === "zoom" && "💡 Panduan: Jika akun Zoom Gratis, atur durasi maks 40 menit & kuota maks 100 kursi."}
+                    {editForm.provider === "gmeet" && "💡 Panduan: Salin tautan rapat dari Google Calendar atau Google Meet."}
+                    {editForm.provider === "teams" && "💡 Panduan: Salin tautan rapat dari Microsoft Teams."}
+                    {editForm.provider === "other" && "💡 Panduan: Tempelkan tautan webinar atau YouTube Live."}
                   </p>
-                  {((selectedWebinar as AdminWebinarDetailItem).attendees || []).length > 0 ? (
-                    <div className="rounded-lg border border-slate-200 dark:border-slate-800 overflow-hidden">
-                      <table className="w-full text-left text-xs">
-                        <thead className="bg-slate-50 dark:bg-slate-900/80 text-slate-600 dark:text-slate-400 border-b border-slate-200 dark:border-slate-800">
-                          <tr>
-                            <th className="px-3 py-2 font-semibold">Nama Peserta</th>
-                            <th className="px-3 py-2 font-semibold">Status Presensi</th>
-                            <th className="px-3 py-2 font-semibold text-right">Waktu Hadir</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
-                          {((selectedWebinar as AdminWebinarDetailItem).attendees || []).map((att, idx) => (
-                            <tr key={idx} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30">
-                              <td className="px-3 py-2 font-medium text-slate-800 dark:text-slate-200">
-                                {att.name}
-                                <span className="block text-[11px] text-slate-500">{att.email}</span>
-                              </td>
-                              <td className="px-3 py-2">
-                                <span
-                                  className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold ${
-                                    att.attendance_state === "present"
-                                      ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300"
-                                      : att.attendance_state === "absent"
-                                      ? "bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300"
-                                      : "bg-sky-50 text-sky-700 dark:bg-sky-950/40 dark:text-sky-300"
-                                  }`}
-                                >
-                                  {att.attendance_state === "present"
-                                    ? "Hadir"
-                                    : att.attendance_state === "absent"
-                                    ? "Tidak Hadir"
-                                    : "Terdaftar"}
-                                </span>
-                              </td>
-                              <td className="px-3 py-2 text-right text-slate-600 dark:text-slate-400 font-mono">
-                                {att.attended_minutes ? `${att.attended_minutes} mnt` : "—"}
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  ) : (
-                    <p className="text-xs text-slate-500 italic">Belum ada rincian presensi untuk sesi ini.</p>
-                  )}
                 </div>
-              </div>
-            )}
 
-            <div className="flex justify-end gap-3 pt-2">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                    Tautan Rekaman Sesi (Opsional)
+                  </label>
+                  <input
+                    type="url"
+                    value={editForm.recording_url}
+                    onChange={(e) => setEditForm({ ...editForm, recording_url: e.target.value })}
+                    placeholder="https://storage.../rekaman.mp4"
+                    className="cuba-input w-full rounded-lg border-slate-300 bg-white px-3 py-2 text-xs text-slate-800 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
+                  />
+                </div>
+
+                <div className="flex justify-end gap-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setDetailTab("info")}
+                    className="admin-button-secondary text-xs"
+                    disabled={isUpdating}
+                  >
+                    Batal
+                  </button>
+                  <button
+                    type="submit"
+                    className="admin-button-primary text-xs"
+                    disabled={isUpdating}
+                  >
+                    {isUpdating ? "Menyimpan Perubahan…" : "Simpan Perubahan"}
+                  </button>
+                </div>
+              </form>
+            )}
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* Standard Delete Confirmation Modal */}
+      {deleteConfirmId && mounted && createPortal(
+        <div
+          role="dialog"
+          aria-modal="true"
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/70 p-4 backdrop-blur-md animate-in fade-in duration-150"
+          onClick={(e) => {
+            if (e.target === e.currentTarget && !isDeleting) setDeleteConfirmId(null);
+          }}
+          onMouseDown={(e) => {
+            if (e.target === e.currentTarget && !isDeleting) setDeleteConfirmId(null);
+          }}
+        >
+          <div
+            className="admin-card max-w-sm w-full p-6 space-y-4 shadow-xl text-center"
+            onClick={(e) => e.stopPropagation()}
+            onMouseDown={(e) => e.stopPropagation()}
+          >
+            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-rose-100 text-rose-600 dark:bg-rose-950/60 dark:text-rose-400">
+              ⚠️
+            </div>
+            <div>
+              <h3 className="text-base font-bold text-slate-900 dark:text-white">Batalkan / Hapus Sesi Webinar?</h3>
+              <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                Sesi webinar #{deleteConfirmId} akan dihapus secara permanen dari basis data platform. Tindakan ini tidak dapat dibatalkan.
+              </p>
+            </div>
+            <div className="flex justify-center gap-3 pt-2">
               <button
                 type="button"
-                onClick={() => setSelectedWebinar(null)}
+                onClick={() => setDeleteConfirmId(null)}
                 className="admin-button-secondary text-xs"
+                disabled={isDeleting}
               >
-                Tutup
+                Batal
+              </button>
+              <button
+                type="button"
+                onClick={() => handleDeleteWebinar(deleteConfirmId)}
+                className="rounded-lg bg-rose-600 px-4 py-2 text-xs font-bold text-white hover:bg-rose-700 shadow-sm disabled:opacity-50"
+                disabled={isDeleting}
+              >
+                {isDeleting ? "Menghapus…" : "Ya, Hapus Sesi"}
               </button>
             </div>
           </div>

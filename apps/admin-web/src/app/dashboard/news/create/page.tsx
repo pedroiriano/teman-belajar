@@ -34,6 +34,9 @@ export default function CreateNewsPage() {
 
   const handleTitleChange = (next: string) => { setTitle(next); setSEO((current) => ({ ...current, slug: next.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)+/g, "") })); };
   const insertMedia = (selection: MediaSelection) => { setBody((current) => `${current}\n${mediaMarkdown(selection)}\n`); autoSave.requestImmediateSave(); };
+const isSessionExpired = (msg: string) =>
+  /sesi|token|unauthorized|401|403|login|kedaluwarsa|konflik/i.test(msg);
+
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault(); setLoading(true); setError("");
     try {
@@ -41,7 +44,18 @@ export default function CreateNewsPage() {
       if (!result.success) throw new Error(result.error || "Berita belum dapat disimpan");
       await autoSave.finalize();
       router.push("/dashboard/news");
-    } catch (caught) { setError(caught instanceof Error ? caught.message : "Terjadi kesalahan yang tidak terduga"); } finally { setLoading(false); }
+    } catch (caught) {
+      const msg = caught instanceof Error ? caught.message : "Terjadi kesalahan yang tidak terduga";
+      setError(msg);
+      setTimeout(() => {
+        document.getElementById("form-error-alert")?.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+        });
+      }, 50);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -67,7 +81,6 @@ export default function CreateNewsPage() {
           </div>
         </div>
         <div className="admin-form-body">
-          {error && <div className="admin-alert-error" role="alert">{error}</div>}
           <div>
             <label htmlFor="news-title" className="admin-label">Judul <span className="text-rose-600">*</span></label>
             <input id="news-title" required value={title} onChange={(event) => handleTitleChange(event.target.value)} className="admin-input" placeholder="Contoh: Program Pembelajaran Kuartal Ketiga" />
@@ -88,7 +101,46 @@ export default function CreateNewsPage() {
           />
         </div>
       <SeoDiscoverySection compact embedded value={seo} onChange={setSEO} contentTitle={title} contentSummary={excerpt} contentBody={body} routePrefix="/news/" />
-      <div className="admin-form-footer"><Link href="/dashboard/news" className="admin-button-secondary">Batal</Link><button type="submit" disabled={loading} className="admin-button">{loading ? "Menyimpan…" : "Simpan draf berita"}</button></div>
+      {error && (
+        <div className="p-5 sm:px-7 pb-0">
+          <div
+            id="form-error-alert"
+            role="alert"
+            className="rounded-xl border border-rose-300 bg-rose-50 p-4 text-sm font-medium text-rose-900 dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-sm"
+          >
+            <div className="flex items-start gap-2.5">
+              <span className="text-rose-600 dark:text-rose-400 font-bold text-base leading-none mt-0.5">⚠️</span>
+              <div>
+                <p className="font-bold text-rose-800 dark:text-rose-300">Gagal Menyimpan:</p>
+                <p className="text-xs text-rose-700 dark:text-rose-300/90 mt-0.5">{error}</p>
+              </div>
+            </div>
+            {isSessionExpired(error) && (
+              <button
+                type="button"
+                onClick={() => window.location.reload()}
+                className="admin-button text-xs whitespace-nowrap self-stretch sm:self-auto py-2 px-3 flex items-center justify-center gap-1.5"
+              >
+                <AdminIcon name="refresh" className="h-3.5 w-3.5" />
+                Muat Ulang Halaman &amp; Masuk Ulang
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+      <div className="admin-form-footer flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <p className="text-xs text-slate-500 dark:text-slate-400">
+          Berita baru akan disimpan sebagai draf sebelum masuk ke antrean peninjauan editorial.
+        </p>
+        <div className="flex items-center gap-3">
+          <Link href="/dashboard/news" className="admin-button-secondary">
+            Batal
+          </Link>
+          <button type="submit" disabled={loading} className="admin-button">
+            {loading ? "Menyimpan…" : "Simpan draf berita"}
+          </button>
+        </div>
+      </div>
     </form>
   </div>
   );

@@ -213,6 +213,7 @@ export function CubaAnnouncementsTable({
       <AdminDataTable
         title="Daftar pengumuman"
         description="Konten aktif, terjadwal, dan riwayat edaran resmi"
+        titleAlign="center"
         itemCount={itemCount}
         headers={[
           { label: "Judul", key: "title", sortable: true },
@@ -226,7 +227,6 @@ export function CubaAnnouncementsTable({
         emptyState="Belum ada pengumuman. Buat draf pertama untuk memulai."
         error={errorMessage}
         retryHref="/dashboard/announcements"
-        actions={headerActions}
         selectable={true}
         isAllSelected={isAllSelected}
         isSomeSelected={isSomeSelected}

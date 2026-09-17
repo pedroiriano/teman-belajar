@@ -15,6 +15,7 @@ export interface ColumnHeader {
 export interface AdminDataTableProps {
   title: string;
   description?: string;
+  titleAlign?: "left" | "center";
   itemCount: number;
   headers: (string | ColumnHeader)[];
   children?: ReactNode;
@@ -102,6 +103,7 @@ export function CubaSortIcon({
 export function AdminDataTable({
   title,
   description,
+  titleAlign = "left",
   itemCount,
   headers,
   children,
@@ -140,7 +142,6 @@ export function AdminDataTable({
     typeof h === "string" ? { label: h } : h
   );
 
-
   const hasToolbarControls = Boolean(
     onSearchChange || onStatusFilterChange || actions || freshnessText
   );
@@ -156,9 +157,15 @@ export function AdminDataTable({
         </h2>
       ) : (
         <div className="admin-table-toolbar border-b border-slate-200 dark:border-slate-800 p-4 sm:p-5 flex flex-col gap-4">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-            <div>
-              <div className="flex items-center gap-3">
+          <div
+            className={`flex flex-col ${
+              titleAlign === "center"
+                ? "items-center text-center justify-center"
+                : "sm:flex-row sm:items-center sm:justify-between"
+            } gap-3`}
+          >
+            <div className={titleAlign === "center" ? "flex flex-col items-center text-center" : ""}>
+              <div className={`flex items-center gap-3 ${titleAlign === "center" ? "justify-center" : ""}`}>
                 <h2
                   id={tableId}
                   className="text-base font-extrabold text-slate-900 dark:text-white tracking-tight"
@@ -170,7 +177,7 @@ export function AdminDataTable({
                 </span>
               </div>
               {description && (
-                <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                <p className={`mt-1 text-xs text-slate-500 dark:text-slate-400 ${titleAlign === "center" ? "text-center" : ""}`}>
                   {description}
                 </p>
               )}
@@ -179,8 +186,16 @@ export function AdminDataTable({
           </div>
 
           {hasToolbarControls && (
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
-              <div className="flex flex-1 flex-wrap items-center gap-3">
+            <div
+              className={`flex flex-col sm:flex-row sm:items-center gap-3 pt-1 ${
+                titleAlign === "center" ? "justify-center" : "justify-between"
+              }`}
+            >
+              <div
+                className={`flex flex-1 flex-wrap items-center gap-3 ${
+                  titleAlign === "center" ? "justify-center" : ""
+                }`}
+              >
                 {onSearchChange && (
                   <div className="relative min-w-[200px] max-w-sm flex-1">
                     <AdminIcon
@@ -198,23 +213,28 @@ export function AdminDataTable({
                   </div>
                 )}
                 {onStatusFilterChange && statusOptions && statusOptions.length > 0 && (
-                  <select
-                    value={statusFilter ?? "all"}
-                    onChange={(e) => onStatusFilterChange(e.target.value)}
-                    className="admin-input !h-9 !w-auto !py-1 text-xs"
-                    aria-label="Filter status tabel"
-                  >
-                    <option value="all">Semua status</option>
-                    {statusOptions.map((opt) => {
-                      const val = typeof opt === "string" ? opt : opt.value;
-                      const lbl = typeof opt === "string" ? opt : opt.label;
-                      return (
-                        <option key={val} value={val}>
-                          {lbl}
-                        </option>
-                      );
-                    })}
-                  </select>
+                  <div className="relative min-w-[150px]">
+                    <select
+                      value={statusFilter ?? "all"}
+                      onChange={(e) => onStatusFilterChange(e.target.value)}
+                      className="admin-input !h-9 !w-full !py-1 !pl-3 !pr-8 text-xs font-semibold rounded-xl appearance-none cursor-pointer border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900"
+                      aria-label="Filter status tabel"
+                    >
+                      <option value="all">Semua status</option>
+                      {statusOptions.map((opt) => {
+                        const val = typeof opt === "string" ? opt : opt.value;
+                        const lbl = typeof opt === "string" ? opt : opt.label;
+                        return (
+                          <option key={val} value={val}>
+                            {lbl}
+                          </option>
+                        );
+                      })}
+                    </select>
+                    <div className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400">
+                      <AdminIcon name="chevron-down" className="h-3.5 w-3.5" />
+                    </div>
+                  </div>
                 )}
               </div>
               {freshnessText && (

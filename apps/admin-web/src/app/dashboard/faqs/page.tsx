@@ -13,6 +13,7 @@ import {
   type FAQItem,
 } from "@/app/actions/faq";
 import { AdminIcon } from "@/components/admin-icon";
+import { AdminDataTable } from "@/components/admin-data-table";
 import { DraftStatus } from "@/components/drafts/DraftStatus";
 import type { DraftPayload } from "@/components/drafts/types";
 import { useAutoSaveDraft } from "@/components/drafts/use-auto-save-draft";
@@ -226,84 +227,56 @@ export default function FAQWorkspacePage() {
       )}
 
       <div className="grid gap-6 xl:grid-cols-[minmax(320px,.72fr)_minmax(0,1.28fr)]">
-        {/* Left: FAQ List Card */}
-        <section
-          className="admin-card self-start overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm"
-          aria-labelledby="faq-list-title"
-        >
-          <div className="admin-card-header border-b border-slate-200 dark:border-slate-800 p-5">
-            <h2
-              id="faq-list-title"
-              className="text-base font-extrabold text-slate-900 dark:text-white"
-            >
-              Daftar FAQ
-            </h2>
-            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-              {pagination.total} data di seluruh alur kerja editorial.
-            </p>
-          </div>
-
-          <div className="admin-card-body p-5 space-y-4">
-            <form
-              onSubmit={(event) => {
-                event.preventDefault();
-                setPage(1);
-                setAppliedQuery(query.trim());
-              }}
-              className="flex gap-2"
-            >
-              <div className="grow">
-                <label htmlFor="faq-search" className="sr-only">
-                  Cari FAQ
-                </label>
-                <input
-                  id="faq-search"
-                  type="search"
-                  className="admin-input text-xs"
-                  value={query}
-                  onChange={(event) => setQuery(event.target.value)}
-                  placeholder="Cari pertanyaan atau jawaban…"
-                />
-              </div>
-              <button className="admin-button-secondary text-xs font-bold" type="submit">
-                Cari
-              </button>
-            </form>
-
-            <div className="grid gap-2.5 sm:grid-cols-2">
-              <div>
-                <label className="sr-only" htmlFor="faq-status">
-                  Status
-                </label>
+        {/* Left: FAQ List Card via AdminDataTable */}
+        <div className="self-start">
+          <AdminDataTable
+            title="Daftar FAQ"
+            description="Katalog tanya jawab terdaftar."
+            itemCount={pagination.total}
+            headers={[
+              { label: "Pertanyaan & Kategori", key: "question" },
+              { label: "Status", key: "status", align: "right" },
+            ]}
+            searchQuery={query}
+            onSearchChange={(q) => {
+              setQuery(q);
+              setAppliedQuery(q.trim());
+              setPage(1);
+            }}
+            searchPlaceholder="Cari pertanyaan / jawaban…"
+            statusFilter={status}
+            statusOptions={[
+              { value: "all", label: "Semua status" },
+              { value: "draft", label: "Draf" },
+              { value: "in_review", label: "Dalam peninjauan" },
+              { value: "approved", label: "Disetujui" },
+              { value: "published", label: "Terbit" },
+              { value: "archived", label: "Arsip" },
+            ]}
+            onStatusFilterChange={(s) => {
+              setStatus(s as StatusFilter);
+              setPage(1);
+            }}
+            loading={loading}
+            emptyState="Belum ada FAQ yang sesuai dengan filter ini."
+            page={pagination.page}
+            pageSize={pagination.page_size}
+            total={pagination.total}
+            onPageChange={setPage}
+            onPageSizeChange={(size) => {
+              setPageSize(size);
+              setPage(1);
+            }}
+            actions={
+              categories.length > 0 ? (
                 <select
-                  id="faq-status"
-                  className="admin-input text-xs"
-                  value={status}
-                  onChange={(event) => {
-                    setStatus(event.target.value as StatusFilter);
-                    setPage(1);
-                  }}
-                >
-                  <option value="all">Semua status</option>
-                  <option value="draft">Draf</option>
-                  <option value="in_review">Dalam peninjauan</option>
-                  <option value="approved">Disetujui</option>
-                  <option value="published">Terbit</option>
-                  <option value="archived">Arsip</option>
-                </select>
-              </div>
-              <div>
-                <label className="sr-only" htmlFor="faq-category-filter">
-                  Kategori
-                </label>
-                <select
-                  id="faq-category-filter"
-                  className="admin-input text-xs"
                   value={category}
                   onChange={(event) => {
                     setCategory(event.target.value);
                     setPage(1);
                   }}
+                  className="admin-input !h-9 !py-1 text-xs font-semibold rounded-xl border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900"
+                  aria-label="Filter Kategori"
                 >
                   <option value="">Semua kategori</option>
                   {categories.map((item) => (
@@ -312,66 +285,40 @@ export default function FAQWorkspacePage() {
                     </option>
                   ))}
                 </select>
-              </div>
-            </div>
-
-            {loading ? (
-              <div className="py-6 text-center text-xs text-slate-500" role="status">
-                Memuat FAQ…
-              </div>
-            ) : items.length === 0 ? (
-              <div className="rounded-xl border border-dashed border-slate-200 dark:border-slate-800 p-6 text-center text-xs text-slate-500">
-                Belum ada FAQ yang sesuai dengan filter ini.
-              </div>
-            ) : (
-              <div className="space-y-2 pt-1">
-                {items.map((item) => (
-                  <button
-                    type="button"
-                    key={item.id}
-                    onClick={() => choose(item)}
-                    className={`w-full rounded-xl border p-3.5 text-left transition flex items-start justify-between gap-3 ${
-                      selected?.id === item.id
-                        ? "border-sky-500 bg-sky-50/60 dark:bg-sky-950/30"
-                        : "border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700"
+              ) : null
+            }
+          >
+            {items.map((item) => (
+              <tr
+                key={item.id}
+                onClick={() => choose(item)}
+                className={`cursor-pointer transition ${
+                  selected?.id === item.id
+                    ? "bg-sky-50/70 dark:bg-sky-950/40"
+                    : "hover:bg-slate-50/50 dark:hover:bg-slate-800/40"
+                }`}
+              >
+                <td className="py-3 px-4">
+                  <span className="block text-xs font-bold text-slate-900 dark:text-slate-100 line-clamp-2">
+                    {item.question}
+                  </span>
+                  <p className="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400 font-mono truncate">
+                    {item.category_name} · /{item.slug}
+                  </p>
+                </td>
+                <td className="py-3 px-4 text-right whitespace-nowrap">
+                  <span
+                    className={`cuba-badge text-[10px] ${
+                      faqStatusBadgeClasses[item.status] || "cuba-badge-neutral"
                     }`}
                   >
-                    <div className="min-w-0 flex-1">
-                      <span className="block text-xs font-bold text-slate-900 dark:text-slate-100 line-clamp-2">
-                        {item.question}
-                      </span>
-                      <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
-                        {item.category_name} · /{item.slug}
-                      </p>
-                    </div>
-                    <span
-                      className={`cuba-badge shrink-0 text-[10px] ${
-                        faqStatusBadgeClasses[item.status] ||
-                        "cuba-badge-neutral"
-                      }`}
-                    >
-                      {statusLabels[item.status] || item.status}
-                    </span>
-                  </button>
-                ))}
-              </div>
-            )}
-
-            <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
-              <AdminClientPagination
-                page={pagination.page}
-                pages={pagination.total_pages}
-                total={pagination.total}
-                pageSize={pagination.page_size}
-                onPageChange={setPage}
-                onPageSizeChange={(size) => {
-                  setPageSize(size);
-                  setPage(1);
-                }}
-              />
-            </div>
-          </div>
-        </section>
+                    {statusLabels[item.status] || item.status}
+                  </span>
+                </td>
+              </tr>
+            ))}
+          </AdminDataTable>
+        </div>
 
         {/* Right: Workspace Detail / Editor */}
         <section>

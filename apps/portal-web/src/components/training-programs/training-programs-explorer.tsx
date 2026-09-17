@@ -26,6 +26,7 @@ export type TrainingProgramItem = {
     instructor: { name: string; avatar?: string; role?: string };
     durationLabel: string;
   };
+  tags?: string[];
   rating?: { average: number; totalReviews: number };
 };
 
@@ -38,6 +39,7 @@ const statusFilterOptions = [
 
 const topicFilterOptions = [
   { value: "", label: "Semua Topik" },
+  { value: "Aplikasi Perkantoran", label: "Aplikasi Perkantoran" },
   { value: "Cloud & DevOps", label: "Cloud & DevOps" },
   { value: "Software Engineering", label: "Software Engineering" },
   { value: "Data & AI", label: "Data & AI" },
@@ -177,7 +179,10 @@ export function TrainingProgramsExplorer({
         const matchSummary = (program.summary || "").toLowerCase().includes(q);
         const matchCategory = (program.visual.category || "").toLowerCase().includes(q);
         const matchAudience = (program.audience || "").toLowerCase().includes(q);
-        if (!matchTitle && !matchSummary && !matchCategory && !matchAudience) return false;
+        const matchTags = (program.tags || []).some((t) => t.toLowerCase().includes(q));
+        if (!matchTitle && !matchSummary && !matchCategory && !matchAudience && !matchTags) {
+          return false;
+        }
       }
 
       return true;

@@ -9,63 +9,46 @@ import type {
   AdminWebinarDetailItem,
   AdminWebinarListResponse,
   CreateAdminWebinarInput,
+  UpdateAdminWebinarInput,
 } from "@/types/webinar";
 
 const API_BASE = process.env.PORTAL_API_INTERNAL_URL || "http://api:8080";
 
-const baselineWebinars: AdminWebinarItem[] = [
-  {
-    id: 101,
-    title: "Workshop Desain Kurikulum Pembelajaran Digital 2026",
-    description: "Pelajari prinsip modern instruksional desain dan integrasi modul LXP interaktif.",
-    speaker: "Dr. Budi Santoso, M.Kom",
-    starts_at: "2026-09-12T09:00:00+07:00",
-    ends_at: "2026-09-12T12:00:00+07:00",
-    timezone: "Asia/Jakarta",
-    capacity: 100,
-    enrolled_count: 68,
-    status: "upcoming",
-    join_url: "https://zoom.us/j/mock-101",
-    provider: "zoom",
-    provider_ready: true,
-  },
-  {
-    id: 102,
-    title: "Best Practices Keamanan Siber dalam Ekosistem Cloud",
-    description: "Tinjauan mendalam postur DevSecOps dan mitigasi risiko aplikasi enterprise.",
-    speaker: "Rina Wijaya, CISSP",
-    starts_at: "2026-09-18T13:30:00+07:00",
-    ends_at: "2026-09-18T16:00:00+07:00",
-    timezone: "Asia/Jakarta",
-    capacity: 150,
-    enrolled_count: 142,
-    status: "upcoming",
-    join_url: "https://zoom.us/j/mock-102",
-    provider: "zoom",
-    provider_ready: true,
-  },
-  {
-    id: 103,
-    title: "Pengenalan Arsitektur Microlearning untuk Pelatihan Korporat",
-    description: "Sesi live interaktif mengenai pemecahan topik pelatihan kompleks ke segmen mikro.",
-    speaker: "Ahmad Fauzi, S.T",
-    starts_at: "2026-08-25T10:00:00+07:00",
-    ends_at: "2026-08-25T11:30:00+07:00",
-    timezone: "Asia/Jakarta",
-    capacity: 80,
-    enrolled_count: 80,
-    status: "completed",
-    recording_url: "https://storage.teman-belajar.local/recordings/webinar-103.mp4",
-    provider: "zoom",
-    provider_ready: true,
-  },
-];
+function mapSessionToAdminItem(s: any): AdminWebinarItem {
+  const speaker = Array.isArray(s.speakers) && s.speakers.length > 0 ? s.speakers[0] : (s.speaker || "");
+  let status: AdminWebinarItem["status"] = "upcoming";
+  if (s.status === "live" || s.status === "in_progress") {
+    status = "in_progress";
+  } else if (s.status === "completed") {
+    status = "completed";
+  } else if (s.status === "cancelled") {
+    status = "cancelled";
+  }
 
-let inMemoryWebinars: AdminWebinarItem[] = [...baselineWebinars];
+  return {
+    id: s.id,
+    title: s.title,
+    description: s.summary || s.description || "",
+    speaker: speaker,
+    starts_at: s.starts_at,
+    ends_at: s.ends_at,
+    timezone: s.timezone || "Asia/Jakarta",
+    capacity: s.capacity || 100,
+    enrolled_count: s.registered_count || 0,
+    status: status,
+    join_url: s.join_url || "",
+    recording_url: s.recording_url || "",
+    provider: (s.source as any) || "zoom",
+    provider_ready: true,
+  };
+}
 
 export async function getAdminWebinarsAction(
   page = 1,
-  pageSize = 50
+  pageSize = 50,
+  status?: string,
+  speaker?: string,
+  query?: string
 ): Promise<{ success: boolean; data?: AdminWebinarListResponse; error?: string }> {
   const session: any = await getServerSession(authOptions);
   const accessToken = await getServerAccessToken();
@@ -75,7 +58,15 @@ export async function getAdminWebinarsAction(
   }
 
   try {
-    const response = await fetch(`${API_BASE}/api/v1/admin/webinars?page=${page}&page_size=${pageSize}`, {
+    const params = new URLSearchParams({
+      page: String(page),
+      page_size: String(pageSize),
+    });
+    if (status && status !== "all") params.set("status", status);
+    if (speaker && speaker !== "all") params.set("speaker", speaker);
+    if (query) params.set("q", query);
+
+    const response = await fetch(`${API_BASE}/api/v1/admin/webinars?${params.toString()}`, {
       headers: {
         Authorization: `Bearer ${accessToken}`,
         "Content-Type": "application/json",
@@ -85,27 +76,25 @@ export async function getAdminWebinarsAction(
 
     if (response.ok) {
       const data = await response.json();
-      if (Array.isArray(data.items) && data.items.length > 0) {
-        return {
-          success: true,
-          data: {
-            items: data.items,
-            total: data.total || data.items.length,
-          },
-        };
-      }
+      const rawItems = Array.isArray(data.data) ? data.data : (Array.isArray(data.items) ? data.items : []);
+      const items: AdminWebinarItem[] = rawItems.map(mapSessionToAdminItem);
+      return {
+        success: true,
+        data: {
+          items,
+          total: data.total || items.length,
+        },
+      };
     }
-  } catch {
-    // Graceful fallback to in-memory store
-  }
 
-  return {
-    success: true,
-    data: {
-      items: inMemoryWebinars,
-      total: inMemoryWebinars.length,
-    },
-  };
+    const errData = await response.json().catch(() => null);
+    return {
+      success: false,
+      error: errData?.detail || errData?.title || `Gagal memuat webinar (HTTP ${response.status})`,
+    };
+  } catch (err: any) {
+    return { success: false, error: err?.message || "Terjadi kesalahan jaringan" };
+  }
 }
 
 export async function createAdminWebinarAction(
@@ -134,27 +123,43 @@ export async function createAdminWebinarAction(
     return { success: false, error: "Kapasitas peserta minimal 1 kursi" };
   }
 
-  const nextId = inMemoryWebinars.length > 0 ? Math.max(...inMemoryWebinars.map((w) => w.id)) + 1 : 101;
-  const newWebinar: AdminWebinarItem = {
-    id: nextId,
-    title: input.title.trim(),
-    description: input.description?.trim() || "Sesi webinar pembelajaran interaktif Teman Belajar.",
-    speaker: input.speaker.trim(),
-    starts_at: input.starts_at,
-    ends_at: input.ends_at,
-    timezone: "Asia/Jakarta",
-    capacity: input.capacity,
-    enrolled_count: 0,
-    status: new Date(input.ends_at) < new Date() ? "completed" : "upcoming",
-    join_url: input.join_url?.trim() || `https://zoom.us/j/tb-${nextId}`,
-    provider: "zoom",
-    provider_ready: true,
-  };
+  try {
+    const payload = {
+      title: input.title.trim(),
+      summary: input.description?.trim() || "",
+      description: input.description?.trim() || "",
+      speaker: input.speaker.trim(),
+      starts_at: input.starts_at,
+      ends_at: input.ends_at,
+      timezone: "Asia/Jakarta",
+      capacity: input.capacity,
+      join_url: input.join_url?.trim() || "",
+      provider: input.provider || "zoom",
+    };
 
-  inMemoryWebinars = [newWebinar, ...inMemoryWebinars];
+    const response = await fetch(`${API_BASE}/api/v1/admin/webinars`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
 
-  revalidatePath("/dashboard/webinars");
-  return { success: true, data: newWebinar };
+    if (response.ok || response.status === 201) {
+      const created = await response.json();
+      revalidatePath("/dashboard/webinars");
+      return { success: true, data: mapSessionToAdminItem(created) };
+    }
+
+    const errData = await response.json().catch(() => null);
+    return {
+      success: false,
+      error: errData?.detail || errData?.title || `Gagal membuat webinar (HTTP ${response.status})`,
+    };
+  } catch (err: any) {
+    return { success: false, error: err?.message || "Terjadi kesalahan jaringan" };
+  }
 }
 
 export async function getAdminWebinarDetailAction(
@@ -178,50 +183,148 @@ export async function getAdminWebinarDetailAction(
 
     if (response.ok) {
       const data = await response.json();
-      if (data && data.id) {
-        return { success: true, data };
-      }
+      const baseItem = mapSessionToAdminItem(data);
+      const detail: AdminWebinarDetailItem = {
+        ...baseItem,
+        attendance_seconds: data.attendance_seconds || 0,
+        attendance_state: data.attendance_state || "pending",
+        synced_at: data.synced_at || new Date().toISOString(),
+        attendees: Array.isArray(data.attendees) ? data.attendees : [],
+      };
+      return { success: true, data: detail };
     }
-  } catch {
-    // Graceful fallback to in-memory item
+
+    const errData = await response.json().catch(() => null);
+    return {
+      success: false,
+      error: errData?.detail || errData?.title || `Sesi webinar tidak ditemukan (HTTP ${response.status})`,
+    };
+  } catch (err: any) {
+    return { success: false, error: err?.message || "Terjadi kesalahan jaringan" };
+  }
+}
+
+export async function updateAdminWebinarAction(
+  id: number,
+  input: UpdateAdminWebinarInput
+): Promise<{ success: boolean; data?: AdminWebinarItem; error?: string }> {
+  const session: any = await getServerSession(authOptions);
+  const accessToken = await getServerAccessToken();
+
+  if (!session || !accessToken) {
+    return { success: false, error: "Sesi tidak terotentikasi" };
   }
 
-  const found = inMemoryWebinars.find((w) => w.id === id);
-  if (!found) {
-    return { success: false, error: "Sesi webinar tidak ditemukan" };
+  try {
+    const payload: any = {};
+    if (input.title) payload.title = input.title.trim();
+    if (input.description !== undefined) {
+      payload.summary = input.description.trim();
+      payload.description = input.description.trim();
+    }
+    if (input.speaker) payload.speaker = input.speaker.trim();
+    if (input.starts_at) payload.starts_at = input.starts_at;
+    if (input.ends_at) payload.ends_at = input.ends_at;
+    if (input.capacity) payload.capacity = Number(input.capacity);
+    if (input.status) {
+      // map frontend in_progress to live if needed
+      payload.status = input.status === "in_progress" ? "live" : input.status;
+    }
+    if (input.join_url !== undefined) payload.join_url = input.join_url.trim();
+    if (input.recording_url !== undefined) payload.recording_url = input.recording_url.trim();
+    if (input.provider) payload.provider = input.provider;
+
+    const response = await fetch(`${API_BASE}/api/v1/admin/webinars/${id}`, {
+      method: "PATCH",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (response.ok) {
+      const updated = await response.json();
+      revalidatePath("/dashboard/webinars");
+      return { success: true, data: mapSessionToAdminItem(updated) };
+    }
+
+    const errData = await response.json().catch(() => null);
+    return {
+      success: false,
+      error: errData?.detail || errData?.title || `Gagal memperbarui webinar (HTTP ${response.status})`,
+    };
+  } catch (err: any) {
+    return { success: false, error: err?.message || "Terjadi kesalahan jaringan" };
+  }
+}
+
+export async function deleteAdminWebinarAction(
+  id: number
+): Promise<{ success: boolean; error?: string }> {
+  const session: any = await getServerSession(authOptions);
+  const accessToken = await getServerAccessToken();
+
+  if (!session || !accessToken) {
+    return { success: false, error: "Sesi tidak terotentikasi" };
   }
 
-  const isCompleted = found.status === "completed";
-  const detail: AdminWebinarDetailItem = {
-    ...found,
-    course_id: 10,
-    attendance_seconds: isCompleted ? 5400 : 0,
-    attendance_state: isCompleted ? "synced" : "pending",
-    synced_at: new Date().toISOString(),
-    attendees: [
-      {
-        name: "Ahmad Dahlan",
-        email: "ahmad.dahlan@example.com",
-        registered_at: "2026-08-20T10:00:00Z",
-        attendance_state: isCompleted ? "present" : "registered",
-        attended_minutes: isCompleted ? 88 : undefined,
+  try {
+    const response = await fetch(`${API_BASE}/api/v1/admin/webinars/${id}`, {
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
       },
-      {
-        name: "Siti Rahmawati",
-        email: "siti.rahmawati@example.com",
-        registered_at: "2026-08-21T14:30:00Z",
-        attendance_state: isCompleted ? "present" : "registered",
-        attended_minutes: isCompleted ? 90 : undefined,
-      },
-      {
-        name: "Budi Pratama",
-        email: "budi.pratama@example.com",
-        registered_at: "2026-08-22T09:15:00Z",
-        attendance_state: isCompleted ? "absent" : "registered",
-        attended_minutes: isCompleted ? 0 : undefined,
-      },
-    ],
-  };
+    });
 
-  return { success: true, data: detail };
+    if (response.ok || response.status === 204) {
+      revalidatePath("/dashboard/webinars");
+      return { success: true };
+    }
+
+    const errData = await response.json().catch(() => null);
+    return {
+      success: false,
+      error: errData?.detail || errData?.title || `Gagal membatalkan webinar (HTTP ${response.status})`,
+    };
+  } catch (err: any) {
+    return { success: false, error: err?.message || "Terjadi kesalahan jaringan" };
+  }
+}
+
+export async function updateAttendanceAction(
+  webinarId: number,
+  attendeeId: string,
+  status: "attended" | "registered" | "cancelled"
+): Promise<{ success: boolean; error?: string }> {
+  const session: any = await getServerSession(authOptions);
+  const accessToken = await getServerAccessToken();
+
+  if (!session || !accessToken) {
+    return { success: false, error: "Sesi tidak terotentikasi" };
+  }
+
+  try {
+    const response = await fetch(`${API_BASE}/api/v1/admin/webinars/${webinarId}/attendance`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ attendee_id: attendeeId, status }),
+    });
+
+    if (response.ok) {
+      revalidatePath("/dashboard/webinars");
+      return { success: true };
+    }
+
+    const errData = await response.json().catch(() => null);
+    return {
+      success: false,
+      error: errData?.detail || errData?.title || `Gagal mengubah status kehadiran (HTTP ${response.status})`,
+    };
+  } catch (err: any) {
+    return { success: false, error: err?.message || "Terjadi kesalahan jaringan" };
+  }
 }

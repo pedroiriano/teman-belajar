@@ -72,6 +72,7 @@ func (r *BannerRepository) ListAll(ctx context.Context, page, pageSize int, sear
 		whereClause = "WHERE " + strings.Join(conditions, " AND ")
 	}
 
+	// #nosec G201 -- whereClause uses internal static conditions and query values are bound via args
 	countQuery := fmt.Sprintf("SELECT COUNT(*) FROM hero_banners %s", whereClause)
 	var total int
 	if err := r.db.QueryRowContext(ctx, countQuery, args...).Scan(&total); err != nil {
@@ -79,6 +80,7 @@ func (r *BannerRepository) ListAll(ctx context.Context, page, pageSize int, sear
 	}
 
 	offset := (page - 1) * pageSize
+	// #nosec G201 -- whereClause uses internal static conditions and query values are bound via args
 	dataQuery := fmt.Sprintf(`
 		SELECT id, title, description, image_url, cta_label, cta_href, align, sort_order, is_active,
 		       created_at, updated_at, COALESCE(created_by, ''), COALESCE(updated_by, '')

@@ -37,8 +37,9 @@ const navigationGroups: NavigationGroup[] = [
         label: "Konten & Sesi",
         items: [
           { href: "/microlearning", label: "Pembelajaran Singkat", description: "Materi editorial 3–15 menit." },
-          { label: "Webinar", description: "Sesi langsung bersama narasumber.", comingSoon: true },
+          { href: "/webinars", label: "Webinar", description: "Sesi langsung bersama narasumber." },
           { href: "/learning-paths", label: "Jalur Belajar", description: "Rangkaian kompetensi terarah." },
+          { label: "Komunitas Belajar", description: "Forum diskusi antarpelajar dan mentor.", comingSoon: true },
         ],
       },
     ],
@@ -69,9 +70,12 @@ const navigationGroups: NavigationGroup[] = [
       {
         label: "Bantuan & Layanan",
         items: [
+          { href: "/about", label: "Tentang Kami", description: "Visi dan profil platform Teman Belajar." },
           { href: "/media-gallery", label: "Media", description: "Galeri kegiatan dan dokumentasi." },
           { href: "/help", label: "FAQ", description: "Pertanyaan yang sering diajukan." },
           { href: "/certificates/verify", label: "Verifikasi Sertifikat", description: "Validasi keaslian sertifikat kelulusan." },
+          { href: "/privacy", label: "Kebijakan Privasi", description: "Perlindungan data dan transparansi akun." },
+          { href: "/terms", label: "Syarat & Ketentuan", description: "Pedoman penggunaan layanan dan sertifikat." },
         ],
       },
     ],
@@ -264,7 +268,16 @@ export function PortalChrome({ authenticated, configuration, children }: { authe
             </div>
           ))}
         </div>
-        <div className="border-t border-white/10"><div className="portal-container flex flex-col gap-2 py-5 text-xs text-slate-400 sm:flex-row sm:items-center sm:justify-between"><span>© {new Date().getFullYear()} Teman Belajar.</span><span>Platform Pengalaman Belajar Digital Perusahaan</span></div></div>
+        <div className="border-t border-white/10">
+          <div className="portal-container flex flex-col gap-3 py-5 text-xs text-slate-400 sm:flex-row sm:items-center sm:justify-between">
+            <span>© {new Date().getFullYear()} Teman Belajar. Platform Pengalaman Belajar Digital Perusahaan.</span>
+            <div className="flex flex-wrap items-center gap-4">
+              <Link href="/about" className="hover:text-white transition-colors duration-200">Tentang Kami</Link>
+              <Link href="/privacy" className="hover:text-white transition-colors duration-200">Kebijakan Privasi</Link>
+              <Link href="/terms" className="hover:text-white transition-colors duration-200">Syarat & Ketentuan</Link>
+            </div>
+          </div>
+        </div>
       </footer>
       <button type="button" id="back-to-top" className={`techwind-back-to-top portal-back-to-top ${showBackToTop ? "is-visible" : ""}`} onClick={scrollToTop} aria-label="Kembali ke atas">
         <PortalIcon name="arrow-up" className="h-5 w-5" />

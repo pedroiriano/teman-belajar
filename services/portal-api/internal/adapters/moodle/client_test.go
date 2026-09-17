@@ -322,3 +322,47 @@ func TestGetLearningAnalyticsUsesExplicitPeriod(t *testing.T) {
 		t.Fatalf("unexpected cohort result: %+v", result)
 	}
 }
+
+func TestEnrolUser_Success(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if err := r.ParseForm(); err != nil {
+			t.Fatalf("ParseForm: %v", err)
+		}
+		if got := r.Form.Get("wsfunction"); got != "enrol_manual_enrol_users" {
+			t.Fatalf("wsfunction = %q, want enrol_manual_enrol_users", got)
+		}
+		if got := r.Form.Get("enrolments[0][roleid]"); got != "5" {
+			t.Fatalf("roleid = %q, want 5", got)
+		}
+		if got := r.Form.Get("enrolments[0][userid]"); got != "42" {
+			t.Fatalf("userid = %q, want 42", got)
+		}
+		if got := r.Form.Get("enrolments[0][courseid]"); got != "29" {
+			t.Fatalf("courseid = %q, want 29", got)
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`null`))
+	}))
+	defer server.Close()
+
+	client := NewClient(Config{BaseURL: server.URL, Token: "test", Timeout: time.Second})
+	err := client.EnrolUser(context.Background(), 42, 29, 5)
+	if err != nil {
+		t.Fatalf("EnrolUser failed: %v", err)
+	}
+}
+
+func TestEnrolUser_Error(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"exception":"moodle_exception","errorcode":"wsaccessfail","message":"Access control exception"}`))
+	}))
+	defer server.Close()
+
+	client := NewClient(Config{BaseURL: server.URL, Token: "test", Timeout: time.Second})
+	err := client.EnrolUser(context.Background(), 42, 29, 5)
+	if err == nil {
+		t.Fatalf("expected error from EnrolUser, got nil")
+	}
+}
+

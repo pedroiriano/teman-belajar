@@ -137,6 +137,73 @@ func (c *Client) callWS(ctx context.Context, wsfunction string, params url.Value
 	return nil
 }
 
+func (c *Client) callWSVoid(ctx context.Context, wsfunction string, params url.Values) error {
+	u, err := url.Parse(c.config.BaseURL)
+	if err != nil {
+		return err
+	}
+	u.Path = "/webservice/rest/server.php"
+
+	if params == nil {
+		params = url.Values{}
+	}
+	params.Set("wstoken", c.config.Token)
+	params.Set("wsfunction", wsfunction)
+	params.Set("moodlewsrestformat", "json")
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, u.String(), strings.NewReader(params.Encode()))
+	if err != nil {
+		return err
+	}
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	if c.config.PublicBaseURL != "" {
+		publicURL, parseErr := url.Parse(c.config.PublicBaseURL)
+		if parseErr != nil || publicURL.Host == "" {
+			return fmt.Errorf("invalid Moodle public base URL")
+		}
+		req.Host = publicURL.Host
+	}
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		if errors.Is(err, context.DeadlineExceeded) || errors.Is(ctx.Err(), context.DeadlineExceeded) {
+			return learning.ErrMoodleTimeout
+		}
+		var netErr net.Error
+		if errors.As(err, &netErr) && netErr.Timeout() {
+			return learning.ErrMoodleTimeout
+		}
+		return fmt.Errorf("%w: %v", learning.ErrMoodleUnavailable, err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("%w: status code %d", learning.ErrMoodleUnavailable, resp.StatusCode)
+	}
+
+	limit := int64(5 * 1024 * 1024)
+	body, err := io.ReadAll(io.LimitReader(resp.Body, limit+1))
+	if err != nil {
+		return err
+	}
+	if int64(len(body)) > limit {
+		return fmt.Errorf("%w: response too large", learning.ErrMoodleInvalidResponse)
+	}
+
+	var moodleErr MoodleError
+	if err := json.Unmarshal(body, &moodleErr); err == nil && moodleErr.Exception != "" {
+		return c.mapError(&moodleErr)
+	}
+
+	strBody := strings.TrimSpace(string(body))
+	if strBody == "false" {
+		return fmt.Errorf("%w: operation failed in moodle", learning.ErrMoodleInvalidResponse)
+	}
+
+	return nil
+}
+
+
 func (c *Client) mapError(err *MoodleError) error {
 	switch err.Errorcode {
 	case "invalidtoken", "accessexception":

@@ -53,3 +53,74 @@ func TestTrainingRepositoryPublicPublicationIsolation(t *testing.T) {
 		t.Fatalf("composition not loaded: detail=%#v err=%v", detail, err)
 	}
 }
+
+func TestTrainingRepositoryMultiCohortUpdate(t *testing.T) {
+	databaseURL := os.Getenv("TEST_DATABASE_URL")
+	if databaseURL == "" {
+		t.Skip("TEST_DATABASE_URL is required for training repository integration")
+	}
+	db, err := sql.Open("postgres", databaseURL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer db.Close()
+	ctx := context.Background()
+	programID := "7f130000-0000-4000-8000-000000000099"
+	defer func() {
+		_, _ = db.ExecContext(context.Background(), `DELETE FROM training_programs WHERE id = $1`, programID)
+	}()
+	now := time.Now().UTC()
+	repo := NewTrainingRepository(db)
+
+	cohort1ID := "7f130000-0000-4000-8000-000000000101"
+	prog := &training.Program{
+		ID:          programID,
+		Slug:        "program-multi-cohort-test",
+		Title:       "Program Multi Cohort Test",
+		Summary:     "Ringkasan program multi cohort test.",
+		Description: "Deskripsi program multi cohort test yang panjang.",
+		Category:    "Software Engineering",
+		Level:       "Menengah",
+		Status:      training.StatusPublished,
+		Version:     1,
+		PublishedAt: &now,
+		CreatedAt:   now,
+		UpdatedAt:   now,
+		Courses:     []training.CourseRef{{MoodleCourseID: 10, SortOrder: 10, Required: true}},
+		Cohorts: []training.Cohort{
+			{ID: cohort1ID, Label: "Gelombang 1", Status: "scheduled", SortOrder: 10},
+		},
+	}
+
+	actorID := "7f130000-0000-4000-8000-000000000000"
+	if err := repo.Create(ctx, prog, actorID); err != nil {
+		t.Fatalf("failed to create program: %v", err)
+	}
+
+	// Now update with multi-cohort (Gelombang 1 updated, Gelombang 2 added)
+	cohort2ID := "7f130000-0000-4000-8000-000000000102"
+	prog.Version = 2
+	prog.Cohorts = []training.Cohort{
+		{ID: cohort1ID, Label: "Gelombang 1 - Revisi", Status: "completed", SortOrder: 10},
+		{ID: cohort2ID, Label: "Gelombang 2 - Baru", Status: "scheduled", SortOrder: 20},
+	}
+
+	if err := repo.Update(ctx, prog, 1, actorID); err != nil {
+		t.Fatalf("failed to update program with multi cohorts: %v", err)
+	}
+
+	fetched, err := repo.GetByID(ctx, programID)
+	if err != nil {
+		t.Fatalf("failed to get program: %v", err)
+	}
+	if len(fetched.Cohorts) != 2 {
+		t.Fatalf("expected 2 cohorts, got %d", len(fetched.Cohorts))
+	}
+	if fetched.Cohorts[0].ID != cohort1ID || fetched.Cohorts[0].Label != "Gelombang 1 - Revisi" || fetched.Cohorts[0].Status != "completed" {
+		t.Fatalf("cohort 1 was not updated correctly: %#v", fetched.Cohorts[0])
+	}
+	if fetched.Cohorts[1].ID != cohort2ID || fetched.Cohorts[1].Label != "Gelombang 2 - Baru" || fetched.Cohorts[1].Status != "scheduled" {
+		t.Fatalf("cohort 2 was not added correctly: %#v", fetched.Cohorts[1])
+	}
+}
+

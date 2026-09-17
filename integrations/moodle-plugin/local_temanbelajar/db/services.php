@@ -91,6 +91,7 @@ $services = array(
             'local_temanbelajar_register_webinar',
             'local_temanbelajar_cancel_webinar',
             'local_temanbelajar_get_user_certificates',
+            'enrol_manual_enrol_users',
         ),
         'restrictedusers' => 1,
         'enabled' => 1,

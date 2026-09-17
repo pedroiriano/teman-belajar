@@ -97,3 +97,42 @@ func TestTrainingPublicListRejectsUnsupportedQuery(t *testing.T) {
 		t.Fatalf("expected 422, got %d: %s", w.Code, w.Body.String())
 	}
 }
+
+func TestTrainingPublicListAllowsCategoryAndLevel(t *testing.T) {
+	h := handler.NewTrainingHandler(training.NewService(&trainingRepoStub{}, &trainingProviderStub{}, nil, "https://moodle.test"))
+	w := httptest.NewRecorder()
+	h.PublicList(w, httptest.NewRequest(http.MethodGet, "/api/v1/training-programs?category=Aplikasi+Perkantoran&level=Pemula", nil))
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d: %s", w.Code, w.Body.String())
+	}
+}
+
+func TestTrainingCreateAcceptsTaxonomy(t *testing.T) {
+	h := handler.NewTrainingHandler(training.NewService(&trainingRepoStub{}, &trainingProviderStub{}, nil, "https://moodle.test"))
+	body := `{"slug":"program-kantor","title":"Program Kantor","summary":"Ringkasan program kantor yang cukup panjang.","description":"Deskripsi program kantor yang cukup panjang untuk validasi.","category":"Aplikasi Perkantoran","level":"Pemula","tags":["Word","Excel"],"courses":[{"moodle_course_id":10,"required":true}],"cohorts":[]}`
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/admin/training-programs", strings.NewReader(body))
+	claims := middleware.CustomClaims{Subject: "subject", RealmAccess: struct {
+		Roles []string `json:"roles"`
+	}{Roles: []string{"Content Editor"}}}
+	req = req.WithContext(context.WithValue(req.Context(), middleware.ClaimsContextKey, claims))
+	w := httptest.NewRecorder()
+	h.AdminCreate(w, req)
+	if w.Code != http.StatusCreated {
+		t.Fatalf("expected 201, got %d: %s", w.Code, w.Body.String())
+	}
+}
+
+func TestTrainingCreateRejectsInvalidLevel(t *testing.T) {
+	h := handler.NewTrainingHandler(training.NewService(&trainingRepoStub{}, &trainingProviderStub{}, nil, "https://moodle.test"))
+	body := `{"slug":"program-kantor","title":"Program Kantor","summary":"Ringkasan program kantor yang cukup panjang.","description":"Deskripsi program kantor yang cukup panjang untuk validasi.","category":"Aplikasi Perkantoran","level":"SuperMahir","tags":["Word"],"courses":[{"moodle_course_id":10,"required":true}],"cohorts":[]}`
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/admin/training-programs", strings.NewReader(body))
+	claims := middleware.CustomClaims{Subject: "subject", RealmAccess: struct {
+		Roles []string `json:"roles"`
+	}{Roles: []string{"Content Editor"}}}
+	req = req.WithContext(context.WithValue(req.Context(), middleware.ClaimsContextKey, claims))
+	w := httptest.NewRecorder()
+	h.AdminCreate(w, req)
+	if w.Code != http.StatusUnprocessableEntity {
+		t.Fatalf("expected 422, got %d: %s", w.Code, w.Body.String())
+	}
+}

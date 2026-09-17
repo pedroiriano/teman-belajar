@@ -865,27 +865,58 @@ export function LearningPathStepCard({
   );
 }
 
-export function CourseCard({ title, required, availability, state, summary, progress, startUrl }: { title: string; required: boolean; availability: "available" | "unavailable"; state?: string; summary?: string; progress?: number; startUrl?: string }) {
+export function CourseCard({
+  title,
+  required,
+  availability,
+  state,
+  summary,
+  progress,
+  startUrl,
+  image,
+}: {
+  title: string;
+  required: boolean;
+  availability: "available" | "unavailable";
+  state?: string;
+  summary?: string;
+  progress?: number;
+  startUrl?: string;
+  image?: string;
+}) {
   return (
     <ContentCard className="p-5 border border-slate-100 dark:border-slate-800 rounded-xl hover:shadow-md transition-shadow">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <span className="text-xs font-bold uppercase tracking-wider text-primary">
-            Course {required ? "wajib" : "opsional"}
-          </span>
-          <h3 className="mt-1.5 text-lg font-bold text-slate-900 dark:text-white">{title}</h3>
+      <div className="flex flex-col sm:flex-row gap-4">
+        {image ? (
+          <div className="sm:w-28 sm:h-20 w-full h-36 rounded-lg overflow-hidden shrink-0 border border-slate-100 dark:border-slate-800 bg-slate-100 dark:bg-slate-800">
+            <img
+              src={image}
+              alt={title}
+              className="w-full h-full object-cover"
+            />
+          </div>
+        ) : null}
+        <div className="flex-1 min-w-0">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <span className="text-xs font-bold uppercase tracking-wider text-primary">
+                Course {required ? "wajib" : "opsional"}
+              </span>
+              <h3 className="mt-1.5 text-lg font-bold text-slate-900 dark:text-white">{title}</h3>
+            </div>
+            <Badge className={availability === "unavailable" ? "opacity-70" : "bg-teal-50 text-teal-700 font-semibold"}>
+              {availability === "available" ? state || "Tersedia" : "Data belum tersedia"}
+            </Badge>
+          </div>
+          {summary ? <p className="mt-3 text-sm leading-relaxed text-slate-600 dark:text-slate-400">{summary}</p> : null}
+          {typeof progress === "number" ? <Progress value={progress} label={`Progres ${title}`} /> : null}
+          {startUrl ? (
+            <a href={startUrl} className="portal-button-secondary mt-4 inline-flex items-center gap-2" rel="noreferrer">
+              <PortalIcon name="sparkles" className="h-4 w-4" /> Buka di Moodle
+            </a>
+          ) : null}
         </div>
-        <Badge className={availability === "unavailable" ? "opacity-70" : "bg-teal-50 text-teal-700 font-semibold"}>
-          {availability === "available" ? state || "Tersedia" : "Data belum tersedia"}
-        </Badge>
       </div>
-      {summary ? <p className="mt-3 text-sm leading-relaxed text-slate-600 dark:text-slate-400">{summary}</p> : null}
-      {typeof progress === "number" ? <Progress value={progress} label={`Progres ${title}`} /> : null}
-      {startUrl ? (
-        <a href={startUrl} className="portal-button-secondary mt-4 inline-flex items-center gap-2" rel="noreferrer">
-          <PortalIcon name="sparkles" className="h-4 w-4" /> Buka di Moodle
-        </a>
-      ) : null}
     </ContentCard>
   );
 }

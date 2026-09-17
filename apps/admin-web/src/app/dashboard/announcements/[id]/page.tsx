@@ -97,12 +97,22 @@ export default function AdminAnnouncementDetailPage() {
   const applyDraft = (draft: AnnouncementEditDraft) => { setTitle(draft.title); setSEO(pickSEOValue(draft)); setBody(draft.body); setStartAt(draft.start_at ?? ""); setEndAt(draft.end_at ?? ""); };
   const autoSave = useAutoSaveDraft({ formKey: "announcement.edit", entityType: "announcement", entityId: id, baseEntityVersion: ann ? String(ann.version) : undefined, value, emptyValue: canonical, enabled: canEditSEO, onRecover: applyDraft, onStartNew: applyDraft });
 
+const isSessionExpired = (msg: string) =>
+  /sesi|token|unauthorized|401|403|login|kedaluwarsa|konflik/i.test(msg);
+
   const handleTransition = async (status: string) => {
     setActionLoading(true);
     setError("");
     const res = await transitionAnnouncementAction(id, status);
     if (!res.success) {
-      setError(res.error || "Status pengumuman belum dapat diperbarui");
+      const msg = res.error || "Status pengumuman belum dapat diperbarui";
+      setError(msg);
+      setTimeout(() => {
+        document.getElementById("form-error-alert")?.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+        });
+      }, 50);
       setActionLoading(false);
     } else {
       router.push("/dashboard/announcements");
@@ -111,14 +121,50 @@ export default function AdminAnnouncementDetailPage() {
 
   const handleSave = async () => {
     setActionLoading(true); setError("");
-    const result = await updateAnnouncementAction(id, { title, slug: seo.slug, body, start_at: startAt ? new Date(startAt) : null, end_at: endAt ? new Date(endAt) : null, expected_version: ann.version, seo, media_usages: mediaUsagesFromMarkdown(body) });
-    if (!result.success) { setError(result.error || "Pengumuman belum dapat diperbarui"); setActionLoading(false); return; }
+    const parsedStart = startAt ? new Date(startAt) : null;
+    const parsedEnd = endAt ? new Date(endAt) : null;
+    if (parsedStart && parsedEnd && parsedStart >= parsedEnd) {
+      const msg = "Jadwal pengumuman: Selesai tayang harus setelah Mulai tayang.";
+      setError(msg);
+      setTimeout(() => {
+        document.getElementById("form-error-alert")?.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+        });
+      }, 50);
+      setActionLoading(false);
+      return;
+    }
+    const result = await updateAnnouncementAction(id, { title, slug: seo.slug, body, start_at: parsedStart, end_at: parsedEnd, expected_version: ann.version, seo, media_usages: mediaUsagesFromMarkdown(body) });
+    if (!result.success) {
+      const msg = result.error || "Pengumuman belum dapat diperbarui";
+      setError(msg);
+      setTimeout(() => {
+        document.getElementById("form-error-alert")?.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+        });
+      }, 50);
+      setActionLoading(false);
+      return;
+    }
     await autoSave.finalize(); router.push("/dashboard/announcements");
   };
 
   const handleSaveSEO = async () => {
     setActionLoading(true); setError(""); const result = await saveDiscoverabilityProfileAction("announcement", id, seo);
-    if (!result.success) { setError(result.error || "SEO & Discovery belum dapat disimpan"); setActionLoading(false); return; }
+    if (!result.success) {
+      const msg = result.error || "SEO & Discovery belum dapat disimpan";
+      setError(msg);
+      setTimeout(() => {
+        document.getElementById("form-error-alert")?.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+        });
+      }, 50);
+      setActionLoading(false);
+      return;
+    }
     await autoSave.finalize(); router.refresh(); setActionLoading(false);
   };
 
@@ -128,7 +174,6 @@ export default function AdminAnnouncementDetailPage() {
   return (
     <div className="admin-page max-w-5xl">
       <div className="admin-page-header"><div><Link href="/dashboard/announcements" className="text-sm font-bold text-sky-700 dark:text-sky-400">&larr; Kembali ke Pengumuman</Link><p className="admin-kicker mt-5">Detail editorial</p><h1 className="admin-page-title">{ann.title}</h1><p className="admin-page-copy">Tinjau jadwal tayang, isi, dan status publikasi.</p></div><span className={`cuba-badge ${statusBadgeClasses[ann.status] || "cuba-badge-neutral"}`}>{statusLabels[ann.status] || ann.status}</span></div>
-      {error && <div className="admin-alert-error mb-5" role="alert">{error}</div>}
 
       <div className="flex items-center gap-2 border-b border-slate-200 dark:border-slate-800 pb-3 mb-6">
         <button
@@ -285,10 +330,70 @@ export default function AdminAnnouncementDetailPage() {
                 )}
               </div>
               {canEdit && <SeoDiscoverySection compact embedded value={seo} onChange={setSEO} contentTitle={title || ann.title} contentSummary={(body || ann.body || "").slice(0, 300)} contentBody={body || ann.body || ""} routePrefix="/announcements/" />}
-              {canEdit && <div className="admin-form-footer"><button type="button" className="admin-button" disabled={actionLoading || !title || !seo.slug || !body} onClick={handleSave}>Simpan perubahan</button></div>}
+              {error && (
+                <div className="p-5 sm:px-7 pb-0">
+                  <div
+                    id="form-error-alert"
+                    role="alert"
+                    className="rounded-xl border border-rose-300 bg-rose-50 p-4 text-sm font-medium text-rose-900 dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-sm"
+                  >
+                    <div className="flex items-start gap-2.5">
+                      <span className="text-rose-600 dark:text-rose-400 font-bold text-base leading-none mt-0.5">⚠️</span>
+                      <div>
+                        <p className="font-bold text-rose-800 dark:text-rose-300">Gagal Menyimpan:</p>
+                        <p className="text-xs text-rose-700 dark:text-rose-300/90 mt-0.5">{error}</p>
+                      </div>
+                    </div>
+                    {isSessionExpired(error) && (
+                      <button
+                        type="button"
+                        onClick={() => window.location.reload()}
+                        className="admin-button text-xs whitespace-nowrap self-stretch sm:self-auto py-2 px-3 flex items-center justify-center gap-1.5"
+                      >
+                        <AdminIcon name="refresh" className="h-3.5 w-3.5" />
+                        Muat Ulang Halaman &amp; Masuk Ulang
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
+              {canEdit && (
+                <div className="admin-form-footer flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    Pastikan jadwal tayang dan isi pengumuman telah akurat sebelum menyimpan perubahan.
+                  </p>
+                  <div className="flex items-center gap-3">
+                    <Link href="/dashboard/announcements" className="admin-button-secondary">
+                      Batal / Kembali
+                    </Link>
+                    <button
+                      type="button"
+                      className="admin-button"
+                      disabled={actionLoading || !title || !seo.slug || !body}
+                      onClick={handleSave}
+                    >
+                      {actionLoading ? "Menyimpan…" : "Simpan perubahan"}
+                    </button>
+                  </div>
+                </div>
+              )}
           </section>
           {!canEdit && <SeoDiscoverySection compact value={seo} onChange={setSEO} contentTitle={title || ann.title} contentSummary={(body || ann.body || "").slice(0, 300)} contentBody={body || ann.body || ""} routePrefix="/announcements/" disabled={!canEditSEO} />}
-          {!canEdit && canEditSEO && <div className="flex justify-end"><button type="button" className="admin-button" disabled={actionLoading} onClick={handleSaveSEO}>Simpan pengaturan publikasi</button></div>}
+          {!canEdit && canEditSEO && (
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pt-4">
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                Pengaturan SEO &amp; Discovery dapat diperbarui secara terpisah setelah pengumuman terbit.
+              </p>
+              <button
+                type="button"
+                className="admin-button"
+                disabled={actionLoading}
+                onClick={handleSaveSEO}
+              >
+                {actionLoading ? "Menyimpan…" : "Simpan pengaturan publikasi"}
+              </button>
+            </div>
+          )}
         </>
       )}
     </div>

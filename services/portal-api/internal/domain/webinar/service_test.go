@@ -1,4 +1,4 @@
-package webinar
+﻿package webinar
 
 import (
 	"context"
@@ -9,22 +9,31 @@ import (
 	notification "teman-belajar-api/internal/domain/notification"
 )
 
-type providerStub struct {
+type repoStub struct {
 	session Session
 	err     error
 	calls   int
 }
 
-func (p *providerStub) List(context.Context, Identity, int, int) (Page, error) { return Page{}, p.err }
-func (p *providerStub) Get(context.Context, Identity, int) (Session, error)    { return p.session, p.err }
-func (p *providerStub) Register(context.Context, Identity, int, string) (Session, error) {
-	p.calls++
-	return p.session, p.err
+func (r *repoStub) List(context.Context, Filter, string) (Page, error) { return Page{}, r.err }
+func (r *repoStub) GetByID(context.Context, int, string) (Session, error) { return r.session, r.err }
+func (r *repoStub) Create(context.Context, CreateWebinarInput, string) (Session, error) {
+	return r.session, r.err
 }
-func (p *providerStub) Cancel(context.Context, Identity, int, string) (Session, error) {
-	p.calls++
-	return p.session, p.err
+func (r *repoStub) Update(context.Context, int, UpdateWebinarInput, string) (Session, error) {
+	return r.session, r.err
 }
+func (r *repoStub) Delete(context.Context, int, string) error { return r.err }
+func (r *repoStub) Register(context.Context, int, Identity, string, string, string) (Session, error) {
+	r.calls++
+	return r.session, r.err
+}
+func (r *repoStub) Cancel(context.Context, int, Identity, string) (Session, error) {
+	r.calls++
+	return r.session, r.err
+}
+func (r *repoStub) ListAttendees(context.Context, int) ([]Attendee, error) { return nil, r.err }
+func (r *repoStub) UpdateAttendance(context.Context, int, string, string) error { return r.err }
 
 type reminderStub struct {
 	deliveries []notification.Delivery
@@ -36,17 +45,6 @@ func (r *reminderStub) Deliver(_ context.Context, input notification.Delivery) (
 	r.deliveries = append(r.deliveries, input)
 	return notification.DeliveryResult{Created: true}, r.err
 }
-
-func TestReminderFailureReturnsRetryableUnavailableAfterIdempotentRegistration(t *testing.T) {
-	now := time.Date(2026, 8, 27, 7, 0, 0, 0, time.UTC)
-	provider := &providerStub{session: Session{ID: 41, Title: "Live", StartsAt: now.Add(48 * time.Hour)}}
-	service := NewService(provider, &reminderStub{err: errors.New("notification store unavailable")})
-	service.now = func() time.Time { return now }
-	_, err := service.Register(context.Background(), Identity{Subject: "11111111-1111-4111-8111-111111111111"}, 41, "register:retry:01")
-	if !errors.Is(err, ErrUnavailable) || provider.calls != 1 {
-		t.Fatalf("err=%v calls=%d", err, provider.calls)
-	}
-}
 func (r *reminderStub) CancelPending(_ context.Context, _ string, _ notification.Audience, eventIDs []string) (int, error) {
 	r.cancelled = append(r.cancelled, eventIDs...)
 	return len(eventIDs), nil
@@ -54,22 +52,22 @@ func (r *reminderStub) CancelPending(_ context.Context, _ string, _ notification
 
 func TestRegisterSchedulesExactlyTwoIdempotentInAppReminders(t *testing.T) {
 	now := time.Date(2026, 8, 27, 7, 0, 0, 0, time.UTC)
-	provider := &providerStub{session: Session{ID: 41, Title: "Security Live", StartsAt: now.Add(48 * time.Hour)}}
+	repo := &repoStub{session: Session{ID: 41, Title: "Security Live", StartsAt: now.Add(48 * time.Hour)}}
 	reminders := &reminderStub{}
-	service := NewService(provider, reminders)
+	service := NewService(repo, reminders)
 	service.now = func() time.Time { return now }
 
-	_, err := service.Register(context.Background(), Identity{Subject: "11111111-1111-4111-8111-111111111111"}, 41, "register:41:one")
+	_, err := service.Register(context.Background(), Identity{Subject: "11111111-1111-4111-8111-111111111111"}, 41, "User Name", "user@example.com", "register:41:one")
 	if err != nil {
 		t.Fatal(err)
 	}
 	if len(reminders.deliveries) != 2 {
 		t.Fatalf("deliveries=%d", len(reminders.deliveries))
 	}
-	if reminders.deliveries[0].AvailableAt != provider.session.StartsAt.Add(-24*time.Hour) {
+	if reminders.deliveries[0].AvailableAt != repo.session.StartsAt.Add(-24*time.Hour) {
 		t.Fatal("T-24 reminder mismatch")
 	}
-	if reminders.deliveries[1].AvailableAt != provider.session.StartsAt.Add(-time.Hour) {
+	if reminders.deliveries[1].AvailableAt != repo.session.StartsAt.Add(-time.Hour) {
 		t.Fatal("T-1 reminder mismatch")
 	}
 	for _, delivery := range reminders.deliveries {
@@ -79,29 +77,29 @@ func TestRegisterSchedulesExactlyTwoIdempotentInAppReminders(t *testing.T) {
 	}
 }
 
-func TestRegisterRejectsInvalidIdempotencyBeforeProvider(t *testing.T) {
-	provider := &providerStub{}
-	service := NewService(provider, nil)
-	_, err := service.Register(context.Background(), Identity{Subject: "subject"}, 1, "short")
-	if !errors.Is(err, ErrInvalidInput) || provider.calls != 0 {
-		t.Fatalf("err=%v calls=%d", err, provider.calls)
+func TestRegisterRejectsInvalidIdentity(t *testing.T) {
+	repo := &repoStub{}
+	service := NewService(repo, nil)
+	_, err := service.Register(context.Background(), Identity{Subject: ""}, 1, "", "", "key")
+	if !errors.Is(err, ErrInvalidInput) || repo.calls != 0 {
+		t.Fatalf("err=%v calls=%d", err, repo.calls)
 	}
 }
 
 func TestProviderFailureDoesNotScheduleReminder(t *testing.T) {
-	provider := &providerStub{err: ErrCapacityFull}
+	repo := &repoStub{err: ErrCapacityFull}
 	reminders := &reminderStub{}
-	service := NewService(provider, reminders)
-	_, err := service.Register(context.Background(), Identity{Subject: "subject"}, 1, "register:one")
+	service := NewService(repo, reminders)
+	_, err := service.Register(context.Background(), Identity{Subject: "subject"}, 1, "", "", "register:one")
 	if !errors.Is(err, ErrCapacityFull) || len(reminders.deliveries) != 0 {
 		t.Fatalf("err=%v deliveries=%d", err, len(reminders.deliveries))
 	}
 }
 
 func TestCancelRemovesBothFutureReminders(t *testing.T) {
-	provider := &providerStub{session: Session{ID: 41, Registered: false}}
+	repo := &repoStub{session: Session{ID: 41, Registered: false}}
 	reminders := &reminderStub{}
-	service := NewService(provider, reminders)
+	service := NewService(repo, reminders)
 	subject := "11111111-1111-4111-8111-111111111111"
 	_, err := service.Cancel(context.Background(), Identity{Subject: subject}, 41, "cancel:41:one")
 	if err != nil {

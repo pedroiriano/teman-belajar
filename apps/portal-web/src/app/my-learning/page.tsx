@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { getBackendAccessToken } from "@/lib/server-auth";
 import { CourseList } from "@/components/learning/course-list";
+import { LearnerAnalyticsCard } from "@/components/learning/learner-analytics-card";
 import { PortalIcon } from "@/components/portal-icon";
 import type { EnrolledCourse, UserCertificate } from "@/lib/learning/types";
 import { EngagementDiscovery } from "@/components/engagement/engagement-discovery";
@@ -278,6 +279,9 @@ export default async function MyLearningDashboard() {
         completed={completed.length}
         estimatedHours={estimatedHours}
       />
+
+      {/* Visual Learning Analytics Widget */}
+      <LearnerAnalyticsCard courses={courses} certificates={certificates} />
 
       {/* Dual-Track Quick Navigation */}
       <div className="flex flex-wrap items-center justify-between gap-4 mb-4">

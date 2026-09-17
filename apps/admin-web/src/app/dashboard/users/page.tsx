@@ -25,7 +25,7 @@ export default async function UsersPage() {
   const headerActions = isPortalAdmin ? (
     <Link
       href="/dashboard/users/create"
-      className="admin-button !min-h-9 !py-1 !px-3 !text-xs"
+      className="admin-button !py-2.5 !px-4 shadow-sm font-bold text-xs"
     >
       <span aria-hidden="true">+</span> Tambah pengguna
     </Link>
@@ -33,7 +33,7 @@ export default async function UsersPage() {
 
   return (
     <div className="admin-page space-y-6">
-      <div className="admin-page-header">
+      <div className="admin-page-header flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-slate-200/70 dark:border-slate-800 pb-5">
         <div>
           <p className="admin-kicker">Platform</p>
           <h1 className="admin-page-title">Manajemen Pengguna</h1>
@@ -41,11 +41,13 @@ export default async function UsersPage() {
             Kelola akun, peran otorisasi, dan kredensial pengguna platform Teman Belajar.
           </p>
         </div>
+        {headerActions && <div>{headerActions}</div>}
       </div>
 
       <AdminDataTable
         title="Daftar pengguna"
         description="Akun dan profil pengguna terdaftar dalam sistem IAM"
+        titleAlign="center"
         itemCount={users.length}
         headers={[
           { label: "Nama", key: "name" },
@@ -56,7 +58,6 @@ export default async function UsersPage() {
           { label: "Aksi", key: "actions" },
         ]}
         emptyState="Belum ada pengguna terdaftar."
-        actions={headerActions}
       >
         {users.map((user) => (
           <tr

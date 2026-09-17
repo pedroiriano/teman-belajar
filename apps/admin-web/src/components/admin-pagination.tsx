@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { AdminIcon } from "@/components/admin-icon";
 
 export interface AdminPaginationProps {
   page: number; pages: number; total: number; pageSize: number; pathname: string;
@@ -36,7 +37,32 @@ export function AdminClientPagination({ page, pages, total, pageSize, onPageChan
   const end = Math.min(current * pageSize, total);
   return <nav className="cuba-pagination admin-pagination" aria-label="Paginasi data">
     <p>Menampilkan {start}–{end} dari {total} data</p>
-    {onPageSizeChange && <label className="admin-page-size"><span>Data per halaman</span><select className="admin-input !min-h-9 !w-auto !py-1" value={pageSize} onChange={(event) => onPageSizeChange(Number(event.target.value))}>{pageSizeOptions.map((size) => <option key={size} value={size}>{size}</option>)}</select></label>}
-    <div className="admin-pagination-controls"><button type="button" className="admin-button-secondary !min-h-9 !px-3" disabled={current <= 1} onClick={() => onPageChange(current - 1)}>Sebelumnya</button><div className="admin-page-numbers">{numbers(current, pages).map((value, index) => value === "…" ? <span key={`ellipsis-${index}`} aria-hidden="true">…</span> : <button type="button" key={value} aria-label={`Halaman ${value}`} aria-current={value === current ? "page" : undefined} className={value === current ? "is-active" : ""} onClick={() => onPageChange(value)}>{value}</button>)}</div><button type="button" className="admin-button-secondary !min-h-9 !px-3" disabled={current >= pages} onClick={() => onPageChange(current + 1)}>Berikutnya</button></div>
+    {onPageSizeChange && (
+      <label className="admin-page-size flex items-center gap-2">
+        <span>Data per halaman</span>
+        <div className="relative inline-block">
+          <select
+            className="admin-input !h-8 !w-auto !py-0.5 !pl-2.5 !pr-7 text-xs font-semibold rounded-lg appearance-none cursor-pointer border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900"
+            value={pageSize}
+            onChange={(event) => onPageSizeChange(Number(event.target.value))}
+            aria-label="Pilih jumlah data per halaman"
+          >
+            {pageSizeOptions.map((size) => (
+              <option key={size} value={size}>
+                {size}
+              </option>
+            ))}
+          </select>
+          <div className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-slate-400">
+            <AdminIcon name="chevron-down" className="h-3 w-3" />
+          </div>
+        </div>
+      </label>
+    )}
+    <div className="admin-pagination-controls">
+      <button type="button" className="admin-button-secondary !min-h-9 !px-3" disabled={current <= 1} onClick={() => onPageChange(current - 1)}>Sebelumnya</button>
+      <div className="admin-page-numbers">{numbers(current, pages).map((value, index) => value === "…" ? <span key={`ellipsis-${index}`} aria-hidden="true">…</span> : <button type="button" key={value} aria-label={`Halaman ${value}`} aria-current={value === current ? "page" : undefined} className={value === current ? "is-active" : ""} onClick={() => onPageChange(value)}>{value}</button>)}</div>
+      <button type="button" className="admin-button-secondary !min-h-9 !px-3" disabled={current >= pages} onClick={() => onPageChange(current + 1)}>Berikutnya</button>
+    </div>
   </nav>;
 }

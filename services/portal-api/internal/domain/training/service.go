@@ -88,11 +88,54 @@ func normalizeInput(in *ProgramInput) error {
 			return ErrValidation
 		}
 	}
+
+	in.Category = cleanSingleLine(in.Category)
+	if in.Category == "" {
+		in.Category = "Umum"
+	}
+	if !validText(in.Category, 1, 100, true) {
+		return ErrValidation
+	}
+
+	in.Level = cleanSingleLine(in.Level)
+	if in.Level == "" {
+		in.Level = "Menengah"
+	}
+	if in.Level != "Pemula" && in.Level != "Menengah" && in.Level != "Mahir" {
+		return ErrValidation
+	}
+
+	if len(in.Tags) > 30 {
+		return ErrValidation
+	}
+	cleanedTags := make([]string, 0, len(in.Tags))
+	seenTags := make(map[string]struct{}, len(in.Tags))
+	for _, t := range in.Tags {
+		t = cleanSingleLine(t)
+		if t == "" || utf8.RuneCountInString(t) > 50 {
+			continue
+		}
+		norm := strings.ToLower(t)
+		if _, exists := seenTags[norm]; !exists {
+			seenTags[norm] = struct{}{}
+			cleanedTags = append(cleanedTags, t)
+		}
+	}
+	in.Tags = cleanedTags
+
 	return nil
 }
 
 func normalizeFilter(filter ListFilter, admin bool) (ListFilter, error) {
 	filter.Query, filter.Status = strings.TrimSpace(filter.Query), strings.TrimSpace(filter.Status)
+	filter.Category = cleanSingleLine(filter.Category)
+	if filter.Category != "" && !validText(filter.Category, 1, 100, true) {
+		return filter, ErrValidation
+	}
+	filter.Level = cleanSingleLine(filter.Level)
+	if filter.Level != "" && filter.Level != "Pemula" && filter.Level != "Menengah" && filter.Level != "Mahir" {
+		return filter, ErrValidation
+	}
 	if filter.Page < 1 {
 		filter.Page = 1
 	}
@@ -157,14 +200,37 @@ func (s *Service) validateCourses(ctx context.Context, input []CourseInput) erro
 }
 
 func programFromInput(in ProgramInput, now time.Time) *Program {
-	item := &Program{Slug: in.Slug, Title: in.Title, Summary: in.Summary, Description: in.Description, Audience: in.Audience, EligibilityText: in.EligibilityText}
+	item := &Program{
+		Slug:            in.Slug,
+		Title:           in.Title,
+		Summary:         in.Summary,
+		Description:     in.Description,
+		Audience:        in.Audience,
+		EligibilityText: in.EligibilityText,
+		Category:        in.Category,
+		Level:           in.Level,
+		Tags:            in.Tags,
+	}
 	item.Courses = make([]CourseRef, len(in.Courses))
 	for i, course := range in.Courses {
 		item.Courses[i] = CourseRef{MoodleCourseID: course.MoodleCourseID, Required: course.Required, SortOrder: (i + 1) * 10}
 	}
 	item.Cohorts = make([]Cohort, len(in.Cohorts))
 	for i, cohort := range in.Cohorts {
-		item.Cohorts[i] = Cohort{ID: uuid.NewString(), Label: cohort.Label, StartsAt: cohort.StartsAt, EndsAt: cohort.EndsAt, EnrollmentOpensAt: cohort.EnrollmentOpensAt, EnrollmentClosesAt: cohort.EnrollmentClosesAt, Status: cohort.Status, SortOrder: (i + 1) * 10}
+		cohortID := strings.TrimSpace(cohort.ID)
+		if _, err := uuid.Parse(cohortID); err != nil {
+			cohortID = uuid.NewString()
+		}
+		item.Cohorts[i] = Cohort{
+			ID:                 cohortID,
+			Label:              cohort.Label,
+			StartsAt:           cohort.StartsAt,
+			EndsAt:             cohort.EndsAt,
+			EnrollmentOpensAt:  cohort.EnrollmentOpensAt,
+			EnrollmentClosesAt: cohort.EnrollmentClosesAt,
+			Status:             cohort.Status,
+			SortOrder:          (i + 1) * 10,
+		}
 	}
 	item.UpdatedAt = now
 	return item
@@ -204,7 +270,7 @@ func (s *Service) Update(ctx context.Context, id string, in ProgramInput, roles 
 	if err != nil {
 		return nil, err
 	}
-	if current.Status != StatusDraft {
+	if current.Status == StatusArchived {
 		return nil, ErrForbidden
 	}
 	if current.Version != in.ExpectedVersion {
@@ -215,6 +281,7 @@ func (s *Service) Update(ctx context.Context, id string, in ProgramInput, roles 
 	}
 	updated := programFromInput(in, s.now())
 	updated.ID, updated.Status, updated.Version, updated.CreatedAt = current.ID, current.Status, current.Version+1, current.CreatedAt
+	updated.PublishedAt = current.PublishedAt
 	if err := s.repo.Update(ctx, updated, in.ExpectedVersion, actor); err != nil {
 		return nil, err
 	}
@@ -268,6 +335,30 @@ func listResult(items []Program, total int, filter ListFilter) *ProgramList {
 	return &ProgramList{Data: items, Pagination: Pagination{Page: filter.Page, PageSize: filter.PageSize, Total: total, TotalPages: pages}}
 }
 
+func (s *Service) enrichProgramsWithCoverImages(ctx context.Context, items []Program) {
+	if len(items) == 0 {
+		return
+	}
+	available, err := s.learning.ListCourses(ctx, learning.CourseFilter{})
+	if err != nil || len(available) == 0 {
+		return
+	}
+	courseImages := make(map[int]string, len(available))
+	for _, c := range available {
+		if c.ImageURL != "" {
+			courseImages[c.ID] = c.ImageURL
+		}
+	}
+	for i := range items {
+		for _, ref := range items[i].Courses {
+			if img, ok := courseImages[ref.MoodleCourseID]; ok && img != "" {
+				items[i].CoverImageURL = img
+				break
+			}
+		}
+	}
+}
+
 func (s *Service) ListPublic(ctx context.Context, filter ListFilter) (*ProgramList, error) {
 	filter, err := normalizeFilter(filter, false)
 	if err != nil {
@@ -277,6 +368,7 @@ func (s *Service) ListPublic(ctx context.Context, filter ListFilter) (*ProgramLi
 	if err != nil {
 		return nil, err
 	}
+	s.enrichProgramsWithCoverImages(ctx, items)
 	return listResult(items, total, filter), nil
 }
 
@@ -289,6 +381,7 @@ func (s *Service) ListAdmin(ctx context.Context, filter ListFilter) (*ProgramLis
 	if err != nil {
 		return nil, err
 	}
+	s.enrichProgramsWithCoverImages(ctx, items)
 	return listResult(items, total, filter), nil
 }
 
@@ -296,7 +389,14 @@ func (s *Service) GetAdmin(ctx context.Context, id string) (*Program, error) {
 	if _, err := uuid.Parse(id); err != nil {
 		return nil, ErrValidation
 	}
-	return s.repo.GetByID(ctx, id)
+	item, err := s.repo.GetByID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	items := []Program{*item}
+	s.enrichProgramsWithCoverImages(ctx, items)
+	*item = items[0]
+	return item, nil
 }
 
 func (s *Service) CourseOptions(ctx context.Context) ([]learning.LearningCourse, error) {
@@ -320,6 +420,12 @@ func (s *Service) GetPublic(ctx context.Context, slug string) (*ProgramDetail, e
 		return nil, err
 	}
 	courses, provenance := s.composeCourses(ctx, item.Courses)
+	for _, c := range courses {
+		if c.ImageURL != "" {
+			item.CoverImageURL = c.ImageURL
+			break
+		}
+	}
 	return &ProgramDetail{Program: *item, Courses: courses, Provenance: provenance}, nil
 }
 
@@ -345,6 +451,7 @@ func (s *Service) composeCourses(ctx context.Context, refs []CourseRef) ([]Compo
 			continue
 		}
 		result[i].ShortName, result[i].FullName, result[i].Summary, result[i].Category, result[i].Availability = course.ShortName, course.FullName, course.Summary, course.Category, "available"
+		result[i].ImageURL = course.ImageURL
 	}
 	if degraded {
 		return result, Provenance{Source: "moodle", CheckedAt: checkedAt, State: "degraded", Detail: "one_or_more_courses_unavailable"}

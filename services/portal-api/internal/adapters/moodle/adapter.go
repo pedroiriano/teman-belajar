@@ -22,6 +22,7 @@ func (c *Client) ListCourses(ctx context.Context, filter learning.CourseFilter) 
 		StartDate int64  `json:"startdate"`
 		EndDate   int64  `json:"enddate"`
 		Visible   int    `json:"visible"`
+		ImageURL  string `json:"imageurl"`
 	}
 
 	err := c.callWS(ctx, "local_temanbelajar_list_visible_courses", nil, &response)
@@ -51,6 +52,7 @@ func (c *Client) ListCourses(ctx context.Context, filter learning.CourseFilter) 
 			StartAt:   startAt,
 			EndAt:     endAt,
 			Visible:   crs.Visible == 1,
+			ImageURL:  crs.ImageURL,
 		})
 	}
 
@@ -341,5 +343,20 @@ func (c *Client) VerifyCertificate(ctx context.Context, code string) (*learning.
 		},
 	}, nil
 }
+
+// EnrolUser enrols a learner into a Moodle course using enrol_manual_enrol_users web service.
+func (c *Client) EnrolUser(ctx context.Context, userID int, courseID int, roleID int) error {
+	if roleID <= 0 {
+		roleID = 5 // Default Moodle student role
+	}
+
+	params := url.Values{}
+	params.Set("enrolments[0][roleid]", strconv.Itoa(roleID))
+	params.Set("enrolments[0][userid]", strconv.Itoa(userID))
+	params.Set("enrolments[0][courseid]", strconv.Itoa(courseID))
+
+	return c.callWSVoid(ctx, "enrol_manual_enrol_users", params)
+}
+
 
 
